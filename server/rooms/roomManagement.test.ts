@@ -95,29 +95,32 @@ test('instant win reveal does not crash server (no require call)', async (t) => 
     consecutiveTimeouts: new Map(),
   } as any;
 
-  ServerGameEngine.triggerInstantWinReveal(
-    room,
-    {
-      winnerIndex: 0,
-      winnerName: 'Host',
-      winType: 'THREE_SEVENS',
-      hand: [],
-      scoreOrCount: 3,
-      expiresAt: Date.now() + 150,
-    },
-    () => {},
-    activeState
-  );
+  try {
+    ServerGameEngine.triggerInstantWinReveal(
+      room,
+      {
+        winnerIndex: 0,
+        winnerName: 'Host',
+        winType: 'THREE_SEVENS',
+        hand: [],
+        scoreOrCount: 3,
+        expiresAt: Date.now() + 150,
+      },
+      () => {},
+      activeState
+    );
 
-  // Wait 600 ms for the timer to fire without manual clearance
-  await new Promise((resolve) => setTimeout(resolve, 600));
+    // Wait 600 ms for the timer to fire without manual clearance
+    await new Promise((resolve) => setTimeout(resolve, 600));
 
-  process.off('uncaughtException', onUncaught);
-
-  assert.equal(uncaughtError, null, 'No uncaught exception raised during instant win timer callback');
-  assert.equal(room.instantWinReveal, null, 'room.instantWinReveal should be cleared to null after timer execution');
-
-  (RoomManager as any).rooms.delete(room.id);
+    assert.equal(uncaughtError, null, 'No uncaught exception raised during instant win timer callback');
+    assert.equal(room.instantWinReveal, null, 'room.instantWinReveal should be cleared to null after timer execution');
+  } finally {
+    ServerGameEngine.clearAllTimers(activeState);
+    (RoomManager as any).rooms.delete(room.id);
+    (RoomManager as any).roomStates?.delete(room.id);
+    process.off('uncaughtException', onUncaught);
+  }
 });
 
 test('LOBBY room survival beyond 3 minutes and closure after lobbyWaitTtlMinutes', () => {
