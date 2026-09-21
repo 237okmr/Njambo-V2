@@ -2547,156 +2547,186 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                 </div>
               ) : (
                 <div className="flex flex-col gap-2.5">
-                  {filteredRooms.map((r, idx) => {
-                    const isLobby = r.status === 'LOBBY';
-                    const isPlaying = r.status === 'PLAYING' || r.status === 'PARTIE_OVER' || r.status === 'MANCHE_OVER';
-                    const isLobbyFull = isLobby && r.playersCount >= r.maxPlayers;
-                    const canReplaceBot = isPlaying && Boolean(r.hasReplaceableBot);
+                  {(() => {
+                    const activeRooms = filteredRooms.filter((r) => !r.hostAbsent);
+                    const waitingRooms = filteredRooms.filter((r) => r.hostAbsent);
 
-                    return (
-                      <div
-                        key={`${r.id}_${idx}`}
-                        className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col gap-2.5 shadow-sm hover:border-slate-700 transition"
-                      >
-                        {/* Line 1: Host info */}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <PlayerAvatar
-                              avatarId={(r.hostAvatarSeed as any) || 'avatar_1'}
-                              size="sm"
-                              className="w-8 h-8 shrink-0"
-                            />
-                            <div className="flex flex-col min-w-0">
-                              <span className="text-xs font-black text-white truncate">{r.hostName}</span>
-                              <span className="text-[10px] text-slate-400">Code #{r.id}</span>
+                    const renderRoomCard = (r: PublicRoomSummary, idx: number) => {
+                      const isLobby = r.status === 'LOBBY';
+                      const isPlaying = r.status === 'PLAYING' || r.status === 'PARTIE_OVER' || r.status === 'MANCHE_OVER';
+                      const isLobbyFull = isLobby && r.playersCount >= r.maxPlayers;
+                      const canReplaceBot = isPlaying && Boolean(r.hasReplaceableBot);
+
+                      return (
+                        <div
+                          key={`${r.id}_${idx}`}
+                          className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col gap-2.5 shadow-sm hover:border-slate-700 transition"
+                        >
+                          {/* Line 1: Host info */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <PlayerAvatar
+                                avatarId={(r.hostAvatarSeed as any) || 'avatar_1'}
+                                size="sm"
+                                className="w-8 h-8 shrink-0"
+                              />
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-xs font-black text-white truncate">{r.hostName}</span>
+                                <span className="text-[10px] text-slate-400">Code #{r.id}</span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                              {/* Host absent badge */}
+                              {r.hostAbsent && (
+                                <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
+                                  <Clock className="w-2.5 h-2.5 text-amber-300 animate-spin" />
+                                  Hôte absent
+                                </span>
+                              )}
+
+                              {/* Status Pill */}
+                              {isPlaying ? (
+                                r.status === 'MANCHE_OVER' ? (
+                                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+                                    Fin de manche
+                                  </span>
+                                ) : canReplaceBot ? (
+                                  <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1 animate-pulse">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                    Place libre
+                                  </span>
+                                ) : (
+                                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center gap-1">
+                                    <Eye className="w-2.5 h-2.5 text-cyan-300" />
+                                    En direct
+                                  </span>
+                                )
+                              ) : (
+                                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                                  Salon
+                                </span>
+                              )}
+
+                              {/* Human vs Bot Badge */}
+                              <span
+                                className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${
+                                  !r.fillWithBots
+                                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                                    : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40'
+                                }`}
+                              >
+                                {!r.fillWithBots ? '👥 Humains' : '🤖 Mixte'}
+                              </span>
+                              <span className="text-xs font-black text-amber-400">Mise: {r.baseBet} 🪙</span>
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-1.5 flex-wrap justify-end">
-                            {/* Host absent badge */}
-                            {r.hostAbsent && (
-                              <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
-                                <Clock className="w-2.5 h-2.5 text-amber-300 animate-spin" />
-                                Hôte absent
-                              </span>
-                            )}
-
-                            {/* Status Pill */}
+                          {/* Line 2: Details & Badges */}
+                          <div className="flex items-center gap-2 text-[11px] text-slate-400 flex-wrap">
                             {isPlaying ? (
-                              r.status === 'MANCHE_OVER' ? (
-                                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 flex items-center gap-1">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-                                  Fin de manche
+                              <>
+                                <span className="text-slate-300 font-semibold">Partie #{r.currentPartie || 1}</span>
+                                <span>·</span>
+                                <span>
+                                  {r.humanPlayersCount ?? r.playersCount} humain(s)
+                                  {r.botPlayersCount ? ` + ${r.botPlayersCount} bot(s)` : ''}
                                 </span>
-                              ) : canReplaceBot ? (
-                                <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1 animate-pulse">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                                  Place libre
-                                </span>
-                              ) : (
-                                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center gap-1">
-                                  <Eye className="w-2.5 h-2.5 text-cyan-300" />
-                                  En direct
-                                </span>
-                              )
+                                {canReplaceBot && (
+                                  <>
+                                    <span>·</span>
+                                    <span className="text-amber-300 font-bold">Relais: {r.prorataCapitalEstimate} 🪙</span>
+                                  </>
+                                )}
+                                {Boolean(r.spectatorsCount) && (
+                                  <>
+                                    <span>·</span>
+                                    <span className="text-cyan-400">{r.spectatorsCount} spectateur(s)</span>
+                                  </>
+                                )}
+                              </>
                             ) : (
-                              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                                Salon
-                              </span>
+                              <>
+                                <span>{Math.min(r.maxPlayers, r.playersCount)}/{r.maxPlayers} Joueurs</span>
+                                <span>·</span>
+                                <span>Capital: <strong className="text-slate-300 font-bold">{r.initialCapital || 100} 🪙</strong></span>
+                              </>
                             )}
-
-                            {/* Human vs Bot Badge */}
-                            <span
-                              className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${
-                                !r.fillWithBots
-                                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                                  : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40'
-                              }`}
-                            >
-                              {!r.fillWithBots ? '👥 Humains' : '🤖 Mixte'}
-                            </span>
-                            <span className="text-xs font-black text-amber-400">Mise: {r.baseBet} 🪙</span>
+                            {r.enableDoubleKora && <span>· <span className="text-emerald-400 font-bold">Double Kora</span></span>}
+                            {r.enableUnder21 && <span>· <span className="text-blue-400 font-bold">Moins de 21</span></span>}
                           </div>
-                        </div>
 
-                        {/* Line 2: Details & Badges */}
-                        <div className="flex items-center gap-2 text-[11px] text-slate-400 flex-wrap">
-                          {isPlaying ? (
-                            <>
-                              <span className="text-slate-300 font-semibold">Partie #{r.currentPartie || 1}</span>
-                              <span>·</span>
+                          {/* Host absent detailed timestamp subtitle */}
+                          {r.hostAbsent && (
+                            <div className="text-[10px] text-amber-300/90 font-mono flex items-center gap-1.5 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">
+                              <Clock className="w-3 h-3 text-amber-400 shrink-0" />
                               <span>
-                                {r.humanPlayersCount ?? r.playersCount} humain(s)
-                                {r.botPlayersCount ? ` + ${r.botPlayersCount} bot(s)` : ''}
+                                Créée il y a {Math.max(0, Math.floor((Date.now() - (r.createdAt || Date.now())) / 60000))} min · Hôte absent depuis {Math.max(0, Math.floor((Date.now() - (r.hostAbsentSince || r.createdAt || Date.now())) / 60000))} min
                               </span>
-                              {canReplaceBot && (
-                                <>
-                                  <span>·</span>
-                                  <span className="text-amber-300 font-bold">Relais: {r.prorataCapitalEstimate} 🪙</span>
-                                </>
-                              )}
-                              {Boolean(r.spectatorsCount) && (
-                                <>
-                                  <span>·</span>
-                                  <span className="text-cyan-400">{r.spectatorsCount} spectateur(s)</span>
-                                </>
-                              )}
-                            </>
-                          ) : (
-                            <>
-                              <span>{Math.min(r.maxPlayers, r.playersCount)}/{r.maxPlayers} Joueurs</span>
-                              <span>·</span>
-                              <span>Capital: <strong className="text-slate-300 font-bold">{r.initialCapital || 100} 🪙</strong></span>
-                            </>
+                            </div>
                           )}
-                          {r.enableDoubleKora && <span>· <span className="text-emerald-400 font-bold">Double Kora</span></span>}
-                          {r.enableUnder21 && <span>· <span className="text-blue-400 font-bold">Moins de 21</span></span>}
-                        </div>
 
-                        {/* Host absent detailed timestamp subtitle */}
-                        {r.hostAbsent && (
-                          <div className="text-[10px] text-amber-300/90 font-mono flex items-center gap-1.5 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">
-                            <Clock className="w-3 h-3 text-amber-400 shrink-0" />
-                            <span>
-                              Créée il y a {Math.max(0, Math.floor((Date.now() - (r.createdAt || Date.now())) / 60000))} min · Hôte absent depuis {Math.max(0, Math.floor((Date.now() - (r.hostAbsentSince || r.createdAt || Date.now())) / 60000))} min
-                            </span>
+                          {/* Line 3: Action Button (100% width, dynamic per state) */}
+                          <button
+                            type="button"
+                            disabled={isLoading || isLobbyFull}
+                            onClick={() => handleJoin(r.id)}
+                            className={`w-full h-10 rounded-xl text-xs font-black transition active:scale-98 cursor-pointer flex items-center justify-center gap-2 ${
+                              isLobbyFull
+                                ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                                : isPlaying && canReplaceBot
+                                ? 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 shadow-md shadow-emerald-500/20'
+                                : isPlaying
+                                ? 'bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30'
+                                : 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20'
+                            }`}
+                          >
+                            {isLobbyFull ? (
+                              'Table Complète (4/4)'
+                            ) : isPlaying && canReplaceBot ? (
+                              <>
+                                <UserPlus className="w-3.5 h-3.5" />
+                                <span>Prendre la place d'un robot ({r.prorataCapitalEstimate} 🪙)</span>
+                              </>
+                            ) : isPlaying ? (
+                              <>
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>{r.status === 'MANCHE_OVER' ? 'Rejoindre (Fin de manche)' : 'Regarder en direct (Spectateur)'}</span>
+                              </>
+                            ) : (
+                              'Rejoindre la Table'
+                            )}
+                          </button>
+                        </div>
+                      );
+                    };
+
+                    return (
+                      <>
+                        {activeRooms.length > 0 && (
+                          <div className="flex flex-col gap-2.5">
+                            {waitingRooms.length > 0 && (
+                              <div className="text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5 px-1 pt-1">
+                                <Users className="w-3.5 h-3.5 text-emerald-400" />
+                                <span>Tables actives ({activeRooms.length})</span>
+                              </div>
+                            )}
+                            {activeRooms.map(renderRoomCard)}
                           </div>
                         )}
-
-                        {/* Line 3: Action Button (100% width, dynamic per state) */}
-                        <button
-                          type="button"
-                          disabled={isLoading || isLobbyFull}
-                          onClick={() => handleJoin(r.id)}
-                          className={`w-full h-10 rounded-xl text-xs font-black transition active:scale-98 cursor-pointer flex items-center justify-center gap-2 ${
-                            isLobbyFull
-                              ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                              : isPlaying && canReplaceBot
-                              ? 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 shadow-md shadow-emerald-500/20'
-                              : isPlaying
-                              ? 'bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30'
-                              : 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20'
-                          }`}
-                        >
-                          {isLobbyFull ? (
-                            'Table Complète (4/4)'
-                          ) : isPlaying && canReplaceBot ? (
-                            <>
-                              <UserPlus className="w-3.5 h-3.5" />
-                              <span>Prendre la place d'un robot ({r.prorataCapitalEstimate} 🪙)</span>
-                            </>
-                          ) : isPlaying ? (
-                            <>
-                              <Eye className="w-3.5 h-3.5" />
-                              <span>{r.status === 'MANCHE_OVER' ? 'Rejoindre (Fin de manche)' : 'Regarder en direct (Spectateur)'}</span>
-                            </>
-                          ) : (
-                            'Rejoindre la Table'
-                          )}
-                        </button>
-                      </div>
+                        {waitingRooms.length > 0 && (
+                          <div className="flex flex-col gap-2.5 mt-2">
+                            <div className="text-[11px] font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5 px-1 pt-2 border-t border-slate-800/80">
+                              <Clock className="w-3.5 h-3.5 text-amber-400" />
+                              <span>En attente de l'hôte ({waitingRooms.length})</span>
+                            </div>
+                            {waitingRooms.map(renderRoomCard)}
+                          </div>
+                        )}
+                      </>
                     );
-                  })}
+                  })()}
                 </div>
               )}
             </div>

@@ -22,6 +22,8 @@ export interface ConnectedClient {
 
 const SERVER_EPOCH = Date.now();
 
+ServerGameEngine.setRoomGetter((roomId) => RoomManager.getRoom(roomId));
+
 export class RoomManager {
   private static rooms = new Map<string, MultiplayerRoom>();
   private static roomStates = new Map<string, ActiveRoomState>();
@@ -3693,6 +3695,13 @@ export class RoomManager {
       const now = Date.now();
       let changed = false;
 
+      // 0. Lobby Host Takeover check
+      if (room.status === 'LOBBY') {
+        if (this.evaluateLobbyHostTakeover(roomCode)) {
+          changed = true;
+        }
+      }
+
       // 1. Auto-expire bet increase proposals after 15 seconds
       if (
         room.betIncreaseProposal &&
@@ -4404,8 +4413,8 @@ export class RoomManager {
         const hostAbsentSince = room.hostAbsentSince || (hostPlayer?.disconnectGraceExpiresAt ? (hostPlayer.disconnectGraceExpiresAt - (this.engineConfig.lobbyWaitTtlMinutes ?? 30) * 60000) : room.createdAt);
         const absentDurationSecs = Math.max(0, Math.floor((now - hostAbsentSince) / 1000));
 
-        // If host is absent in LOBBY for more than publicAbsentHostVisibilitySeconds, hide from public list
-        if (!isHostConnected && room.status === 'LOBBY' && absentDurationSecs > pubVisibilitySecs) {
+        // If host is absent in LOBBY with NO connected humans and absent longer than pubVisibilitySecs, hide from public list
+        if (!isHostConnected && room.status === 'LOBBY' && connectedHumans.length === 0 && absentDurationSecs > pubVisibilitySecs) {
           return;
         }
 
@@ -4415,8 +4424,8 @@ export class RoomManager {
           !isHostConnected
         );
 
-        // Anti-ghost: NEVER display rooms with 0 connected humans unless host is in LOBBY grace period
-        if (connectedHumans.length === 0 && (!isHostInLobbyGrace || absentDurationSecs > (this.engineConfig.lobbyWaitTtlMinutes ?? 30) * 60)) {
+        // Anti-ghost: NEVER display rooms with 0 connected humans unless host is within publicAbsentHostVisibilitySeconds
+        if (connectedHumans.length === 0 && absentDurationSecs > pubVisibilitySecs) {
           return;
         }
 
@@ -4941,9 +4950,9 @@ export class RoomManager {
     }, 1000 * 60); // Run every 1 minute
   }
 
-  public static evaluateLobbyHostTakeover(roomCode: string): void {
+  public static evaluateLobbyHostTakeover(roomCode: string): boolean {
     const room = this.rooms.get(roomCode);
-    if (!room || room.status !== 'LOBBY') return;
+    if (!room || room.status !== 'LOBBY') return false;
 
     room.originalHostId = room.originalHostId || room.hostId;
     const origHostPlayer = (room.players || []).find((p) => p.id === room.originalHostId);
@@ -4963,9 +4972,23 @@ export class RoomManager {
         room.hostName = origHostPlayer.name;
         (room.players || []).forEach((p) => { p.isHost = (p.id === room.originalHostId); });
         room.hostAbsentSince = undefined;
+
+        const emote: EmoteMessage = {
+          id: 'em_' + Math.random().toString(36).substring(2, 9),
+          playerId: 'system',
+          playerName: 'Système',
+          text: `👑 ${origHostPlayer.name} a repris son rôle d'hôte.`,
+          emoji: '👑',
+          timestamp: Date.now(),
+          isBot: true,
+        };
+        room.activeEmotes = [...(room.activeEmotes || []), emote].slice(-5);
+        room.updatedAt = Date.now();
+
         this.broadcastRoomState(roomCode);
+        return true;
       }
-      return;
+      return false;
     }
 
     if (!room.hostAbsentSince) {
@@ -4985,10 +5008,25 @@ export class RoomManager {
           room.hostId = takeoverPlayer.id;
           room.hostName = takeoverPlayer.name;
           (room.players || []).forEach((p) => { p.isHost = (p.id === takeoverPlayer.id); });
+
+          const emote: EmoteMessage = {
+            id: 'em_' + Math.random().toString(36).substring(2, 9),
+            playerId: 'system',
+            playerName: 'Système',
+            text: `👑 ${takeoverPlayer.name} est hôte temporaire.`,
+            emoji: '👑',
+            timestamp: Date.now(),
+            isBot: true,
+          };
+          room.activeEmotes = [...(room.activeEmotes || []), emote].slice(-5);
+          room.updatedAt = Date.now();
+
           this.broadcastRoomState(roomCode);
+          return true;
         }
       }
     }
+    return false;
   }
 
   private static notifyHostPlayerJoined(room: MultiplayerRoom, joiningPlayerName: string, joiningPlayerId: string): void {

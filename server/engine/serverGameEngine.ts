@@ -219,6 +219,11 @@ export function selectNeutralCard(hand: Card[], leadSuit: Suit | null): Card {
 }
 
 export class ServerGameEngine {
+  private static roomGetter?: (roomId: string) => MultiplayerRoom | undefined;
+
+  public static setRoomGetter(getter: (roomId: string) => MultiplayerRoom | undefined): void {
+    this.roomGetter = getter;
+  }
   public static getConfig(activeRoomState?: ActiveRoomState): KatikaEngineConfig {
     return activeRoomState?.engineConfig || getEngineConfig();
   }
@@ -440,7 +445,7 @@ export class ServerGameEngine {
     return false;
   }
 
-  private static triggerInstantWinReveal(
+  public static triggerInstantWinReveal(
     room: MultiplayerRoom,
     reveal: InstantWinReveal,
     onStateChange: (room: MultiplayerRoom) => void,
@@ -468,8 +473,7 @@ export class ServerGameEngine {
     // After Xms (matching solo mode dramatic reveal duration), proceed to resolve instant win and show EndRoundModal
     activeRoomState.instantWinTimer = setTimeout(() => {
       // Re-fetch the fresh room reference to avoid closure state staleness if firestore synced
-      const { RoomManager } = require('../rooms/roomManager');
-      const activeRoom = RoomManager.getRoom(room.id) || room;
+      const activeRoom = ServerGameEngine.roomGetter ? (ServerGameEngine.roomGetter(room.id) || room) : room;
       
       if (activeRoom.gameState) {
         activeRoom.gameState.instantWinReveal = null;

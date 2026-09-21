@@ -115,6 +115,11 @@ export function updateEngineConfig(patch: Partial<KatikaEngineConfig>): KatikaEn
     validatedPatch.guestLobbyGraceSeconds = Number.isFinite(val) ? Math.min(600, Math.max(30, val)) : 60;
   }
 
+  if (patch.emptyRoomTimeoutMinutes !== undefined) {
+    const val = Number(patch.emptyRoomTimeoutMinutes);
+    validatedPatch.emptyRoomTimeoutMinutes = Number.isFinite(val) ? Math.min(120, Math.max(3, val)) : 5;
+  }
+
   if (patch.joinPushEnabled !== undefined) {
     validatedPatch.joinPushEnabled = Boolean(patch.joinPushEnabled);
   }
