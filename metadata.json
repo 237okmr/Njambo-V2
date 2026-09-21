@@ -1,0 +1,7 @@
+{
+  "name": "Njambo Kora",
+  "description": "Jeu de cartes traditionnel africain à 31 cartes en Solo et Multijoueur en ligne temps réel (2 à 4 joueurs avec bots optionnels), respect des règles de Kora, Double Kora, et tableau des scores.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

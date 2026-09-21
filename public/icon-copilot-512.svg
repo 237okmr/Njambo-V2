@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="copilotBg512" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="50%" stop-color="#020617" />
+      <stop offset="100%" stop-color="#1e1b4b" />
+    </linearGradient>
+    <linearGradient id="copilotGold512" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="50%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#b45309" />
+    </linearGradient>
+    <linearGradient id="copilotGlow512" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0.05" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background rounded card -->
+  <rect width="512" height="512" rx="112" fill="url(#copilotBg512)" />
+  <rect x="16" y="16" width="480" height="480" rx="96" fill="none" stroke="url(#copilotGold512)" stroke-width="6" opacity="0.9" />
+  
+  <!-- Ambient glow circle -->
+  <circle cx="256" cy="228" r="164" fill="url(#copilotGlow512)" stroke="url(#copilotGold512)" stroke-width="4" stroke-dasharray="10 8" />
+
+  <!-- AI Copilot Bot & Sparkle Motif -->
+  <g transform="translate(256, 218)">
+    <!-- Bot Antenna -->
+    <line x1="0" y1="-118" x2="0" y2="-86" stroke="url(#copilotGold512)" stroke-width="8" stroke-linecap="round" />
+    <circle cx="0" cy="-120" r="12" fill="#fef08a" />
+    
+    <!-- Bot Head -->
+    <rect x="-90" y="-86" width="180" height="138" rx="36" fill="#0f172a" stroke="url(#copilotGold512)" stroke-width="6" />
+    
+    <!-- Bot Screen / Visor -->
+    <rect x="-64" y="-58" width="128" height="64" rx="18" fill="#020617" stroke="#38bdf8" stroke-width="3" />
+    
+    <!-- Bot Glowing Eyes -->
+    <circle cx="-32" cy="-26" r="14" fill="#38bdf8" />
+    <circle cx="32" cy="-26" r="14" fill="#38bdf8" />
+    <circle cx="-28" cy="-30" r="4" fill="#ffffff" />
+    <circle cx="36" cy="-30" r="4" fill="#ffffff" />
+
+    <!-- AI Sparkles -->
+    <path d="M 86 -96 Q 86 -68 114 -68 Q 86 -68 86 -40 Q 86 -68 58 -68 Q 86 -68 86 -96 Z" fill="url(#copilotGold512)" />
+    <path d="M -90 42 Q -90 58 -74 58 Q -90 58 -90 74 Q -90 58 -106 58 Q -90 58 -90 42 Z" fill="#38bdf8" />
+  </g>
+
+  <!-- Copilote Banner Badge -->
+  <rect x="76" y="388" width="360" height="64" rx="32" fill="#0f172a" stroke="url(#copilotGold512)" stroke-width="4" />
+  <text x="256" y="432" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="28" letter-spacing="5" fill="url(#copilotGold512)">COPILOTE</text>
+</svg>

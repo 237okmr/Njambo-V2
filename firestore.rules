@@ -1,0 +1,397 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===== Helpers : authentification et rôles =====
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isGoogleSignIn() {
+      return isAuthenticated()
+        && request.auth.token.get('firebase', {}).get('sign_in_provider', '') == 'google.com';
+    }
+
+    function isUser(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return isAuthenticated()
+        && request.auth.token.get('email_verified', false) == true
+        && (request.auth.token.get('email', '') == '237okmr@gmail.com'
+            || request.auth.token.get('admin', false) == true);
+    }
+
+    // ===== Helpers : profil =====
+
+    function validDisplayName(data) {
+      return !('displayName' in data) || (
+        data.displayName is string
+        && data.displayName.size() > 0
+        && data.displayName.size() <= 30
+      );
+    }
+
+    // Aucun e-mail dans le document public (clé absente ou null tolérés)
+    function noPublicEmail(data) {
+      return !('email' in data) || data.email == null;
+    }
+
+    // Compteur borné à la création (cap = 0 pour un compte neuf)
+    function capAtCreate(stats, key, cap) {
+      return stats.get(key, 0) >= 0 && stats.get(key, 0) <= cap;
+    }
+
+    // Compteur sans baisse et avec plafond d'incrément par écriture
+    function ctr(oS, nS, key, maxDelta) {
+      return nS.get(key, 0) >= oS.get(key, 0)
+        && nS.get(key, 0) - oS.get(key, 0) <= maxDelta;
+    }
+
+    // Sanction non expirée : impossible de la supprimer, de la désactiver ou de reculer son échéance
+    function sanctionKept(oSan, nSan) {
+      return oSan == null
+        || oSan.get('active', false) != true
+        || (oSan.get('expiresAt', null) != null && oSan.get('expiresAt', null) <= request.time.toMillis())
+        || (
+          nSan != null
+          && nSan.get('active', false) == true
+          && (
+            oSan.get('expiresAt', null) == null
+              ? nSan.get('expiresAt', null) == null
+              : (nSan.get('expiresAt', null) == null || nSan.get('expiresAt', null) >= oSan.get('expiresAt', null))
+          )
+        );
+    }
+
+    function isPermBanned(data) {
+      let s = data.get('fairPlay', {}).get('activeSanction', null);
+      return s != null && s.get('active', false) == true && s.get('type', '') == 'PERM_BAN';
+    }
+
+    // ===== Helpers : soloDaily et score =====
+
+    // Index de jour Douala (UTC+1)
+    function dayIdx(t) {
+      return (t.toMillis() + 3600000) / 86400000;
+    }
+
+    // Structure et bornes du champ soloDaily lorsqu'il est présent
+    function validSoloDaily(existing, incoming) {
+      let hasIn = 'soloDaily' in incoming && incoming.soloDaily != null;
+      let hasEx = 'soloDaily' in existing && existing.soloDaily != null;
+      let inSD = hasIn ? incoming.soloDaily : null;
+      let exSD = hasEx ? existing.soloDaily : null;
+      let oDay = (hasEx && 'day' in exSD) ? exSD.day : null;
+      let oPts = (hasEx && 'points' in exSD) ? exSD.points : 0;
+      return (!hasEx || hasIn) && (
+        !hasIn || (
+          inSD is map
+          && 'day' in inSD && inSD.day is int
+          && inSD.day <= dayIdx(request.time) + 1
+          && (oDay == null || inSD.day >= oDay)
+          && 'points' in inSD && (inSD.points is int || inSD.points is float)
+          && inSD.points >= 0 && inSD.points <= 30.01
+          && (oDay == null || inSD.day > oDay || inSD.points >= oPts)
+        )
+      );
+    }
+
+    // Calcul du gain solo déclaré de l'écriture
+    function getDeltaSolo(existing, incoming) {
+      let hasIn = 'soloDaily' in incoming && incoming.soloDaily != null;
+      let inSD = hasIn ? incoming.soloDaily : null;
+      let hasEx = 'soloDaily' in existing && existing.soloDaily != null;
+      let exSD = hasEx ? existing.soloDaily : null;
+      let oDay = (hasEx && 'day' in exSD) ? exSD.day : null;
+      let oPts = (hasEx && 'points' in exSD) ? exSD.points : 0;
+      return !hasIn ? 0 : (
+        (oDay != null && inSD.day == oDay)
+          ? (inSD.points - oPts)
+          : inSD.points
+      );
+    }
+
+    // Couplage entre la hausse de masteryScore et le gain solo + allocation multijoueur
+    function validMasteryScoreCoupling(existing, incoming) {
+      let oS = existing.stats;
+      let nS = incoming.stats;
+      let scoreIncrease = nS.get('masteryScore', 0) - oS.get('masteryScore', 0);
+      let one = !('guestMergedAt' in existing) && ('guestMergedAt' in incoming);
+      let isScoreMigration = incoming.get('scoreVersion', 1) > existing.get('scoreVersion', 1);
+      let dGamesWon = nS.get('multiplayerGamesWon', 0) - oS.get('multiplayerGamesWon', 0);
+      let dManchesWon = nS.get('multiplayerManchesWon', 0) - oS.get('multiplayerManchesWon', 0);
+      let dKoraCount = nS.get('multiplayerKoraCount', 0) - oS.get('multiplayerKoraCount', 0);
+      let allocHorsSolo = 20 * (dGamesWon + dManchesWon + dKoraCount) + 0.01;
+      let deltaSolo = getDeltaSolo(existing, incoming);
+      let hasIn = 'soloDaily' in incoming && incoming.soloDaily != null;
+      let hasEx = 'soloDaily' in existing && existing.soloDaily != null;
+      let inSD = hasIn ? incoming.soloDaily : null;
+      let exSD = hasEx ? existing.soloDaily : null;
+      let oDay = (hasEx && 'day' in exSD) ? exSD.day : null;
+      let nDay = (hasIn && 'day' in inSD) ? inSD.day : null;
+      let oPts = (hasEx && 'points' in exSD && exSD.points != null) ? exSD.points : 0;
+      let g = (oDay != null && nDay != null && nDay > oDay) ? (nDay - oDay) : 0;
+      let gCap = g >= 7 ? 7 : g;
+      let remainingOldDay = (30 - oPts > 0) ? (30 - oPts) : 0;
+      let allocMultiDay = (g == 0) ? 0 : (remainingOldDay + 30 * (gCap - 1));
+      return one || isScoreMigration || (scoreIncrease <= deltaSolo + allocHorsSolo + allocMultiDay);
+    }
+
+    // ===== Création d'un profil (compte neuf ou première fusion invité) =====
+
+    function initialProfileValid(data) {
+      let stats = data.stats;
+      let merge = 'guestMergedAt' in data;
+      let g = merge ? 100 : 0;
+      let kc = merge ? 30 : 0;
+      let dc = merge ? 10 : 0;
+      let mc = merge ? 50000 : 0;
+      let fp = data.get('fairPlay', {});
+      let san = fp.get('activeSanction', null);
+      return data.uid == request.auth.uid
+        && data.get('isGuest', false) == false
+        && data.get('authProvider', '') == 'google.com'
+        && validDisplayName(data)
+        && noPublicEmail(data)
+        && data.get('scoreVersion', 1) in [1, 2]
+        && (merge
+            ? (data.get('chips', 1000) >= 0 && data.get('chips', 1000) <= 20000)
+            : data.get('chips', 1000) == 1000)
+        && (san == null || san.get('active', false) == false)
+        && (merge || (
+              fp.get('totalForfeits', 0) == 0
+              && fp.get('consecutiveForfeits', 0) == 0
+              && fp.get('totalFoldRounds', 0) == 0
+              && fp.get('prolongedDisconnects', 0) == 0))
+        && (!('soloDaily' in data) || (
+              data.soloDaily is map
+              && 'day' in data.soloDaily && data.soloDaily.day is int
+              && data.soloDaily.day <= dayIdx(request.time) + 1
+              && 'points' in data.soloDaily && (data.soloDaily.points is int || data.soloDaily.points is float)
+              && data.soloDaily.points >= 0 && data.soloDaily.points <= 30.01
+            ))
+        && capAtCreate(stats, 'masteryScore', merge ? 300 : 0)
+        && capAtCreate(stats, 'partiesPlayed', g)
+        && capAtCreate(stats, 'partiesWon', g)
+        && capAtCreate(stats, 'gamesPlayed', g)
+        && capAtCreate(stats, 'gamesWon', g)
+        && capAtCreate(stats, 'gamesLost', g)
+        && capAtCreate(stats, 'manchesPlayed', g)
+        && capAtCreate(stats, 'manchesWon', g)
+        && capAtCreate(stats, 'soloGamesPlayed', g)
+        && capAtCreate(stats, 'soloGamesWon', g)
+        && capAtCreate(stats, 'multiplayerGamesPlayed', g)
+        && capAtCreate(stats, 'multiplayerGamesWon', g)
+        && capAtCreate(stats, 'soloManchesWon', g)
+        && capAtCreate(stats, 'multiplayerManchesWon', g)
+        && capAtCreate(stats, 'soloManchesWonEasy', g)
+        && capAtCreate(stats, 'soloManchesWonNormal', g)
+        && capAtCreate(stats, 'soloManchesWonHard', g)
+        && capAtCreate(stats, 'soloGamesWonEasy', g)
+        && capAtCreate(stats, 'soloGamesWonNormal', g)
+        && capAtCreate(stats, 'soloGamesWonHard', g)
+        && capAtCreate(stats, 'koraCount', kc)
+        && capAtCreate(stats, 'soloKoraCount', kc)
+        && capAtCreate(stats, 'multiplayerKoraCount', kc)
+        && capAtCreate(stats, 'soloKorasEasy', kc)
+        && capAtCreate(stats, 'soloKorasNormal', kc)
+        && capAtCreate(stats, 'soloKorasHard', kc)
+        && capAtCreate(stats, 'doubleKoraCount', dc)
+        && capAtCreate(stats, 'soloDoubleKoraCount', dc)
+        && capAtCreate(stats, 'multiplayerDoubleKoraCount', dc)
+        && capAtCreate(stats, 'soloDoubleKorasEasy', dc)
+        && capAtCreate(stats, 'soloDoubleKorasNormal', dc)
+        && capAtCreate(stats, 'soloDoubleKorasHard', dc)
+        && capAtCreate(stats, 'multiplayerGains', mc)
+        && capAtCreate(stats, 'multiplayerPertes', mc)
+        && capAtCreate(stats, 'soloGains', mc)
+        && capAtCreate(stats, 'soloPertes', mc)
+        && capAtCreate(stats, 'fortune', mc)
+        && capAtCreate(stats, 'soloFortune', mc)
+        && capAtCreate(stats, 'biggestPotWon', mc);
+    }
+
+    // ===== Mise à jour d'un profil =====
+
+    function coherentProfile(data) {
+      let s = data.stats;
+      return validDisplayName(data)
+        && noPublicEmail(data)
+        && data.get('isGuest', false) == false
+        && data.get('authProvider', '') == 'google.com'
+        && data.get('chips', 0) >= 0
+        && s.get('partiesWon', 0) <= s.get('partiesPlayed', 0)
+        && s.get('gamesWon', 0) <= s.get('gamesPlayed', 0)
+        && s.get('manchesWon', 0) <= s.get('manchesPlayed', 0)
+        && s.get('doubleKoraCount', 0) <= s.get('koraCount', 0)
+        && s.get('masteryScore', 0) >= 0;
+    }
+
+    function validProfileUpdate(existing, incoming) {
+      let oS = existing.stats;
+      let nS = incoming.stats;
+      // Fusion invité unique sur un compte existant : plafonds élargis, une seule fois
+      let one = !('guestMergedAt' in existing) && ('guestMergedAt' in incoming);
+      let maxG = one ? 100 : 20;
+      let maxK = one ? 30 : 10;
+      let maxD = 10;
+      let oFP = existing.get('fairPlay', {});
+      let nFP = incoming.get('fairPlay', {});
+      return incoming.get('scoreVersion', 1) >= existing.get('scoreVersion', 1)
+        && (!('guestMergedAt' in existing) || incoming.get('guestMergedAt', null) == existing.guestMergedAt)
+        // Fair-Play : aucun compteur ne baisse, sanction active protégée
+        && nFP.get('totalForfeits', 0) >= oFP.get('totalForfeits', 0)
+        && nFP.get('totalFoldRounds', 0) >= oFP.get('totalFoldRounds', 0)
+        && nFP.get('prolongedDisconnects', 0) >= oFP.get('prolongedDisconnects', 0)
+        && sanctionKept(oFP.get('activeSanction', null), nFP.get('activeSanction', null))
+        // Jetons
+        && incoming.get('chips', 0) - existing.get('chips', 0) <= (one ? 20000 : 50000)
+        && existing.get('chips', 0) - incoming.get('chips', 0) <= 25000
+        // Score : ne baisse que de la pénalité d'abandon (5 points)
+        && nS.get('masteryScore', 0) >= oS.get('masteryScore', 0) - 5
+        && nS.get('masteryScore', 0) - oS.get('masteryScore', 0) <= (one ? 300 : 100)
+        // Validation soloDaily & couplage masteryScore
+        && validSoloDaily(existing, incoming)
+        && validMasteryScoreCoupling(existing, incoming)
+        // Compteurs
+        && ctr(oS, nS, 'partiesPlayed', maxG)
+        && ctr(oS, nS, 'partiesWon', maxG)
+        && ctr(oS, nS, 'gamesPlayed', maxG)
+        && ctr(oS, nS, 'gamesWon', maxG)
+        && ctr(oS, nS, 'gamesLost', maxG)
+        && ctr(oS, nS, 'manchesPlayed', maxG)
+        && ctr(oS, nS, 'manchesWon', maxG)
+        && ctr(oS, nS, 'soloGamesPlayed', maxG)
+        && ctr(oS, nS, 'soloGamesWon', maxG)
+        && ctr(oS, nS, 'multiplayerGamesPlayed', maxG)
+        && ctr(oS, nS, 'multiplayerGamesWon', maxG)
+        && ctr(oS, nS, 'soloManchesWon', maxG)
+        && ctr(oS, nS, 'multiplayerManchesWon', maxG)
+        && ctr(oS, nS, 'soloManchesWonEasy', maxG)
+        && ctr(oS, nS, 'soloManchesWonNormal', maxG)
+        && ctr(oS, nS, 'soloManchesWonHard', maxG)
+        && ctr(oS, nS, 'soloGamesWonEasy', maxG)
+        && ctr(oS, nS, 'soloGamesWonNormal', maxG)
+        && ctr(oS, nS, 'soloGamesWonHard', maxG)
+        && ctr(oS, nS, 'koraCount', maxK)
+        && ctr(oS, nS, 'soloKoraCount', maxK)
+        && ctr(oS, nS, 'multiplayerKoraCount', maxK)
+        && ctr(oS, nS, 'soloKorasEasy', maxK)
+        && ctr(oS, nS, 'soloKorasNormal', maxK)
+        && ctr(oS, nS, 'soloKorasHard', maxK)
+        && ctr(oS, nS, 'doubleKoraCount', maxD)
+        && ctr(oS, nS, 'soloDoubleKoraCount', maxD)
+        && ctr(oS, nS, 'multiplayerDoubleKoraCount', maxD)
+        && ctr(oS, nS, 'soloDoubleKorasEasy', maxD)
+        && ctr(oS, nS, 'soloDoubleKorasNormal', maxD)
+        && ctr(oS, nS, 'soloDoubleKorasHard', maxD)
+        && ctr(oS, nS, 'multiplayerGains', 50000)
+        && ctr(oS, nS, 'multiplayerPertes', 25000)
+        && ctr(oS, nS, 'soloGains', 50000)
+        && ctr(oS, nS, 'soloPertes', 25000)
+        && ctr(oS, nS, 'biggestPotWon', 50000)
+        && nS.get('fortune', 0) - oS.get('fortune', 0) <= 50000
+        && oS.get('fortune', 0) - nS.get('fortune', 0) <= 25000
+        && nS.get('soloFortune', 0) - oS.get('soloFortune', 0) <= 50000
+        && oS.get('soloFortune', 0) - nS.get('soloFortune', 0) <= 25000;
+    }
+
+    // ===== Collections =====
+
+    // Réglages Katika : lecture publique, écriture admin
+    match /katika_settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Carnet de bord et backlog admin (Katika Admin Notes)
+    match /katika_admin_notes/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    // Enregistrements de parties
+    match /njambo_game_records/{recordId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && request.resource.data.creatorUid == request.auth.uid;
+      allow update: if isAuthenticated() && (
+        resource.data.get('creatorUid', null) == request.auth.uid
+        || (!('creatorUid' in resource.data) && resource.data.get('winnerId', null) == request.auth.uid)
+        || isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Profils joueurs
+    match /users/{userId} {
+      allow read: if true;
+      allow create: if isUser(userId) && isGoogleSignIn() && initialProfileValid(request.resource.data);
+      allow update: if isAdmin() || (
+        isUser(userId)
+        && isGoogleSignIn()
+        && !isPermBanned(resource.data)
+        && coherentProfile(request.resource.data)
+        && validProfileUpdate(resource.data, request.resource.data)
+      );
+      allow delete: if isAdmin();
+
+      // Données privées (e-mail)
+      match /private/{docId} {
+        allow read, write: if isUser(userId) || isAdmin();
+      }
+
+      // Historique individuel
+      match /history/{gameId} {
+        allow read: if isUser(userId) || isAdmin();
+        allow create, update: if isUser(userId) && (
+          !('masteryPointsAwarded' in request.resource.data)
+          || (request.resource.data.masteryPointsAwarded >= -5 && request.resource.data.masteryPointsAwarded <= 30)
+        );
+        allow delete: if isAdmin();
+      }
+
+      // Amis
+      match /friends/{friendId} {
+        allow read, write: if isAuthenticated() && (
+          request.auth.uid == userId || request.auth.uid == friendId || isAdmin()
+        );
+      }
+    }
+
+    // Salles de jeu : gérées uniquement par le serveur
+    match /rooms/{roomId} {
+      allow read, write: if false;
+    }
+
+    // Abonnements Web Push (lecture/écriture par le serveur avec le SDK client : à migrer au lot 4)
+    match /push_subscriptions/{subscriptionId} {
+      allow read, write: if true;
+    }
+
+    // Invitations de table
+    match /invitations/{invitationId} {
+      allow read: if isAuthenticated() && (
+        resource.data.toUserId == request.auth.uid || resource.data.fromUserId == request.auth.uid
+      );
+      allow create: if isAuthenticated() && request.resource.data.fromUserId == request.auth.uid;
+      allow update, delete: if isAuthenticated() && (
+        resource.data.toUserId == request.auth.uid || resource.data.fromUserId == request.auth.uid
+      );
+    }
+
+    // Présence en ligne
+    match /presence/{userId} {
+      allow read: if true;
+      allow write: if isUser(userId);
+    }
+
+    // Sanctions Fair-Play
+    match /fairplay_sanctions/{sanctionId} {
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="mBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#090d16" />
+      <stop offset="50%" stop-color="#020617" />
+      <stop offset="100%" stop-color="#041a14" />
+    </linearGradient>
+    <linearGradient id="mGoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="40%" stop-color="#eab308" />
+      <stop offset="70%" stop-color="#ca8a04" />
+      <stop offset="100%" stop-color="#854d0e" />
+    </linearGradient>
+    <linearGradient id="mFeltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064e3b" />
+      <stop offset="100%" stop-color="#022c22" />
+    </linearGradient>
+  </defs>
+
+  <!-- Full Bleed Background for Maskable Icon -->
+  <rect width="512" height="512" fill="url(#mBgGrad)" />
+
+  <!-- Inner Safe Zone Content (within center 80%) -->
+  <circle cx="256" cy="256" r="170" fill="url(#mFeltGrad)" stroke="url(#mGoldGrad)" stroke-width="6" />
+  
+  <g transform="translate(256, 230) translate(-65, -95)">
+    <rect width="130" height="190" rx="14" fill="#0f172a" stroke="url(#mGoldGrad)" stroke-width="4" />
+    <text x="16" y="34" font-family="system-ui, sans-serif" font-weight="900" font-size="28" fill="url(#mGoldGrad)">3</text>
+    <path d="M 65 60 L 100 100 L 65 140 L 30 100 Z" fill="url(#mGoldGrad)" />
+  </g>
+
+  <g transform="translate(256, 395)">
+    <rect x="-130" y="-22" width="260" height="38" rx="19" fill="#020617" stroke="url(#mGoldGrad)" stroke-width="2" />
+    <text x="0" y="4" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="900" font-size="16" letter-spacing="2" fill="url(#mGoldGrad)">NJAMBO KORA</text>
+  </g>
+</svg>

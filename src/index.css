@@ -1,0 +1,284 @@
+@import "tailwindcss";
+
+@layer utilities {
+  /* Golden glowing pulsing border for playable cards on human turn */
+  @keyframes goldGlowPulse {
+    0%, 100% {
+      box-shadow: 0 0 14px 2px rgba(245, 158, 11, 0.85), 0 0 28px 6px rgba(245, 158, 11, 0.35);
+      border-color: #f59e0b;
+    }
+    50% {
+      box-shadow: 0 0 5px 1px rgba(245, 158, 11, 0.4), 0 0 12px 2px rgba(245, 158, 11, 0.15);
+      border-color: #d97706;
+    }
+  }
+
+  .golden-glow-pulse {
+    animation: goldGlowPulse 1.4s ease-in-out infinite;
+    border-width: 2px !important;
+    border-color: #f59e0b !important;
+  }
+
+  /* Le Mbap - Micro Table Screen Shake on 10, 9♠, or 3 */
+  @keyframes mbapShake {
+    0% { transform: translate(0, 0) scale(1); }
+    20% { transform: translate(-3px, 3px) scale(1.008); }
+    40% { transform: translate(3px, -2px) scale(0.995); }
+    60% { transform: translate(-2px, -2px) scale(1.003); }
+    80% { transform: translate(2px, 1px) scale(1); }
+    100% { transform: translate(0, 0) scale(1); }
+  }
+
+  .animate-mbap-shake {
+    animation: mbapShake 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  }
+
+  /* Shockwave ripple expanding on table */
+  @keyframes shockwaveRipple {
+    0% {
+      transform: scale(0.4);
+      opacity: 0.9;
+      border-width: 4px;
+    }
+    100% {
+      transform: scale(2.2);
+      opacity: 0;
+      border-width: 1px;
+    }
+  }
+
+  .animate-shockwave {
+    animation: shockwaveRipple 0.5s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+  }
+
+  /* Cut badge pop & slice */
+  @keyframes cutBadgePop {
+    0% {
+      transform: scale(0.3) rotate(-8deg);
+      opacity: 0;
+    }
+    50% {
+      transform: scale(1.18) rotate(3deg);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1) rotate(0deg);
+      opacity: 1;
+    }
+  }
+
+  /* Suit Cut Slash - Dynamic swift laser beam slice across card */
+  @keyframes cutLaserSlash {
+    0% {
+      transform: translate(-100%, -100%) rotate(35deg);
+      opacity: 0;
+    }
+    20% {
+      opacity: 1;
+    }
+    70% {
+      opacity: 0.95;
+    }
+    100% {
+      transform: translate(140%, 140%) rotate(35deg);
+      opacity: 0;
+    }
+  }
+
+  .animate-cut-badge {
+    animation: cutBadgePop 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+
+  .animate-cut-slash {
+    animation: cutLaserSlash 0.24s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+  }
+
+  /* Card Drop Slam Impact - Quick crisp drop & shadow compression */
+  @keyframes cardDropImpact {
+    0% {
+      box-shadow: 0 22px 30px -4px rgba(0, 0, 0, 0.6), 0 10px 14px -6px rgba(0, 0, 0, 0.5);
+    }
+    65% {
+      box-shadow: 0 2px 5px -1px rgba(0, 0, 0, 0.7), 0 1px 3px -1px rgba(0, 0, 0, 0.7);
+    }
+    100% {
+      box-shadow: 0 12px 20px -3px rgba(0, 0, 0, 0.45), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  .animate-card-slam {
+    animation: cardDropImpact 0.15s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
+  }
+
+  /* Live Lead Flare - Golden instant shimmer when a card takes the lead */
+  @keyframes leadFlareSweep {
+    0% {
+      transform: translateX(-150%) skewX(-20deg);
+      opacity: 0;
+    }
+    30% {
+      opacity: 0.85;
+    }
+    100% {
+      transform: translateX(250%) skewX(-20deg);
+      opacity: 0;
+    }
+  }
+
+  @keyframes leadBadgePop {
+    0% {
+      transform: scale(0.65) translateY(-4px);
+      opacity: 0;
+    }
+    70% {
+      transform: scale(1.15) translateY(0);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .animate-lead-flare {
+    animation: leadFlareSweep 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .animate-lead-badge {
+    animation: leadBadgePop 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+
+  /* Trick won pop - Elastic scale bounce with green flash */
+  @keyframes trickCounterPop {
+    0% {
+      transform: scale(1);
+    }
+    40% {
+      transform: scale(1.35);
+      color: #34d399;
+      text-shadow: 0 0 8px rgba(52, 211, 153, 0.8);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  .animate-trick-pop {
+    animation: trickCounterPop 0.26s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+
+  /* 5th Trick Decisive Tension Alert */
+  @keyframes decisiveBadgeTension {
+    0% {
+      transform: scale(0.85);
+      box-shadow: 0 0 0 rgba(245, 158, 11, 0);
+    }
+    50% {
+      transform: scale(1.12);
+      box-shadow: 0 0 16px rgba(245, 158, 11, 0.85), inset 0 0 8px rgba(245, 158, 11, 0.4);
+    }
+    100% {
+      transform: scale(1);
+      box-shadow: 0 0 6px rgba(245, 158, 11, 0.4);
+    }
+  }
+
+  .animate-decisive-pop {
+    animation: decisiveBadgeTension 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+
+  /* Tactile Juicy Button Micro-Interactions */
+  .btn-juicy {
+    transition: transform 0.09s cubic-bezier(0.2, 0, 0, 1), background-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  }
+  .btn-juicy:hover:not(:disabled) {
+    transform: scale(1.025);
+  }
+  .btn-juicy:active:not(:disabled) {
+    transform: scale(0.94);
+  }
+
+  .btn-juicy-subtle {
+    transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1), background-color 0.15s ease, border-color 0.15s ease;
+  }
+  .btn-juicy-subtle:hover:not(:disabled) {
+    transform: scale(1.02);
+  }
+  .btn-juicy-subtle:active:not(:disabled) {
+    transform: scale(0.95);
+  }
+
+  /* KO Avatar elimination tremor */
+  @keyframes koGlitch {
+    0%, 100% { transform: scale(1); filter: grayscale(100%) contrast(120%); }
+    25% { transform: translate(-2px, 2px) scale(0.96); filter: grayscale(100%) brightness(1.4) drop-shadow(0 0 8px rgba(225,29,72,0.8)); }
+    50% { transform: translate(2px, -2px) scale(0.98); filter: grayscale(100%) brightness(0.7); }
+    75% { transform: translate(-1px, -1px) scale(0.97); }
+  }
+
+  .animate-ko-fracture {
+    animation: koGlitch 0.6s ease-in-out;
+  }
+
+  /* Card back pattern for Elegant Dark */
+  .card-back-pattern {
+    background-color: #1e293b;
+    background-image: radial-gradient(#334155 1.5px, transparent 1.5px), radial-gradient(#334155 1.5px, #1e293b 1.5px);
+    background-size: 10px 10px;
+    background-position: 0 0, 5px 5px;
+  }
+
+  /* Dark luxury card table arena background */
+  .dark-table-arena {
+    background: radial-gradient(circle at center, #1e293b 0%, #0f172a 55%, #020617 100%);
+  }
+
+  /* Hide scrollbar across all browsers */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Sleek custom dark scrollbar for scrollable content panels */
+  .custom-dark-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(100, 116, 139, 0.4) transparent;
+  }
+  .custom-dark-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .custom-dark-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-dark-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.4);
+    border-radius: 9999px;
+  }
+  .custom-dark-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(245, 158, 11, 0.6);
+  }
+}
+
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+  
+  /* Hide non-print elements */
+  nav, header, aside, .print\\:hidden {
+    display: none !important;
+  }
+
+  #investor-one-pager-report {
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+}
+

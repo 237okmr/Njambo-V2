@@ -1,0 +1,355 @@
+{
+  "entities": {
+    "MultiplayerRoom": {
+      "title": "MultiplayerRoom",
+      "description": "A multiplayer game room for Njambo Kora",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique 4-character room code"
+        },
+        "hostId": {
+          "type": "string",
+          "description": "Player ID of the room creator"
+        },
+        "hostName": {
+          "type": "string",
+          "description": "Display name of the host"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["LOBBY", "PLAYING", "PARTIE_OVER", "MANCHE_OVER"],
+          "description": "Current status of the room"
+        },
+        "fillWithBots": {
+          "type": "boolean",
+          "description": "Whether to auto-fill empty seats with AI bots"
+        },
+        "maxPlayers": {
+          "type": "number",
+          "description": "Maximum number of players allowed (up to 4)"
+        },
+        "baseBet": {
+          "type": "number",
+          "description": "Mise de base per round"
+        },
+        "initialCapital": {
+          "type": "number",
+          "description": "Starting chips/capital for each player"
+        },
+        "enableDoubleKora": {
+          "type": "boolean",
+          "description": "Whether double kora rule is enabled"
+        },
+        "enableUnder21": {
+          "type": "boolean",
+          "description": "Whether under 21 instant win rule is enabled"
+        },
+        "turnTimerSeconds": {
+          "type": "number",
+          "description": "Turn timer limit in seconds"
+        },
+        "afkAction": {
+          "type": "string",
+          "enum": ["auto_play", "replace_bot"],
+          "description": "Action when timer expires"
+        },
+        "createdAt": {
+          "type": "number",
+          "description": "Timestamp when room was created"
+        },
+        "updatedAt": {
+          "type": "number",
+          "description": "Timestamp of last update"
+        }
+      },
+      "required": ["id", "hostId", "hostName", "status", "maxPlayers", "baseBet", "initialCapital"]
+    },
+    "GameRecord": {
+      "title": "GameRecord",
+      "description": "Telemetry record of a completed Njambo Kora game or round",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique game record ID"
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["SOLO", "MULTIPLAYER"],
+          "description": "Game mode"
+        },
+        "playerCount": {
+          "type": "number",
+          "description": "Number of players in the table (2, 3, or 4)"
+        },
+        "winType": {
+          "type": "string",
+          "enum": ["STANDARD", "KORA", "DOUBLE_KORA", "THREE_SEVENS", "UNDER_21"],
+          "description": "Type of victory"
+        },
+        "winnerName": {
+          "type": "string",
+          "description": "Name of the winning player"
+        },
+        "winnerId": {
+          "type": "string",
+          "description": "ID of the winning player"
+        },
+        "durationSeconds": {
+          "type": "number",
+          "description": "Duration of game session in seconds"
+        },
+        "roundsCount": {
+          "type": "number",
+          "description": "Total rounds/parties played"
+        },
+        "potWon": {
+          "type": "number",
+          "description": "Amount won"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["completed", "in_progress"],
+          "description": "Whether the manche was completed to the end or still in progress / incomplete"
+        },
+        "createdAt": {
+          "type": "number",
+          "description": "Timestamp when record was logged"
+        }
+      },
+      "required": ["id", "mode", "playerCount", "winType", "createdAt"]
+    },
+    "KatikaCopilotSettings": {
+      "title": "KatikaCopilotSettings",
+      "description": "Global configuration and social links for Katika AI Copilot",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "geminiModel": { "type": "string" },
+        "aiTemperatureMode": { "type": "string", "enum": ["analytical", "balanced", "creative"] },
+        "socialLinks": {
+          "type": "object",
+          "properties": {
+            "appUrl": { "type": "string" },
+            "whatsappUrl": { "type": "string" },
+            "facebookUrl": { "type": "string" },
+            "tiktokUrl": { "type": "string" },
+            "instagramUrl": { "type": "string" }
+          }
+        },
+        "defaultLinkStrategy": { "type": "string", "enum": ["AUTO", "APP_ONLY", "WHATSAPP_ONLY", "BOTH"] },
+        "customHashtags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "updatedAt": { "type": "number" },
+        "updatedBy": { "type": "string" }
+      },
+      "required": ["updatedAt"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with persistent chips wallet, game statistics, fair-play record and honorific title",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "avatarId": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "email": { "type": "string" },
+        "isGuest": { "type": "boolean" },
+        "chips": { "type": "number", "description": "Persistent wallet tokens balance" },
+        "stats": {
+          "type": "object",
+          "properties": {
+            "gamesPlayed": { "type": "number" },
+            "gamesWon": { "type": "number" },
+            "gamesLost": { "type": "number" },
+            "winRate": { "type": "number" },
+            "partiesPlayed": { "type": "number" },
+            "partiesWon": { "type": "number" },
+            "koraCount": { "type": "number" },
+            "doubleKoraCount": { "type": "number" },
+            "under21Count": { "type": "number" },
+            "threeSevensCount": { "type": "number" },
+            "biggestPotWon": { "type": "number" },
+            "totalTricksWon": { "type": "number" },
+            "averageTricksPerGame": { "type": "number" },
+            "soloGamesPlayed": { "type": "number" },
+            "multiplayerGamesPlayed": { "type": "number" },
+            "forfeitCount": { "type": "number" },
+            "foldCount": { "type": "number" },
+            "fortune": { "type": "number" },
+            "multiplayerGains": { "type": "number" },
+            "multiplayerPertes": { "type": "number" }
+          }
+        },
+        "fairPlay": {
+          "type": "object",
+          "properties": {
+            "consecutiveForfeits": { "type": "number" },
+            "totalForfeits": { "type": "number" },
+            "totalFoldRounds": { "type": "number" },
+            "prolongedDisconnects": { "type": "number" },
+            "totalGamesStarted": { "type": "number" },
+            "disconnectRate": { "type": "number" },
+            "activeSanction": { "type": "object" },
+            "sanctionsHistory": { "type": "array" }
+          }
+        },
+        "honorificTitleId": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["uid", "displayName", "stats", "createdAt", "updatedAt"]
+    },
+    "FairPlaySanctionRecord": {
+      "title": "FairPlaySanctionRecord",
+      "description": "Log of a fair-play incident or sanction for Katika moderation",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "incidentType": { "type": "string" },
+        "sanction": { "type": "object" },
+        "roomId": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["id", "userId", "incidentType", "createdAt"]
+    },
+    "FriendRelation": {
+      "title": "FriendRelation",
+      "description": "Social friendship link and status between users",
+      "type": "object",
+      "properties": {
+        "friendUid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "avatarId": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["ACCEPTED", "PENDING_SENT", "PENDING_RECEIVED", "BLOCKED"]
+        },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["friendUid", "displayName", "status", "createdAt", "updatedAt"]
+    },
+    "GameInvitation": {
+      "title": "GameInvitation",
+      "description": "Real-time in-app table invitation",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "fromUserId": { "type": "string" },
+        "fromUserName": { "type": "string" },
+        "fromUserAvatar": { "type": "string" },
+        "toUserId": { "type": "string" },
+        "roomCode": { "type": "string" },
+        "baseBet": { "type": "number" },
+        "status": {
+          "type": "string",
+          "enum": ["PENDING", "ACCEPTED", "DECLINED", "EXPIRED"]
+        },
+        "createdAt": { "type": "number" },
+        "expiresAt": { "type": "number" }
+      },
+      "required": ["id", "fromUserId", "fromUserName", "toUserId", "roomCode", "baseBet", "status", "createdAt", "expiresAt"]
+    },
+    "UserPresence": {
+      "title": "UserPresence",
+      "description": "Real-time presence and activity status of a player",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "displayName": { "type": "string" },
+        "avatarId": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["ONLINE_IDLE", "IN_LOBBY", "IN_GAME", "OFFLINE"]
+        },
+        "currentRoomCode": { "type": "string" },
+        "lastSeenAt": { "type": "number" }
+      },
+      "required": ["userId", "displayName", "status", "lastSeenAt"]
+    },
+    "PushSubscription": {
+      "title": "PushSubscription",
+      "description": "Persistent Web Push notifications subscription details",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userAgent": { "type": "string" },
+        "subscription": {
+          "type": "object",
+          "description": "JSON representation of the Web Push subscription object"
+        },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["userId", "subscription"]
+    },
+    "AdminNote": {
+      "title": "AdminNote",
+      "description": "Development backlog, tester feedback, bugs and roadmap notes for Katika administrators",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string", "enum": ["BUG", "FEEDBACK", "IDEE", "ROADMAP", "TACHE"] },
+        "title": { "type": "string", "maxLength": 120 },
+        "details": { "type": "string", "maxLength": 600 },
+        "priority": { "type": "string", "enum": ["P1", "P2", "P3"] },
+        "status": { "type": "string", "enum": ["OUVERT", "EN_COURS", "FAIT"] },
+        "source": { "type": "string", "maxLength": 120 },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["id", "type", "title", "priority", "status", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/katika_admin_notes/{id}": {
+      "schema": "AdminNote",
+      "description": "Admin-only development and management notes"
+    },
+    "/push_subscriptions/{subscriptionId}": {
+      "schema": "PushSubscription",
+      "description": "Administrative collection of user push notifications subscriptions"
+    },
+    "/rooms/{roomId}": {
+      "schema": "MultiplayerRoom",
+      "description": "Collection of all multiplayer game rooms"
+    },
+    "/njambo_game_records/{recordId}": {
+      "schema": "GameRecord",
+      "description": "Telemetry collection for tracking completed games and Katika analytics"
+    },
+    "/katika_settings/{settingId}": {
+      "schema": "KatikaCopilotSettings",
+      "description": "Global system and social settings for Katika Copilot"
+    },
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile documents with aggregated statistics and palmares"
+    },
+    "/users/{userId}/friends/{friendId}": {
+      "schema": "FriendRelation",
+      "description": "Subcollection of friends and connection requests per user"
+    },
+    "/invitations/{invitationId}": {
+      "schema": "GameInvitation",
+      "description": "Real-time game room invitations"
+    },
+    "/presence/{userId}": {
+      "schema": "UserPresence",
+      "description": "Online presence and status indicators"
+    },
+    "/fairplay_sanctions/{sanctionId}": {
+      "schema": "FairPlaySanctionRecord",
+      "description": "Moderation and fair-play audit logs for Katika"
+    }
+  }
+}

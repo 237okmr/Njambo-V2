@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Njambo Kora</title>
+    <meta name="description" content="Jeu de cartes traditionnel africain à 31 cartes en Solo et Multijoueur en ligne temps réel (2 à 4 joueurs avec bots optionnels), respect des règles de Kora, Double Kora, et tableau des scores." />
+    
+    <!-- PWA & Mobile Web App Settings -->
+    <link id="app-manifest" rel="manifest" href="/manifest.webmanifest" />
+    <link id="app-favicon" rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link id="app-apple-icon" rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preload" as="image" href="/icon-192.svg" />
+    <meta name="theme-color" content="#020617" />
+    <meta name="background-color" content="#020617" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta id="app-apple-title" name="apple-mobile-web-app-title" content="Njambo Kora" />
+    <meta id="app-name" name="application-name" content="Njambo Kora" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Early PWA Manifest Dispatcher (Dual PWA: Njambo Kora vs Njambo Copilote) -->
+    <script>
+      (function() {
+        try {
+          var p = window.location.pathname.toLowerCase();
+          var s = window.location.search.toLowerCase();
+          var h = window.location.hash.toLowerCase();
+          var isCopilot = p.startsWith('/katika') || p.startsWith('/copilot') || s.indexOf('copilot') !== -1 || s.indexOf('katika') !== -1 || h.indexOf('copilot') !== -1 || h.indexOf('katika') !== -1;
+          if (isCopilot) {
+            document.title = 'Njambo Copilote - IA & Cockpit';
+            var m = document.getElementById('app-manifest');
+            if (m) m.setAttribute('href', '/manifest-copilot.webmanifest');
+            var f = document.getElementById('app-favicon');
+            if (f) f.setAttribute('href', '/icon-copilot-192.svg');
+            var a = document.getElementById('app-apple-icon');
+            if (a) a.setAttribute('href', '/icon-copilot-192.png');
+            var at = document.getElementById('app-apple-title');
+            if (at) at.setAttribute('content', 'Njambo Copilote');
+            var an = document.getElementById('app-name');
+            if (an) an.setAttribute('content', 'Njambo Copilote');
+            if (!p.startsWith('/copilot') && !p.startsWith('/katika')) {
+              window.history.replaceState(null, '', '/copilot/' + window.location.search + window.location.hash);
+            }
+          } else {
+            if (p === '/' || p === '') {
+              window.history.replaceState(null, '', '/game/' + window.location.search + window.location.hash);
+            }
+          }
+        } catch(e) {}
+      })();
+    </script>
+
+    <meta property="og:title" content="Njambo Kora" />
+    <meta property="og:description" content="Jeu de cartes traditionnel africain à 31 cartes en Solo et Multijoueur en ligne temps réel (2 à 4 joueurs avec bots optionnels), respect des règles de Kora, Double Kora, et tableau des scores." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Styles CSS de l'écran de chargement (Splash Screen) -->
+    <style>
+      @keyframes splash-spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      @keyframes splash-pulse {
+        0%, 100% { transform: scale(1); opacity: 0.85; }
+        50% { transform: scale(1.05); opacity: 1; }
+      }
+      .splash-logo {
+        width: 72px;
+        height: 72px;
+        animation: splash-pulse 2.2s ease-in-out infinite;
+      }
+      .splash-spinner {
+        width: 28px;
+        height: 28px;
+        border: 2.5px solid rgba(99, 102, 241, 0.12);
+        border-top: 2.5px solid #6366f1;
+        border-radius: 50%;
+        animation: splash-spin 0.8s linear infinite;
+        margin-top: 24px;
+      }
+      .splash-tips-container {
+        position: absolute;
+        bottom: 56px;
+        left: 24px;
+        right: 24px;
+        text-align: center;
+        max-width: 480px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .splash-tip-title {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        color: #6366f1;
+        margin-bottom: 12px;
+        font-weight: 600;
+        opacity: 0.9;
+      }
+      .splash-tip-text {
+        font-size: 14px;
+        line-height: 1.6;
+        color: #94a3b8;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.3s ease;
+        opacity: 1;
+        text-align: center;
+      }
+      .splash-safety {
+        margin-top: 16px;
+        font-size: 12px;
+        color: #64748b;
+        display: none;
+        cursor: pointer;
+        text-decoration: underline;
+        background: none;
+        border: none;
+        outline: none;
+        transition: color 0.2s ease;
+      }
+      .splash-safety:hover {
+        color: #94a3b8;
+      }
+    </style>
+  </head>
+  <body class="bg-slate-950">
+    <div id="root">
+      <div id="splash-screen" style="
+        position: fixed;
+        inset: 0;
+        background-color: #020617;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        font-family: system-ui, -apple-system, sans-serif;
+        color: #f8fafc;
+        padding: 24px;
+        box-sizing: border-box;
+      ">
+        <div style="display: flex; flex-direction: column; align-items: center;">
+          <!-- Logo existant du jeu -->
+          <img class="splash-logo" src="/icon-192.svg" alt="Njambo Logo" referrerpolicy="no-referrer" />
+          <!-- Spinner discret -->
+          <div class="splash-spinner"></div>
+        </div>
+
+        <!-- Section Anecdotes -->
+        <div class="splash-tips-container">
+          <div class="splash-tip-title">Paroles de Njambo</div>
+          <div id="splash-tip" class="splash-tip-text">Chargement du terre...</div>
+          <button id="splash-safety-btn" class="splash-safety" onclick="window.location.reload()">
+            Connexion lente ? Cliquez pour recharger
+          </button>
+        </div>
+      </div>
+
+      <!-- Micro-script Vanilla JS pour la rotation des conseils et le bouton d'urgence -->
+      <script>
+        (function() {
+          var tips = [
+            "Celui qui compte ses cartes avant de compter ses amis finit seul au sol.",
+            "Au Njambo, le 3 est roi, mais c’est la tête qui porte la couronne.",
+            "Quand le moto crie, c’est que quelqu’un vient de sortir un 3 caché.",
+            "Le joueur qui tok trop a déjà perdu sa dernière main.",
+            "On ne kora pas avec le cœur, on kora avec le ndem.",
+            "Le vrai chef du terre, c’est celui qui sait s’arrêter quand il a gagné.",
+            "Au Kora, la carte ne ment pas, c’est la main qui tremble.",
+            "Qui joue sans regarder ses amis joue contre son propre sang.",
+            "Quand le 3 sort en silence, c’est que le piège est déjà fermé.",
+            "Au Njambo, la chance est une carte, la discipline est le jeu entier.",
+            "Le joueur sage compte les cartes tombées, le fou compte seulement l’argent.",
+            "On ne défie pas un ancien du Kora avec une main qui tremble.",
+            "Celui qui gagne sans partager son gain n’aura plus personne avec qui kora.",
+            "Le vrai tchio du Njambo, c’est de savoir quand ne pas jouer.",
+            "Au Njambo, celui qui cri “j’ai gagné” avant la fin prépare déjà ses excuses.",
+            "Qui kora sans comprendre le terre finit par de venir la leçon du terre."
+          ];
+          
+          // Choix initial
+          var randomTip = tips[Math.floor(Math.random() * tips.length)];
+          var tipElement = document.getElementById('splash-tip');
+          if (tipElement) {
+            tipElement.textContent = randomTip;
+          }
+
+          // Rotation toutes les 4 secondes avec fondu
+          var intervalId = setInterval(function() {
+            var el = document.getElementById('splash-tip');
+            if (!el) {
+              clearInterval(intervalId); // Arrêt de sécurité quand React prend la main
+              return;
+            }
+            el.style.opacity = 0;
+            setTimeout(function() {
+              var nextTip = tips[Math.floor(Math.random() * tips.length)];
+              el.textContent = nextTip;
+              el.style.opacity = 1;
+            }, 300);
+          }, 4000);
+
+          // Bouton de sécurité après 8 secondes d'attente
+          setTimeout(function() {
+            var btn = document.getElementById('splash-safety-btn');
+            if (btn && document.getElementById('splash-screen')) {
+              btn.style.display = 'inline-block';
+            }
+          }, 8000);
+        })();
+      </script>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
