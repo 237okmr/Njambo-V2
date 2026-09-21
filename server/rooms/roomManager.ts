@@ -1941,8 +1941,8 @@ export class RoomManager {
 
     const state = this.getOrCreateActiveState(roomCode, room);
 
-    // Si le salon n'est pas en LOBBY ni en MANCHE_OVER, annuler immédiatement le décompte de transfert
-    if (room.status !== 'LOBBY' && room.status !== 'MANCHE_OVER') {
+    // Seul MANCHE_OVER est géré ici. LOBBY utilise evaluateLobbyHostTakeover (hôte de repli).
+    if (room.status !== 'MANCHE_OVER') {
       if (state.hostTransferTimer) {
         clearTimeout(state.hostTransferTimer);
         state.hostTransferTimer = null;
@@ -4413,9 +4413,11 @@ export class RoomManager {
         const hostAbsentSince = room.hostAbsentSince || (hostPlayer?.disconnectGraceExpiresAt ? (hostPlayer.disconnectGraceExpiresAt - (this.engineConfig.lobbyWaitTtlMinutes ?? 30) * 60000) : room.createdAt);
         const absentDurationSecs = Math.max(0, Math.floor((now - hostAbsentSince) / 1000));
 
-        // If host is absent in LOBBY with NO connected humans and absent longer than pubVisibilitySecs, hide from public list
-        if (!isHostConnected && room.status === 'LOBBY' && connectedHumans.length === 0 && absentDurationSecs > pubVisibilitySecs) {
-          return;
+        // Anti-ghost: Hide rooms with 0 connected humans immediately UNLESS in LOBBY within publicAbsentHostVisibilitySeconds
+        if (connectedHumans.length === 0) {
+          if (room.status !== 'LOBBY' || absentDurationSecs > pubVisibilitySecs) {
+            return;
+          }
         }
 
         // Host absent under grace in LOBBY (e.g. sharing link via WhatsApp)
@@ -4423,11 +4425,6 @@ export class RoomManager {
           room.status === 'LOBBY' &&
           !isHostConnected
         );
-
-        // Anti-ghost: NEVER display rooms with 0 connected humans unless host is within publicAbsentHostVisibilitySeconds
-        if (connectedHumans.length === 0 && absentDurationSecs > pubVisibilitySecs) {
-          return;
-        }
 
         // Host name & ID resolution:
         let hostId = room.hostId;
