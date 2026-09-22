@@ -7,6 +7,8 @@ import { pushService, buildGameUrl } from '../pushService';
 import { APP_VERSION } from '../../src/version';
 import { verifyFirebaseIdToken } from '../firebaseAdmin';
 import { shouldBotAcceptBetIncrease, BOT_BET_INCREASE_AGREE_EMOTES, BOT_BET_INCREASE_DECLINE_EMOTES } from '../../src/utils/ai';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { db } from '../../src/lib/firebase';
 
 export interface ConnectedClient {
   socket: WebSocket;
@@ -34,6 +36,7 @@ export class RoomManager {
   private static roomPlayerTokens = new Map<string, Map<string, string>>(); // roomCode -> (playerId -> reconnectToken)
   private static userPresences = new Map<string, UserPresence>(); // playerId -> UserPresence
   private static pendingInvitations = new Map<string, GameInvitation>(); // inviteId -> GameInvitation
+  private static lastDirectInviteTimestamps = new Map<string, number>(); // "fromUserId_toUserId" -> timestamp
   private static lastEmoteTimestamps = new Map<string, number>(); // playerId -> lastEmoteTimestamp
   private static cleanupInterval: NodeJS.Timeout | null = null;
   private static roomTickInterval: NodeJS.Timeout | null = null;
@@ -4757,13 +4760,40 @@ export class RoomManager {
     });
   }
 
-  public static handleGetFriendsPresence(client: ConnectedClient, msg: ClientMessage): void {
+  public static async handleGetFriendsPresence(client: ConnectedClient, msg: ClientMessage): Promise<void> {
     const friendUserIds = msg.friendUserIds || [];
     const now = Date.now();
     const presences: UserPresence[] = [];
 
+    if (!client.playerId || friendUserIds.length === 0) {
+      this.sendMessage(client.socket, {
+        type: 'FRIENDS_PRESENCE_UPDATE',
+        presences: [],
+        timestamp: now,
+      });
+      return;
+    }
+
+    // Vérification en base Firestore : ne retenir que les vrais amis confirmés (status === 'ACCEPTED')
+    const confirmedFriendIds = new Set<string>();
+    try {
+      const friendsRef = collection(db, 'users', client.playerId, 'friends');
+      const q = query(friendsRef, where('status', '==', 'ACCEPTED'));
+      const snapshot = await getDocs(q);
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const fId = data?.friendUid || docSnap.id;
+        if (fId) confirmedFriendIds.add(fId);
+      });
+    } catch (err) {
+      console.error('[RoomManager] Erreur lors de la récupération des amis pour la présence:', err);
+    }
+
     for (const friendId of friendUserIds) {
       if (!friendId) continue;
+      // Filtrer silencieusement les UIDs qui ne sont pas de vrais amis confirmés
+      if (!confirmedFriendIds.has(friendId)) continue;
+
       let presence = this.userPresences.get(friendId);
       const friendClient = this.clients.get(friendId);
       const isSocketOpen = friendClient && friendClient.socket.readyState === WebSocket.OPEN;
@@ -4809,7 +4839,7 @@ export class RoomManager {
     });
   }
 
-  public static handleSendDirectInvite(client: ConnectedClient, msg: ClientMessage): void {
+  public static async handleSendDirectInvite(client: ConnectedClient, msg: ClientMessage): Promise<void> {
     if (msg.isGuest) {
       this.sendMessage(client.socket, {
         type: 'ERROR',
@@ -4828,12 +4858,122 @@ export class RoomManager {
       return;
     }
 
+    // 1. Protection Auto-invitation (SELF_INVITE)
+    if (msg.targetPlayerId === client.playerId) {
+      this.sendMessage(client.socket, {
+        type: 'ERROR',
+        errorCode: 'SELF_INVITE',
+        error: 'Vous ne pouvez pas vous inviter vous-même.',
+      });
+      return;
+    }
+
+    // 2. Protection Sanction Fair-Play sur l'expéditeur (BANNED)
+    const serverSanction = this.getActivePlayerSanction(client.playerId);
+    const effectiveSanction = serverSanction ? {
+      type: serverSanction.sanctionType || (serverSanction.status === 'BANNED' ? 'TEMP_BAN' : undefined),
+      reason: serverSanction.bannedReason || 'Sanction Fair-Play active',
+      expiresAt: serverSanction.banExpiresAt,
+      active: true,
+    } : (msg.fairPlaySanction && msg.fairPlaySanction.active ? msg.fairPlaySanction : null);
+
+    if (effectiveSanction && effectiveSanction.active) {
+      if (effectiveSanction.type === 'TEMP_BAN' || effectiveSanction.type === 'PERM_BAN') {
+        const isStillActive = !effectiveSanction.expiresAt || Date.now() < effectiveSanction.expiresAt;
+        if (isStillActive) {
+          const remainingMinutes = effectiveSanction.expiresAt ? Math.ceil((effectiveSanction.expiresAt - Date.now()) / 60000) : 0;
+          this.sendMessage(client.socket, {
+            type: 'ERROR',
+            errorCode: 'BANNED',
+            error: `🚫 Accès refusé par le Fair-Play (${effectiveSanction.type}) : ${effectiveSanction.reason}${
+              remainingMinutes > 0 ? ` (expire dans ${remainingMinutes} min)` : ''
+            }`,
+          });
+          return;
+        }
+      }
+    }
+
     const room = this.rooms.get(msg.roomCode);
     if (!room) {
       this.sendMessage(client.socket, {
         type: 'ERROR',
         errorCode: 'ROOM_NOT_FOUND',
         error: 'Salon introuvable pour envoyer l\'invitation.',
+      });
+      return;
+    }
+
+    // 3. Protection Liste de blocage bi-directionnelle (BLOCKED)
+    let isBlocked = false;
+    try {
+      const senderDocRef = doc(db, 'blocked_players', client.playerId);
+      const targetDocRef = doc(db, 'blocked_players', msg.targetPlayerId);
+
+      const [senderSnap, targetSnap] = await Promise.all([
+        getDoc(senderDocRef),
+        getDoc(targetDocRef),
+      ]);
+
+      if (senderSnap.exists()) {
+        const senderBlocked = (senderSnap.data()?.blockedUserIds as string[]) || [];
+        if (senderBlocked.includes(msg.targetPlayerId)) {
+          isBlocked = true;
+        }
+      }
+
+      if (!isBlocked && targetSnap.exists()) {
+        const targetBlocked = (targetSnap.data()?.blockedUserIds as string[]) || [];
+        if (targetBlocked.includes(client.playerId)) {
+          isBlocked = true;
+        }
+      }
+    } catch (err) {
+      console.error('[RoomManager] Erreur lors de la vérification des blocages:', err);
+    }
+
+    if (isBlocked) {
+      this.sendMessage(client.socket, {
+        type: 'ERROR',
+        errorCode: 'BLOCKED',
+        error: 'Impossible d\'envoyer l\'invitation à ce joueur.',
+      });
+      return;
+    }
+
+    // 4. Protection Limitation de fréquence / Anti-Spam (RATE_LIMITED)
+    const now = Date.now();
+    let existingPendingInvite = false;
+    for (const invite of this.pendingInvitations.values()) {
+      if (
+        invite.fromUserId === client.playerId &&
+        invite.toUserId === msg.targetPlayerId &&
+        invite.status === 'PENDING' &&
+        invite.expiresAt > now
+      ) {
+        existingPendingInvite = true;
+        break;
+      }
+    }
+
+    if (existingPendingInvite) {
+      this.sendMessage(client.socket, {
+        type: 'ERROR',
+        errorCode: 'RATE_LIMITED',
+        error: 'Une invitation est déjà en cours avec ce joueur.',
+      });
+      return;
+    }
+
+    const invitePairKey = `${client.playerId}_${msg.targetPlayerId}`;
+    const lastInviteTime = this.lastDirectInviteTimestamps.get(invitePairKey) || 0;
+    const elapsedSeconds = (now - lastInviteTime) / 1000;
+    if (elapsedSeconds < 30) {
+      const remainingSeconds = Math.ceil(30 - elapsedSeconds);
+      this.sendMessage(client.socket, {
+        type: 'ERROR',
+        errorCode: 'RATE_LIMITED',
+        error: `Veuillez patienter ${remainingSeconds} seconde${remainingSeconds > 1 ? 's' : ''} avant de réinviter ce joueur.`,
       });
       return;
     }
@@ -4851,11 +4991,12 @@ export class RoomManager {
       baseBet: room.baseBet,
       initialCapital: room.initialCapital,
       status: 'PENDING',
-      createdAt: Date.now(),
-      expiresAt: Date.now() + 1000 * 120, // 2 minutes
+      createdAt: now,
+      expiresAt: now + 1000 * 120, // 2 minutes
     };
 
     this.pendingInvitations.set(inviteId, invitation);
+    this.lastDirectInviteTimestamps.set(invitePairKey, now);
 
     let deliveredViaWs = false;
     // 1. Forward invitation via active WebSocket if online

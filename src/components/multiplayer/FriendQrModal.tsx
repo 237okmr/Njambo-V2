@@ -11,6 +11,7 @@ interface FriendQrModalProps {
   playerId: string;
   playerName: string;
   activeRoomCode?: string | null;
+  storedFriendCode?: string;
 }
 
 export const FriendQrModal: React.FC<FriendQrModalProps> = ({
@@ -19,11 +20,12 @@ export const FriendQrModal: React.FC<FriendQrModalProps> = ({
   playerId,
   playerName,
   activeRoomCode,
+  storedFriendCode,
 }) => {
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
-  const friendCode = FriendService.getFriendCode(playerId);
+  const friendCode = FriendService.getFriendCode(playerId, storedFriendCode);
   const qrValue = activeRoomCode
     ? FriendService.getShareInviteUrl(activeRoomCode, playerId)
     : `${window.location.origin}${window.location.pathname}?friendCode=${encodeURIComponent(friendCode)}&friendName=${encodeURIComponent(playerName)}`;

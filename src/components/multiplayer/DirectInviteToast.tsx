@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Check, Clock, Swords, X } from 'lucide-react';
+import { Check, Clock, Swords, UserX, X } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { GameInvitation } from '../../types';
 import { PlayerAvatar } from '../profile/PlayerAvatar';
@@ -11,6 +11,7 @@ interface DirectInviteToastProps {
   onAccept: (invitation: GameInvitation) => void;
   onDecline: (invitation: GameInvitation) => void;
   onDismiss: (inviteId: string) => void;
+  onBlock?: (invitation: GameInvitation) => void;
   /** Pendant une donne : bandeau d'une ligne qui ne masque ni le chrono ni les adversaires. */
   compact?: boolean;
   /** Vrai si accepter met la partie solo en cours en sauvegarde automatique. */
@@ -44,6 +45,7 @@ export const DirectInviteToast: React.FC<DirectInviteToastProps> = ({
   onAccept,
   onDecline,
   onDismiss,
+  onBlock,
   compact = false,
   willSaveSolo = false,
 }) => {
@@ -58,6 +60,7 @@ export const DirectInviteToast: React.FC<DirectInviteToastProps> = ({
         onAccept={onAccept}
         onDecline={onDecline}
         onDismiss={onDismiss}
+        onBlock={onBlock}
         compact={compact}
         willSaveSolo={willSaveSolo}
       />
@@ -71,6 +74,7 @@ interface InviteCardProps {
   onAccept: (invitation: GameInvitation) => void;
   onDecline: (invitation: GameInvitation) => void;
   onDismiss: (inviteId: string) => void;
+  onBlock?: (invitation: GameInvitation) => void;
   compact: boolean;
   willSaveSolo: boolean;
 }
@@ -81,6 +85,7 @@ const InviteCard: React.FC<InviteCardProps> = ({
   onAccept,
   onDecline,
   onDismiss,
+  onBlock,
   compact,
   willSaveSolo,
 }) => {
@@ -111,6 +116,10 @@ const InviteCard: React.FC<InviteCardProps> = ({
   const decline = () => {
     triggerHaptic('light');
     onDecline(invitation);
+  };
+  const block = () => {
+    triggerHaptic('heavy');
+    if (onBlock) onBlock(invitation);
   };
 
   const timerPill = (
@@ -168,6 +177,17 @@ const InviteCard: React.FC<InviteCardProps> = ({
               {othersCount > 0 ? ` · +${othersCount} autre${othersCount > 1 ? 's' : ''}` : ''}
             </span>
           </div>
+          {onBlock && (
+            <button
+              type="button"
+              aria-label="Bloquer ce joueur"
+              title="Bloquer ce joueur"
+              onClick={block}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition active:scale-95"
+            >
+              <UserX className="h-4 w-4" />
+            </button>
+          )}
           <button
             type="button"
             aria-label="Refuser l'invitation"
@@ -240,6 +260,16 @@ const InviteCard: React.FC<InviteCardProps> = ({
       </div>
 
       <div className="flex items-center gap-2 border-t border-slate-800/80 pt-2.5">
+        {onBlock && (
+          <button
+            type="button"
+            title="Bloquer ce joueur"
+            onClick={block}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition active:scale-95 cursor-pointer"
+          >
+            <UserX className="h-4 w-4" />
+          </button>
+        )}
         <button
           type="button"
           onClick={decline}

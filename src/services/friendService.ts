@@ -18,12 +18,20 @@ import {
 const LOCAL_CONTACTS_KEY = 'njambo_local_contacts_v1';
 const RECENT_PLAYERS_KEY = 'njambo_recent_players_v1';
 const BLOCKED_PLAYERS_KEY = 'njambo_blocked_players_v1';
+const BLOCKED_PLAYERS_DETAILS_KEY = 'njambo_blocked_players_details_v1';
+
+export interface BlockedPlayerRecord {
+  uid: string;
+  displayName: string;
+  friendCode: string;
+  blockedAt: number;
+}
 
 export class FriendService {
   /**
-   * Generates a stable, memorable Friend Code like #NK-789 from a player's ID
+   * Generates a legacy hash code for backward compatibility
    */
-  public static getFriendCode(userId: string): string {
+  public static getLegacyHashFriendCode(userId: string): string {
     if (!userId) return '#NK-100';
     let hash = 0;
     for (let i = 0; i < userId.length; i++) {
@@ -32,6 +40,77 @@ export class FriendService {
     }
     const cleanNum = Math.abs(hash) % 900 + 100; // 100 to 999
     return `#NK-${cleanNum}`;
+  }
+
+  /**
+   * Generates a random 6-character uppercase alphanumeric Friend Code (e.g. #NK-K7B2X9)
+   */
+  public static async generateUniqueFriendCode(): Promise<string> {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let attempts = 0;
+    while (attempts < 20) {
+      attempts++;
+      let code = '#NK-';
+      for (let i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      if (db) {
+        try {
+          const q = query(collection(db, 'users'), where('friendCode', '==', code), limit(1));
+          const snap = await getDocs(q);
+          if (snap.empty) {
+            return code;
+          }
+        } catch {
+          return code;
+        }
+      } else {
+        return code;
+      }
+    }
+    return `#NK-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+  }
+
+  /**
+   * Synchronous getter for Friend Code (uses stored friendCode if available, otherwise legacy hash)
+   */
+  public static getFriendCode(userId: string, storedCode?: string): string {
+    if (storedCode && storedCode.trim()) return storedCode.trim();
+    if (!userId) return '#NK-100000';
+    return this.getLegacyHashFriendCode(userId);
+  }
+
+  /**
+   * Ensures that a user profile in Firestore has a unique stored friendCode.
+   * Auto-migrates existing profiles without a friendCode.
+   */
+  public static async ensureUserFriendCode(userId: string, existingProfileData?: any): Promise<string> {
+    if (!userId || userId.startsWith('usr_') || userId.startsWith('bot_')) {
+      return existingProfileData?.friendCode || this.getLegacyHashFriendCode(userId);
+    }
+    if (existingProfileData?.friendCode && typeof existingProfileData.friendCode === 'string' && existingProfileData.friendCode.trim().length > 0) {
+      return existingProfileData.friendCode.trim();
+    }
+    if (!db) {
+      return this.getLegacyHashFriendCode(userId);
+    }
+    try {
+      const userRef = doc(db, 'users', userId);
+      const snap = await getDoc(userRef);
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data.friendCode && typeof data.friendCode === 'string' && data.friendCode.trim().length > 0) {
+          return data.friendCode.trim();
+        }
+      }
+      // Generate and save unique friendCode
+      const newCode = await this.generateUniqueFriendCode();
+      await setDoc(userRef, { friendCode: newCode }, { merge: true });
+      return newCode;
+    } catch (err) {
+      console.warn('[FriendService] ensureUserFriendCode error:', err);
+      return this.getLegacyHashFriendCode(userId);
+    }
   }
 
   // ==========================================
@@ -198,20 +277,166 @@ export class FriendService {
     }
   }
 
-  public static blockPlayer(playerId: string): void {
+  public static getBlockedPlayersDetailsLocal(): BlockedPlayerRecord[] {
+    try {
+      const raw = localStorage.getItem(BLOCKED_PLAYERS_DETAILS_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch {
+      // Fallback
+    }
+    return [];
+  }
+
+  public static async blockPlayer(
+    targetPlayerId: string,
+    targetDisplayName?: string,
+    targetFriendCode?: string
+  ): Promise<void> {
+    if (!targetPlayerId) return;
+
+    // 1. Update local ID list
     const blocked = this.getBlockedPlayerIds();
-    if (!blocked.includes(playerId)) {
-      blocked.push(playerId);
+    if (!blocked.includes(targetPlayerId)) {
+      blocked.push(targetPlayerId);
       localStorage.setItem(BLOCKED_PLAYERS_KEY, JSON.stringify(blocked));
+    }
+
+    // 2. Update local details list
+    const details = this.getBlockedPlayersDetailsLocal();
+    if (!details.some((d) => d.uid === targetPlayerId)) {
+      const code = targetFriendCode || this.getFriendCode(targetPlayerId);
+      details.push({
+        uid: targetPlayerId,
+        displayName: targetDisplayName || 'Joueur',
+        friendCode: code,
+        blockedAt: Date.now(),
+      });
+      localStorage.setItem(BLOCKED_PLAYERS_DETAILS_KEY, JSON.stringify(details));
+    }
+
+    // 3. Remove local contact & recent player if present
+    this.removeLocalContact(targetPlayerId);
+
+    // 4. Sync to Firestore if authenticated/db available
+    const uid = auth.currentUser?.uid || getPlayerId();
+    if (uid && db) {
+      try {
+        const docRef = doc(db, 'blocked_players', uid);
+        await setDoc(
+          docRef,
+          {
+            blockedUserIds: blocked,
+            blockedDetails: details,
+            updatedAt: Date.now(),
+          },
+          { merge: true }
+        );
+      } catch (err) {
+        console.error('Failed to sync blockPlayer to Firestore:', err);
+      }
+
+      // 5. Remove any existing cloud friendship
+      try {
+        await this.removeCloudFriend(uid, targetPlayerId);
+      } catch (e) {
+        console.warn('Error removing cloud friend on block:', e);
+      }
     }
   }
 
-  public static unblockPlayer(playerId: string): void {
-    const blocked = this.getBlockedPlayerIds().filter((id) => id !== playerId);
+  public static async unblockPlayer(targetPlayerId: string): Promise<void> {
+    if (!targetPlayerId) return;
+
+    const blocked = this.getBlockedPlayerIds().filter((id) => id !== targetPlayerId);
     localStorage.setItem(BLOCKED_PLAYERS_KEY, JSON.stringify(blocked));
+
+    const details = this.getBlockedPlayersDetailsLocal().filter((d) => d.uid !== targetPlayerId);
+    localStorage.setItem(BLOCKED_PLAYERS_DETAILS_KEY, JSON.stringify(details));
+
+    const uid = auth.currentUser?.uid || getPlayerId();
+    if (uid && db) {
+      try {
+        const docRef = doc(db, 'blocked_players', uid);
+        await setDoc(
+          docRef,
+          {
+            blockedUserIds: blocked,
+            blockedDetails: details,
+            updatedAt: Date.now(),
+          },
+          { merge: true }
+        );
+      } catch (err) {
+        console.error('Failed to sync unblockPlayer to Firestore:', err);
+      }
+    }
+  }
+
+  public static async fetchCloudBlockedPlayers(userId: string): Promise<BlockedPlayerRecord[]> {
+    if (!userId || !db) return this.getBlockedPlayersWithDetails(userId);
+    try {
+      const docRef = doc(db, 'blocked_players', userId);
+      const snap = await getDoc(docRef);
+      if (snap.exists()) {
+        const data = snap.data();
+        const cloudIds = (data?.blockedUserIds as string[]) || [];
+        const cloudDetails = (data?.blockedDetails as BlockedPlayerRecord[]) || [];
+
+        localStorage.setItem(BLOCKED_PLAYERS_KEY, JSON.stringify(cloudIds));
+
+        const resultDetails: BlockedPlayerRecord[] = [...cloudDetails];
+
+        // Ensure every blocked ID has a details entry
+        for (const bUid of cloudIds) {
+          if (!resultDetails.some((d) => d.uid === bUid)) {
+            let fetchedName = 'Joueur';
+            let fetchedCode = this.getLegacyHashFriendCode(bUid);
+            try {
+              const uSnap = await getDoc(doc(db, 'users', bUid));
+              if (uSnap.exists()) {
+                const uData = uSnap.data();
+                fetchedName = uData.displayName || fetchedName;
+                fetchedCode = uData.friendCode || fetchedCode;
+              }
+            } catch {
+              // Ignore fallback
+            }
+            resultDetails.push({
+              uid: bUid,
+              displayName: fetchedName,
+              friendCode: fetchedCode,
+              blockedAt: Date.now(),
+            });
+          }
+        }
+
+        localStorage.setItem(BLOCKED_PLAYERS_DETAILS_KEY, JSON.stringify(resultDetails));
+        return resultDetails;
+      }
+    } catch (e) {
+      console.error('Failed to fetch cloud blocked players:', e);
+    }
+    return this.getBlockedPlayersWithDetails(userId);
+  }
+
+  public static getBlockedPlayersWithDetails(userId?: string): BlockedPlayerRecord[] {
+    const details = this.getBlockedPlayersDetailsLocal();
+    const ids = this.getBlockedPlayerIds();
+
+    return ids.map((id) => {
+      const found = details.find((d) => d.uid === id);
+      if (found) return found;
+      return {
+        uid: id,
+        displayName: 'Joueur',
+        friendCode: this.getFriendCode(id),
+        blockedAt: Date.now(),
+      };
+    });
   }
 
   public static isPlayerBlocked(playerId: string): boolean {
+    if (!playerId) return false;
     return this.getBlockedPlayerIds().includes(playerId);
   }
 
@@ -564,14 +789,16 @@ export class FriendService {
           const friends: FriendDocument[] = [];
           snap.forEach((d) => {
             const data = d.data();
+            const fUid = data.friendUid || d.id;
+            if (this.isPlayerBlocked(fUid)) return;
             friends.push({
-              friendUid: data.friendUid || d.id,
+              friendUid: fUid,
               displayName: data.displayName || 'Joueur',
               avatarId: data.avatarId || 'avatar_1',
               status: data.status || 'ACCEPTED',
               createdAt: data.createdAt || Date.now(),
               updatedAt: data.updatedAt || Date.now(),
-              friendCode: data.friendCode || this.getFriendCode(data.friendUid || d.id),
+              friendCode: data.friendCode || this.getFriendCode(fUid),
             });
           });
           onUpdate(friends);
@@ -588,7 +815,8 @@ export class FriendService {
   }
 
   /**
-   * Searches for a user by friend code (#NK-123 or NK-123) or display name
+   * Searches for a user by stored unique friend code (#NK-XXXXXX or NK-XXXXXX)
+   * or legacy hash code (#NK-XXX) for backward compatibility during transition, or display name.
    */
   public static async searchPlayer(
     queryStr: string,
@@ -596,37 +824,58 @@ export class FriendService {
   ): Promise<Array<{ uid: string; displayName: string; avatarId?: string; friendCode: string; isGoogleUser: boolean }>> {
     if (!queryStr || !queryStr.trim()) return [];
     const cleaned = queryStr.trim();
+    const cleanedUpper = cleaned.toUpperCase();
+    const cleanedNorm = cleanedUpper.replace('#', '');
     const results: Array<{ uid: string; displayName: string; avatarId?: string; friendCode: string; isGoogleUser: boolean }> = [];
 
-    // Search cloud users first
+    // Search cloud users with targeted queries
     if (db) {
       try {
         const usersRef = collection(db, 'users');
-        const q = query(usersRef, limit(50));
-        const snap = await getDocs(q);
-        snap.forEach((docSnap) => {
-          const data = docSnap.data();
-          const uid = docSnap.id;
-          if (currentUserId && uid === currentUserId) return;
+        const matchedDocs = new Map<string, any>();
 
-          const code = this.getFriendCode(uid);
-          const name = data.displayName || 'Joueur';
-          const matchName = name.toLowerCase().includes(cleaned.toLowerCase());
-          const matchCode = code.toLowerCase() === cleaned.toLowerCase() ||
-            code.toLowerCase().replace('#', '') === cleaned.toLowerCase().replace('#', '');
+        // 1. Targeted query by unique friendCode
+        const codeQuery = query(usersRef, where('friendCode', '==', '#' + cleanedNorm), limit(10));
+        const codeSnap = await getDocs(codeQuery);
+        codeSnap.forEach((d) => matchedDocs.set(d.id, d.data()));
 
-          if (matchName || matchCode) {
-            if (!results.some((r) => r.uid === uid)) {
-              results.push({
-                uid,
-                displayName: name,
-                avatarId: data.avatarId || 'avatar_1',
-                friendCode: code,
-                isGoogleUser: true,
-              });
-            }
+        const rawCodeQuery = query(usersRef, where('friendCode', '==', cleanedNorm), limit(10));
+        const rawCodeSnap = await getDocs(rawCodeQuery);
+        rawCodeSnap.forEach((d) => matchedDocs.set(d.id, d.data()));
+
+        // 2. Prefix query by displayName
+        const nameQuery = query(
+          usersRef,
+          where('displayName', '>=', cleaned),
+          where('displayName', '<=', cleaned + '\uf8ff'),
+          limit(20)
+        );
+        const nameSnap = await getDocs(nameQuery);
+        nameSnap.forEach((d) => matchedDocs.set(d.id, d.data()));
+
+        for (const [uid, data] of matchedDocs.entries()) {
+          if ((currentUserId && uid === currentUserId) || this.isPlayerBlocked(uid)) continue;
+
+          let storedCode = typeof data.friendCode === 'string' ? data.friendCode.trim() : '';
+
+          // Auto-migration: if user profile has no stored friendCode, generate and persist one!
+          if (!storedCode) {
+            storedCode = await this.ensureUserFriendCode(uid, data);
           }
-        });
+
+          const legacyHash = this.getLegacyHashFriendCode(uid);
+          const name = data.displayName || 'Joueur';
+
+          if (!results.some((r) => r.uid === uid)) {
+            results.push({
+              uid,
+              displayName: name,
+              avatarId: data.avatarId || 'avatar_1',
+              friendCode: storedCode || legacyHash,
+              isGoogleUser: true,
+            });
+          }
+        }
       } catch (err) {
         console.warn('[FriendService] Search user query error:', err);
       }
@@ -635,13 +884,17 @@ export class FriendService {
     // Search local contacts/recents
     const locals = [...this.getLocalContacts(), ...this.getRecentPlayers()];
     locals.forEach((c) => {
-      if (currentUserId && c.id === currentUserId) return;
+      if ((currentUserId && c.id === currentUserId) || this.isPlayerBlocked(c.id)) return;
       const code = c.friendCode || this.getFriendCode(c.id);
-      const matchName = c.name.toLowerCase().includes(cleaned.toLowerCase());
-      const matchCode = code.toLowerCase() === cleaned.toLowerCase() ||
-        code.toLowerCase().replace('#', '') === cleaned.toLowerCase().replace('#', '');
+      const legacyHash = this.getLegacyHashFriendCode(c.id);
 
-      if (matchName || matchCode) {
+      const matchName = c.name.toLowerCase().includes(cleaned.toLowerCase());
+      const matchStoredCode = code.toUpperCase() === cleanedUpper ||
+        code.toUpperCase().replace('#', '') === cleanedNorm;
+      const matchLegacyCode = legacyHash.toUpperCase() === cleanedUpper ||
+        legacyHash.toUpperCase().replace('#', '') === cleanedNorm;
+
+      if (matchName || matchStoredCode || matchLegacyCode) {
         if (!results.some((r) => r.uid === c.id)) {
           results.push({
             uid: c.id,

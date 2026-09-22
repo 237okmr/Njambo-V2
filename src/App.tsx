@@ -38,6 +38,7 @@ import { CapacityExtensionProposalWidget } from './components/CapacityExtensionP
 import { EarlyCloseProposalWidget } from './components/EarlyCloseProposalWidget';
 import { UpdateNotificationBanner } from './components/UpdateNotificationBanner';
 import { PlayerProfileProvider, usePlayerProfile } from './context/PlayerProfileContext';
+import { InvitationsProvider, useInvitations } from './context/InvitationsContext';
 import { PlayerProfileScreen } from './components/profile/PlayerProfileScreen';
 import { GlobalLeaderboardModal } from './components/leaderboard/GlobalLeaderboardModal';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
@@ -134,7 +135,9 @@ export function App() {
 
   return (
     <PlayerProfileProvider>
-      <GameApp />
+      <InvitationsProvider>
+        <GameApp />
+      </InvitationsProvider>
     </PlayerProfileProvider>
   );
 }
@@ -643,56 +646,51 @@ function GameApp() {
     setShowMultiplayerLobby,
   ]);
 
-  // Floating Direct Invitations State (Phase 4)
-  const [incomingInvitations, setIncomingInvitations] = useState<GameInvitation[]>([]);
+  // Floating Direct Invitations State (Centralised via InvitationsContext)
+  const {
+    incomingInvitations,
+    acceptInvitation,
+    declineInvitation,
+    dismissInvitation,
+    declineAllInvitations,
+    blockUserAndClearInvitations,
+    onInviteFeedback,
+  } = useInvitations();
+
+  const handleBlockInvitationUnified = useCallback(
+    async (invitation: GameInvitation) => {
+      await blockUserAndClearInvitations(invitation.fromUserId, invitation.fromUserName);
+      triggerToast(`Joueur ${invitation.fromUserName} bloqué.`);
+    },
+    [blockUserAndClearInvitations, triggerToast]
+  );
 
   useEffect(() => {
-    // 1. WebSocket direct invitations listener
-    const unsubWs = wsService.onDirectInvite((invitation) => {
-      setIncomingInvitations((prev) => {
-        if (prev.some((inv) => inv.id === invitation.id)) return prev;
-        return [invitation, ...prev];
-      });
-      triggerHaptic('success');
-      sounds.playKoraAlert();
-    });
-
-    // 2. Feedback listener when an invite sent by this player is accepted/declined
-    const unsubFeedback = wsService.onInviteFeedback((fb) => {
+    const unsub = onInviteFeedback((fb) => {
       if (fb.agree) {
         triggerToast(`${fb.responderName} a accepté votre invitation !`);
       } else {
         triggerToast(`${fb.responderName} a décliné l'invitation.`);
       }
     });
-
-    return () => {
-      unsubWs();
-      unsubFeedback();
-    };
-  }, []);
+    return () => unsub();
+  }, [onInviteFeedback, triggerToast]);
 
   // Nettoyage automatique des invitations en cours de partie
   useEffect(() => {
     const isPlayingMultiplayer = currentScreen === 'GAME' && isOnlineActive && multiplayerRoom?.gameState?.phase !== 'SETUP';
-    if (isPlayingMultiplayer) {
-      if (incomingInvitations.length > 0) {
-        incomingInvitations.forEach(inv => {
-          wsService.respondToDirectInvite(inv.id, inv.fromUserId, false, inv.roomCode);
-        });
-        setIncomingInvitations([]);
-      }
+    if (isPlayingMultiplayer && incomingInvitations.length > 0) {
+      declineAllInvitations();
     }
-  }, [currentScreen, isOnlineActive, multiplayerRoom?.gameState?.phase, incomingInvitations]);
+  }, [currentScreen, isOnlineActive, multiplayerRoom?.gameState?.phase, incomingInvitations.length, declineAllInvitations]);
 
   const handleAcceptInvitationUnified = useCallback(
     async (invitation: GameInvitation) => {
-      setIncomingInvitations((prev) => prev.filter((i) => i.id !== invitation.id));
       if (currentScreen === 'GAME' && !isMultiplayerMode) {
         saveCurrentSession('Partie Solo Sauvegardée (Défi Amis)');
         triggerToast('Partie solo sauvegardée automatiquement !');
       }
-      wsService.respondToDirectInvite(invitation.id, invitation.fromUserId, true, invitation.roomCode);
+      acceptInvitation(invitation);
       const res = await handleJoinRoom(invitation.roomCode, localPlayerName);
       if (res.success) {
         triggerToast(`Salon #${invitation.roomCode} rejoint !`);
@@ -700,18 +698,17 @@ function GameApp() {
         triggerToast(res.error || "Erreur de connexion");
       }
     },
-    [handleJoinRoom, localPlayerName, currentScreen, isMultiplayerMode, saveCurrentSession, triggerToast]
+    [acceptInvitation, handleJoinRoom, localPlayerName, currentScreen, isMultiplayerMode, saveCurrentSession, triggerToast]
   );
 
   const handleDeclineInvitationUnified = useCallback((invitation: GameInvitation) => {
-    setIncomingInvitations((prev) => prev.filter((i) => i.id !== invitation.id));
-    wsService.respondToDirectInvite(invitation.id, invitation.fromUserId, false, invitation.roomCode);
+    declineInvitation(invitation);
     triggerToast('Invitation refusée');
-  }, []);
+  }, [declineInvitation, triggerToast]);
 
   const handleDismissInvitationUnified = useCallback((inviteId: string) => {
-    setIncomingInvitations((prev) => prev.filter((i) => i.id !== inviteId));
-  }, []);
+    dismissInvitation(inviteId);
+  }, [dismissInvitation]);
 
   // Update App Badge on mobile home screen when invitations change
   useEffect(() => {
@@ -772,7 +769,7 @@ function GameApp() {
       const inviteId = urlParams.get('inv');
       const inviterId = urlParams.get('inviter') || undefined;
       if (inviteId) {
-        wsService.respondToDirectInvite(inviteId, inviterId, true, cleanCode);
+        wsService.respondDirectInvite(inviteId, true);
       }
 
       setDeepLinkWaitState({ active: true, roomCode: cleanCode, elapsedSeconds: 0 });
@@ -837,8 +834,8 @@ function GameApp() {
 
       // Invitation : on répond « accepté » pour que l'invitant reçoive son retour et que l'invitation soit soldée.
       if (d.type === 'INVITATION' && d.inviteId) {
-        setIncomingInvitations((prev) => prev.filter((i) => i.id !== d.inviteId));
-        wsService.respondToDirectInvite(d.inviteId, d.fromUserId, true, roomCode);
+        dismissInvitation(d.inviteId);
+        wsService.respondDirectInvite(d.inviteId, true);
       }
 
       handleJoinRoom(roomCode, localPlayerName).then((res) => {
@@ -2837,6 +2834,7 @@ function GameApp() {
           onAccept={handleAcceptInvitationUnified}
           onDecline={handleDeclineInvitationUnified}
           onDismiss={handleDismissInvitationUnified}
+          onBlock={handleBlockInvitationUnified}
           compact={currentScreen === 'GAME'}
           willSaveSolo={currentScreen === 'GAME' && !isMultiplayerMode}
         />

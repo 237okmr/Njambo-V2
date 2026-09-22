@@ -280,7 +280,7 @@ export class LeaderboardService {
         fairPlayStatus = 'WARNING';
       }
 
-      const friendCode = FriendService.getFriendCode(u.uid);
+      const friendCode = u.friendCode || FriendService.getFriendCode(u.uid, u.friendCode);
 
       return {
         rank: 0, // Assigned after sorting

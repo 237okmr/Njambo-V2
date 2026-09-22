@@ -73,7 +73,7 @@ export class RivalryService {
     const oppId = (opponent.id || '').trim();
     const oppName = (opponent.name || '').trim().toLowerCase();
     const oppAvatar = opponent.avatarId || opponent.avatarSeed || 'avatar_1';
-    const oppFriendCode = opponent.friendCode || FriendService.getFriendCode(oppId);
+    const oppFriendCode = opponent.friendCode || FriendService.getFriendCode(oppId, opponent.friendCode);
 
     // Filtrage anti-bots : Ignorer Katika et les bots virtuels
     if (oppId.includes('bot') || oppId.includes('katika') || oppName.includes('bot') || oppName.includes('katika') || oppName === 'katika admin' || oppName === 'katika_dealer') {

@@ -29,8 +29,11 @@ import {
   Clock,
   Users,
   Activity,
+  UserX,
 } from 'lucide-react';
 import { usePlayerProfile } from '../../context/PlayerProfileContext';
+import { FriendService, BlockedPlayerRecord } from '../../services/friendService';
+import { triggerHaptic } from '../../utils/sound';
 import { PlayerAvatar } from './PlayerAvatar';
 import { FlatAvatarIcon } from './FlatAvatarIcon';
 import { PushNotificationToggle } from './PushNotificationToggle';
@@ -47,7 +50,7 @@ import {
   DEFAULT_PLAYER_STATS,
 } from '../../types/playerProfile';
 
-export type ProfileTabType = 'identity' | 'google' | 'stats' | 'progression' | 'history';
+export type ProfileTabType = 'identity' | 'google' | 'blocked' | 'stats' | 'progression' | 'history';
 export type HistoryFilter = 'ALL' | 'MANCHES' | 'DONNES' | 'SOLO' | 'MULTIPLAYER' | 'WINS' | 'KORAS';
 
 import { GoogleIcon } from '../common/GoogleIcon';
@@ -142,6 +145,38 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
       setNameInput(safeProfile.displayName);
     }
   }, [safeProfile.displayName]);
+
+  // Blocked players state
+  const [blockedPlayers, setBlockedPlayers] = useState<BlockedPlayerRecord[]>([]);
+  const [isLoadingBlocked, setIsLoadingBlocked] = useState<boolean>(false);
+
+  const loadBlockedPlayers = useCallback(async () => {
+    setIsLoadingBlocked(true);
+    try {
+      const records = await FriendService.fetchCloudBlockedPlayers(safeProfile.uid);
+      setBlockedPlayers(records);
+    } catch (e) {
+      console.error('Error loading blocked players:', e);
+    } finally {
+      setIsLoadingBlocked(false);
+    }
+  }, [safeProfile.uid]);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadBlockedPlayers();
+    }
+  }, [isOpen, loadBlockedPlayers]);
+
+  const handleUnblockPlayer = async (targetUid: string) => {
+    try {
+      await FriendService.unblockPlayer(targetUid);
+      setBlockedPlayers((prev) => prev.filter((p) => p.uid !== targetUid));
+      triggerHaptic('light');
+    } catch (e) {
+      console.error('Error unblocking player:', e);
+    }
+  };
 
   // History filtering & pagination
   const [historyFilter, setHistoryFilter] = useState<HistoryFilter>('ALL');
@@ -242,10 +277,18 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
       badge: isLoggedIn ? '✓' : undefined,
       badgeColor: 'bg-emerald-500 text-slate-950 font-black',
     },
+    {
+      id: 'blocked',
+      label: 'Bloqués',
+      shortLabel: 'Bloqués',
+      icon: UserX,
+      badge: blockedPlayers.length > 0 ? String(blockedPlayers.length) : undefined,
+      badgeColor: 'bg-rose-500 text-white font-black',
+    },
     { id: 'stats', label: 'Stats', shortLabel: 'Stats', icon: BarChart3 },
     { id: 'progression', label: 'Rangs', shortLabel: 'Rangs', icon: Trophy },
     { id: 'history', label: 'Parties', shortLabel: 'Parties', icon: History },
-  ], [isLoggedIn]);
+  ], [isLoggedIn, blockedPlayers.length]);
 
   // Rule of Hooks: Return null only after all hooks have run
   if (!isOpen) return null;
@@ -698,6 +741,24 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   <span>Ouvrir le diagnostic</span>
                 </button>
               </div>
+
+              {/* Quick Link: Blocked Players */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('blocked')}
+                className="w-full p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 flex items-center justify-between text-xs font-bold text-slate-200 transition cursor-pointer shadow-sm group"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                    <UserX className="w-4 h-4" />
+                  </div>
+                  <div className="flex flex-col text-left">
+                    <span className="font-bold text-slate-200 group-hover:text-white">Joueurs bloqués</span>
+                    <span className="text-[10px] text-slate-400">Gérer votre liste de blocage ({blockedPlayers.length})</span>
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-slate-300 transition-transform group-hover:translate-x-0.5" />
+              </button>
             </div>
           )}
 
@@ -940,6 +1001,68 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   </div>
                 </>
               )}
+            </div>
+          )}
+
+          {/* ========================================================= */}
+          {/* TAB 3: JOUEURS BLOQUÉS                                   */}
+          {/* ========================================================= */}
+          {activeTab === 'blocked' && (
+            <div className="space-y-4 animate-in fade-in duration-150">
+              <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4 shadow-md">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                      <UserX className="w-4 h-4 text-rose-400" />
+                      Joueurs Bloqués ({blockedPlayers.length})
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Les joueurs bloqués ne peuvent ni vous envoyer d'invitations ni vous trouver lors des recherches.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={loadBlockedPlayers}
+                    disabled={isLoadingBlocked}
+                    className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer disabled:opacity-50"
+                    title="Actualiser la liste"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${isLoadingBlocked ? 'animate-spin' : ''}`} />
+                  </button>
+                </div>
+
+                {blockedPlayers.length === 0 ? (
+                  <div className="p-8 text-center bg-slate-950/60 rounded-xl border border-slate-800/80 flex flex-col items-center gap-2">
+                    <UserX className="w-8 h-8 text-slate-600" />
+                    <p className="text-xs font-semibold text-slate-400">Aucun joueur bloqué pour le moment.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+                    {blockedPlayers.map((player) => (
+                      <div
+                        key={player.uid}
+                        className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-3 shadow-sm"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <PlayerAvatar avatarId="lion" size="sm" className="w-9 h-9 border border-rose-500/30" />
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-xs font-bold text-white truncate">{player.displayName}</span>
+                            <span className="text-[10px] text-amber-400 font-mono font-bold">{player.friendCode}</span>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleUnblockPlayer(player.uid)}
+                          className="h-8 px-3 rounded-xl bg-slate-800 hover:bg-emerald-500/20 hover:text-emerald-400 text-slate-300 text-xs font-bold border border-slate-700 hover:border-emerald-500/40 transition active:scale-95 cursor-pointer shrink-0"
+                        >
+                          Débloquer
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

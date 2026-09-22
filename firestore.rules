@@ -34,6 +34,27 @@ service cloud.firestore {
       );
     }
 
+    function validFriendCode(data) {
+      return !('friendCode' in data) || (
+        data.friendCode is string
+        && data.friendCode.size() >= 4
+        && data.friendCode.size() <= 20
+      );
+    }
+
+    // Validation stricte du schéma du document d'ami
+    function isValidFriendDoc(data, friendId) {
+      return data.keys().hasAll(['friendUid', 'displayName', 'avatarId', 'status', 'createdAt', 'updatedAt', 'friendCode'])
+        && data.keys().hasOnly(['friendUid', 'displayName', 'avatarId', 'status', 'createdAt', 'updatedAt', 'friendCode'])
+        && data.friendUid == friendId
+        && data.displayName is string
+        && data.avatarId is string
+        && data.friendCode is string
+        && data.status in ['PENDING_SENT', 'PENDING_RECEIVED', 'ACCEPTED', 'DECLINED']
+        && (data.createdAt is int || data.createdAt is float || data.createdAt is timestamp)
+        && (data.updatedAt is int || data.updatedAt is float || data.updatedAt is timestamp);
+    }
+
     // Aucun e-mail dans le document public (clé absente ou null tolérés)
     function noPublicEmail(data) {
       return !('email' in data) || data.email == null;
@@ -219,6 +240,7 @@ service cloud.firestore {
     function coherentProfile(data) {
       let s = data.stats;
       return validDisplayName(data)
+        && validFriendCode(data)
         && noPublicEmail(data)
         && data.get('isGuest', false) == false
         && data.get('authProvider', '') == 'google.com'
@@ -354,8 +376,30 @@ service cloud.firestore {
 
       // Amis
       match /friends/{friendId} {
-        allow read, write: if isAuthenticated() && (
+        allow read: if isAuthenticated() && (
           request.auth.uid == userId || request.auth.uid == friendId || isAdmin()
+        );
+        allow delete: if isAuthenticated() && (
+          request.auth.uid == userId || request.auth.uid == friendId || isAdmin()
+        );
+        allow create, update: if isAdmin() || (
+          isAuthenticated()
+          && (request.auth.uid == userId || request.auth.uid == friendId)
+          && isValidFriendDoc(request.resource.data, friendId)
+          // Statut ACCEPTED restreint aux transitions depuis PENDING_SENT ou PENDING_RECEIVED
+          && (
+            request.resource.data.status != 'ACCEPTED'
+            || (resource != null && resource.data.status in ['PENDING_SENT', 'PENDING_RECEIVED'])
+          )
+          // Protection de l'identité : displayName et avatarId ne peuvent être modifiés sur un doc existant que par friendId
+          && (
+            resource == null
+            || request.auth.uid == friendId
+            || (
+              request.resource.data.displayName == resource.data.displayName
+              && request.resource.data.avatarId == resource.data.avatarId
+            )
+          )
         );
       }
     }
@@ -370,17 +414,6 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
-    // Invitations de table
-    match /invitations/{invitationId} {
-      allow read: if isAuthenticated() && (
-        resource.data.toUserId == request.auth.uid || resource.data.fromUserId == request.auth.uid
-      );
-      allow create: if isAuthenticated() && request.resource.data.fromUserId == request.auth.uid;
-      allow update, delete: if isAuthenticated() && (
-        resource.data.toUserId == request.auth.uid || resource.data.fromUserId == request.auth.uid
-      );
-    }
-
     // Présence en ligne
     match /presence/{userId} {
       allow read: if true;
@@ -392,6 +425,12 @@ service cloud.firestore {
       allow read: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isAdmin();
+    }
+
+    // Joueurs bloqués
+    match /blocked_players/{userId} {
+      allow read: if true;
+      allow write: if isUser(userId) || isAdmin();
     }
   }
 }

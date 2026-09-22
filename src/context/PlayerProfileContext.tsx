@@ -186,6 +186,21 @@ export const PlayerProfileProvider: React.FC<{ children: ReactNode }> = ({ child
     }
   }, [profile.isGuest, profile.uid]);
 
+  // Ensure logged-in user profile has a unique stored friendCode
+  useEffect(() => {
+    if (!profile.isGuest && profile.uid && !profile.friendCode) {
+      FriendService.ensureUserFriendCode(profile.uid, profile)
+        .then((code) => {
+          if (code) {
+            setProfile((prev) => ({ ...prev, friendCode: code }));
+          }
+        })
+        .catch((err) => {
+          console.warn('[PlayerProfileContext] Ensure friend code error:', err);
+        });
+    }
+  }, [profile.isGuest, profile.uid, profile.friendCode]);
+
   const loginWithGoogle = useCallback(async () => {
     setIsSyncing(true);
     setSyncMessage('Fusion de vos données locales avec votre compte Google...');

@@ -200,6 +200,10 @@
           }
         },
         "honorificTitleId": { "type": "string" },
+        "friendCode": {
+          "type": "string",
+          "description": "Unique short 6-character alphanumeric Friend Code (e.g. #NK-A7B2X9)"
+        },
         "createdAt": { "type": "number" },
         "updatedAt": { "type": "number" }
       },
@@ -308,6 +312,20 @@
         "createdBy": { "type": "string" }
       },
       "required": ["id", "type", "title", "priority", "status", "createdAt", "updatedAt"]
+    },
+    "BlockedPlayers": {
+      "title": "BlockedPlayers",
+      "description": "List of player IDs blocked by a user",
+      "type": "object",
+      "properties": {
+        "blockedUserIds": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Array of blocked player UIDs"
+        },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["blockedUserIds", "updatedAt"]
     }
   },
   "firestore": {
@@ -350,6 +368,10 @@
     "/fairplay_sanctions/{sanctionId}": {
       "schema": "FairPlaySanctionRecord",
       "description": "Moderation and fair-play audit logs for Katika"
+    },
+    "/blocked_players/{userId}": {
+      "schema": "BlockedPlayers",
+      "description": "Collection of user block lists"
     }
   }
 }

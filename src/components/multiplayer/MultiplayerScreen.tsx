@@ -70,6 +70,7 @@ import { JoinProgressIndicator } from './JoinProgressIndicator';
 import { HeadToHeadModal } from '../rivalry/HeadToHeadModal';
 import { ConnectionDiagnosticModal } from '../common/ConnectionDiagnosticModal';
 import { usePlayerProfile } from '../../context/PlayerProfileContext';
+import { useInvitations } from '../../context/InvitationsContext';
 import { NativeScreenHeader } from '../common/NativeScreenHeader';
 import { NativeSegmentedNav, SegmentTab } from '../common/NativeSegmentedNav';
 import { GoogleIcon } from '../common/GoogleIcon';
@@ -255,7 +256,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
   const [cloudFriends, setCloudFriends] = useState<FriendDocument[]>([]);
   const [friendSubTab, setFriendSubTab] = useState<'FRIENDS' | 'RECEIVED' | 'SENT'>('FRIENDS');
   const [friendsPresenceMap, setFriendsPresenceMap] = useState<Record<string, UserPresence>>({});
-  const [receivedInvitations, setReceivedInvitations] = useState<GameInvitation[]>([]);
+  const { incomingInvitations, acceptInvitation, declineInvitation } = useInvitations();
   const [newFriendInput, setNewFriendInput] = useState<string>('');
   const [isSearchingFriends, setIsSearchingFriends] = useState<boolean>(false);
   const [friendSearchResults, setFriendSearchResults] = useState<
@@ -406,28 +407,6 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
       setIsRefreshingRooms(false);
     });
 
-    const unsubInvite = webSocketService.onDirectInvite((invitation) => {
-      triggerHaptic('heavy');
-      sounds.playRoundVictory();
-      setReceivedInvitations((prev) => {
-        const filtered = prev.filter((i) => i.id !== invitation.id);
-        return [invitation, ...filtered];
-      });
-    });
-
-    const unsubFeedback = webSocketService.onInviteFeedback((data) => {
-      triggerHaptic('light');
-      if (data.agree) {
-        setHubSuccessMsg(`${data.responderName} a accepté votre invitation !`);
-      } else {
-        setHubErrorMsg(`${data.responderName} a décliné votre invitation.`);
-      }
-      setTimeout(() => {
-        setHubSuccessMsg(null);
-        setHubErrorMsg(null);
-      }, 4000);
-    });
-
     const unsubFriendsPresence = webSocketService.onFriendsPresence((presences) => {
       const map: Record<string, UserPresence> = {};
       presences.forEach((p) => {
@@ -467,8 +446,6 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
 
     return () => {
       unsubPublic();
-      unsubInvite();
-      unsubFeedback();
       unsubFriendsPresence();
     };
   }, [isOpen, room]);
@@ -950,14 +927,12 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
   };
 
   const handleAcceptInvite = (invite: GameInvitation, confirmLeaveCurrent?: boolean) => {
-    webSocketService.respondDirectInvite(invite.id, true, confirmLeaveCurrent);
-    setReceivedInvitations((prev) => prev.filter((i) => i.id !== invite.id));
-    triggerHaptic('success');
+    acceptInvitation(invite, confirmLeaveCurrent);
+    handleJoin(invite.roomCode, confirmLeaveCurrent);
   };
 
   const handleDeclineInvite = (invite: GameInvitation) => {
-    webSocketService.respondDirectInvite(invite.id, false);
-    setReceivedInvitations((prev) => prev.filter((i) => i.id !== invite.id));
+    declineInvitation(invite);
     triggerHaptic('light');
   };
 
@@ -1031,6 +1006,31 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
     setTimeout(() => setHubSuccessMsg(null), 3000);
   };
 
+  const handleBlockPlayer = async (targetUid: string, displayName?: string, friendCode?: string) => {
+    if (!targetUid) return;
+    setFriendActionPendingMap((prev) => ({ ...prev, [targetUid]: true }));
+    try {
+      await FriendService.blockPlayer(targetUid, displayName, friendCode);
+
+      // Clean up search results
+      setFriendSearchResults((prev) => prev.filter((p) => p.uid !== targetUid));
+
+      // Clean up incoming invitations from this user
+      incomingInvitations
+        .filter((inv) => inv.fromUserId === targetUid)
+        .forEach((inv) => declineInvitation(inv));
+
+      setHubSuccessMsg(`Joueur ${displayName || ''} bloqué avec succès.`);
+      triggerHaptic('heavy');
+      setTimeout(() => setHubSuccessMsg(null), 3000);
+    } catch (e: any) {
+      console.error('Error blocking player:', e);
+      setHubErrorMsg('Erreur lors du blocage du joueur.');
+    } finally {
+      setFriendActionPendingMap((prev) => ({ ...prev, [targetUid]: false }));
+    }
+  };
+
   const handleSearchFriend = async (val: string) => {
     setNewFriendInput(val);
     const trimmed = val.trim();
@@ -1088,13 +1088,9 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
     const raw = newFriendInput.trim();
     if (!raw) return;
 
-    let friendName = raw;
-    let friendId = 'usr_' + Math.random().toString(36).substring(2, 9);
-
-    if (raw.startsWith('#NK-')) {
-      friendName = `Joueur ${raw}`;
-      friendId = 'usr_' + raw.replace('#NK-', '');
-    }
+    // Clean display name: if user typed a raw code, display as custom nickname, not fake ID
+    let friendName = raw.startsWith('#NK-') ? `Contact ${raw.replace('#NK-', '')}` : raw;
+    const friendId = 'usr_' + Math.random().toString(36).substring(2, 9);
 
     FriendService.addLocalContact({
       id: friendId,
@@ -1105,7 +1101,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
     setLocalContacts(FriendService.getLocalContacts());
     setNewFriendInput('');
     setShowAddFriendModal(false);
-    setHubSuccessMsg('Contact local ajouté !');
+    setHubSuccessMsg('Contact local hors-ligne ajouté !');
     triggerHaptic('success');
     setTimeout(() => setHubSuccessMsg(null), 3000);
   };
@@ -1251,11 +1247,11 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
         label: 'Amis',
         shortLabel: 'Amis',
         icon: Users,
-        badge: receivedInvitations.length > 0 ? String(receivedInvitations.length) : undefined,
+        badge: incomingInvitations.length > 0 ? String(incomingInvitations.length) : undefined,
         badgeColor: 'bg-rose-500 text-white animate-pulse',
       },
     ],
-    [publicRooms.length, receivedInvitations.length]
+    [publicRooms.length, incomingInvitations.length]
   );
 
   const showExpanded = isQuickMatchExpanded || isQuickMatching;
@@ -2852,13 +2848,13 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
               )}
 
               {/* Invitations Received */}
-              {receivedInvitations.length > 0 && (
+              {incomingInvitations.length > 0 && (
                 <div className="flex flex-col gap-2">
                   <span className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
-                    <Mail className="w-3.5 h-3.5" /> Invitations Reçues ({receivedInvitations.length})
+                    <Mail className="w-3.5 h-3.5" /> Invitations Reçues ({incomingInvitations.length})
                   </span>
                   <div className="flex flex-col gap-2">
-                    {receivedInvitations.map((inv, idx) => (
+                    {incomingInvitations.map((inv, idx) => (
                       <div
                         key={`${inv.id}_${idx}`}
                         className="p-3.5 rounded-2xl bg-slate-900 border border-amber-500/40 shadow-md flex flex-col gap-2.5"
@@ -2877,7 +2873,15 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-3 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleBlockPlayer(inv.fromUserId, inv.fromUserName)}
+                            className="h-9 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1"
+                          >
+                            <UserX className="w-3.5 h-3.5" />
+                            <span>Bloquer</span>
+                          </button>
                           <button
                             type="button"
                             onClick={() => handleDeclineInvite(inv)}
@@ -2904,7 +2908,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                 <div className="flex flex-col">
                   <span className="text-[10px] font-bold text-amber-400 uppercase">Mon Code Ami</span>
                   <span className="text-base font-black text-white font-mono">
-                    {FriendService.getFriendCode(localPlayerId)}
+                    {FriendService.getFriendCode(localPlayerId, profile?.friendCode)}
                   </span>
                 </div>
 
@@ -3283,12 +3287,12 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2 shrink-0">
+                          <div className="flex items-center gap-1.5 shrink-0">
                             <button
                               type="button"
                               disabled={isActing}
                               onClick={() => handleAcceptFriendRequest(req)}
-                              className="h-8 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-md shadow-emerald-500/20 transition active:scale-95 disabled:opacity-50 cursor-pointer"
+                              className="h-8 px-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center gap-1 shadow-md shadow-emerald-500/20 transition active:scale-95 disabled:opacity-50 cursor-pointer"
                             >
                               <Check className="w-3.5 h-3.5 stroke-[3]" />
                               <span>Accepter</span>
@@ -3297,10 +3301,20 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                               type="button"
                               disabled={isActing}
                               onClick={() => handleDeclineFriendRequest(req)}
-                              className="h-8 px-2.5 rounded-xl bg-slate-800 hover:bg-rose-500/20 hover:text-rose-300 text-slate-400 font-bold text-xs flex items-center gap-1 transition active:scale-95 disabled:opacity-50 cursor-pointer"
+                              className="h-8 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs flex items-center gap-1 transition active:scale-95 disabled:opacity-50 cursor-pointer"
                             >
                               <X className="w-3.5 h-3.5" />
                               <span>Refuser</span>
+                            </button>
+                            <button
+                              type="button"
+                              disabled={isActing}
+                              onClick={() => handleBlockPlayer(req.friendUid, req.displayName, req.friendCode)}
+                              className="h-8 px-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold text-xs flex items-center gap-1 transition active:scale-95 disabled:opacity-50 cursor-pointer"
+                              title="Bloquer ce joueur"
+                            >
+                              <UserX className="w-3.5 h-3.5" />
+                              <span>Bloquer</span>
                             </button>
                           </div>
                         </div>
@@ -4081,7 +4095,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                 <label className="text-xs text-slate-300 font-bold flex items-center justify-between">
                   <span>Rechercher un joueur</span>
                   <span className="text-[10px] text-amber-400 font-mono">
-                    Mon Code : {FriendService.getFriendCode(localPlayerId)}
+                    Mon Code : {FriendService.getFriendCode(localPlayerId, profile?.friendCode)}
                   </span>
                 </label>
                 <div className="relative">
@@ -4091,7 +4105,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                     maxLength={30}
                     value={newFriendInput}
                     onChange={(e) => handleSearchFriend(e.target.value)}
-                    placeholder="Ex: #NK-789 ou Pseudo..."
+                    placeholder="Ex: #NK-X7B2Q9 ou Pseudo..."
                     className="w-full h-11 pl-10 pr-10 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm font-medium focus:outline-none focus:border-amber-400 transition"
                   />
                   {isSearchingFriends && (
@@ -4121,16 +4135,18 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
 
                   {friendSearchResults.length === 0 && !isSearchingFriends ? (
                     <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 text-center flex flex-col items-center gap-2">
-                      <p className="text-xs text-slate-400">Aucun joueur enregistré avec ce pseudo ou code.</p>
-                      {!isLoggedIn && (
-                        <button
-                          type="button"
-                          onClick={handleAddFriendLegacyFallback}
-                          className="text-xs font-bold text-amber-400 hover:underline cursor-pointer"
-                        >
-                          + Ajouter comme contact local quand même
-                        </button>
-                      )}
+                      <p className="text-xs text-slate-400">
+                        {newFriendInput.trim().toUpperCase().includes('NK-')
+                          ? 'Ce code est introuvable (aucun compte associé).'
+                          : 'Aucun joueur enregistré avec ce pseudo ou code.'}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleAddFriendLegacyFallback}
+                        className="text-xs font-bold text-slate-400 hover:text-amber-400 underline cursor-pointer mt-1"
+                      >
+                        + Ajouter un pseudo local sans compte (Joueur hors-ligne)
+                      </button>
                     </div>
                   ) : (
                     <div className="flex flex-col gap-1.5 max-h-56 overflow-y-auto pr-1">
@@ -4167,7 +4183,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                             </div>
 
                             {/* DYNAMIC ACTION BUTTON */}
-                            <div className="shrink-0">
+                            <div className="shrink-0 flex items-center gap-1.5">
                               {isSelf ? (
                                 <span className="text-[10px] text-slate-500 font-bold px-2 py-1 rounded-lg bg-slate-800">
                                   Vous
@@ -4199,6 +4215,19 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                                 >
                                   <UserPlus className="w-3.5 h-3.5" />
                                   <span>Demander</span>
+                                </button>
+                              )}
+
+                              {!isSelf && (
+                                <button
+                                  type="button"
+                                  disabled={isActing}
+                                  onClick={() => handleBlockPlayer(player.uid, player.displayName, player.friendCode)}
+                                  className="h-7 px-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold flex items-center gap-1 transition active:scale-95 cursor-pointer disabled:opacity-50"
+                                  title="Bloquer ce joueur"
+                                >
+                                  <UserX className="w-3.5 h-3.5" />
+                                  <span>Bloquer</span>
                                 </button>
                               )}
                             </div>
@@ -4254,6 +4283,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
         playerId={localPlayerId}
         playerName={playerName}
         activeRoomCode={room?.id}
+        storedFriendCode={profile?.friendCode}
       />
 
       {/* ========================================================================= */}

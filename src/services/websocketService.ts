@@ -1506,10 +1506,6 @@ class WebSocketService {
     }
   }
 
-  public respondToDirectInvite(inviteId: string, fromUserId?: string, agree: boolean = true, roomCode?: string, confirmLeaveCurrent?: boolean): void {
-    this.respondDirectInvite(inviteId, agree, confirmLeaveCurrent);
-  }
-
   public onPublicRooms(listener: PublicRoomsListener): () => void {
     this.publicRoomsListeners.add(listener);
     return () => {

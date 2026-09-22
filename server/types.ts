@@ -93,6 +93,8 @@ export type ServerErrorCode =
   | 'MAINTENANCE'
   | 'ACTIVE_GAME_IN_PROGRESS'
   | 'SEAT_TAKEN'
+  | 'SELF_INVITE'
+  | 'BLOCKED'
   | 'GENERIC';
 
 export interface ServerMessage {

@@ -468,3 +468,76 @@ test('notifyHostPlayerJoined throttling rules', () => {
   assert.equal(canSend3, true, 'Second push after 2 minutes allowed');
   assert.equal(room.joinPushCount, 2);
 });
+
+test('handleSendDirectInvite protections: SELF_INVITE, BANNED, RATE_LIMITED', async (t) => {
+  const room = mockRoom({
+    id: 'ROOM_INVITE',
+    hostId: 'p1',
+    hostName: 'HostPlayer',
+    status: 'LOBBY',
+    players: [mockPlayer({ id: 'p1', name: 'HostPlayer', isHuman: true, connected: true })],
+  });
+  (RoomManager as any).rooms.set(room.id, room);
+
+  let lastSentMessage: any = null;
+  const mockClient = {
+    socket: {
+      readyState: 1, // OPEN
+      send: (data: string) => {
+        lastSentMessage = JSON.parse(data);
+      },
+    },
+    playerId: 'p1',
+    roomCode: 'ROOM_INVITE',
+    reconnectToken: 'tok1',
+    lastPing: Date.now(),
+  } as any;
+
+  // Test 1: SELF_INVITE
+  await RoomManager.handleSendDirectInvite(mockClient, {
+    type: 'SEND_DIRECT_INVITE',
+    playerId: 'p1',
+    targetPlayerId: 'p1',
+    roomCode: 'ROOM_INVITE',
+  });
+  assert.equal(lastSentMessage?.type, 'ERROR');
+  assert.equal(lastSentMessage?.errorCode, 'SELF_INVITE');
+
+  // Test 2: BANNED
+  (RoomManager as any).playerSanctions.set('p1', {
+    status: 'BANNED',
+    sanctionType: 'TEMP_BAN',
+    banExpiresAt: Date.now() + 600000,
+    bannedReason: 'Suspension temporaire',
+  });
+
+  await RoomManager.handleSendDirectInvite(mockClient, {
+    type: 'SEND_DIRECT_INVITE',
+    playerId: 'p1',
+    targetPlayerId: 'p2',
+    roomCode: 'ROOM_INVITE',
+  });
+  assert.equal(lastSentMessage?.type, 'ERROR');
+  assert.equal(lastSentMessage?.errorCode, 'BANNED');
+
+  // Remove sanction for rate limit test
+  (RoomManager as any).playerSanctions.delete('p1');
+
+  // Test 3: First valid invite
+  await RoomManager.handleSendDirectInvite(mockClient, {
+    type: 'SEND_DIRECT_INVITE',
+    playerId: 'p1',
+    targetPlayerId: 'p2',
+    roomCode: 'ROOM_INVITE',
+  });
+
+  // Test 4: RATE_LIMITED (pending invite exists)
+  await RoomManager.handleSendDirectInvite(mockClient, {
+    type: 'SEND_DIRECT_INVITE',
+    playerId: 'p1',
+    targetPlayerId: 'p2',
+    roomCode: 'ROOM_INVITE',
+  });
+  assert.equal(lastSentMessage?.type, 'ERROR');
+  assert.equal(lastSentMessage?.errorCode, 'RATE_LIMITED');
+});
