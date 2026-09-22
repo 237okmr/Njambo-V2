@@ -28,7 +28,6 @@ import { DirectInviteToast } from './components/multiplayer/DirectInviteToast';
 import { JoinProgressIndicator } from './components/multiplayer/JoinProgressIndicator';
 import { SavedSessionsModal } from './components/SavedSessionsModal';
 import { QuitConfirmationModal } from './components/QuitConfirmationModal';
-import { GameDiamondTable } from './components/GameDiamondTable';
 import { OpponentArea } from './components/OpponentArea';
 import { PlayZoneFelt } from './components/PlayZoneFelt';
 import { KoraHunterAlertBanner } from './components/KoraHunterAlertBanner';

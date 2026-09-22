@@ -111,6 +111,34 @@ export function getPlayerId(): string {
 }
 
 /**
+ * Updates the persistent local player ID.
+ * If the ID starts with 'usr_', updates the guest ID and clears any auth UID.
+ * Otherwise, updates the authenticated UID.
+ * Also synchronizes PLAYER_ID_KEY and notifies listeners.
+ */
+export function setLocalPlayerId(newPlayerId: string): void {
+  if (!newPlayerId || !newPlayerId.trim()) return;
+  const id = newPlayerId.trim();
+
+  if (id.startsWith('usr_')) {
+    setPersistentItem(GUEST_ID_KEY, id);
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem(AUTH_UID_KEY);
+      }
+    } catch {
+      // ignore
+    }
+    setPersistentItem(AUTH_UID_KEY, '');
+  } else {
+    setPersistentItem(AUTH_UID_KEY, id);
+  }
+
+  setPersistentItem(PLAYER_ID_KEY, id);
+  notifyIdentityChange();
+}
+
+/**
  * Sets the authenticated Firebase UID.
  * If the user is currently in an active room, queues the new UID until room exit
  * to prevent phantom seats and room disruption.

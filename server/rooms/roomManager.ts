@@ -838,6 +838,14 @@ export class RoomManager {
         console.log(`[Auth] Authenticated Google player: ${verifiedUid} (email: ${result.email || 'n/a'})`);
         this.deliverPartieResults(client.socket, verifiedUid);
 
+        // Send explicit confirmation that authentication succeeded on this socket
+        this.sendMessage(client.socket, {
+          type: 'AUTH_CONFIRMED',
+          playerId: verifiedUid,
+          reconnectToken: userToken,
+          timestamp: Date.now(),
+        });
+
         // If client was previously associated with an active room and is a non-spectator non-forfeit member, resume seat
         if (client.roomCode && this.rooms.has(client.roomCode)) {
           const room = this.rooms.get(client.roomCode)!;

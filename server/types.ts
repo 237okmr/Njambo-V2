@@ -98,6 +98,7 @@ export type ServerErrorCode =
 export interface ServerMessage {
   type:
     | 'SESSION_READY'
+    | 'AUTH_CONFIRMED'
     | 'SYNC_STATE'
     | 'ROOM_JOINED'
     | 'ERROR'

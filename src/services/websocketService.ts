@@ -5,7 +5,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { APP_VERSION } from '../version';
 import { playerProfileService } from './playerProfileService';
 import { getPersistentItem, setPersistentItem } from '../utils/storageUtils';
-import { getPlayerId, setInRoomStatus, onIdentityChange } from './identity';
+import { getPlayerId, setLocalPlayerId, setInRoomStatus, onIdentityChange } from './identity';
 
 export type ConnectionStateListener = (connected: boolean) => void;
 export type RoomUpdateListener = (room: MultiplayerRoom | null) => void;
@@ -76,8 +76,11 @@ class WebSocketService {
   private lastServerError: { code: string; message: string; timestamp: number } | null = null;
   private lastConnectAttemptAt: number = 0;
   private authSentOnThisSocket: boolean = false;
+  private authConfirmedOnThisSocket: boolean = false;
+  private pendingAuthMessages: string[] = [];
   private hasAttemptedAuthRetry: boolean = false;
   private lastConnectedPlayerId: string | null = null;
+  private isSessionTakenOver: boolean = false;
   private pendingJoinCancelled: boolean = false;
 
   public getLocalPlayerId(): string {
@@ -128,7 +131,7 @@ class WebSocketService {
       // High-priority mobile resume & Page Visibility listeners (RFC & Zero-friction auto-sync)
       const handleAppResume = () => {
         if (typeof document !== 'undefined' && document.hidden) return;
-        if (this.userExplicitlyLeft) return;
+        if (this.userExplicitlyLeft || this.isSessionTakenOver) return;
 
         const currentActiveRoom = this.activeRoomCode || localStorage.getItem('njambo_active_room_code');
         if (!currentActiveRoom) return;
@@ -238,17 +241,43 @@ class WebSocketService {
     setPersistentItem('njambo_reconnect_token', token);
   }
 
-  public connect(): Promise<void> {
-    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+  public connect(forceReconnect: boolean = false): Promise<void> {
+    if (this.isSessionTakenOver && !forceReconnect) {
+      console.log('[WS] Connection skipped: session taken over in another tab.');
       return Promise.resolve();
     }
-    if (this.connectPromise) {
-      return this.connectPromise;
+    if (forceReconnect) {
+      this.isSessionTakenOver = false;
+    }
+
+    const currentId = this.getLocalPlayerId();
+    const isSameIdentity = !this.lastConnectedPlayerId || this.lastConnectedPlayerId === currentId;
+
+    // Protection contre les connexions doublées : si une connexion est déjà ouverte ou en cours pour la même identité
+    if (isSameIdentity && !forceReconnect) {
+      if (this.socket && (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)) {
+        return this.connectPromise || Promise.resolve();
+      }
+      if (this.isConnecting && this.connectPromise) {
+        return this.connectPromise;
+      }
+    }
+
+    // Si l'identité a changé et qu'une socket existe, la fermer proprement avant de reconnecter
+    if (!isSameIdentity && this.socket && (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)) {
+      console.log(`[WS] Player identity changed (from ${this.lastConnectedPlayerId} to ${currentId}): closing old socket before reconnect.`);
+      try {
+        this.socket.close(1000, 'Identity changed');
+      } catch (e) {
+        // ignore
+      }
+      this.socket = null;
     }
 
     this.isConnecting = true;
     this.lastConnectAttemptAt = Date.now();
     this.authSentOnThisSocket = false;
+    this.authConfirmedOnThisSocket = false;
 
     this.connectPromise = (async () => {
       // Wait for authStateReady with a 3s max timeout to ensure restored Firebase session
@@ -379,6 +408,8 @@ class WebSocketService {
               t === 'RESPOND_BET_INCREASE' ||
               t === 'CANCEL_BET_INCREASE';
 
+            const requiresAuthGating = Boolean(auth.currentUser && !auth.currentUser.isAnonymous);
+
             if (this.activeRoomCode) {
               // Segregate room-bound messages: hold them until ROOM_JOINED confirms room attachment
               const immediateMessages: string[] = [];
@@ -399,8 +430,14 @@ class WebSocketService {
               // Flush global non-room messages
               while (immediateMessages.length > 0) {
                 const raw = immediateMessages.shift();
-                if (raw && this.socket && this.socket.readyState === WebSocket.OPEN) {
-                  this.socket.send(raw);
+                if (raw) {
+                  if (requiresAuthGating && !this.authConfirmedOnThisSocket) {
+                    this.pendingAuthMessages.push(raw);
+                  } else if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+                    this.socket.send(raw);
+                  } else {
+                    this.pendingMessages.push(raw);
+                  }
                 }
               }
               this.pendingMessages = [];
@@ -417,11 +454,17 @@ class WebSocketService {
                 reconnectToken,
               });
             } else {
-              // Flush all surviving messages immediately
+              // Flush all surviving messages immediately (or route to pendingAuthMessages if waiting for AUTH_CONFIRMED)
               while (this.pendingMessages.length > 0) {
                 const raw = this.pendingMessages.shift();
-                if (raw && this.socket && this.socket.readyState === WebSocket.OPEN) {
-                  this.socket.send(raw);
+                if (raw) {
+                  if (requiresAuthGating && !this.authConfirmedOnThisSocket) {
+                    this.pendingAuthMessages.push(raw);
+                  } else if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+                    this.socket.send(raw);
+                  } else {
+                    this.pendingMessages.push(raw);
+                  }
                 }
               }
             }
@@ -445,7 +488,12 @@ class WebSocketService {
           this.socket.onclose = (event) => {
             this.isConnecting = false;
             this.connectPromise = null;
+            this.authConfirmedOnThisSocket = false;
             this.stopHeartbeat();
+            if (this.pendingAuthMessages.length > 0) {
+              this.pendingMessages.unshift(...this.pendingAuthMessages);
+              this.pendingAuthMessages = [];
+            }
             if (this.pendingInRoomMessages.length > 0) {
               this.pendingMessages.unshift(...this.pendingInRoomMessages);
               this.pendingInRoomMessages = [];
@@ -454,15 +502,23 @@ class WebSocketService {
             
             if (event.code === 4001) {
               console.log('[WS] Session takeover detected (4001). Halting auto-reconnect.');
+              this.isSessionTakenOver = true;
               this.activeRoomCode = null;
               this.sessionRoomPlayerId = null;
+              this.lastAcceptedState = null;
               setInRoomStatus(false);
+              this.currentRoom = null;
+              try {
+                localStorage.removeItem('njambo_active_room_code');
+              } catch (e) {
+                // ignore
+              }
               this.notifyError('SESSION_TAKEOVER');
               return resolve();
             }
 
             // Auto reconnect if we have an active room or connected presence
-            if (this.activeRoomCode || this.currentPresenceStatus !== 'OFFLINE') {
+            if (!this.isSessionTakenOver && (this.activeRoomCode || this.currentPresenceStatus !== 'OFFLINE')) {
               this.scheduleReconnect();
             }
             resolve();
@@ -500,10 +556,25 @@ class WebSocketService {
     return this.connectPromise;
   }
 
+  public forceReconnect(): Promise<void> {
+    this.isSessionTakenOver = false;
+    this.userExplicitlyLeft = false;
+    if (this.socket) {
+      try {
+        this.socket.close(1000, 'Force reconnect requested');
+      } catch (e) {
+        // ignore
+      }
+      this.socket = null;
+    }
+    return this.connect(true);
+  }
+
   private scheduleReconnect(): void {
+    if (this.isSessionTakenOver) return;
     if (this.reconnectTimeout) clearTimeout(this.reconnectTimeout);
     this.reconnectTimeout = setTimeout(() => {
-      if (this.userExplicitlyLeft) return;
+      if (this.userExplicitlyLeft || this.isSessionTakenOver) return;
       this.connect().then(() => {
         const currentActiveRoom = this.activeRoomCode || localStorage.getItem('njambo_active_room_code');
         if (!this.userExplicitlyLeft && currentActiveRoom && this.socket && this.socket.readyState === WebSocket.OPEN) {
@@ -593,7 +664,7 @@ class WebSocketService {
     }
   }
 
-  private handleServerMessage(msg: ServerMessage): void {
+  public handleServerMessage(msg: ServerMessage): void {
     if (msg.timestamp) {
       const rtt = msg.type === 'PONG' && this.lastPingSentAt > 0 ? Math.max(0, Date.now() - this.lastPingSentAt) : 0;
       if (msg.type === 'PONG' && this.lastPingSentAt > 0) {
@@ -618,11 +689,75 @@ class WebSocketService {
     }
 
     switch (msg.type) {
-      case 'SESSION_READY':
-        if (msg.reconnectToken && msg.playerId && msg.playerId === getPlayerId() && msg.playerId.startsWith('usr_')) {
-          this.setReconnectToken(msg.reconnectToken);
+      case 'SESSION_READY': {
+        const inTable = Boolean(this.activeRoomCode || this.currentRoom);
+        const currentLocalId = getPlayerId();
+        const serverAssignedId = msg.playerId;
+
+        if (serverAssignedId && serverAssignedId !== currentLocalId) {
+          if (!inTable) {
+            console.warn(`[WS] Server assigned new identity '${serverAssignedId}' (previous: '${currentLocalId}'). Adopting new identity.`);
+            this.lastConnectedPlayerId = serverAssignedId;
+            setLocalPlayerId(serverAssignedId);
+            if (msg.reconnectToken) {
+              this.setReconnectToken(msg.reconnectToken);
+            }
+          } else {
+            console.warn(`[WS] Server forced identity change while in table (new: '${serverAssignedId}', previous: '${currentLocalId}'). Closing table cleanly.`);
+            this.activeRoomCode = null;
+            this.sessionRoomPlayerId = null;
+            this.lastAcceptedState = null;
+            setInRoomStatus(false);
+            this.currentRoom = null;
+            try {
+              localStorage.removeItem('njambo_active_room_code');
+            } catch (e) {
+              // ignore
+            }
+            this.notifyRoomUpdate(null);
+            this.notifyError(
+              'Votre session a été réinitialisée par le serveur. Veuillez rejoindre la table à nouveau.',
+              'SESSION_RESET'
+            );
+            this.lastConnectedPlayerId = serverAssignedId;
+            setLocalPlayerId(serverAssignedId);
+            if (msg.reconnectToken) {
+              this.setReconnectToken(msg.reconnectToken);
+            }
+          }
+        } else {
+          if (serverAssignedId) {
+            this.lastConnectedPlayerId = serverAssignedId;
+          }
+          if (msg.reconnectToken) {
+            this.setReconnectToken(msg.reconnectToken);
+          }
         }
         break;
+      }
+
+      case 'AUTH_CONFIRMED': {
+        this.authConfirmedOnThisSocket = true;
+        if (msg.playerId) {
+          this.lastConnectedPlayerId = msg.playerId;
+        }
+        if (msg.reconnectToken) {
+          this.setReconnectToken(msg.reconnectToken);
+        }
+        // Drain any messages queued while waiting for auth confirmation on this socket
+        if (this.pendingAuthMessages.length > 0) {
+          const toSend = [...this.pendingAuthMessages];
+          this.pendingAuthMessages = [];
+          for (const raw of toSend) {
+            if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+              this.socket.send(raw);
+            } else {
+              this.pendingMessages.push(raw);
+            }
+          }
+        }
+        break;
+      }
 
       case 'ROOM_JOINED':
       case 'SYNC_STATE':
@@ -1248,8 +1383,18 @@ class WebSocketService {
     }
 
     const raw = JSON.stringify(msg);
+    const requiresAuthGating = Boolean(auth.currentUser && !auth.currentUser.isAnonymous);
+
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-      this.socket.send(raw);
+      if (requiresAuthGating && !this.authConfirmedOnThisSocket && msg.type !== 'AUTH') {
+        console.log(`[WS] Authenticated Google user: socket open but auth unconfirmed, queueing ${msg.type} in pendingAuthMessages`);
+        if (this.pendingAuthMessages.length >= 50) {
+          this.pendingAuthMessages.shift();
+        }
+        this.pendingAuthMessages.push(raw);
+      } else {
+        this.socket.send(raw);
+      }
     } else {
       console.log(`[WS] Socket not open (readyState: ${this.socket ? this.socket.readyState : 'null'}), queueing message: ${msg.type}`);
       // Hard cap queue size to 50 to prevent unbounded memory growth
