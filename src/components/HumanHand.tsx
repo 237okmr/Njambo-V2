@@ -538,24 +538,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
         className="flex flex-col items-center justify-center shrink-0 w-full lg:w-auto gap-1"
       >
         <div className="flex items-center gap-1 sm:gap-1.5 w-full lg:w-auto justify-center sm:justify-end flex-nowrap overflow-x-hidden">
-          {/* 1. Fold / Passer la donne Button */}
-          {onFoldRound && hand.length > 0 && !isDealing && !instantWinReveal && (
-            <button
-              id="btn-fold-round"
-              type="button"
-              onClick={() => {
-                triggerHaptic('light');
-                setShowFoldConfirm(true);
-              }}
-              className="flex items-center justify-center gap-1 px-2 sm:px-2.5 py-1.5 sm:py-2 rounded-xl font-bold text-xs bg-slate-800 hover:bg-rose-950/70 text-slate-300 hover:text-rose-200 border border-slate-700 hover:border-rose-700/60 transition-all cursor-pointer shadow-sm active:scale-95 shrink-0"
-              title="Passer cette donne (Forfait de manche)"
-            >
-              <Flag className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-              <span className="hidden sm:inline">Passer</span>
-            </button>
-          )}
-
-          {/* 2. Emote Picker Popover */}
+          {/* 1. Emote Picker Popover */}
           {onSendEmote && (
             <div className="shrink-0">
               <EmotePickerPopover
@@ -566,7 +549,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
             </div>
           )}
 
-          {/* 3. Kora Hunter Manual Declaration Button */}
+          {/* 2. Kora Hunter Manual Declaration Button */}
           {enableKoraHunterAlerts &&
             hand.length > 0 &&
             !isDealing &&
@@ -607,7 +590,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
             </button>
           )}
 
-          {/* 4. Valider Button (Primary CTA) */}
+          {/* 3. Valider Button (Primary CTA) */}
           {!instantWinReveal && (
             <button
               id="btn-valider-carte"
@@ -628,16 +611,21 @@ export const HumanHand: React.FC<HumanHandProps> = ({
             </button>
           )}
 
-          {/* 5. Permanent 1-Tap Quick Contextual Reaction Button (Positioned JUST AFTER Valider) */}
-          {onSendEmote && (
-            <QuickContextualReaction
-              currentTrick={currentTrick}
-              tricksHistory={tricksHistory}
-              currentTrickNumber={currentTrickNumber}
-              isHumanTurn={isHumanTurn}
-              onSendEmote={onSendEmote}
-              disabled={isDealing || isForfeit || isFoldedInRound || isEliminated}
-            />
+          {/* 4. Forfeit / Abandon Button (Positioned ON THE RIGHT) */}
+          {onFoldRound && hand.length > 0 && !isDealing && !instantWinReveal && !isForfeit && !isFoldedInRound && !isEliminated && (
+            <button
+              id="btn-fold-round"
+              type="button"
+              onClick={() => {
+                triggerHaptic('light');
+                setShowFoldConfirm(true);
+              }}
+              className="flex items-center justify-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl font-bold text-xs bg-rose-950/80 hover:bg-rose-900 text-rose-200 border border-rose-600/60 transition-all cursor-pointer shadow-md active:scale-95 shrink-0"
+              title="Passer cette donne (Déclarer Forfait)"
+            >
+              <Flag className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+              <span>Forfait</span>
+            </button>
           )}
         </div>
 

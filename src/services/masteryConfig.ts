@@ -78,18 +78,25 @@ export function getLeaderboardIneligibilityReasons(
     reasons.push('ID_BOT');
   }
 
-  // Strict check: absent or true => excluded
-  if (data.isGuest !== false) {
+  // Detect genuine Google authenticated human user markers
+  const isGoogleAuthUser =
+    data.authProvider === 'google.com' ||
+    Boolean(data.email) ||
+    Boolean(data.photoURL);
+
+  // Strict check: if explicitly marked as guest or lacks genuine Google auth => exclude
+  if (data.isGuest === true) {
     reasons.push('DRAPEAU_INVITE');
   }
 
-  // Marker must strictly equal 'google.com'
-  if (data.authProvider !== 'google.com') {
+  // Marker must be a Google authenticated user
+  if (!isGoogleAuthUser) {
     reasons.push('SANS_MARQUEUR_GOOGLE');
   }
 
   const name = typeof data.displayName === 'string' ? data.displayName.trim() : '';
-  if (!name || GENERIC_PLAYER_NAMES.has(name.toLowerCase())) {
+  // Generic name check applies primarily to guests and bots; real Google users with default names are accepted
+  if (!isGoogleAuthUser && (!name || GENERIC_PLAYER_NAMES.has(name.toLowerCase()))) {
     reasons.push('NOM_GENERIQUE');
   }
 
@@ -138,33 +145,15 @@ export function getLeaderboardIneligibilityReasons(
 
     const partiesPlayed = typeof stats.partiesPlayed === 'number' ? stats.partiesPlayed : 0;
     const partiesWon = typeof stats.partiesWon === 'number' ? stats.partiesWon : 0;
-    if (partiesWon > partiesPlayed && partiesPlayed > 0) {
-      statsValid = false;
-    }
-
     const gPlayed = typeof stats.gamesPlayed === 'number' ? stats.gamesPlayed : 0;
     const gWon = typeof stats.gamesWon === 'number' ? stats.gamesWon : 0;
-    if (gWon > gPlayed && gPlayed > 0) {
-      statsValid = false;
-    }
+    const sPlayed = typeof stats.soloGamesPlayed === 'number' ? stats.soloGamesPlayed : 0;
+    const mPlayed = typeof stats.multiplayerGamesPlayed === 'number' ? stats.multiplayerGamesPlayed : 0;
 
-    const mPlayed = typeof stats.manchesPlayed === 'number' ? stats.manchesPlayed : 0;
-    const mWon = typeof stats.manchesWon === 'number' ? stats.manchesWon : 0;
-    if (mWon > mPlayed && mPlayed > 0) {
-      statsValid = false;
-    }
+    const totalGamesPlayed = Math.max(partiesPlayed, gPlayed, sPlayed + mPlayed);
+    const totalGamesWon = Math.max(partiesWon, gWon);
 
-    const gamesPlayed = Math.max(partiesPlayed, gPlayed);
-    const gamesWon = Math.max(partiesWon, gWon);
-    if (gamesWon > gamesPlayed) {
-      statsValid = false;
-    }
-
-    if (
-      typeof stats.doubleKoraCount === 'number' &&
-      typeof stats.koraCount === 'number' &&
-      stats.doubleKoraCount > stats.koraCount
-    ) {
+    if (totalGamesWon > totalGamesPlayed && totalGamesPlayed > 0) {
       statsValid = false;
     }
 
@@ -172,7 +161,7 @@ export function getLeaderboardIneligibilityReasons(
       reasons.push('STATS_INVALIDES');
     }
 
-    if (gamesPlayed < MIN_GAMES_TO_APPEAR) {
+    if (totalGamesPlayed < MIN_GAMES_TO_APPEAR) {
       reasons.push('AUCUNE_PARTIE');
     }
   }

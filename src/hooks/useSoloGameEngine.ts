@@ -630,6 +630,7 @@ export function useSoloGameEngine({
             const mancheWinnerIdx = evaluatedPlayers.findIndex((p) => p.id === mancheWinnerPlayer.id);
 
             setInstantWinReveal(null);
+            setShowKoraVictoryOverlay(true);
             setGameState((prev) => ({
               ...prev,
               phase: isMancheEnd ? 'MANCHE_OVER' : 'PARTIE_OVER',
@@ -1247,11 +1248,20 @@ export function useSoloGameEngine({
 
               const remainingActive = evaluatedPlayers.filter((p) => !p.isEliminated);
 
-              if (partieWinType === 'DOUBLE_KORA') {
+              const winTypeStr = partieWinType as string;
+              if (winTypeStr === 'DOUBLE_KORA') {
                 sounds.playDoubleKora();
                 setShowKoraVictoryOverlay(true);
-              } else if (partieWinType === 'KORA') {
+              } else if (winTypeStr === 'KORA') {
                 sounds.playKora();
+                setShowKoraVictoryOverlay(true);
+              } else if (winTypeStr === 'THREE_SEVENS') {
+                sounds.playThreeSevens();
+                setShowKoraVictoryOverlay(true);
+              } else if (winTypeStr === 'UNDER_21') {
+                sounds.playUnder21();
+                setShowKoraVictoryOverlay(true);
+              } else if (winTypeStr === 'FORFEIT') {
                 setShowKoraVictoryOverlay(true);
               } else {
                 sounds.playRoundVictory();

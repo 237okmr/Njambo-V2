@@ -1003,12 +1003,23 @@ function GameApp() {
     const roomCode = multiplayerRoom?.id;
     const shareUrl = `${window.location.origin}${window.location.pathname}${roomCode ? `?join=${roomCode}` : ''}`;
 
-    const text = `🏆 Victoire éclatante (${winType}) de ${winnerName} sur Njambo Kora ! Cagnotte raflée : ${pot} jetons.\nRejoins la table et tente ta chance !`;
+    const diff = (activeGameState.aiDifficulty || gameState.aiDifficulty || 'NORMAL') as string;
+    const modeLabel = isOnlineActive
+      ? 'Multijoueur ⚔️'
+      : diff === 'EASY'
+      ? 'Facile 🌱'
+      : diff === 'EXPERT'
+      ? 'Expert 🔥'
+      : diff === 'GRAND_MASTER' || diff === 'MASTER'
+      ? 'Grand Katika 👑'
+      : 'Normale 🎯';
+
+    const text = `🏆 Victoire éclatante sur Njambo Katika !\n🎯 Mode : ${modeLabel}\n💥 Type : ${winType}\n🪙 Pot raflé : +${pot} jetons (par ${winnerName})\n\nRejoins la table et tente ta chance !`;
     const fallbackText = `${text}\n${shareUrl}`;
 
-    if (navigator.share && navigator.canShare && navigator.canShare({ title: 'Njambo Kora - Résultat', text, url: shareUrl })) {
+    if (navigator.share && navigator.canShare && navigator.canShare({ title: 'Njambo Katika - Résultat', text, url: shareUrl })) {
       try {
-        await navigator.share({ title: 'Njambo Kora - Résultat', text, url: shareUrl });
+        await navigator.share({ title: 'Njambo Katika - Résultat', text, url: shareUrl });
         triggerHaptic('medium');
         return;
       } catch (e) {
@@ -1018,8 +1029,8 @@ function GameApp() {
 
     navigator.clipboard.writeText(fallbackText);
     triggerHaptic('light');
-    triggerToast('Résultat et lien copiés dans le presse-papiers !');
-  }, [activeGameState, multiplayerRoom?.id]);
+    triggerToast('Résultat et lien de partage copiés !');
+  }, [activeGameState, multiplayerRoom?.id, isOnlineActive, gameState.aiDifficulty]);
 
   // Unified instant win reveal for both Solo and Multiplayer
   const effectiveInstantWinReveal = isOnlineActive
@@ -1104,8 +1115,12 @@ function GameApp() {
           setMpShowKoraOverlay(true);
         } else if (winType === 'THREE_SEVENS') {
           sounds.playThreeSevens();
+          setMpShowKoraOverlay(true);
         } else if (winType === 'UNDER_21') {
           sounds.playUnder21();
+          setMpShowKoraOverlay(true);
+        } else if (winType === 'FORFEIT') {
+          setMpShowKoraOverlay(true);
         } else {
           sounds.playRoundVictory();
         }

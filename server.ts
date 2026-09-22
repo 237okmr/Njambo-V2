@@ -318,30 +318,44 @@ async function startServer() {
       if (force || Date.now() - leaderboardCacheTimestamp > LEADERBOARD_CACHE_TTL || cachedLeaderboardUsers.length === 0) {
         if (db) {
           try {
-            // 1. Requêtes Firestore paginées et triées
+            // 1. Requêtes Firestore paginées (avec secours sans orderBy pour capter tous les profils réels)
             const usersSnapDocs: any[] = [];
             let lastUserDoc: any = null;
             const userPageSize = 100;
             const maxUsers = 300;
 
-            while (usersSnapDocs.length < maxUsers) {
-              const uQuery = lastUserDoc
-                ? query(
-                    collection(db, 'users'),
-                    orderBy('stats.masteryScore', 'desc'),
-                    startAfter(lastUserDoc),
-                    limit(userPageSize)
-                  )
-                : query(
-                    collection(db, 'users'),
-                    orderBy('stats.masteryScore', 'desc'),
-                    limit(userPageSize)
-                  );
-              const snap = await getDocs(uQuery);
-              if (snap.empty) break;
-              usersSnapDocs.push(...snap.docs);
-              lastUserDoc = snap.docs[snap.docs.length - 1];
-              if (snap.docs.length < userPageSize) break;
+            try {
+              while (usersSnapDocs.length < maxUsers) {
+                const uQuery = lastUserDoc
+                  ? query(
+                      collection(db, 'users'),
+                      orderBy('stats.masteryScore', 'desc'),
+                      startAfter(lastUserDoc),
+                      limit(userPageSize)
+                    )
+                  : query(
+                      collection(db, 'users'),
+                      orderBy('stats.masteryScore', 'desc'),
+                      limit(userPageSize)
+                    );
+                const snap = await getDocs(uQuery);
+                if (snap.empty) break;
+                usersSnapDocs.push(...snap.docs);
+                lastUserDoc = snap.docs[snap.docs.length - 1];
+                if (snap.docs.length < userPageSize) break;
+              }
+            } catch (queryErr) {
+              console.warn('[Leaderboard Server] orderBy query fallback triggered:', queryErr);
+            }
+
+            // Si la requête orderBy renvoie peu ou pas de documents (ex: propriété stats.masteryScore absente sur les documents), requêter directement sans orderBy
+            if (usersSnapDocs.length === 0) {
+              try {
+                const fallbackSnap = await getDocs(query(collection(db, 'users'), limit(userPageSize)));
+                usersSnapDocs.push(...fallbackSnap.docs);
+              } catch (fallbackErr) {
+                console.warn('[Leaderboard Server] Direct users fallback failed:', fallbackErr);
+              }
             }
 
             const recordsSnapDocs: any[] = [];
@@ -370,6 +384,7 @@ async function startServer() {
             }
 
             const usersMap = new Map<string, any>();
+            const guestToUserMap = new Map<string, string>();
 
             // Chargement des utilisateurs Google officiels validés par la règle permanente
             usersSnapDocs.forEach((doc) => {
@@ -389,6 +404,17 @@ async function startServer() {
                 stats: { ...(data.stats || {}) },
                 fairPlay: data.fairPlay || { activeSanction: null },
               });
+
+              if (data.migratedFromGuestUid && typeof data.migratedFromGuestUid === 'string') {
+                guestToUserMap.set(data.migratedFromGuestUid.trim(), uid);
+              }
+              if (Array.isArray(data.previousUids)) {
+                data.previousUids.forEach((pUid: string) => {
+                  if (typeof pUid === 'string' && pUid.trim()) {
+                    guestToUserMap.set(pUid.trim(), uid);
+                  }
+                });
+              }
             });
 
             // 2. Dédoublonnage des enregistrements par ID de document
@@ -479,9 +505,13 @@ async function startServer() {
             );
 
             for (const { id, data: g } of chronologicalRecords) {
-              const creatorUid = g.creatorUid;
-              // Rattachement EXCLUSIF par creatorUid
-              if (!creatorUid || typeof creatorUid !== 'string' || !usersMap.has(creatorUid)) {
+              let creatorUid = typeof g.creatorUid === 'string' ? g.creatorUid.trim() : '';
+              if (creatorUid && guestToUserMap.has(creatorUid)) {
+                creatorUid = guestToUserMap.get(creatorUid)!;
+              }
+
+              // Rattachement par creatorUid résolu ou direct
+              if (!creatorUid || !usersMap.has(creatorUid)) {
                 continue;
               }
 

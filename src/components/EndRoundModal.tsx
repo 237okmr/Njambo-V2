@@ -157,6 +157,143 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
     winnerIndex !== null && winnerIndex !== undefined && players[winnerIndex]?.isHuman && !isHumanEliminated;
   const finalTrick = tricksHistory.find((t) => t.trickNumber === 5);
 
+  const currentDifficulty = isOnlineMultiplayer
+    ? 'MULTIPLAYER'
+    : ((gameState as any)?.aiDifficulty || (gameState as any)?.difficulty || 'NORMAL');
+
+  const levelTheme = React.useMemo(() => {
+    if (isOnlineMultiplayer) {
+      return {
+        label: 'Multijoueur',
+        badgeClass: 'bg-cyan-500/20 text-cyan-300 border-cyan-400/50',
+        badgeText: '🌐 MULTIJOUEUR',
+        modalBorder: 'border-cyan-500/60 shadow-cyan-500/30 ring-1 ring-cyan-500/20',
+        bannerGradient: 'from-cyan-950 via-slate-900 to-cyan-950 border-2 border-cyan-400 shadow-cyan-500/30',
+        winnerGlow: 'bg-cyan-400 text-slate-950 ring-4 ring-cyan-400/40',
+        accentText: 'text-cyan-400',
+      };
+    }
+
+    switch (currentDifficulty) {
+      case 'EASY':
+        return {
+          label: 'Facile',
+          badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50',
+          badgeText: '🌱 MODE FACILE',
+          modalBorder: 'border-emerald-500/60 shadow-emerald-500/30 ring-1 ring-emerald-500/20',
+          bannerGradient: 'from-emerald-950 via-slate-900 to-emerald-950 border-2 border-emerald-400 shadow-emerald-500/30',
+          winnerGlow: 'bg-emerald-400 text-slate-950 ring-4 ring-emerald-400/40',
+          accentText: 'text-emerald-400',
+        };
+      case 'EXPERT':
+        return {
+          label: 'Expert',
+          badgeClass: 'bg-rose-500/20 text-rose-300 border-rose-400/50',
+          badgeText: '🔥 MODE EXPERT',
+          modalBorder: 'border-rose-500/60 shadow-rose-500/30 ring-1 ring-rose-500/20',
+          bannerGradient: 'from-rose-950 via-slate-900 to-rose-950 border-2 border-rose-500 shadow-rose-500/30',
+          winnerGlow: 'bg-rose-500 text-slate-950 ring-4 ring-rose-500/40',
+          accentText: 'text-rose-400',
+        };
+      case 'GRAND_MASTER':
+      case 'MASTER':
+        return {
+          label: 'Grand Katika',
+          badgeClass: 'bg-gradient-to-r from-purple-500/25 to-indigo-500/25 text-purple-200 border-purple-400/60 shadow-purple-500/20',
+          badgeText: '👑 GRAND KATIKA',
+          modalBorder: 'border-purple-500/60 shadow-purple-500/30 ring-1 ring-purple-500/20',
+          bannerGradient: 'from-purple-950 via-indigo-900 to-purple-950 border-2 border-purple-400 shadow-purple-500/40',
+          winnerGlow: 'bg-purple-400 text-slate-950 ring-4 ring-purple-400/40',
+          accentText: 'text-purple-300',
+        };
+      case 'NORMAL':
+      default:
+        return {
+          label: 'Normale',
+          badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-400/50',
+          badgeText: '🎯 MODE NORMAL',
+          modalBorder: 'border-amber-500/50 shadow-amber-500/20 ring-1 ring-amber-500/10',
+          bannerGradient: 'from-amber-950 via-amber-900 to-amber-950 border-2 border-amber-400 shadow-amber-500/20',
+          winnerGlow: 'bg-amber-400 text-slate-950 ring-4 ring-amber-400/40',
+          accentText: 'text-amber-400',
+        };
+    }
+  }, [isOnlineMultiplayer, currentDifficulty]);
+
+  const victoryTheme = React.useMemo(() => {
+    if (isHumanEliminated && !isSpectator) {
+      return {
+        badgeClass: 'bg-rose-500 text-slate-950 font-black',
+        badgeText: 'Banqueroute · Élimination',
+        modalBorder: 'border-rose-500/80 shadow-rose-950/60 ring-1 ring-rose-500/30',
+        bannerGradient: 'from-rose-950 via-slate-900 to-rose-950 border-2 border-rose-500 shadow-rose-900/40',
+        icon: <Skull className="w-3.5 h-3.5 fill-slate-950" />,
+      };
+    }
+
+    if (!isMancheOver && partieWinType) {
+      switch (partieWinType) {
+        case 'DOUBLE_KORA':
+          return {
+            badgeClass: 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-black shadow-purple-500/40',
+            badgeText: 'Double Kora (x4)',
+            modalBorder: 'border-purple-500/70 shadow-purple-500/30 ring-1 ring-purple-500/20',
+            bannerGradient: 'from-purple-950 via-indigo-900 to-purple-950 border-2 border-purple-400 shadow-purple-500/30',
+            icon: <Zap className="w-3.5 h-3.5 text-yellow-300 fill-yellow-300" />,
+          };
+        case 'KORA':
+          return {
+            badgeClass: 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black shadow-amber-500/40',
+            badgeText: 'Kora (x2)',
+            modalBorder: 'border-orange-500/70 shadow-orange-500/30 ring-1 ring-orange-500/20',
+            bannerGradient: 'from-amber-950 via-orange-900 to-amber-950 border-2 border-amber-500 shadow-amber-500/20',
+            icon: <Flame className="w-3.5 h-3.5 text-slate-950 fill-slate-950" />,
+          };
+        case 'THREE_SEVENS':
+          return {
+            badgeClass: 'bg-gradient-to-r from-yellow-400 to-amber-400 text-slate-950 font-black shadow-yellow-500/40',
+            badgeText: '777 · Trois Septs',
+            modalBorder: 'border-yellow-400/80 shadow-yellow-500/30 ring-1 ring-yellow-400/20',
+            bannerGradient: 'from-amber-950 via-yellow-900 to-amber-950 border-2 border-yellow-400 shadow-yellow-500/30',
+            icon: <Sparkles className="w-3.5 h-3.5" />,
+          };
+        case 'UNDER_21':
+          return {
+            badgeClass: 'bg-gradient-to-r from-emerald-400 to-teal-400 text-slate-950 font-black shadow-emerald-500/40',
+            badgeText: 'Moins de 21 (≤ 21)',
+            modalBorder: 'border-emerald-400/80 shadow-emerald-500/30 ring-1 ring-emerald-400/20',
+            bannerGradient: 'from-emerald-950 via-teal-900 to-emerald-950 border-2 border-emerald-400 shadow-emerald-500/30',
+            icon: <Sparkles className="w-3.5 h-3.5" />,
+          };
+        case 'FORFEIT':
+          return {
+            badgeClass: 'bg-amber-400 text-slate-950 font-black shadow-amber-500/40',
+            badgeText: 'Victoire par forfait',
+            modalBorder: 'border-amber-400/80 shadow-amber-500/30 ring-1 ring-amber-400/20',
+            bannerGradient: 'from-amber-950 via-slate-900 to-amber-950 border-2 border-amber-400 shadow-amber-500/30',
+            icon: <Trophy className="w-3.5 h-3.5 text-slate-950" />,
+          };
+        case 'STANDARD':
+        default:
+          return {
+            badgeClass: 'bg-slate-800/90 text-amber-300 border border-amber-400/40 font-black',
+            badgeText: 'Victoire au 5ᵉ Tour',
+            modalBorder: levelTheme.modalBorder,
+            bannerGradient: levelTheme.bannerGradient,
+            icon: <Trophy className="w-3.5 h-3.5 text-amber-400" />,
+          };
+      }
+    }
+
+    return {
+      badgeClass: 'bg-slate-800/90 text-amber-300 border border-amber-400/40 font-black',
+      badgeText: isMancheOver ? 'Victoire de la Manche' : 'Victoire au 5ᵉ Tour',
+      modalBorder: levelTheme.modalBorder,
+      bannerGradient: levelTheme.bannerGradient,
+      icon: <Trophy className="w-3.5 h-3.5 text-amber-400" />,
+    };
+  }, [isHumanEliminated, isSpectator, isMancheOver, partieWinType, levelTheme]);
+
   const earnedPoints = isHumanWinner ? computeEarnedPoints({
     isMancheOver,
     isWinner: true,
@@ -213,67 +350,24 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="w-full max-w-md bg-slate-900 border border-amber-500/40 rounded-2xl p-4 sm:p-5 shadow-2xl text-slate-100 flex flex-col gap-3.5 my-auto max-h-[96vh] overflow-y-auto"
+        className={`w-full max-w-md bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-2xl text-slate-100 flex flex-col gap-3.5 my-auto max-h-[96vh] overflow-y-auto transition-all ${victoryTheme.modalBorder}`}
       >
         {/* Header: Streamlined Victory or Elimination Banner */}
         <div
           id="victory-banner"
-          className={`relative bg-gradient-to-br ${
-            isHumanEliminated && !isSpectator
-              ? 'from-rose-950 via-slate-900 to-rose-950 border-2 border-rose-500 shadow-rose-900/40'
-              : isMancheOver
-              ? 'from-amber-950 via-amber-900 to-amber-950 border-2 border-amber-400 shadow-amber-500/20'
-              : partieWinType === 'UNDER_21'
-              ? 'from-emerald-950 via-teal-900 to-emerald-950 border-2 border-emerald-400 shadow-emerald-500/30'
-              : partieWinType === 'THREE_SEVENS'
-              ? 'from-amber-950 via-yellow-900 to-amber-950 border-2 border-yellow-400 shadow-yellow-500/30'
-              : partieWinType === 'DOUBLE_KORA'
-              ? 'from-purple-950 via-indigo-900 to-purple-950 border-2 border-purple-400 shadow-purple-500/30'
-              : partieWinType === 'KORA'
-              ? 'from-amber-950 via-orange-900 to-amber-950 border-2 border-amber-500 shadow-amber-500/20'
-              : 'from-amber-950/70 via-slate-900 to-slate-950 border border-amber-500/40'
-          } rounded-xl p-3.5 text-center flex flex-col items-center gap-2 shadow-lg`}
+          className={`relative bg-gradient-to-br ${victoryTheme.bannerGradient} rounded-xl p-3.5 text-center flex flex-col items-center gap-2 shadow-lg`}
         >
-          {/* Top Pill for Elimination or Special Victory Mode */}
-          {isHumanEliminated && !isSpectator ? (
-            <span className="bg-rose-500 text-slate-950 px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase shadow flex items-center gap-1">
-              <Skull className="w-3.5 h-3.5 fill-slate-950" />
-              <span>Banqueroute · Élimination</span>
+          {/* Top Level / Mode Badge + Special Victory Pills */}
+          <div className="flex items-center justify-center gap-1.5 flex-wrap">
+            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-sm flex items-center gap-1 ${levelTheme.badgeClass}`}>
+              <span>{levelTheme.badgeText}</span>
             </span>
-          ) : !isMancheOver && partieWinType && partieWinType !== 'STANDARD' ? (
-            <div className="flex items-center gap-1">
-              {partieWinType === 'UNDER_21' && (
-                <span className="bg-emerald-400 text-slate-950 px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase shadow flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Moins de 21 (≤ 21)</span>
-                </span>
-              )}
-              {partieWinType === 'THREE_SEVENS' && (
-                <span className="bg-yellow-400 text-slate-950 px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase shadow flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>777 · Trois Septs</span>
-                </span>
-              )}
-              {partieWinType === 'DOUBLE_KORA' && (
-                <span className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase shadow flex items-center gap-1">
-                  <Zap className="w-3.5 h-3.5 text-yellow-300 fill-yellow-300" />
-                  <span>Double Kora (x4)</span>
-                </span>
-              )}
-              {partieWinType === 'KORA' && (
-                <span className="bg-amber-500 text-slate-950 px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase shadow flex items-center gap-1">
-                  <Flame className="w-3.5 h-3.5 text-slate-950 fill-slate-950" />
-                  <span>Kora (x2)</span>
-                </span>
-              )}
-              {partieWinType === 'FORFEIT' && (
-                <span className="bg-amber-400 text-slate-950 px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase shadow flex items-center gap-1">
-                  <Trophy className="w-3.5 h-3.5 text-slate-950" />
-                  <span>Victoire par forfait</span>
-                </span>
-              )}
-            </div>
-          ) : null}
+
+            <span className={`px-2.5 py-0.5 rounded-full text-[11px] uppercase shadow flex items-center gap-1 ${victoryTheme.badgeClass}`}>
+              {victoryTheme.icon}
+              <span>{victoryTheme.badgeText}</span>
+            </span>
+          </div>
 
           {/* Winner Identity & Points */}
           <div className="flex items-center justify-center gap-3">
