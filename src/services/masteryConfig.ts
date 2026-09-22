@@ -78,25 +78,18 @@ export function getLeaderboardIneligibilityReasons(
     reasons.push('ID_BOT');
   }
 
-  // Detect genuine Google authenticated human user markers
-  const isGoogleAuthUser =
-    data.authProvider === 'google.com' ||
-    Boolean(data.email) ||
-    Boolean(data.photoURL);
-
-  // Strict check: if explicitly marked as guest or lacks genuine Google auth => exclude
-  if (data.isGuest === true) {
+  // Strict check: must be explicitly marked as not guest (isGuest === false)
+  if (data.isGuest !== false) {
     reasons.push('DRAPEAU_INVITE');
   }
 
-  // Marker must be a Google authenticated user
-  if (!isGoogleAuthUser) {
+  // Marker must strictly be a Google authenticated user
+  if (data.authProvider !== 'google.com') {
     reasons.push('SANS_MARQUEUR_GOOGLE');
   }
 
   const name = typeof data.displayName === 'string' ? data.displayName.trim() : '';
-  // Generic name check applies primarily to guests and bots; real Google users with default names are accepted
-  if (!isGoogleAuthUser && (!name || GENERIC_PLAYER_NAMES.has(name.toLowerCase()))) {
+  if (!name || GENERIC_PLAYER_NAMES.has(name.toLowerCase())) {
     reasons.push('NOM_GENERIQUE');
   }
 
@@ -149,6 +142,26 @@ export function getLeaderboardIneligibilityReasons(
     const gWon = typeof stats.gamesWon === 'number' ? stats.gamesWon : 0;
     const sPlayed = typeof stats.soloGamesPlayed === 'number' ? stats.soloGamesPlayed : 0;
     const mPlayed = typeof stats.multiplayerGamesPlayed === 'number' ? stats.multiplayerGamesPlayed : 0;
+    const manchesPlayed = typeof stats.manchesPlayed === 'number' ? stats.manchesPlayed : 0;
+    const manchesWon = typeof stats.manchesWon === 'number' ? stats.manchesWon : 0;
+    const koraCount = typeof stats.koraCount === 'number' ? stats.koraCount : 0;
+    const doubleKoraCount = typeof stats.doubleKoraCount === 'number' ? stats.doubleKoraCount : 0;
+
+    if (partiesWon > partiesPlayed && partiesPlayed > 0) {
+      statsValid = false;
+    }
+
+    if (gWon > gPlayed && gPlayed > 0) {
+      statsValid = false;
+    }
+
+    if (manchesWon > manchesPlayed && manchesPlayed > 0) {
+      statsValid = false;
+    }
+
+    if (doubleKoraCount > koraCount) {
+      statsValid = false;
+    }
 
     const totalGamesPlayed = Math.max(partiesPlayed, gPlayed, sPlayed + mPlayed);
     const totalGamesWon = Math.max(partiesWon, gWon);
