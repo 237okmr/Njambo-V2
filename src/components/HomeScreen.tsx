@@ -4,7 +4,8 @@ import { motion } from 'motion/react';
 import { SavedManche } from '../types';
 import { APP_VERSION } from '../version';
 import { usePlayerProfile } from '../context/PlayerProfileContext';
-import { PlayerAvatar } from './profile/PlayerAvatar';
+import { HeaderProfileButton } from './profile/HeaderProfileButton';
+import { NativeScreenHeader } from './common/NativeScreenHeader';
 
 interface HomeScreenProps {
   savedSessions?: SavedManche[];
@@ -79,6 +80,79 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       onResumeSession(activeSession.id);
     }
   };
+
+  // 1. Left branding block for NativeScreenHeader (Logo 🎴 + Gradient text)
+  const leftContent = (
+    <div className="flex items-center gap-2 shrink-0">
+      <div className="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-black text-xs shadow-sm">
+        🎴
+      </div>
+      <span className="text-xs font-black tracking-tight bg-gradient-to-r from-amber-400 to-amber-200 bg-clip-text text-transparent hidden xs:inline">
+        NJAMBO KORA
+      </span>
+    </div>
+  );
+
+  // 2. Right action controls aligned with unified header tokens (rounded-xl, h-9)
+  const rightActions = (
+    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+      {/* Profile Pill Button: Modern & Sleek Ring Capsule */}
+      {onOpenProfile && (
+        <HeaderProfileButton
+          variant="pill"
+          onClick={onOpenProfile}
+        />
+      )}
+
+      {/* Palmarès Quick Button */}
+      {onOpenLeaderboard && (
+        <button
+          type="button"
+          id="btn-header-leaderboard"
+          onClick={onOpenLeaderboard}
+          className="h-9 px-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 active:scale-95 border border-slate-700/80 hover:border-amber-400/40 text-amber-400 text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer shadow-sm shrink-0"
+          title="Consulter le Palmarès"
+          aria-label="Consulter le Palmarès"
+        >
+          <Trophy className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />
+          <span className="hidden xs:inline">Palmarès</span>
+        </button>
+      )}
+
+      {/* PWA Install Button */}
+      {onOpenInstallModal && (
+        <button
+          type="button"
+          id="btn-header-install"
+          onClick={onOpenInstallModal}
+          className="h-9 px-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 active:scale-95 text-amber-300 border border-amber-500/40 text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer shadow-sm shrink-0"
+          title="Installer l'application sur Android"
+          aria-label="Installer l'application"
+        >
+          <Smartphone className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+          <span>{isPwaInstalled ? 'Installée ✓' : 'Installer'}</span>
+        </button>
+      )}
+
+      {/* Sound Toggle Button (conditioned on onToggleSound) */}
+      {onToggleSound && (
+        <button
+          type="button"
+          id="btn-header-sound"
+          onClick={onToggleSound}
+          className="w-9 h-9 rounded-xl bg-slate-800/90 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-amber-300 border border-slate-700/80 transition-all duration-150 flex items-center justify-center cursor-pointer shadow-sm shrink-0"
+          title={soundEnabled ? 'Couper le son' : 'Activer le son'}
+          aria-label={soundEnabled ? 'Couper le son' : 'Activer le son'}
+        >
+          {soundEnabled ? (
+            <Volume2 className="w-4 h-4 text-amber-400" />
+          ) : (
+            <VolumeX className="w-4 h-4 text-slate-500" />
+          )}
+        </button>
+      )}
+    </div>
+  );
 
   return (
     <div
@@ -206,84 +280,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </motion.div>
       </div>
 
-      {/* Top Header Bar */}
-      <header className="relative z-10 max-w-md mx-auto w-full flex items-center justify-between shrink-0 pt-1 pb-2">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-black text-xs shadow-sm">
-            🎴
-          </div>
-          <span className="text-xs font-black tracking-tight bg-gradient-to-r from-amber-400 to-amber-200 bg-clip-text text-transparent hidden xs:inline">
-            NJAMBO KORA
-          </span>
-        </div>
-
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* Profile Pill Button: Modern & Sleek Ring Capsule (Mix Option 1 + 2) */}
-          {onOpenProfile && (
-            <button
-              type="button"
-              id="btn-header-profile"
-              onClick={onOpenProfile}
-              className="h-8 pl-1 pr-2.5 rounded-full bg-slate-900/60 hover:bg-slate-800/80 backdrop-blur-md border border-white/10 hover:border-amber-400/40 transition-all duration-200 cursor-pointer shadow-xs active:scale-95 flex items-center gap-2 group text-left"
-              title="Mon Profil & Palmarès"
-              aria-label="Mon Profil & Palmarès"
-            >
-              <PlayerAvatar
-                avatarId={profile.avatarId}
-                photoURL={profile.photoURL}
-                size="xs"
-                title={currentTitle}
-                showStatusDot
-                isOnline={isLoggedIn}
-              />
-              <span className="text-xs font-semibold text-slate-200 group-hover:text-white transition-colors truncate max-w-[80px] sm:max-w-[110px] tracking-tight">
-                {profile.displayName}
-              </span>
-              <ChevronRight className="w-3 h-3 text-slate-400/80 group-hover:text-amber-300 transition-transform group-hover:translate-x-0.5 shrink-0" />
-            </button>
-          )}
-
-          {/* Palmarès Quick Button */}
-          {onOpenLeaderboard && (
-            <button
-              type="button"
-              id="btn-header-leaderboard"
-              onClick={onOpenLeaderboard}
-              className="h-8 px-2.5 rounded-full bg-slate-900/60 hover:bg-slate-800/80 backdrop-blur-md border border-amber-500/30 hover:border-amber-400 text-amber-400 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
-              title="Consulter le Palmarès"
-            >
-              <Trophy className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-              <span className="hidden xs:inline">Palmarès</span>
-            </button>
-          )}
-
-          {onOpenInstallModal && (
-            <button
-              type="button"
-              id="btn-header-install"
-              onClick={onOpenInstallModal}
-              className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
-              title="Installer l'application sur Android"
-            >
-              <Smartphone className="w-3.5 h-3.5 text-amber-400" />
-              <span>{isPwaInstalled ? 'Installée ✓' : 'Installer'}</span>
-            </button>
-          )}
-
-          <button
-            type="button"
-            onClick={onToggleSound}
-            className="p-1.5 rounded-lg bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-amber-300 border border-slate-800 transition flex items-center justify-center cursor-pointer active:scale-95"
-            title={soundEnabled ? 'Couper le son' : 'Activer le son'}
-          >
-            {soundEnabled ? (
-              <Volume2 className="w-4 h-4 text-amber-400" />
-            ) : (
-              <VolumeX className="w-4 h-4 text-slate-500" />
-            )}
-          </button>
-        </div>
-      </header>
+      {/* Top Header Bar (Unified NativeScreenHeader) */}
+      <NativeScreenHeader
+        id="home-screen-header"
+        className="-mx-3 sm:-mx-4 -mt-3 sm:-mt-4 mb-1 sm:mb-2 relative z-10"
+        leftContent={leftContent}
+        rightActions={rightActions}
+        title=""
+      />
 
       {/* Main Content Area (Centered & Streamlined) */}
       <main className="relative z-10 max-w-md mx-auto w-full flex-1 flex flex-col justify-center items-center py-2 overflow-hidden">

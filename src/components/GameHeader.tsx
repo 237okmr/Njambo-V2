@@ -17,12 +17,14 @@ import {
   SlidersHorizontal,
   CheckCircle2,
   Trophy,
+  Loader2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GameState, AI_DIFFICULTIES_INFO, BetIncreaseProposal, RoomPlayer } from '../types';
 import { BetIncreaseProposalWidget } from './BetIncreaseProposalWidget';
 import { usePlayerProfile } from '../context/PlayerProfileContext';
 import { PlayerAvatar } from './profile/PlayerAvatar';
+import { HeaderProfileButton } from './profile/HeaderProfileButton';
 import { GoogleIcon } from './common/GoogleIcon';
 import { Cloud, ShieldCheck } from 'lucide-react';
 
@@ -140,159 +142,108 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
     <>
       <header
         id="app-header"
-        className="w-full bg-slate-900/95 backdrop-blur-md border-b border-slate-800/80 px-3 sm:px-4 py-2 flex items-center justify-between z-30 shadow-sm shrink-0 relative"
+        className="w-full bg-slate-900/95 backdrop-blur-md border-b border-slate-800/80 px-2 sm:px-4 py-2 flex items-center justify-between z-30 shadow-sm shrink-0 relative"
       >
         {/* 1. LEFT SECTION: Safe Navigation / Identity */}
         <div className="flex items-center gap-2 shrink-0">
-          {currentScreen === 'GAME' ? (
-            isOnlineActive ? (
-              <button
-                id="btn-quit-multiplayer"
-                onClick={onQuitMultiplayer}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-950/60 hover:bg-rose-900/80 text-rose-200 border border-rose-800/60 transition active:scale-95 text-xs font-semibold shadow-xs cursor-pointer shrink-0 min-h-[36px]"
-                title="Quitter la partie en ligne (Forfait)"
-              >
-                <LogOut className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-                <span className="hidden sm:inline">Quitter</span>
-              </button>
-            ) : (
-              <button
-                id="btn-return-home"
-                onClick={onReturnHome}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700/60 transition active:scale-95 text-xs font-semibold shadow-xs cursor-pointer shrink-0 min-h-[36px]"
-                title="Retourner à l'accueil (Sauvegarde automatique)"
-              >
-                <Home className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span className="hidden sm:inline">Accueil</span>
-              </button>
-            )
+          {isOnlineActive ? (
+            <button
+              id="btn-quit-multiplayer"
+              onClick={onQuitMultiplayer}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-950/60 hover:bg-rose-900/80 text-rose-200 border border-rose-800/60 transition active:scale-95 text-xs font-semibold shadow-xs cursor-pointer shrink-0 min-h-[36px]"
+              title="Quitter la partie en ligne (Forfait)"
+            >
+              <LogOut className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+              <span className="hidden sm:inline">Quitter</span>
+            </button>
           ) : (
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center font-black text-slate-950 text-xs shadow-sm">
-                N
-              </div>
-              <div className="flex flex-col">
-                <span className="text-sm font-black tracking-tight bg-gradient-to-r from-emerald-400 via-teal-300 to-amber-300 bg-clip-text text-transparent leading-none">
-                  NJAMBO KORA
-                </span>
-                <span className="text-[9px] text-slate-400 font-medium leading-tight">
-                  Jeu de cartes traditionnel
-                </span>
-              </div>
-            </div>
+            <button
+              id="btn-return-home"
+              onClick={onReturnHome}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700/60 transition active:scale-95 text-xs font-semibold shadow-xs cursor-pointer shrink-0 min-h-[36px]"
+              title="Retourner à l'accueil (Sauvegarde automatique)"
+            >
+              <Home className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span className="hidden sm:inline">Accueil</span>
+            </button>
           )}
         </div>
 
         {/* 2. CENTER SECTION: Macro Game Status Capsule (Breadcrumbs & Pot) */}
-        {currentScreen === 'GAME' ? (
-          <div className="flex items-center justify-center min-w-0 mx-1 flex-1 sm:flex-initial">
-            <div className="flex items-center gap-1.5 sm:gap-3 px-2 sm:px-3 py-1 rounded-full bg-slate-950/90 border border-slate-800/90 shadow-inner text-xs min-w-0 max-w-full">
-              {/* Breadcrumbs */}
-              <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] tracking-tight min-w-0">
-                {isOnlineActive ? (
-                  <span className="text-cyan-400 font-semibold flex items-center gap-1 shrink-0">
-                    <span className="hidden xs:inline">🌐 Multi</span>
-                    <span className="xs:hidden">🌐</span>
-                  </span>
-                ) : (
-                  <span className="text-emerald-400 font-semibold flex items-center gap-1 shrink-0">
-                    <span className="hidden xs:inline">🎮 Solo</span>
-                    <span className="xs:hidden">🎮</span>
-                  </span>
-                )}
-                
-                {isOnlineActive && multiplayerRoomId && (
-                  <>
-                    <span className="text-slate-600 shrink-0">›</span>
-                    <span className="text-slate-300 font-medium hidden sm:inline">Table #{multiplayerRoomId}</span>
-                    <span className="text-slate-300 font-medium sm:hidden max-w-[60px] truncate">#{multiplayerRoomId}</span>
-                  </>
-                )}
-
-                <span className="text-slate-600 shrink-0">›</span>
-                <span className="text-white font-bold flex items-center gap-1 shrink-0">
-                  <span className="hidden xs:inline">Manche</span>
-                  <span className="xs:hidden">M.</span>
-                  <span className="text-amber-300">{activeGameState.partieCount || activeGameState.roundCount || 1}</span>
+        <div className="flex items-center justify-center min-w-0 mx-1 flex-1 sm:flex-initial">
+          <div className="flex items-center gap-1.5 sm:gap-3 px-2 sm:px-3 py-1 rounded-full bg-slate-950/90 border border-slate-800/90 shadow-inner text-xs min-w-0 max-w-full">
+            {/* Breadcrumbs */}
+            <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] tracking-tight min-w-0">
+              {isOnlineActive ? (
+                <span className="text-cyan-400 font-semibold flex items-center gap-1 shrink-0">
+                  <span className="hidden xs:inline">🌐 Multi</span>
+                  <span className="xs:hidden">🌐</span>
                 </span>
-              </div>
-
-              <div className="h-3 w-px bg-slate-800" />
-
-              {/* Pot Counter */}
-              <div className="flex items-center gap-1">
-                <span className="text-slate-400 text-[10px] sm:text-[11px]">Pot</span>
-                <span className="font-extrabold text-emerald-400 flex items-center gap-0.5 text-[11px] sm:text-xs font-mono">
-                  <span>{activeGameState.pot || 0}</span>
-                  <span className="text-[11px] text-amber-400 font-normal">🪙</span>
+              ) : (
+                <span className="text-emerald-400 font-semibold flex items-center gap-1 shrink-0">
+                  <span className="hidden xs:inline">🎮 Solo</span>
+                  <span className="xs:hidden">🎮</span>
                 </span>
-              </div>
+              )}
+              
+              {isOnlineActive && multiplayerRoomId && (
+                <>
+                  <span className="text-slate-600 shrink-0">›</span>
+                  <span className="text-slate-300 font-medium hidden sm:inline">Table #{multiplayerRoomId}</span>
+                  <span className="text-slate-300 font-medium sm:hidden max-w-[60px] truncate">#{multiplayerRoomId}</span>
+                </>
+              )}
 
+              <span className="text-slate-600 shrink-0">›</span>
+              <span className="text-white font-bold flex items-center gap-1 shrink-0">
+                <span className="hidden xs:inline">Manche</span>
+                <span className="xs:hidden">M.</span>
+                <span className="text-amber-300">{activeGameState.partieCount || activeGameState.roundCount || 1}</span>
+              </span>
             </div>
-          </div>
-        ) : (
-          <div className="hidden md:flex items-center gap-2 text-xs text-slate-400">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Prêt à jouer</span>
-          </div>
-        )}
 
-        {/* Bet Increase Proposal Widget (rendered in header ONLY during active play, masked during PARTIE_OVER to prevent duplication with EndRoundModal) */}
-        {betIncreaseProposal &&
-          activeGameState.phase !== 'PARTIE_OVER' &&
-          onProposeBetIncrease &&
-          onRespondBetIncrease &&
-          onCancelBetIncrease && (
-            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 w-full max-w-md px-2 pointer-events-auto">
-              <BetIncreaseProposalWidget
-                currentBaseBet={activeGameState.baseBet || 10}
-                proposal={betIncreaseProposal}
-                players={multiplayerPlayers}
-                localPlayerId={localPlayerId}
-                onPropose={onProposeBetIncrease}
-                onRespond={onRespondBetIncrease}
-                onCancel={onCancelBetIncrease}
-                compact
-              />
+            <div className="h-3 w-px bg-slate-800" />
+
+            {/* Pot Counter */}
+            <div className="flex items-center gap-1">
+              <span className="text-slate-400 text-[10px] sm:text-[11px]">Pot</span>
+              <span className="font-extrabold text-emerald-400 flex items-center gap-0.5 text-[11px] sm:text-xs font-mono">
+                <span>{activeGameState.pot || 0}</span>
+                <span className="text-[11px] text-amber-400 font-normal">🪙</span>
+              </span>
             </div>
-          )}
 
-        {/* 3. RIGHT SECTION: Predictable Tactile Controls (Profile + Sound + Menu) */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {/* Subtle Google Auth pill when playing as guest */}
+          </div>
+        </div>
+
+        {/* 3. RIGHT SECTION: Predictable Tactile Controls (Google Sync + Profile + Sound + Menu) */}
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          {/* Google Auth pill: compact icon-only on mobile (<sm), pill with text on sm+ */}
           {!isLoggedIn && (
             <button
               type="button"
               id="btn-header-google-sync"
               disabled={isAuthLoading}
               onClick={handleGoogleSignIn}
-              className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-semibold shadow-xs transition active:scale-95 cursor-pointer disabled:opacity-50 shrink-0"
+              className="flex items-center justify-center gap-1.5 w-9 sm:w-auto h-9 px-0 sm:px-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-semibold shadow-xs transition active:scale-95 cursor-pointer disabled:opacity-50 shrink-0"
               title="Lier Google pour synchroniser vos jetons et statistiques"
+              aria-label="Lier Google pour synchroniser vos jetons et statistiques"
             >
-              <GoogleIcon className="w-3.5 h-3.5" />
-              <span>{isAuthLoading ? '...' : 'Sauvegarder'}</span>
+              {isAuthLoading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-white shrink-0" />
+              ) : (
+                <GoogleIcon className="w-3.5 h-3.5 shrink-0" />
+              )}
+              <span className="hidden sm:inline">{isAuthLoading ? '...' : 'Sauvegarder'}</span>
             </button>
           )}
 
           {/* Quick Profile Trigger: Modern Ring Avatar */}
           {onOpenProfile && (
-            <button
-              type="button"
-              id="btn-game-header-profile"
+            <HeaderProfileButton
+              variant="compact"
               onClick={onOpenProfile}
-              className="w-9 h-9 rounded-full bg-slate-900/60 hover:bg-slate-800/80 backdrop-blur-md border border-white/10 hover:border-amber-400/40 transition active:scale-95 flex items-center justify-center cursor-pointer shrink-0"
-              title={isLoggedIn ? `Connecté: ${profile.displayName}` : 'Mon Profil (Invité)'}
-              aria-label="Mon Profil & Palmarès"
-            >
-              <PlayerAvatar
-                avatarId={profile.avatarId}
-                photoURL={profile.photoURL}
-                size="xs"
-                title={currentTitle}
-                showStatusDot
-                isOnline={isLoggedIn}
-              />
-            </button>
+            />
           )}
 
           {/* Quick Sound Toggle: Ergonomic 36x36px tap target */}
@@ -314,11 +265,11 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
           <button
             id="btn-header-menu"
             onClick={() => setIsPauseModalOpen(true)}
-            className="relative flex items-center gap-1.5 px-3 py-1.5 h-9 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700/60 transition active:scale-95 text-xs font-semibold cursor-pointer shrink-0"
+            className="relative flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 h-9 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700/60 transition active:scale-95 text-xs font-semibold cursor-pointer shrink-0"
             title="Ouvrir le menu et les options"
             aria-label="Options et menu du jeu"
           >
-            <SlidersHorizontal className="w-3.5 h-3.5 text-slate-300" />
+            <SlidersHorizontal className="w-3.5 h-3.5 text-slate-300 shrink-0" />
             <span className="font-medium">Menu</span>
             {pendingInvitesCount > 0 && (
               <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white font-black text-[9px] flex items-center justify-center animate-bounce shadow">
@@ -328,6 +279,43 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
           </button>
         </div>
       </header>
+
+      {/* 
+        Bet Increase Proposal Banner (In-flow layout preservation):
+        SOLUTION RETENUE & JUSTIFICATION :
+        Initialement, ce widget était positionné en 'absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50',
+        ce qui le faisait flotter hors du flux vertical et recouvrir le haut de la table de jeu (notamment
+        OpponentsHistoryBoard : avatars des joueurs, badges donneur/entameur, cartes distribuées).
+        En le plaçant ici dans le flux normal (in-flow) en tant qu'enfant direct du fragment retourné par GameHeader
+        (qui s'insère dans le conteneur flex vertical parent 'flex flex-col h-screen' de App.tsx), le widget réserve
+        naturellement sa propre hauteur (shrink-0).
+        Le conteneur principal (<main id="main-content" className="flex-1 ...">) est ainsi automatiquement
+        décalé vers le bas de la hauteur exacte du widget, garantissant qu'aucun élément de jeu (cartes, plis,
+        avatars, boutons) n'est jamais masqué, sur mobile (Android/iPhone) comme sur grand écran.
+      */}
+      {betIncreaseProposal &&
+        activeGameState.phase !== 'PARTIE_OVER' &&
+        onProposeBetIncrease &&
+        onRespondBetIncrease &&
+        onCancelBetIncrease && (
+          <div
+            id="bet-increase-proposal-bar"
+            className="w-full bg-slate-950/80 backdrop-blur-sm border-b border-slate-800/60 py-1.5 px-2 flex justify-center shrink-0 z-20 pointer-events-auto"
+          >
+            <div className="w-full max-w-md">
+              <BetIncreaseProposalWidget
+                currentBaseBet={activeGameState.baseBet || 10}
+                proposal={betIncreaseProposal}
+                players={multiplayerPlayers}
+                localPlayerId={localPlayerId}
+                onPropose={onProposeBetIncrease}
+                onRespond={onRespondBetIncrease}
+                onCancel={onCancelBetIncrease}
+                compact
+              />
+            </div>
+          </div>
+        )}
 
       {/* 4. MODAL PAUSE & OPTIONS (Central, thumb-friendly, categorized) */}
       <AnimatePresence>
