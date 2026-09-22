@@ -255,6 +255,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
   const [recentPlayers, setRecentPlayers] = useState<LocalContact[]>(() => FriendService.getRecentPlayers());
   const [cloudFriends, setCloudFriends] = useState<FriendDocument[]>([]);
   const [friendSubTab, setFriendSubTab] = useState<'FRIENDS' | 'RECEIVED' | 'SENT'>('FRIENDS');
+  const [isGuestBannerDismissed, setIsGuestBannerDismissed] = useState<boolean>(false);
   const [friendsPresenceMap, setFriendsPresenceMap] = useState<Record<string, UserPresence>>({});
   const { incomingInvitations, acceptInvitation, declineInvitation } = useInvitations();
   const [newFriendInput, setNewFriendInput] = useState<string>('');
@@ -2805,11 +2806,20 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
           {/* PILIER 3 : 👥 AMIS & INVITATIONS                                      */}
           {/* ===================================================================== */}
           {activeTab === 'social' && (
-            <div className="flex flex-col gap-4">
-              {/* Priorité 1 — Onglet Amis : Incitation visible & non bloquante */}
-              {!isLoggedIn && (
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/15 via-slate-900 to-slate-900 border border-amber-500/40 shadow-lg flex flex-col gap-3">
-                  <div className="flex items-start gap-3">
+            <div className="flex flex-col gap-3">
+              {/* Priorité 1 — Onglet Amis : Incitation visible & non bloquante avec bouton de fermeture */}
+              {!isLoggedIn && !isGuestBannerDismissed && (
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/15 via-slate-900 to-slate-900 border border-amber-500/40 shadow-lg flex flex-col gap-3 relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsGuestBannerDismissed(true)}
+                    className="absolute top-2.5 right-2.5 p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+                    title="Masquer pour cette session"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+
+                  <div className="flex items-start gap-3 pr-6">
                     <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shrink-0 shadow-md">
                       <GoogleIcon className="w-5 h-5" />
                     </div>
@@ -2903,135 +2913,114 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                 </div>
               )}
 
-              {/* My Friend Code & WhatsApp Share Card */}
-              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-slate-900 to-slate-900 border border-amber-500/30 flex items-center justify-between gap-2">
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-amber-400 uppercase">Mon Code Ami</span>
-                  <span className="text-base font-black text-white font-mono">
+              {/* Compact Friend Code Bar */}
+              <div className="px-3.5 py-2 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between gap-2 shadow-sm">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 shrink-0">Code :</span>
+                  <span className="text-xs font-black text-amber-400 font-mono tracking-wide truncate">
                     {FriendService.getFriendCode(localPlayerId, profile?.friendCode)}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 shrink-0">
                   {!isLoggedIn ? (
                     <button
                       type="button"
                       id="btn-friend-code-link-google"
                       disabled={isAuthLoading}
                       onClick={handleGoogleSignIn}
-                      className="h-8 px-2.5 rounded-lg bg-white/[0.08] hover:bg-white/15 text-slate-200 border border-white/10 text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition disabled:opacity-50"
-                      title="Lier à Google pour pérenniser ce code ami"
+                      className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/80 flex items-center justify-center transition active:scale-95 cursor-pointer disabled:opacity-50"
+                      title="Sauvegarder avec Google"
                     >
-                      <GoogleIcon className="w-3.5 h-3.5" />
-                      <span className="hidden xs:inline">Sauvegarder</span>
+                      <GoogleIcon className="w-4 h-4" />
                     </button>
                   ) : (
                     <span
-                      className="h-8 px-2 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold flex items-center gap-1"
+                      className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center"
                       title="Code associé à votre compte Google"
                     >
-                      <Check className="w-3 h-3 text-emerald-400" />
-                      <span className="hidden xs:inline">Vérifié Cloud</span>
+                      <Check className="w-4 h-4" />
                     </span>
                   )}
                   <button
                     type="button"
                     onClick={() => setShowQrModal(true)}
-                    className="h-8 px-3 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-bold flex items-center gap-1.5 cursor-pointer hover:bg-amber-500 hover:text-slate-950 transition"
+                    className="w-8 h-8 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center justify-center transition active:scale-95 cursor-pointer"
+                    title="Afficher le QR Code"
                   >
-                    <QrCode className="w-3.5 h-3.5" />
-                    <span>QR Code</span>
+                    <QrCode className="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
-              {/* Palmarès Banner */}
-              {onOpenLeaderboard && (
-                <div
-                  onClick={onOpenLeaderboard}
-                  className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-slate-900 to-slate-900 border border-amber-500/30 flex items-center justify-between gap-3 shadow-md hover:border-amber-400/50 cursor-pointer transition group"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 group-hover:scale-105 transition shrink-0">
-                      <Trophy className="w-5 h-5 fill-amber-400 text-amber-400" />
-                    </div>
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-xs font-black text-white group-hover:text-amber-300 transition-colors truncate">
-                        Palmarès & Classement
-                      </span>
-                      <span className="text-[10px] text-slate-400 truncate">
-                        Comparez vos victoires, Koras et taux de réussite avec les maîtres du jeu
-                      </span>
-                    </div>
-                  </div>
-                  <span className="text-xs font-bold text-amber-400 group-hover:translate-x-0.5 transition-transform shrink-0">
-                    Explorer →
-                  </span>
-                </div>
-              )}
-
-              {/* Social Sub-Tabs Header & Action */}
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800">
-                    <button
-                      type="button"
-                      onClick={() => setFriendSubTab('FRIENDS')}
-                      className={`h-8 px-3 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                        friendSubTab === 'FRIENDS'
-                          ? 'bg-amber-500 text-slate-950 font-black shadow-sm'
-                          : 'text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      <Users className="w-3.5 h-3.5" />
-                      <span>Mes Amis ({acceptedFriends.length})</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setFriendSubTab('RECEIVED')}
-                      className={`h-8 px-3 rounded-lg text-xs font-bold transition flex items-center gap-1.5 relative cursor-pointer ${
-                        friendSubTab === 'RECEIVED'
-                          ? 'bg-amber-500 text-slate-950 font-black shadow-sm'
-                          : 'text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      <Inbox className="w-3.5 h-3.5" />
-                      <span>Reçues</span>
-                      {pendingReceivedRequests.length > 0 && (
-                        <span className="ml-1 px-1.5 py-0.2 bg-rose-500 text-white text-[10px] font-black rounded-full animate-pulse shadow-sm">
-                          {pendingReceivedRequests.length}
-                        </span>
-                      )}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setFriendSubTab('SENT')}
-                      className={`h-8 px-3 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                        friendSubTab === 'SENT'
-                          ? 'bg-amber-500 text-slate-950 font-black shadow-sm'
-                          : 'text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      <Send className="w-3.5 h-3.5" />
-                      <span>Envoyées ({pendingSentRequests.length})</span>
-                    </button>
-                  </div>
+              {/* Social Sub-Tabs Header & Action (Restructured into 2 rows) */}
+              <div className="flex flex-col gap-2.5">
+                {/* Row 1: Full-width sub-tab pills */}
+                <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800 w-full">
+                  <button
+                    type="button"
+                    onClick={() => setFriendSubTab('FRIENDS')}
+                    className={`h-9 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer w-full ${
+                      friendSubTab === 'FRIENDS'
+                        ? 'bg-amber-500 text-slate-950 font-black shadow-sm'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <Users className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">
+                      Mes Amis{acceptedFriends.length > 0 ? ` (${acceptedFriends.length})` : ''}
+                    </span>
+                  </button>
 
                   <button
                     type="button"
-                    onClick={() => {
-                      setFriendSearchResults([]);
-                      setNewFriendInput('');
-                      setShowAddFriendModal(true);
-                    }}
-                    className="h-9 px-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-black flex items-center gap-1.5 shadow-md shadow-amber-500/10 cursor-pointer transition active:scale-95"
+                    onClick={() => setFriendSubTab('RECEIVED')}
+                    className={`h-9 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 relative cursor-pointer w-full ${
+                      friendSubTab === 'RECEIVED'
+                        ? 'bg-amber-500 text-slate-950 font-black shadow-sm'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
                   >
-                    <UserPlus className="w-3.5 h-3.5" />
-                    <span>+ Ajouter</span>
+                    <Inbox className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">
+                      Reçues{pendingReceivedRequests.length > 0 ? ` (${pendingReceivedRequests.length})` : ''}
+                    </span>
+                    {pendingReceivedRequests.length > 0 && (
+                      <span className="ml-0.5 px-1.5 py-0.2 bg-rose-500 text-white text-[10px] font-black rounded-full animate-pulse shadow-sm shrink-0">
+                        {pendingReceivedRequests.length}
+                      </span>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFriendSubTab('SENT')}
+                    className={`h-9 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer w-full ${
+                      friendSubTab === 'SENT'
+                        ? 'bg-amber-500 text-slate-950 font-black shadow-sm'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <Send className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">
+                      Envoyées{pendingSentRequests.length > 0 ? ` (${pendingSentRequests.length})` : ''}
+                    </span>
                   </button>
                 </div>
+
+                {/* Row 2: Full-width add friend button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFriendSearchResults([]);
+                    setNewFriendInput('');
+                    setShowAddFriendModal(true);
+                  }}
+                  className="w-full h-10 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-black flex items-center justify-center gap-2 shadow-md shadow-amber-500/10 cursor-pointer transition active:scale-95"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span>+ Ajouter un ami</span>
+                </button>
               </div>
 
               {/* VIEW 1 : MES AMIS */}
