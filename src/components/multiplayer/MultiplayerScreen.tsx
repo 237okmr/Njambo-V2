@@ -2273,20 +2273,87 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
           {/* ===================================================================== */}
           {activeTab === 'play' && (
             <div className="flex flex-col gap-3.5">
-              {/* Hero Card : Matchmaking Instantané */}
-              <div className="p-5 rounded-3xl bg-gradient-to-br from-amber-500/20 via-slate-900 to-slate-900 border border-amber-500/40 shadow-xl flex flex-col gap-4">
+              {/* Hero Card : Créer un Salon Personnalisé (Carte Héros Émeraude) */}
+              <div className="p-5 rounded-3xl bg-gradient-to-br from-emerald-500/20 via-slate-900 to-slate-900 border border-emerald-500/40 shadow-xl flex flex-col gap-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
-                      <Flame className="w-3.5 h-3.5 fill-amber-400 text-amber-400" /> Matchmaking Instantané
+                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                      <Crown className="w-3.5 h-3.5 fill-emerald-400 text-emerald-400" /> Salon Personnalisé
                     </span>
-                    <h2 className="text-lg sm:text-xl font-black text-white">Partie Rapide</h2>
+                    <h2 className="text-lg sm:text-xl font-black text-white">Créer une Table</h2>
                     <p className="text-xs text-slate-300">
-                      Trouve instantanément des adversaires humains ou démarre immédiatement avec des bots.
+                      Publique libre · Privée avec Google · Choisis les règles et les mises.
                     </p>
                   </div>
-                  <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center shrink-0">
-                    <Zap className="w-6 h-6 text-amber-400 fill-amber-400" />
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                    <Crown className="w-6 h-6 text-emerald-400 fill-emerald-400/20" />
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  id="btn-open-create-room-modal"
+                  onClick={() => {
+                    if (
+                      activeSanction &&
+                      activeSanction.active &&
+                      (activeSanction.type === 'RESTRICT_CREATE_ROOM' ||
+                        activeSanction.type === 'TEMP_BAN' ||
+                        activeSanction.type === 'PERM_BAN')
+                    ) {
+                      setHubErrorMsg(`🚫 Création restreinte par le Fair-Play (${activeSanction.type}) : ${activeSanction.reason}`);
+                      triggerHaptic('heavy');
+                      return;
+                    }
+                    setShowCreateModal(true);
+                  }}
+                  className="w-full h-12 rounded-2xl bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-400 hover:from-emerald-300 text-slate-950 text-sm font-black flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 transition active:scale-98 cursor-pointer"
+                >
+                  <PlusCircle className="w-4.5 h-4.5 text-slate-950" />
+                  <span>+ Créer une Table</span>
+                </button>
+              </div>
+
+              {/* Action Card 1 : Rejoindre par Code */}
+              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-md flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0">
+                    <KeyRound className="w-5 h-5 text-amber-400" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <h3 className="text-xs sm:text-sm font-black text-white truncate">Rejoindre par Code</h3>
+                    <p className="text-[11px] text-slate-400 truncate">Saisis le code à 4 lettres partagé</p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  id="btn-open-join-code-modal"
+                  onClick={() => setShowJoinCodeModal(true)}
+                  className="h-10 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 text-xs font-black transition active:scale-95 cursor-pointer shrink-0"
+                >
+                  Entrer Code
+                </button>
+              </div>
+
+              {/* Card 3 : Matchmaking Instantané (Partie Rapide - Carte Réduite) */}
+              <div className="p-4 rounded-2xl bg-slate-900/90 border border-amber-500/30 shadow-md flex flex-col gap-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center shrink-0">
+                      <Zap className="w-5 h-5 text-amber-400 fill-amber-400" />
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <h3 className="text-xs sm:text-sm font-black text-white truncate">Partie Rapide</h3>
+                        <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                          Matchmaking
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-300 truncate">
+                        Trouve instantanément des adversaires ou démarre avec des bots.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
@@ -2304,7 +2371,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                           setQuickMatchBet(bet);
                           triggerHaptic('light');
                         }}
-                        className={`h-9 rounded-xl text-xs font-black transition cursor-pointer flex items-center justify-center gap-1 ${
+                        className={`h-8 rounded-xl text-xs font-black transition cursor-pointer flex items-center justify-center gap-1 ${
                           quickMatchBet === bet
                             ? 'bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/20'
                             : 'bg-slate-950 text-slate-300 border border-slate-800 hover:bg-slate-800'
@@ -2321,9 +2388,9 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                 {isQuickMatching ? (
                   quickMatchTimer > 0 ? (
                     <div className="flex flex-col gap-2">
-                      <div className="w-full h-12 rounded-2xl bg-amber-500/20 border border-amber-500/50 flex items-center justify-between px-4">
+                      <div className="w-full h-11 rounded-xl bg-amber-500/20 border border-amber-500/50 flex items-center justify-between px-3">
                         <div className="flex items-center gap-2">
-                          <span className="w-3 h-3 rounded-full bg-amber-400 animate-ping" />
+                          <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
                           <span className="text-xs font-black text-amber-300">
                             Recherche d'une table ({quickMatchTimer}s)...
                           </span>
@@ -2354,16 +2421,15 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                     type="button"
                     id="btn-quick-play-hero"
                     onClick={handleStartQuickMatch}
-                    className="w-full h-12 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-300 text-slate-950 text-sm font-black flex items-center justify-center gap-2 shadow-lg shadow-amber-500/25 transition active:scale-98 cursor-pointer"
+                    className="w-full h-10 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-300 text-slate-950 text-xs font-black flex items-center justify-center gap-2 shadow-md shadow-amber-500/20 transition active:scale-98 cursor-pointer"
                   >
-                    <Play className="w-4 h-4 fill-slate-950" />
+                    <Play className="w-3.5 h-3.5 fill-slate-950" />
                     <span>Lancer la Recherche ({quickMatchBet} Jetons 🪙)</span>
                   </button>
                 )}
 
-                {/* Priorité 5 — Matchmaking rapide : Encart discret et non bloquant */}
                 {!isLoggedIn && (
-                  <div className="pt-2.5 border-t border-white/[0.08] flex items-center justify-between gap-2 text-xs">
+                  <div className="pt-2 border-t border-white/[0.08] flex items-center justify-between gap-2 text-xs">
                     <div className="flex items-center gap-1.5 min-w-0">
                       <ShieldCheck className="w-3.5 h-3.5 text-amber-400/80 shrink-0" />
                       <span className="text-[11px] text-slate-300 truncate">
@@ -2383,63 +2449,6 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                     </button>
                   </div>
                 )}
-              </div>
-
-              {/* Action Card 1 : Rejoindre par Code */}
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-md flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0">
-                    <KeyRound className="w-5 h-5 text-amber-400" />
-                  </div>
-                  <div className="flex flex-col min-w-0">
-                    <h3 className="text-xs sm:text-sm font-black text-white truncate">Rejoindre par Code</h3>
-                    <p className="text-[11px] text-slate-400 truncate">Saisis le code à 4 lettres partagé</p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  id="btn-open-join-code-modal"
-                  onClick={() => setShowJoinCodeModal(true)}
-                  className="h-10 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 text-xs font-black transition active:scale-95 cursor-pointer shrink-0"
-                >
-                  Entrer Code
-                </button>
-              </div>
-
-              {/* Action Card 2 : Créer un Salon Personnalisé */}
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-md flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0">
-                    <Crown className="w-5 h-5 text-emerald-400" />
-                  </div>
-                  <div className="flex flex-col min-w-0">
-                    <h3 className="text-xs sm:text-sm font-black text-white truncate">Créer une Table</h3>
-                    <p className="text-[11px] text-slate-400 truncate">Publique libre · Privée avec Google</p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  id="btn-open-create-room-modal"
-                  onClick={() => {
-                    if (
-                      activeSanction &&
-                      activeSanction.active &&
-                      (activeSanction.type === 'RESTRICT_CREATE_ROOM' ||
-                        activeSanction.type === 'TEMP_BAN' ||
-                        activeSanction.type === 'PERM_BAN')
-                    ) {
-                      setHubErrorMsg(`🚫 Création restreinte par le Fair-Play (${activeSanction.type}) : ${activeSanction.reason}`);
-                      triggerHaptic('heavy');
-                      return;
-                    }
-                    setShowCreateModal(true);
-                  }}
-                  className="h-10 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black transition active:scale-95 cursor-pointer shrink-0 shadow-md shadow-emerald-500/20"
-                >
-                  + Créer
-                </button>
               </div>
             </div>
           )}
