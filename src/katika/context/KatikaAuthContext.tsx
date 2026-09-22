@@ -36,24 +36,32 @@ export const KatikaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
-        // Strict email whitelist verification
-        const normalizedEmail = (currentUser.email || '').trim().toLowerCase();
-        if (normalizedEmail === KATIKA_AUTHORIZED_EMAIL.toLowerCase()) {
-          setUser(currentUser);
-          setLoginError(null);
-          setLoading(false);
-        } else {
-          // Non-admin user: Keep their player session intact, but deny access to Katika cockpit
+        try {
+          const idTokenResult = await currentUser.getIdTokenResult();
+          const normalizedEmail = (currentUser.email || '').trim().toLowerCase();
+          const isOwner = normalizedEmail === KATIKA_AUTHORIZED_EMAIL.toLowerCase();
+          const isSecondaryAdmin = idTokenResult.claims.admin === true;
+
+          if (isOwner || isSecondaryAdmin) {
+            setUser(currentUser);
+            setLoginError(null);
+            setLoading(false);
+          } else {
+            setUser(null);
+            setLoading(false);
+            const isKatikaRoute = 
+              window.location.pathname.toLowerCase().includes('katika') ||
+              window.location.pathname.toLowerCase().includes('copilot') ||
+              window.location.search.toLowerCase().includes('katika') ||
+              window.location.search.toLowerCase().includes('copilot');
+            if (isKatikaRoute) {
+              window.location.replace('/');
+            }
+          }
+        } catch (tokenErr) {
+          console.warn('Katika auth check error:', tokenErr);
           setUser(null);
           setLoading(false);
-          const isKatikaRoute = 
-            window.location.pathname.toLowerCase().includes('katika') ||
-            window.location.pathname.toLowerCase().includes('copilot') ||
-            window.location.search.toLowerCase().includes('katika') ||
-            window.location.search.toLowerCase().includes('copilot');
-          if (isKatikaRoute) {
-            window.location.replace('/');
-          }
         }
       } else {
         setUser(null);
@@ -74,7 +82,11 @@ export const KatikaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const credential = await signInWithPopup(auth, provider);
       
       const email = (credential.user?.email || '').trim().toLowerCase();
-      if (email !== KATIKA_AUTHORIZED_EMAIL.toLowerCase()) {
+      const idTokenResult = await credential.user.getIdTokenResult(true);
+      const isOwner = email === KATIKA_AUTHORIZED_EMAIL.toLowerCase();
+      const isSecondaryAdmin = idTokenResult.claims.admin === true;
+
+      if (!isOwner && !isSecondaryAdmin) {
         setUser(null);
         setLoginError(`Accès refusé : l'adresse ${email} n'est pas autorisée sur la station Katika Master.`);
         setLoading(false);
@@ -102,7 +114,7 @@ export const KatikaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   const isAuthorized = useMemo(() => {
-    return !!user && (user.email || '').trim().toLowerCase() === KATIKA_AUTHORIZED_EMAIL.toLowerCase();
+    return !!user;
   }, [user]);
 
   const value = useMemo(() => ({

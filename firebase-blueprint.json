@@ -313,6 +313,20 @@
       },
       "required": ["id", "type", "title", "priority", "status", "createdAt", "updatedAt"]
     },
+    "KatikaAdmin": {
+      "title": "KatikaAdmin",
+      "description": "Secondary Katika administrator metadata and audit record document",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "grantedAt": { "type": "string" },
+        "grantedBy": { "type": "string" },
+        "status": { "type": "string", "enum": ["ACTIVE", "REVOKED"] },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["uid", "email", "grantedAt", "grantedBy"]
+    },
     "BlockedPlayers": {
       "title": "BlockedPlayers",
       "description": "List of player IDs blocked by a user",
@@ -329,6 +343,10 @@
     }
   },
   "firestore": {
+    "/katika_admins/{uid}": {
+      "schema": "KatikaAdmin",
+      "description": "Registry and access audit records for secondary Katika administrators"
+    },
     "/katika_admin_notes/{id}": {
       "schema": "AdminNote",
       "description": "Admin-only development and management notes"

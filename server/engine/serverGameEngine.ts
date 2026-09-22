@@ -2768,6 +2768,14 @@ export class ServerGameEngine {
       clearTimeout(activeRoomState.botMoveTimer);
       activeRoomState.botMoveTimer = null;
     }
+    if (activeRoomState.autoStartTimer) {
+      clearTimeout(activeRoomState.autoStartTimer);
+      activeRoomState.autoStartTimer = null;
+    }
+    if (activeRoomState.hostTransferTimer) {
+      clearTimeout(activeRoomState.hostTransferTimer);
+      activeRoomState.hostTransferTimer = null;
+    }
     if (activeRoomState.disconnectTimers) {
       activeRoomState.disconnectTimers.forEach((timer) => clearTimeout(timer));
       activeRoomState.disconnectTimers.clear();

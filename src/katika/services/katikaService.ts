@@ -26,6 +26,14 @@ export interface ProfileAuditReport {
   timestamp: number;
 }
 
+export interface SecondaryAdminRecord {
+  uid: string;
+  email: string;
+  grantedAt: string;
+  grantedBy: string;
+  status?: string;
+}
+
 export const OFFICIAL_BOT_NAMES = [
   "Thom's Kora",
   "Don WizeMan",
@@ -2143,5 +2151,46 @@ export const KatikaService = {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  },
+
+  /**
+   * Récupère la liste des administrateurs secondaires
+   */
+  getSecondaryAdmins: async (): Promise<SecondaryAdminRecord[]> => {
+    const res = await tikaFetch('/api/katika/admins');
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Impossible de récupérer la liste des administrateurs.');
+    }
+    return data.admins || [];
+  },
+
+  /**
+   * Accorde le droit administrateur secondaire à un compte Google par e-mail
+   */
+  grantSecondaryAdmin: async (email: string, reason?: string): Promise<SecondaryAdminRecord> => {
+    const res = await tikaFetch('/api/katika/admins', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, reason }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Impossible d\'accorder l\'accès administrateur.');
+    }
+    return data.admin;
+  },
+
+  /**
+   * Révoque le droit administrateur secondaire pour un UID
+   */
+  revokeSecondaryAdmin: async (uid: string): Promise<void> => {
+    const res = await tikaFetch(`/api/katika/admins/${encodeURIComponent(uid)}`, {
+      method: 'DELETE',
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Impossible de révoquer l\'accès administrateur.');
+    }
   },
 };

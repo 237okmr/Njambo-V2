@@ -76,22 +76,24 @@ export class RoomManager {
     }
   }
 
-  public static clearRoomForTest(roomCode: string): void {
-    this.clearBotBetIncreaseTimers(roomCode);
+  /**
+   * Centralized room destruction method.
+   * Idempotent and safe: cancels all room timers (game engine, autoStart, hostTransfer, disconnect, aiRelay),
+   * clears bot bet increase timers, deletes room state & room object, and clears room tokens.
+   */
+  public static destroyRoom(roomCode: string, reason?: string): void {
     const state = this.roomStates.get(roomCode);
     if (state) {
-      if (state.autoStartTimer) {
-        clearTimeout(state.autoStartTimer);
-        state.autoStartTimer = null;
-      }
-      if (state.hostTransferTimer) {
-        clearTimeout(state.hostTransferTimer);
-        state.hostTransferTimer = null;
-      }
       ServerGameEngine.clearAllTimers(state);
     }
-    this.rooms.delete(roomCode);
+    this.clearBotBetIncreaseTimers(roomCode);
     this.roomStates.delete(roomCode);
+    this.rooms.delete(roomCode);
+    this.deleteRoomTokens(roomCode);
+  }
+
+  public static clearRoomForTest(roomCode: string): void {
+    this.destroyRoom(roomCode, 'clearRoomForTest');
   }
 
   public static deleteRoomTokens(roomCode: string): void {
@@ -1362,8 +1364,7 @@ export class RoomManager {
           room.players = (room.players || []).filter(p => p.id !== playerId);
           
           if ((room.players || []).length === 0) {
-            this.rooms.delete(roomCode);
-            this.roomStates.delete(roomCode);
+            this.destroyRoom(roomCode, 'removePlayerFromOtherRooms');
           } else {
             if (room.hostId === playerId) {
               const nextHuman = (room.players || []).find((p) => p.isHuman);
@@ -2886,13 +2887,7 @@ export class RoomManager {
     room.players = (room.players || []).filter((p) => p.id !== playerId);
     if ((room.players || []).length === 0) {
       // Room empty, clean up
-      const state = this.roomStates.get(roomCode);
-      if (state) {
-        ServerGameEngine.clearAllTimers(state);
-        this.roomStates.delete(roomCode);
-      }
-      this.rooms.delete(roomCode);
-      this.deleteRoomTokens(roomCode);
+      this.destroyRoom(roomCode, 'leaveRoom');
     } else {
       if (room.hostId === playerId) {
         // Pass host to next connected human
@@ -3955,8 +3950,7 @@ export class RoomManager {
         if (room.players.length !== initialCount) {
           changed = true;
           if (room.players.length === 0) {
-            this.rooms.delete(roomCode);
-            this.deleteRoomTokens(roomCode);
+            this.destroyRoom(roomCode, 'tickRoom empty lobby');
             return false;
           } else {
             const currentHost = (room.players || []).find((p) => p.id === room.hostId);
@@ -4421,8 +4415,7 @@ export class RoomManager {
 
     // If no players remain, clean up room
     if ((room.players || []).length === 0) {
-      this.roomStates.delete(roomCode);
-      this.rooms.delete(roomCode);
+      this.destroyRoom(roomCode, 'adminKickPlayer empty room');
       return true;
     }
 
@@ -4460,13 +4453,7 @@ export class RoomManager {
       }
     });
 
-    const state = this.roomStates.get(roomCode);
-    if (state) {
-      ServerGameEngine.clearAllTimers(state);
-      this.roomStates.delete(roomCode);
-    }
-    this.rooms.delete(roomCode);
-    this.deleteRoomTokens(roomCode);
+    this.destroyRoom(roomCode, 'adminCloseRoom');
     return true;
   }
 

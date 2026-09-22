@@ -14,7 +14,7 @@ import { RoomManager } from './server/rooms/roomManager';
 import { handleAdminChatMessage, streamAdminChatMessage } from './server/aiAdminChat';
 import { generateVisualSpec } from './server/aiVisual';
 import { pushService, buildGameUrl } from './server/pushService';
-import { verifyFirebaseIdToken } from './server/firebaseAdmin';
+import { verifyFirebaseIdToken, listAdminUsers, setAdminUserClaim, getFirebaseAdminDb } from './server/firebaseAdmin';
 import { collection, getDocs, query, limit, orderBy, startAfter } from 'firebase/firestore';
 import { db } from './src/lib/firebase';
 import {
@@ -837,7 +837,182 @@ async function startServer() {
       });
     }
 
+    (req as any).katikaUser = {
+      uid: verified.uid,
+      email,
+      isOwner: email === KATIKA_ADMIN_EMAIL,
+      isSecondaryAdmin: verified.admin === true,
+    };
+
     return next();
+  });
+
+  // Admin Management Endpoints (Reserved exclusively for KATIKA_ADMIN_EMAIL owner)
+  app.get('/api/katika/admins', async (req, res) => {
+    const user = (req as any).katikaUser;
+    if (!user || !user.isOwner) {
+      console.warn(`[Katika Admin Auth] Refus 403 GET /api/katika/admins pour l'utilisateur non-propriétaire: ${user?.email || 'anonyme'}`);
+      return res.status(403).json({
+        success: false,
+        error: 'Droits insuffisants : la gestion des administrateurs est strictement réservée au propriétaire (KATIKA_ADMIN_EMAIL).'
+      });
+    }
+
+    try {
+      const authAdmins = await listAdminUsers();
+
+      const firestoreAdminsMap = new Map<string, any>();
+      try {
+        const db = getFirebaseAdminDb();
+        const snapshot = await db.collection('katika_admins').get();
+        snapshot.forEach(doc => {
+          firestoreAdminsMap.set(doc.id, doc.data());
+        });
+      } catch (fsErr) {
+        console.warn('[Katika Admins] Impossible d\'interroger Firestore tika_admins:', fsErr);
+      }
+
+      const adminsList = authAdmins.map(admin => {
+        const fsData = firestoreAdminsMap.get(admin.uid) || {};
+        return {
+          uid: admin.uid,
+          email: admin.email || fsData.email || '',
+          grantedAt: fsData.grantedAt || admin.creationTime || new Date().toISOString(),
+          grantedBy: fsData.grantedBy || KATIKA_ADMIN_EMAIL,
+          status: fsData.status || 'ACTIVE',
+        };
+      });
+
+      return res.json({
+        success: true,
+        admins: adminsList,
+        timestamp: Date.now()
+      });
+    } catch (err: any) {
+      console.error('[Katika Admins] Erreur lors de la récupération des administrateurs:', err);
+      return res.status(500).json({ success: false, error: err?.message || 'Erreur serveur interne.' });
+    }
+  });
+
+  app.post('/api/katika/admins', express.json(), async (req, res) => {
+    const user = (req as any).katikaUser;
+    if (!user || !user.isOwner) {
+      console.warn(`[Katika Admin Auth] Refus 403 POST /api/katika/admins pour l'utilisateur non-propriétaire: ${user?.email || 'anonyme'}`);
+      return res.status(403).json({
+        success: false,
+        error: 'Droits insuffisants : la gestion des administrateurs est strictly réservée au propriétaire (KATIKA_ADMIN_EMAIL).'
+      });
+    }
+
+    const { email, reason } = req.body || {};
+    const targetEmail = (email || '').trim().toLowerCase();
+
+    if (!targetEmail) {
+      return res.status(400).json({ success: false, error: 'L\'adresse e-mail de l\'utilisateur à nommer administrateur est requise.' });
+    }
+
+    if (targetEmail === KATIKA_ADMIN_EMAIL) {
+      return res.status(400).json({ success: false, error: 'Le propriétaire est déjà administrateur principal.' });
+    }
+
+    try {
+      const grantedUser = await setAdminUserClaim({ email: targetEmail }, true);
+
+      const grantedAt = new Date().toISOString();
+      const adminRecord = {
+        uid: grantedUser.uid,
+        email: grantedUser.email || targetEmail,
+        grantedAt,
+        grantedBy: KATIKA_ADMIN_EMAIL,
+        status: 'ACTIVE',
+        updatedAt: grantedAt,
+        reason: reason || 'Privilège administrateur accordé depuis Katika Master'
+      };
+
+      try {
+        const db = getFirebaseAdminDb();
+        await db.collection('katika_admins').doc(grantedUser.uid).set(adminRecord, { merge: true });
+      } catch (fsErr) {
+        console.warn('[Katika Admins] Warning setting firestore doc tika_admins:', fsErr);
+      }
+
+      RoomManager.addAuditLog({
+        id: 'adm_grant_' + Date.now().toString(36),
+        timestamp: Date.now(),
+        type: 'KATIKA_ACTION',
+        severity: 'INFO',
+        actor: 'Propriétaire Katika (' + KATIKA_ADMIN_EMAIL + ')',
+        summary: `Privilège administrateur accordé à ${grantedUser.email || targetEmail}`,
+        details: { uid: grantedUser.uid, email: grantedUser.email || targetEmail, grantedBy: KATIKA_ADMIN_EMAIL }
+      });
+
+      return res.json({
+        success: true,
+        admin: adminRecord
+      });
+    } catch (err: any) {
+      console.error('[Katika Admins] Erreur lors de l\'octroi du rôle admin:', err);
+      if (err.code === 'auth/user-not-found') {
+        return res.status(404).json({
+          success: false,
+          error: `Aucun compte Firebase Auth n'a été trouvé pour l'adresse e-mail « ${targetEmail} ». L'utilisateur doit d'abord créer son compte.`
+        });
+      }
+      return res.status(500).json({ success: false, error: err?.message || 'Erreur lors de la modification des privilèges.' });
+    }
+  });
+
+  app.delete('/api/katika/admins/:uid', async (req, res) => {
+    const user = (req as any).katikaUser;
+    if (!user || !user.isOwner) {
+      console.warn(`[Katika Admin Auth] Refus 403 DELETE /api/katika/admins pour l'utilisateur non-propriétaire: ${user?.email || 'anonyme'}`);
+      return res.status(403).json({
+        success: false,
+        error: 'Droits insuffisants : la gestion des administrateurs est strictement réservée au propriétaire (KATIKA_ADMIN_EMAIL).'
+      });
+    }
+
+    const { uid } = req.params;
+    if (!uid) {
+      return res.status(400).json({ success: false, error: 'UID de l\'administrateur à révoquer manquant.' });
+    }
+
+    try {
+      const revokedUser = await setAdminUserClaim({ uid }, false);
+
+      const revokedAt = new Date().toISOString();
+
+      try {
+        const db = getFirebaseAdminDb();
+        await db.collection('katika_admins').doc(uid).set({
+          status: 'REVOKED',
+          revokedAt,
+          revokedBy: KATIKA_ADMIN_EMAIL,
+          updatedAt: revokedAt
+        }, { merge: true });
+      } catch (fsErr) {
+        console.warn('[Katika Admins] Warning updating firestore doc tika_admins on revoke:', fsErr);
+      }
+
+      RoomManager.addAuditLog({
+        id: 'adm_revoke_' + Date.now().toString(36),
+        timestamp: Date.now(),
+        type: 'KATIKA_ACTION',
+        severity: 'WARNING',
+        actor: 'Propriétaire Katika (' + KATIKA_ADMIN_EMAIL + ')',
+        summary: `Privilège administrateur révoqué pour ${revokedUser.email || uid}`,
+        details: { uid, email: revokedUser.email, revokedBy: KATIKA_ADMIN_EMAIL }
+      });
+
+      return res.json({
+        success: true,
+        uid,
+        email: revokedUser.email
+      });
+    } catch (err: any) {
+      console.error('[Katika Admins] Erreur lors de la révocation du rôle admin:', err);
+      return res.status(500).json({ success: false, error: err?.message || 'Erreur lors de la révocation du rôle administrateur.' });
+    }
   });
 
   app.get('/api/katika/live-metrics', (req, res) => {

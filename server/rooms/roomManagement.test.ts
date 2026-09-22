@@ -541,3 +541,141 @@ test('handleSendDirectInvite protections: SELF_INVITE, BANNED, RATE_LIMITED', as
   assert.equal(lastSentMessage?.type, 'ERROR');
   assert.equal(lastSentMessage?.errorCode, 'RATE_LIMITED');
 });
+
+// Helper for testing timer cleanup on room deletion
+function setupRoomWithAllTimers(roomCode: string) {
+  (RoomManager as any).rooms.clear();
+  (RoomManager as any).roomStates.clear();
+  (RoomManager as any).clients.clear();
+  (RoomManager as any).botBetIncreaseTimers.clear();
+
+  const room = mockRoom({
+    id: roomCode,
+    hostId: 'p1',
+    hostName: 'Player 1',
+    status: 'PLAYING',
+    players: [mockPlayer({ id: 'p1', name: 'Player 1', isHuman: true, connected: true })],
+  });
+
+  const disconnectMap = new Map();
+  disconnectMap.set('p1', setTimeout(() => {}, 60000));
+
+  const relayMap = new Map();
+  relayMap.set('p1', setTimeout(() => {}, 60000));
+
+  const activeState = {
+    room,
+    turnTimeoutTimer: setTimeout(() => {}, 60000),
+    trickResolutionTimer: setTimeout(() => {}, 60000),
+    nextPartieTimer: setTimeout(() => {}, 60000),
+    instantWinTimer: setTimeout(() => {}, 60000),
+    botMoveTimer: setTimeout(() => {}, 60000),
+    autoStartTimer: setTimeout(() => {}, 60000),
+    hostTransferTimer: setTimeout(() => {}, 60000),
+    disconnectTimers: disconnectMap,
+    aiRelayTimers: relayMap,
+    consecutiveTimeouts: new Map(),
+  } as any;
+
+  (RoomManager as any).rooms.set(roomCode, room);
+  (RoomManager as any).roomStates.set(roomCode, activeState);
+  (RoomManager as any).botBetIncreaseTimers.set(roomCode, [setTimeout(() => {}, 60000)]);
+
+  return { room, activeState };
+}
+
+function verifyRoomCleanedUp(roomCode: string, activeState: any) {
+  assert.equal(activeState.turnTimeoutTimer, null, 'turnTimeoutTimer should be null');
+  assert.equal(activeState.trickResolutionTimer, null, 'trickResolutionTimer should be null');
+  assert.equal(activeState.nextPartieTimer, null, 'nextPartieTimer should be null');
+  assert.equal(activeState.instantWinTimer, null, 'instantWinTimer should be null');
+  assert.equal(activeState.botMoveTimer, null, 'botMoveTimer should be null');
+  assert.equal(activeState.autoStartTimer, null, 'autoStartTimer should be null');
+  assert.equal(activeState.hostTransferTimer, null, 'hostTransferTimer should be null');
+  assert.equal(activeState.disconnectTimers.size, 0, 'disconnectTimers should be empty');
+  assert.equal(activeState.aiRelayTimers.size, 0, 'aiRelayTimers should be empty');
+
+  assert.equal((RoomManager as any).roomStates.has(roomCode), false, 'roomStates should not contain roomCode');
+  assert.equal((RoomManager as any).rooms.has(roomCode), false, 'rooms should not contain roomCode');
+  assert.equal((RoomManager as any).botBetIncreaseTimers.has(roomCode), false, 'botBetIncreaseTimers should not contain roomCode');
+}
+
+test('1. destroyRoom / clearRoomForTest cleans up all 10 timer categories and room state', () => {
+  const code = 'TEST_CLEAR';
+  const { activeState } = setupRoomWithAllTimers(code);
+  RoomManager.clearRoomForTest(code);
+  verifyRoomCleanedUp(code, activeState);
+});
+
+test('2. destroyRoom via removePlayerFromOtherRooms cleans up all timers and room state when room becomes empty', () => {
+  const code = 'TEST_REMOVE_OTHER';
+  const { room, activeState } = setupRoomWithAllTimers(code);
+  room.status = 'LOBBY';
+  (RoomManager as any).removePlayerFromOtherRooms('p1', 'SOME_OTHER_ROOM');
+  verifyRoomCleanedUp(code, activeState);
+});
+
+test('3. destroyRoom via handleLeaveRoom cleans up all timers and room state when last player leaves', () => {
+  const code = 'TEST_LEAVE';
+  const { activeState } = setupRoomWithAllTimers(code);
+  
+  const mockClient = {
+    playerId: 'p1',
+    playerName: 'Player 1',
+    roomCode: code,
+    socket: { readyState: 1, send: () => {}, close: () => {} },
+  } as any;
+  (RoomManager as any).clients.set('p1', mockClient);
+
+  RoomManager.handleLeaveRoom(mockClient);
+  verifyRoomCleanedUp(code, activeState);
+  (RoomManager as any).clients.delete('p1');
+});
+
+test('4. destroyRoom via tickRoom cleans up all timers and room state when all disconnected players expire', () => {
+  const code = 'TEST_TICK_ROOM';
+  const { room, activeState } = setupRoomWithAllTimers(code);
+  room.status = 'LOBBY';
+  room.players[0].connected = false;
+  room.players[0].disconnectGraceExpiresAt = Date.now() - 10000;
+
+  RoomManager.tickRoom(code);
+  verifyRoomCleanedUp(code, activeState);
+});
+
+test('5. destroyRoom via adminKickPlayer cleans up all timers and room state when last player is kicked', () => {
+  const code = 'TEST_KICK';
+  const { activeState } = setupRoomWithAllTimers(code);
+  
+  const mockClient = {
+    playerId: 'p1',
+    playerName: 'Player 1',
+    roomCode: code,
+    socket: { readyState: 1, send: () => {}, close: () => {} },
+  } as any;
+  (RoomManager as any).clients.set('p1', mockClient);
+
+  RoomManager.adminKickPlayer(code, 'p1');
+  verifyRoomCleanedUp(code, activeState);
+});
+
+test('6. destroyRoom via adminCloseRoom cleans up all timers and room state on administrative closure', () => {
+  const code = 'TEST_CLOSE';
+  const { activeState } = setupRoomWithAllTimers(code);
+  RoomManager.adminCloseRoom(code);
+  verifyRoomCleanedUp(code, activeState);
+});
+
+test('destroyRoom is idempotent and safe when called multiple times or on non-existent room', () => {
+  const code = 'TEST_IDEMPOTENT';
+  const { activeState } = setupRoomWithAllTimers(code);
+
+  RoomManager.destroyRoom(code);
+  verifyRoomCleanedUp(code, activeState);
+
+  assert.doesNotThrow(() => {
+    RoomManager.destroyRoom(code);
+    RoomManager.destroyRoom('NON_EXISTENT');
+  });
+});
+

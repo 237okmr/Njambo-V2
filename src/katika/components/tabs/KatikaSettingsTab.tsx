@@ -27,10 +27,14 @@ import {
   FileText,
   CheckSquare,
   Square,
-  RefreshCw
+  RefreshCw,
+  UserPlus,
+  UserMinus,
+  Trash2
 } from 'lucide-react';
 import { KatikaGameConfig } from '../../types/katika';
-import { KatikaService, DEFAULT_KATIKA_CONFIG, ProfileAuditReport } from '../../services/katikaService';
+import { KatikaService, DEFAULT_KATIKA_CONFIG, ProfileAuditReport, SecondaryAdminRecord } from '../../services/katikaService';
+import { useKatikaAuth, KATIKA_AUTHORIZED_EMAIL } from '../../context/KatikaAuthContext';
 import { navigateToKatikaTab } from '../../utils/katikaNavigation';
 import { 
   AiAdminChatClient, 
@@ -45,15 +49,48 @@ interface KatikaSettingsTabProps {
 }
 
 export const KatikaSettingsTab: React.FC<KatikaSettingsTabProps> = ({ onConfigUpdated }) => {
+  const { user } = useKatikaAuth();
+  const isOwner = (user?.email || '').trim().toLowerCase() === KATIKA_AUTHORIZED_EMAIL.toLowerCase();
+
   const [config, setConfig] = useState<KatikaGameConfig>({ ...DEFAULT_KATIKA_CONFIG });
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [feedback, setFeedback] = useState<string | null>(null);
-  const [settingsSubTab, setSettingsSubTab] = useState<'ENGINE_PACING' | 'MULTI_AI' | 'ECONOMY' | 'RULES' | 'BROADCAST' | 'AI_CONFIG' | 'PWA_POLICY' | 'SECURITY_AUDIT'>('ENGINE_PACING');
+  const [settingsSubTab, setSettingsSubTab] = useState<'ENGINE_PACING' | 'MULTI_AI' | 'ECONOMY' | 'RULES' | 'BROADCAST' | 'AI_CONFIG' | 'PWA_POLICY' | 'SECURITY_AUDIT' | 'ADMINS'>('ENGINE_PACING');
   const [aiPrefs, setAiPrefs] = useState<ChatBotPreferences>(() => AiAdminChatClient.getPreferences());
   const [auditReport, setAuditReport] = useState<ProfileAuditReport | null>(null);
   const [isAuditing, setIsAuditing] = useState<boolean>(false);
   const [auditError, setAuditError] = useState<string | null>(null);
+
+  // Admin Management State
+  const [adminsList, setAdminsList] = useState<SecondaryAdminRecord[]>([]);
+  const [loadingAdmins, setLoadingAdmins] = useState<boolean>(false);
+  const [newAdminEmail, setNewAdminEmail] = useState<string>('');
+  const [grantingAdmin, setGrantingAdmin] = useState<boolean>(false);
+  const [adminError, setAdminError] = useState<string | null>(null);
+  const [adminSuccess, setAdminSuccess] = useState<string | null>(null);
+  const [revokeConfirmUid, setRevokeConfirmUid] = useState<string | null>(null);
+  const [revokingAdmin, setRevokingAdmin] = useState<boolean>(false);
+
+  const loadAdmins = async () => {
+    if (!isOwner) return;
+    setLoadingAdmins(true);
+    setAdminError(null);
+    try {
+      const list = await KatikaService.getSecondaryAdmins();
+      setAdminsList(list);
+    } catch (err: any) {
+      setAdminError(err?.message || 'Erreur lors du chargement des administrateurs.');
+    } finally {
+      setLoadingAdmins(false);
+    }
+  };
+
+  useEffect(() => {
+    if (settingsSubTab === 'ADMINS' && isOwner) {
+      loadAdmins();
+    }
+  }, [settingsSubTab, isOwner]);
 
   useEffect(() => {
     KatikaService.getConfig().then((data) => {
@@ -153,6 +190,7 @@ export const KatikaSettingsTab: React.FC<KatikaSettingsTabProps> = ({ onConfigUp
           { id: 'AI_CONFIG', label: 'Assistant IA', icon: Bot },
           { id: 'PWA_POLICY', label: 'Versions PWA', icon: ShieldCheck },
           { id: 'SECURITY_AUDIT', label: 'Audit Sécurité & Règles', icon: ShieldCheck },
+          ...(isOwner ? [{ id: 'ADMINS', label: 'Administrateurs', icon: Crown }] : []),
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = settingsSubTab === tab.id;
@@ -1756,6 +1794,177 @@ export const KatikaSettingsTab: React.FC<KatikaSettingsTabProps> = ({ onConfigUp
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* DOMAIN 9: GESTION DES ADMINISTRATEURS (ADMINS) */}
+        {settingsSubTab === 'ADMINS' && isOwner && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Crown className="w-4 h-4 text-amber-400" />
+                <h3 className="text-sm font-bold text-white">Gestion des Administrateurs Katika Secondaires</h3>
+              </div>
+              <span className="text-[11px] font-mono text-amber-400 bg-amber-950/40 border border-amber-800/40 px-2 py-0.5 rounded">
+                Espace Propriétaire Exclusif
+              </span>
+            </div>
+
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Accordez ou révoquez les privilèges administrateur secondaire (custom claim Firebase <code className="text-amber-300 font-mono">admin: true</code>). Les administrateurs secondaires ont accès au cockpit Katika Master mais ne peuvent pas modifier les accès administrateurs.
+            </p>
+
+            {/* Form: Grant new admin by email */}
+            <div className="p-4 rounded-xl bg-slate-850/80 border border-slate-700/60 space-y-3">
+              <h4 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                <UserPlus className="w-4 h-4 text-emerald-400" />
+                <span>Accorder le rôle Administrateur Secondaire</span>
+              </h4>
+
+              <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                <input
+                  type="email"
+                  value={newAdminEmail}
+                  onChange={(e) => setNewAdminEmail(e.target.value)}
+                  placeholder="adresse.email@exemple.com"
+                  className="flex-1 bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-amber-500 font-mono"
+                />
+                <button
+                  type="button"
+                  disabled={grantingAdmin || !newAdminEmail.trim()}
+                  onClick={async () => {
+                    if (!newAdminEmail.trim()) return;
+                    setGrantingAdmin(true);
+                    setAdminError(null);
+                    setAdminSuccess(null);
+                    try {
+                      const granted = await KatikaService.grantSecondaryAdmin(newAdminEmail.trim());
+                      setAdminSuccess(`Privilège administrateur accordé avec succès à ${granted.email} !`);
+                      setNewAdminEmail('');
+                      await loadAdmins();
+                    } catch (err: any) {
+                      setAdminError(err?.message || 'Erreur lors de l’octroi des privilèges.');
+                    } finally {
+                      setGrantingAdmin(false);
+                    }
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>{grantingAdmin ? 'Octroi en cours...' : 'Accorder l\'accès'}</span>
+                </button>
+              </div>
+
+              {adminSuccess && (
+                <div className="p-3 rounded-xl bg-emerald-950/70 border border-emerald-800 text-emerald-300 text-xs flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>{adminSuccess}</span>
+                </div>
+              )}
+
+              {adminError && (
+                <div className="p-3 rounded-xl bg-rose-950/70 border border-rose-800 text-rose-300 text-xs flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span>{adminError}</span>
+                </div>
+              )}
+            </div>
+
+            {/* List of Secondary Admins */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-amber-400" />
+                  <span>Administrateurs Secondaires Actuels ({adminsList.length})</span>
+                </h4>
+                <button
+                  type="button"
+                  onClick={loadAdmins}
+                  disabled={loadingAdmins}
+                  className="text-[11px] font-mono text-slate-400 hover:text-amber-300 flex items-center gap-1 cursor-pointer"
+                >
+                  <RefreshCw className={`w-3 h-3 ${loadingAdmins ? 'animate-spin' : ''}`} />
+                  <span>Actualiser</span>
+                </button>
+              </div>
+
+              {loadingAdmins ? (
+                <div className="p-6 text-center text-slate-400 text-xs flex items-center justify-center gap-2">
+                  <RefreshCw className="w-4 h-4 animate-spin text-amber-400" />
+                  <span>Chargement des administrateurs...</span>
+                </div>
+              ) : adminsList.length === 0 ? (
+                <div className="p-6 rounded-xl bg-slate-950/60 border border-slate-800 text-center text-slate-400 text-xs">
+                  Aucun administrateur secondaire n'a été nommé pour le moment.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {adminsList.map((adm) => (
+                    <div
+                      key={adm.uid}
+                      className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between gap-4 flex-wrap sm:flex-nowrap"
+                    >
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-xs text-amber-300 truncate">{adm.email || 'E-mail inconnu'}</span>
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                            ADMIN
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3 text-[10px] text-slate-500 font-mono flex-wrap">
+                          <span>UID: {adm.uid}</span>
+                          <span>Accordé le: {new Date(adm.grantedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                          <span>Par: {adm.grantedBy}</span>
+                        </div>
+                      </div>
+
+                      {revokeConfirmUid === adm.uid ? (
+                        <div className="flex items-center gap-2 shrink-0 bg-rose-950/60 border border-rose-800/80 p-1.5 rounded-lg">
+                          <span className="text-[10px] text-rose-300 font-bold">Confirmer la révocation ?</span>
+                          <button
+                            type="button"
+                            disabled={revokingAdmin}
+                            onClick={async () => {
+                              setRevokingAdmin(true);
+                              setAdminError(null);
+                              try {
+                                await KatikaService.revokeSecondaryAdmin(adm.uid);
+                                setAdminSuccess(`Rôle administrateur révoqué pour ${adm.email || adm.uid}.`);
+                                setRevokeConfirmUid(null);
+                                await loadAdmins();
+                              } catch (err: any) {
+                                setAdminError(err?.message || 'Erreur lors de la révocation.');
+                              } finally {
+                                setRevokingAdmin(false);
+                              }
+                            }}
+                            className="px-2 py-1 rounded bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-bold transition cursor-pointer disabled:opacity-50"
+                          >
+                            {revokingAdmin ? 'Révocation...' : 'Oui, révoquer'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setRevokeConfirmUid(null)}
+                            className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] transition cursor-pointer"
+                          >
+                            Annuler
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setRevokeConfirmUid(adm.uid)}
+                          className="px-3 py-1.5 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 hover:text-rose-100 border border-rose-900/50 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shrink-0"
+                        >
+                          <UserMinus className="w-3.5 h-3.5 text-rose-400" />
+                          <span>Révoquer</span>
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
