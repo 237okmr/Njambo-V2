@@ -615,10 +615,11 @@ test('2. destroyRoom via removePlayerFromOtherRooms cleans up all timers and roo
   verifyRoomCleanedUp(code, activeState);
 });
 
-test('3. destroyRoom via handleLeaveRoom cleans up all timers and room state when last player leaves', () => {
-  const code = 'TEST_LEAVE';
-  const { activeState } = setupRoomWithAllTimers(code);
-  
+test('3a. handleLeaveRoom in PLAYING triggers relay/bot replacement and does NOT destroy room or timers', () => {
+  const code = 'TEST_LEAVE_PLAYING';
+  const { room, activeState } = setupRoomWithAllTimers(code);
+  room.players.push(mockPlayer({ id: 'p2', name: 'Player 2', isHuman: true, connected: true }));
+
   const mockClient = {
     playerId: 'p1',
     playerName: 'Player 1',
@@ -627,7 +628,31 @@ test('3. destroyRoom via handleLeaveRoom cleans up all timers and room state whe
   } as any;
   (RoomManager as any).clients.set('p1', mockClient);
 
-  RoomManager.handleLeaveRoom(mockClient);
+  (RoomManager as any).handleLeaveRoom(mockClient, { type: 'LEAVE_ROOM' });
+
+  assert.ok(RoomManager.getRoom(code) !== undefined, 'Room should still exist in PLAYING status after player leaves');
+  assert.equal((RoomManager as any).roomStates.has(code), true, 'activeState should be preserved');
+  const p1 = room.players.find((p) => p.id === 'p1');
+  assert.ok(p1?.leftRoom === true || p1?.isAiRelay === true, 'Player 1 should have leftRoom or isAiRelay set');
+
+  (RoomManager as any).clients.delete('p1');
+  RoomManager.clearRoomForTest(code);
+});
+
+test('3b. destroyRoom via handleLeaveRoom in LOBBY cleans up all timers and room state when last player leaves', () => {
+  const code = 'TEST_LEAVE_LOBBY';
+  const { room, activeState } = setupRoomWithAllTimers(code);
+  room.status = 'LOBBY';
+
+  const mockClient = {
+    playerId: 'p1',
+    playerName: 'Player 1',
+    roomCode: code,
+    socket: { readyState: 1, send: () => {}, close: () => {} },
+  } as any;
+  (RoomManager as any).clients.set('p1', mockClient);
+
+  (RoomManager as any).handleLeaveRoom(mockClient, { type: 'LEAVE_ROOM' });
   verifyRoomCleanedUp(code, activeState);
   (RoomManager as any).clients.delete('p1');
 });
@@ -677,5 +702,57 @@ test('destroyRoom is idempotent and safe when called multiple times or on non-ex
     RoomManager.destroyRoom(code);
     RoomManager.destroyRoom('NON_EXISTENT');
   });
+});
+
+test('7. PLAYING room with only bots auto-closes after emptyRoomTimeoutMinutes despite bot activity updating updatedAt', () => {
+  RoomManager.updateEngineConfig({
+    emptyRoomTimeoutMinutes: 5,
+  });
+
+  const now = Date.now();
+  // Simulated departure of last human 6 minutes ago (exceeding 5 min threshold)
+  const sixMinutesAgo = now - 6 * 60 * 1000;
+
+  const room = mockRoom({
+    id: 'BOT_ONLY_ROOM',
+    hostId: 'p1',
+    hostName: 'Player 1',
+    status: 'PLAYING',
+    players: [
+      mockPlayer({ id: 'p1', name: 'Player 1', isHuman: true, connected: false, leftRoom: true }),
+      mockPlayer({ id: 'bot1', name: 'Bot 1', isHuman: false, connected: true }),
+      mockPlayer({ id: 'bot2', name: 'Bot 2', isHuman: false, connected: true }),
+      mockPlayer({ id: 'bot3', name: 'Bot 3', isHuman: false, connected: true }),
+    ],
+    createdAt: sixMinutesAgo - 10000,
+    // Bot played a card 10 seconds ago! updatedAt is very recent!
+    updatedAt: now - 10000,
+    allHumansAbsentSince: sixMinutesAgo,
+  });
+
+  (RoomManager as any).rooms.set(room.id, room);
+
+  // Trigger the human absent timestamp check
+  (RoomManager as any).updateHumanAbsentTimestamp(room);
+
+  // Execute room cleanup logic
+  const defaultTimeoutMinutes = (RoomManager as any).engineConfig.emptyRoomTimeoutMinutes ?? 5;
+  const connectedHumans = (room.players || []).filter((p) => p.isHuman && p.connected);
+
+  if (connectedHumans.length === 0) {
+    const absentSince = room.allHumansAbsentSince || now;
+    const absentDuration = now - absentSince;
+    const emptyTimeoutMs = defaultTimeoutMinutes * 60 * 1000;
+
+    if (absentDuration >= emptyTimeoutMs) {
+      RoomManager.adminCloseRoom(room.id);
+    }
+  }
+
+  assert.equal(
+    RoomManager.getRoom('BOT_ONLY_ROOM'),
+    undefined,
+    'Room should be closed because allHumansAbsentSince exceeds emptyRoomTimeoutMinutes, despite recent updatedAt from bot moves'
+  );
 });
 

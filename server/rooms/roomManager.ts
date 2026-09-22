@@ -2842,6 +2842,7 @@ export class RoomManager {
       if (remainingHumans.length === 0) {
         room.lastSeenAt = Date.now();
         room.updatedAt = Date.now();
+        this.updateHumanAbsentTimestamp(room);
         console.log(`[Room Cleanup] All human players left room ${roomCode}. Inactive countdown started.`);
       }
       return;
@@ -3871,6 +3872,8 @@ export class RoomManager {
     if (!roomCode || this.isTickingRooms.has(roomCode)) return false;
     const room = this.rooms.get(roomCode);
     if (!room) return false;
+
+    this.updateHumanAbsentTimestamp(room);
 
     this.isTickingRooms.add(roomCode);
     try {
@@ -5167,6 +5170,26 @@ export class RoomManager {
     }
   }
 
+  public static updateHumanAbsentTimestamp(room: MultiplayerRoom): void {
+    if (!room || !room.players) return;
+    const connectedHumans = room.players.filter((p) => {
+      if (!p.isHuman || !p.connected) return false;
+      const client = this.clients.get(p.id);
+      if (client && client.socket.readyState !== WebSocket.OPEN) {
+        return false;
+      }
+      return true;
+    });
+
+    if (connectedHumans.length === 0) {
+      if (!room.allHumansAbsentSince) {
+        room.allHumansAbsentSince = Date.now();
+      }
+    } else {
+      room.allHumansAbsentSince = null;
+    }
+  }
+
   /**
    * Periodic room cleanup task:
    * Dynamically removes rooms from memory when all human players have left
@@ -5201,32 +5224,63 @@ export class RoomManager {
           return;
         }
 
+        this.updateHumanAbsentTimestamp(room);
+
         const humanPlayers = (room.players || []).filter((p) => p.isHuman);
         const connectedHumans = humanPlayers.filter((p) => {
           const client = this.clients.get(p.id);
-          return Boolean(p.connected && client && client.socket.readyState === WebSocket.OPEN);
+          if (!p.connected) return false;
+          if (client && client.socket.readyState !== WebSocket.OPEN) return false;
+          return true;
         });
-        const lastActivity = room.lastSeenAt || room.updatedAt || room.createdAt || now;
-        const inactiveDuration = now - lastActivity;
 
         // If at least 1 human is connected, keep open!
         if (connectedHumans.length > 0) {
+          room.allHumansAbsentSince = null;
           return;
         }
 
-        // When 0 humans are connected:
-        // Use lobbyWaitTtlMinutes in LOBBY (default 30m), emptyRoomTimeoutMinutes in other states (default 5m)
-        const activeTimeoutMins = room.status === 'LOBBY' ? lobbyWaitTtlMinutes : defaultTimeoutMinutes;
-        const activeTimeoutMs = activeTimeoutMins * 60 * 1000;
-
-        if (inactiveDuration >= activeTimeoutMs) {
-          console.log(
-            `[Room Cleanup] Auto-closing room ${roomCode} (${room.status}) after ${Math.round(
-              inactiveDuration / 60000
-            )}m without connected humans (threshold: ${activeTimeoutMins}m).`
+        // When 0 connected humans:
+        if (room.status === 'LOBBY') {
+          const hostPlayer = (room.players || []).find(
+            (p) => p.id === (room.originalHostId || room.hostId) && p.isHuman
           );
-          this.adminCloseRoom(roomCode);
-          return;
+          const isHostInLobbyGrace = Boolean(
+            hostPlayer &&
+              !hostPlayer.connected &&
+              hostPlayer.disconnectGraceExpiresAt &&
+              now < hostPlayer.disconnectGraceExpiresAt
+          );
+
+          const lobbyWaitTtlMs = lobbyWaitTtlMinutes * 60 * 1000;
+          const lobbyRefTime = room.hostAbsentSince || room.allHumansAbsentSince || room.lastSeenAt || room.updatedAt || room.createdAt || now;
+          const inactiveDuration = now - lobbyRefTime;
+
+          if (!isHostInLobbyGrace && inactiveDuration >= lobbyWaitTtlMs) {
+            console.log(
+              `[Room Cleanup] Auto-closing LOBBY room ${roomCode} after ${Math.round(
+                inactiveDuration / 60000
+              )}m without connected humans (threshold: ${lobbyWaitTtlMinutes}m).`
+            );
+            this.adminCloseRoom(roomCode);
+            return;
+          }
+        } else {
+          // Non-LOBBY rooms (PLAYING, PARTIE_OVER, MANCHE_OVER) with 0 connected humans:
+          // Use emptyRoomTimeoutMinutes based on allHumansAbsentSince (NOT affected by bot updatedAt)
+          const absentSince = room.allHumansAbsentSince || now;
+          const absentDuration = now - absentSince;
+          const activeTimeoutMs = defaultTimeoutMinutes * 60 * 1000;
+
+          if (absentDuration >= activeTimeoutMs) {
+            console.log(
+              `[Room Cleanup] Auto-closing room ${roomCode} (${room.status}) after ${Math.round(
+                absentDuration / 60000
+              )}m without connected humans (threshold: ${defaultTimeoutMinutes}m, absentSince: ${absentSince}).`
+            );
+            this.adminCloseRoom(roomCode);
+            return;
+          }
         }
       });
 

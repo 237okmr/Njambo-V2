@@ -627,6 +627,7 @@ export interface MultiplayerRoom {
   lastBetIncreaseProposalPartie?: number;
   previousPartieSummary?: PreviousPartieSummary | null;
   instantWinReveal?: InstantWinReveal | null;
+  allHumansAbsentSince?: number | null;
   createdAt: number;
   updatedAt: number;
   lastSeenAt?: number;
