@@ -28,6 +28,9 @@ import {
   getPlayedCardsInRound,
   isDynamicBossCard,
   ALL_BOT_PROFILES,
+  shouldBotAcceptBetIncrease,
+  BOT_BET_INCREASE_AGREE_EMOTES,
+  BOT_BET_INCREASE_DECLINE_EMOTES,
 } from '../utils/ai';
 import { sounds, triggerHaptic } from '../utils/sound';
 import { getKatikaConfigSync, subscribeKatikaConfig } from '../katika/services/katikaService';
@@ -172,6 +175,7 @@ export function useSoloGameEngine({
   const botVoteTimersRef = useRef<NodeJS.Timeout[]>([]);
   const lastBotEmoteTimeRef = useRef<number>(0);
   const botEmoteCountInRoundRef = useRef<number>(0);
+  const hasRolledBetProposalForPartieRef = useRef<boolean>(false);
 
   const clearAllSoloTimers = useCallback(() => {
     if (aiTimerRef.current) {
@@ -339,6 +343,7 @@ export function useSoloGameEngine({
       if (instantWinTimerRef.current) clearTimeout(instantWinTimerRef.current);
       if (dealTimerRef.current) clearTimeout(dealTimerRef.current);
       if (collectTimerRef.current) clearTimeout(collectTimerRef.current);
+      hasRolledBetProposalForPartieRef.current = false;
 
       sounds.playShuffle();
 
@@ -354,8 +359,8 @@ export function useSoloGameEngine({
 
       const currentKatikaCfg = katikaConfigRef.current;
 
-      // Auto stake escalation (Anti-stagnation) - strictly disabled in souverain mode
-      if (effectiveMode !== 'souverain' && currentKatikaCfg.enableAutoBetEscalation !== false && partieNumber > 1) {
+      // Auto stake escalation (Anti-stagnation) - strictly enabled ONLY in souverain mode
+      if (effectiveMode === 'souverain' && currentKatikaCfg.enableAutoBetEscalation !== false && partieNumber > 1) {
         const interval = currentKatikaCfg.autoBetEscalationInterval || 5;
         if ((partieNumber - 1) % interval === 0) {
           const maxMultiplier = currentKatikaCfg.maxAutoBetMultiplier || 4;
@@ -1889,7 +1894,6 @@ export function useSoloGameEngine({
       proposerId: humanPlayer.id,
       proposerName: humanPlayer.name,
       agreedPlayerIds: [humanPlayer.id],
-      declinedPlayerIds: [],
       createdAt: Date.now(),
       expiresAt: Date.now() + 15000,
     };
@@ -1918,27 +1922,11 @@ export function useSoloGameEngine({
           }
 
           const diff = prev.aiDifficulty || 'NORMAL';
-          const maxSafeBet = player.capital * 0.40;
-          let agree = true;
-
-          if (proposedBet > maxSafeBet) {
-            agree = false;
-          } else {
-            const roll = Math.random();
-            if (diff === 'EASY') {
-              agree = roll < 0.95;
-            } else if (player.aiStrategy === 'AGGRESSIVE_LEADER' || player.aiStrategy === 'KORA_HUNTER') {
-              agree = roll < 0.85;
-            } else if (player.aiStrategy === 'CONSERVATIVE') {
-              agree = roll < 0.45;
-            } else {
-              agree = roll < 0.70;
-            }
-          }
+          const agree = shouldBotAcceptBetIncrease(proposedBet, player.capital, player.aiStrategy, diff);
 
           const emotes = agree
-            ? ["Ça me va, on monte !", "Je te suis direct !", "On augmente l’enjeu, pas de peur !", "Mise acceptée, pose ça !", "D’accord, on y va !"][Math.floor(Math.random() * 5)]
-            : ["C’est trop cher pour moi, je refuse !", "C’est trop risqué, on reste calme.", "Pas question, je ne te suis pas là-bas !", "Tu veux me piéger ? Mise refusée !", "Je refuse 👎"][Math.floor(Math.random() * 5)];
+            ? BOT_BET_INCREASE_AGREE_EMOTES[Math.floor(Math.random() * BOT_BET_INCREASE_AGREE_EMOTES.length)]
+            : BOT_BET_INCREASE_DECLINE_EMOTES[Math.floor(Math.random() * BOT_BET_INCREASE_DECLINE_EMOTES.length)];
           
           sendEmote(emotes, agree ? '👍' : '👎', index);
 
@@ -2015,6 +2003,9 @@ export function useSoloGameEngine({
     if (gameState.phase !== 'PARTIE_OVER') return;
     if (gameState.soloBetIncreaseMode !== 'symetrique') return;
     if (gameState.betIncreaseProposal) return;
+    if (hasRolledBetProposalForPartieRef.current) return;
+
+    hasRolledBetProposalForPartieRef.current = true;
 
     const roll = Math.random();
     if (roll > 0.25) return; // 25% trigger probability per game end
@@ -2063,7 +2054,6 @@ export function useSoloGameEngine({
               proposerId: maxBot.id,
               proposerName: maxBot.name,
               agreedPlayerIds,
-              declinedPlayerIds: [],
               createdAt: Date.now(),
               expiresAt: Date.now() + 15000,
             },

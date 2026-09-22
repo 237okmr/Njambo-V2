@@ -6,6 +6,7 @@ import { getEngineConfig, updateEngineConfig as applyEngineConfigUpdate, KatikaE
 import { pushService, buildGameUrl } from '../pushService';
 import { APP_VERSION } from '../../src/version';
 import { verifyFirebaseIdToken } from '../firebaseAdmin';
+import { shouldBotAcceptBetIncrease, BOT_BET_INCREASE_AGREE_EMOTES, BOT_BET_INCREASE_DECLINE_EMOTES } from '../../src/utils/ai';
 
 export interface ConnectedClient {
   socket: WebSocket;
@@ -62,7 +63,18 @@ export class RoomManager {
     this.rooms.set(roomCode, room);
   }
 
+  private static botBetIncreaseTimers = new Map<string, NodeJS.Timeout[]>();
+
+  public static clearBotBetIncreaseTimers(roomCode: string): void {
+    const timers = this.botBetIncreaseTimers.get(roomCode);
+    if (timers) {
+      timers.forEach((t) => clearTimeout(t));
+      this.botBetIncreaseTimers.delete(roomCode);
+    }
+  }
+
   public static clearRoomForTest(roomCode: string): void {
+    this.clearBotBetIncreaseTimers(roomCode);
     const state = this.roomStates.get(roomCode);
     if (state) {
       if (state.autoStartTimer) {
@@ -665,6 +677,7 @@ export class RoomManager {
   private static handleVoteStateOnDisconnect(room: MultiplayerRoom, playerId: string): void {
     // 1. Bet Increase Proposal
     if (room.betIncreaseProposal) {
+      this.clearBotBetIncreaseTimers(room.id);
       if (room.betIncreaseProposal.proposerId === playerId) {
         if (room.betIncreaseProposal.previousReadyStates) {
           const prev = room.betIncreaseProposal.previousReadyStates;
@@ -3045,6 +3058,7 @@ export class RoomManager {
 
     const proposedBet = rawProposed;
     const activeHumans = activePlayers.filter((p) => p.isHuman && p.connected);
+    const activeBots = activePlayers.filter((p) => !p.isHuman);
 
     // Save previous ready states before proposal
     const previousReadyStates: Record<string, boolean> = {};
@@ -3059,8 +3073,8 @@ export class RoomManager {
       state.nextPartieTimer = null;
     }
 
-    // If solo human player with bots, accept immediately
-    if (activeHumans.length <= 1) {
+    // If solo human player with NO active bots, accept immediately
+    if (activeHumans.length <= 1 && activeBots.length === 0) {
       room.baseBet = proposedBet;
       if (room.gameState) {
         room.gameState.baseBet = proposedBet;
@@ -3079,12 +3093,13 @@ export class RoomManager {
       room.activeEmotes = [...(room.activeEmotes || []), emote].slice(-5);
       room.updatedAt = Date.now();
       this.broadcastRoomState(client.roomCode);
-    if (client.roomCode) this.evaluateAutoStart(client.roomCode);
+      if (client.roomCode) this.evaluateAutoStart(client.roomCode);
       return;
     }
 
+    const proposalId = 'prop_' + Math.random().toString(36).substring(2, 9);
     room.betIncreaseProposal = {
-      id: 'prop_' + Math.random().toString(36).substring(2, 9),
+      id: proposalId,
       proposedBet,
       proposerId: client.playerId,
       proposerName: player.name,
@@ -3097,6 +3112,157 @@ export class RoomManager {
     room.updatedAt = Date.now();
     this.broadcastRoomState(client.roomCode);
     if (client.roomCode) this.evaluateAutoStart(client.roomCode);
+
+    // Trigger asynchronous voting for active bots
+    if (activeBots.length > 0) {
+      this.triggerBotBetIncreaseVotes(client.roomCode, proposalId);
+    }
+  }
+
+  private static triggerBotBetIncreaseVotes(roomCode: string, proposalId: string): void {
+    const room = this.rooms.get(roomCode);
+    if (!room || !room.betIncreaseProposal || room.betIncreaseProposal.id !== proposalId) return;
+
+    const activeBots = (room.players || []).filter(
+      (p) => !p.isHuman && !p.isEliminated && !p.isForfeit && !p.isSpectator
+    );
+    if (activeBots.length === 0) return;
+
+    this.clearBotBetIncreaseTimers(roomCode);
+
+    const timers: NodeJS.Timeout[] = [];
+    const proposedBet = room.betIncreaseProposal.proposedBet;
+
+    activeBots.forEach((botPlayer) => {
+      const delay = 800 + Math.random() * 1200; // 800 to 2000 ms
+      const timer = setTimeout(() => {
+        const currentRoom = this.rooms.get(roomCode);
+        if (
+          !currentRoom ||
+          !currentRoom.betIncreaseProposal ||
+          currentRoom.betIncreaseProposal.id !== proposalId
+        ) {
+          return;
+        }
+
+        const bot = (currentRoom.players || []).find(
+          (p) => p.id === botPlayer.id && !p.isHuman && !p.isEliminated && !p.isForfeit
+        );
+        if (!bot) return;
+
+        const diff = currentRoom.gameState?.aiDifficulty || 'NORMAL';
+        const agree = shouldBotAcceptBetIncrease(proposedBet, bot.capital, bot.aiStrategy, diff);
+
+        const chosenEmoteText = agree
+          ? BOT_BET_INCREASE_AGREE_EMOTES[Math.floor(Math.random() * BOT_BET_INCREASE_AGREE_EMOTES.length)]
+          : BOT_BET_INCREASE_DECLINE_EMOTES[Math.floor(Math.random() * BOT_BET_INCREASE_DECLINE_EMOTES.length)];
+
+        const botEmote: EmoteMessage = {
+          id: 'em_' + Math.random().toString(36).substring(2, 9),
+          playerId: bot.id,
+          playerName: bot.name,
+          text: chosenEmoteText,
+          emoji: agree ? '👍' : '👎',
+          timestamp: Date.now(),
+          isBot: true,
+        };
+        currentRoom.activeEmotes = [...(currentRoom.activeEmotes || []), botEmote].slice(-5);
+
+        if (!agree) {
+          // Bot refused the proposal
+          this.clearBotBetIncreaseTimers(roomCode);
+          currentRoom.roundEndAutoAdvanceAt = null;
+          if (currentRoom.betIncreaseProposal.previousReadyStates) {
+            const prev = currentRoom.betIncreaseProposal.previousReadyStates;
+            (currentRoom.players || []).forEach((p) => {
+              p.readyForNextPartie = prev[p.id] ?? p.readyForNextPartie;
+            });
+          }
+          currentRoom.betIncreaseProposal = null;
+
+          const systemEmote: EmoteMessage = {
+            id: 'em_' + Math.random().toString(36).substring(2, 9),
+            playerId: bot.id,
+            playerName: bot.name,
+            text: `${bot.name} a refusé la hausse. La mise reste à ${currentRoom.baseBet} 🪙. Attente des joueurs...`,
+            emoji: '✋',
+            timestamp: Date.now(),
+            isBot: true,
+          };
+          currentRoom.activeEmotes = [...(currentRoom.activeEmotes || []), systemEmote].slice(-5);
+          currentRoom.updatedAt = Date.now();
+          this.broadcastRoomState(roomCode);
+          if (roomCode) this.evaluateAutoStart(roomCode);
+          return;
+        }
+
+        // Bot agreed
+        if (!currentRoom.betIncreaseProposal.agreedPlayerIds.includes(bot.id)) {
+          currentRoom.betIncreaseProposal.agreedPlayerIds.push(bot.id);
+        }
+
+        const activePlayers = (currentRoom.players || []).filter(
+          (p) => !p.isEliminated && !p.isForfeit && !p.isSpectator
+        );
+        const allAgreed = activePlayers.every((p) =>
+          currentRoom.betIncreaseProposal!.agreedPlayerIds.includes(p.id)
+        );
+
+        if (allAgreed) {
+          this.clearBotBetIncreaseTimers(roomCode);
+          const newBet = currentRoom.betIncreaseProposal.proposedBet;
+          currentRoom.baseBet = newBet;
+          if (currentRoom.gameState) {
+            currentRoom.gameState.baseBet = newBet;
+          }
+          currentRoom.betIncreaseProposal = null;
+
+          (currentRoom.players || []).forEach((p) => {
+            if (!p.isEliminated && !p.isSpectator) {
+              p.readyForNextPartie = true;
+            }
+          });
+
+          const successEmote: EmoteMessage = {
+            id: 'em_' + Math.random().toString(36).substring(2, 9),
+            playerId: 'system',
+            playerName: 'Table',
+            text: `⚡ Accord unanime ! La mise passe à ${newBet} 🪙 dès la prochaine partie !`,
+            emoji: '🔥',
+            timestamp: Date.now(),
+            isBot: true,
+          };
+          currentRoom.activeEmotes = [...(currentRoom.activeEmotes || []), successEmote].slice(-5);
+          currentRoom.updatedAt = Date.now();
+          this.broadcastRoomState(roomCode);
+          if (roomCode) this.evaluateAutoStart(roomCode);
+
+          // Advance to next partie if all ready
+          const activeHumans = activePlayers.filter((p) => p.isHuman && p.connected);
+          const allHumansReady = activeHumans.every((p) => p.readyForNextPartie);
+          if (allHumansReady && (currentRoom.status === 'PARTIE_OVER' || currentRoom.gameState?.phase === 'PARTIE_OVER')) {
+            const state = this.getOrCreateActiveState(roomCode, currentRoom);
+            ServerGameEngine.advanceToNextPartie(
+              currentRoom,
+              (updatedRoom) => {
+                this.broadcastRoomState(updatedRoom.id);
+                this.evaluateAutoStart(updatedRoom.id);
+              },
+              state
+            );
+          }
+          return;
+        }
+
+        currentRoom.updatedAt = Date.now();
+        this.broadcastRoomState(roomCode);
+        if (roomCode) this.evaluateAutoStart(roomCode);
+      }, delay);
+
+      timers.push(timer);
+    });
+
+    this.botBetIncreaseTimers.set(roomCode, timers);
   }
 
   private static handleRespondBetIncrease(client: ConnectedClient, msg: ClientMessage): void {
@@ -3121,11 +3287,12 @@ export class RoomManager {
         room.betIncreaseProposal.agreedPlayerIds.push(client.playerId);
       }
 
-      // Requires 100% agreement among all active connected human players
-      const activeHumans = (room.players || []).filter((p) => p.isHuman && !p.isEliminated && !p.isForfeit && !p.isSpectator && p.connected);
-      const allAgreed = activeHumans.every((h) => room.betIncreaseProposal!.agreedPlayerIds.includes(h.id));
+      // Requires 100% agreement among all active players (humans + bots)
+      const activePlayers = (room.players || []).filter((p) => !p.isEliminated && !p.isForfeit && !p.isSpectator);
+      const allAgreed = activePlayers.every((p) => room.betIncreaseProposal!.agreedPlayerIds.includes(p.id));
 
       if (allAgreed) {
+        this.clearBotBetIncreaseTimers(client.roomCode);
         const newBet = room.betIncreaseProposal.proposedBet;
         room.baseBet = newBet;
         if (room.gameState) {
@@ -3135,7 +3302,7 @@ export class RoomManager {
 
         // Restore / confirm ready status for next partie
         (room.players || []).forEach((p) => {
-          if (p.isHuman && !p.isEliminated && !p.isSpectator && p.connected) {
+          if (!p.isEliminated && !p.isSpectator) {
             p.readyForNextPartie = true;
           }
         });
@@ -3152,17 +3319,18 @@ export class RoomManager {
         room.activeEmotes = [...(room.activeEmotes || []), emote].slice(-5);
         room.updatedAt = Date.now();
         this.broadcastRoomState(client.roomCode);
-    if (client.roomCode) this.evaluateAutoStart(client.roomCode);
+        if (client.roomCode) this.evaluateAutoStart(client.roomCode);
 
         // Advance to next partie if all ready
-        const allReadyNow = activeHumans.every((p) => p.readyForNextPartie);
-        if (allReadyNow && (room.status === 'PARTIE_OVER' || room.gameState?.phase === 'PARTIE_OVER')) {
+        const activeHumans = activePlayers.filter((p) => p.isHuman && p.connected);
+        const allHumansReady = activeHumans.every((p) => p.readyForNextPartie);
+        if (allHumansReady && (room.status === 'PARTIE_OVER' || room.gameState?.phase === 'PARTIE_OVER')) {
           const state = this.getOrCreateActiveState(client.roomCode, room);
           ServerGameEngine.advanceToNextPartie(
             room,
             (updatedRoom) => {
               this.broadcastRoomState(updatedRoom.id);
-          this.evaluateAutoStart(updatedRoom.id);
+              this.evaluateAutoStart(updatedRoom.id);
             },
             state
           );
@@ -3171,11 +3339,15 @@ export class RoomManager {
       }
     } else {
       // Declined by player
+      this.clearBotBetIncreaseTimers(client.roomCode);
       const declinedBy = player.name;
       room.roundEndAutoAdvanceAt = null; // Kill auto-advance
-      (room.players || []).forEach((p) => {
-        p.readyForNextPartie = false; // Force manual ready
-      });
+      if (room.betIncreaseProposal.previousReadyStates) {
+        const prev = room.betIncreaseProposal.previousReadyStates;
+        (room.players || []).forEach((p) => {
+          p.readyForNextPartie = prev[p.id] ?? p.readyForNextPartie;
+        });
+      }
       room.betIncreaseProposal = null;
 
       const emote: EmoteMessage = {
@@ -3203,10 +3375,14 @@ export class RoomManager {
     if (!room.betIncreaseProposal) return;
 
     if (room.betIncreaseProposal.proposerId === client.playerId) {
+      this.clearBotBetIncreaseTimers(client.roomCode);
       room.roundEndAutoAdvanceAt = null; // Kill auto-advance
-      (room.players || []).forEach((p) => {
-        p.readyForNextPartie = false; // Force manual ready
-      });
+      if (room.betIncreaseProposal.previousReadyStates) {
+        const prev = room.betIncreaseProposal.previousReadyStates;
+        (room.players || []).forEach((p) => {
+          p.readyForNextPartie = prev[p.id] ?? p.readyForNextPartie;
+        });
+      }
       room.betIncreaseProposal = null;
       room.updatedAt = Date.now();
       this.broadcastRoomState(client.roomCode);
@@ -3708,6 +3884,7 @@ export class RoomManager {
         room.betIncreaseProposal.expiresAt &&
         now >= room.betIncreaseProposal.expiresAt
       ) {
+        this.clearBotBetIncreaseTimers(roomCode);
         if (room.betIncreaseProposal.previousReadyStates) {
           const prev = room.betIncreaseProposal.previousReadyStates;
           (room.players || []).forEach((p) => {

@@ -1665,3 +1665,52 @@ export function getBotPlayReaction(params: {
 
   return null;
 }
+
+export const BOT_BET_INCREASE_AGREE_EMOTES = [
+  "Ça me va, on monte !",
+  "Je te suis direct !",
+  "On augmente l’enjeu, pas de peur !",
+  "Mise acceptée, pose ça !",
+  "D’accord, on y va !",
+];
+
+export const BOT_BET_INCREASE_DECLINE_EMOTES = [
+  "C’est trop cher pour moi, je refuse !",
+  "C’est trop risqué, on reste calme.",
+  "Pas question, je ne te suis pas là-bas !",
+  "Tu veux me piéger ? Mise refusée !",
+  "Je refuse 👎",
+];
+
+/**
+ * Évalue le vote d'un bot lors d'une proposition de hausse de mise.
+ * - Refus automatique si proposedBet > 40% du capital du bot (botCapital * 0.40).
+ * - Sinon, probabilité selon la difficulté et la personnalité (aiStrategy) du bot :
+ *   - Difficulté 'EASY' : 95% d'acceptation
+ *   - 'AGGRESSIVE_LEADER' ou 'KORA_HUNTER' : 85% d'acceptation
+ *   - 'CONSERVATIVE' : 45% d'acceptation (55% de refus)
+ *   - Par défaut : 70% d'acceptation
+ */
+export function shouldBotAcceptBetIncrease(
+  proposedBet: number,
+  botCapital: number,
+  botStrategy?: AIStrategy,
+  aiDifficulty?: AIDifficulty
+): boolean {
+  const maxSafeBet = botCapital * 0.40;
+  if (proposedBet > maxSafeBet) {
+    return false;
+  }
+  const roll = Math.random();
+  if (aiDifficulty === 'EASY') {
+    return roll < 0.95;
+  }
+  if (botStrategy === 'AGGRESSIVE_LEADER' || botStrategy === 'KORA_HUNTER') {
+    return roll < 0.85;
+  }
+  if (botStrategy === 'CONSERVATIVE') {
+    return roll < 0.45;
+  }
+  return roll < 0.70;
+}
+

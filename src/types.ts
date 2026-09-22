@@ -449,7 +449,6 @@ export interface BetIncreaseProposal {
   proposerId: string;
   proposerName: string;
   agreedPlayerIds: string[]; // Player IDs who voted "Yes"
-  declinedPlayerIds?: string[]; // Player IDs who voted "No"
   createdAt: number;
   expiresAt?: number; // 15s expiration timestamp
   previousReadyStates?: Record<string, boolean>; // Ready states before proposal

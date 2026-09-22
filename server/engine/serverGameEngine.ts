@@ -1420,9 +1420,9 @@ export class ServerGameEngine {
 
     const nextPartieCount = (gs.partieCount || 1) + 1;
 
-    // Automatic Stake Escalation (Anti-stagnation)
+    // Automatic Stake Escalation (Anti-stagnation) - strictly disabled in multiplayer unless explicitly authorized
     const engineConfig = this.getConfig(activeRoomState);
-    if (engineConfig.enableAutoBetEscalation !== false && nextPartieCount > 1) {
+    if (engineConfig.enableMultiplayerAutoBetEscalation === true && engineConfig.enableAutoBetEscalation !== false && nextPartieCount > 1) {
       const interval = engineConfig.autoBetEscalationInterval || 5;
       if ((nextPartieCount - 1) % interval === 0) {
         const initialBet = room.initialBaseBet || gs.initialBaseBet || room.baseBet || 10;

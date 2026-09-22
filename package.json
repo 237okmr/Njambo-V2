@@ -1,7 +1,7 @@
 {
   "name": "react-example",
   "private": true,
-  "version": "2.5.274",
+  "version": "2.5.278",
   "type": "module",
   "scripts": {
     "version:sync": "node scripts/sync-version.js",
@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "test": "node --import tsx --test src/services/leaderboardEligibility.test.ts src/utils/gameRules.test.ts src/utils/settlement.test.ts server/engine/serverGameEngine.settlement.test.ts server/engine/relayRule.test.ts server/engine/autoStart.test.ts server/pushService.policy.test.ts server/rooms/roomManagement.test.ts server/aiAdminChat.test.ts src/katika/visual/layoutEngine.test.ts src/katika/visual/captionEngine.test.ts src/katika/visual/validateSpec.test.ts src/katika/data/memeBank.test.ts && node --test scripts/sw-push.test.cjs"
+    "test": "node --import tsx --test src/services/leaderboardEligibility.test.ts src/utils/gameRules.test.ts src/utils/settlement.test.ts server/engine/serverGameEngine.settlement.test.ts server/engine/relayRule.test.ts server/engine/autoStart.test.ts server/engine/autoBetEscalation.test.ts server/rooms/botBetIncrease.test.ts server/pushService.policy.test.ts server/rooms/roomManagement.test.ts server/aiAdminChat.test.ts src/katika/visual/layoutEngine.test.ts src/katika/visual/captionEngine.test.ts src/katika/visual/validateSpec.test.ts src/katika/data/memeBank.test.ts && node --test scripts/sw-push.test.cjs"
   },
   "dependencies": {
     "@fontsource/anton": "^5.3.0",

@@ -228,7 +228,6 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                 </span>
               </div>
 
-
             </div>
           </div>
         ) : (
@@ -237,6 +236,26 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
             <span>Prêt à jouer</span>
           </div>
         )}
+
+        {/* Bet Increase Proposal Widget (rendered in header ONLY during active play, masked during PARTIE_OVER to prevent duplication with EndRoundModal) */}
+        {betIncreaseProposal &&
+          activeGameState.phase !== 'PARTIE_OVER' &&
+          onProposeBetIncrease &&
+          onRespondBetIncrease &&
+          onCancelBetIncrease && (
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 w-full max-w-md px-2 pointer-events-auto">
+              <BetIncreaseProposalWidget
+                currentBaseBet={activeGameState.baseBet || 10}
+                proposal={betIncreaseProposal}
+                players={multiplayerPlayers}
+                localPlayerId={localPlayerId}
+                onPropose={onProposeBetIncrease}
+                onRespond={onRespondBetIncrease}
+                onCancel={onCancelBetIncrease}
+                compact
+              />
+            </div>
+          )}
 
         {/* 3. RIGHT SECTION: Predictable Tactile Controls (Profile + Sound + Menu) */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">

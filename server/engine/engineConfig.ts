@@ -34,6 +34,7 @@ export interface KatikaEngineConfig {
   allowAutoAdvance: boolean;
   emptyRoomTimeoutMinutes?: number;
   enableAutoBetEscalation?: boolean;
+  enableMultiplayerAutoBetEscalation?: boolean;
   autoBetEscalationInterval?: number;
   autoBetEscalationRatePct?: number;
   maxAutoBetMultiplier?: number;
@@ -75,6 +76,7 @@ export const DEFAULT_ENGINE_CONFIG: KatikaEngineConfig = {
   globalRakePct: 0,
   allowAutoAdvance: false,
   enableAutoBetEscalation: true,
+  enableMultiplayerAutoBetEscalation: false,
   autoBetEscalationInterval: 5,
   autoBetEscalationRatePct: 50,
   maxAutoBetMultiplier: 4,
@@ -122,6 +124,10 @@ export function updateEngineConfig(patch: Partial<KatikaEngineConfig>): KatikaEn
 
   if (patch.joinPushEnabled !== undefined) {
     validatedPatch.joinPushEnabled = Boolean(patch.joinPushEnabled);
+  }
+
+  if (patch.enableMultiplayerAutoBetEscalation !== undefined) {
+    validatedPatch.enableMultiplayerAutoBetEscalation = Boolean(patch.enableMultiplayerAutoBetEscalation);
   }
 
   activeEngineConfig = { ...activeEngineConfig, ...validatedPatch };
