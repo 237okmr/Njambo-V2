@@ -43,6 +43,8 @@ import {
   Inbox,
   ShieldAlert,
   Activity,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -1169,6 +1171,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
 
   // Lobby calculations
   const [alertSent, setAlertSent] = useState<boolean>(false);
+  const [isQuickMatchExpanded, setIsQuickMatchExpanded] = useState(false);
   const isHost = room ? room.hostId === localPlayerId : false;
   const hostPlayer = room?.players.find((p) => p.isHost || p.id === room.hostId);
   const isHostDisconnected = hostPlayer ? !hostPlayer.connected : true;
@@ -1254,6 +1257,8 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
     ],
     [publicRooms.length, receivedInvitations.length]
   );
+
+  const showExpanded = isQuickMatchExpanded || isQuickMatching;
 
   if (!isOpen) return null;
 
@@ -2315,7 +2320,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
               </div>
 
               {/* Action Card 1 : Rejoindre par Code */}
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-md flex items-center justify-between gap-3">
+              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-md flex flex-col gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0">
                     <KeyRound className="w-5 h-5 text-amber-400" />
@@ -2326,26 +2331,75 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  id="btn-open-join-code-modal"
-                  onClick={() => setShowJoinCodeModal(true)}
-                  className="h-10 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 text-xs font-black transition active:scale-95 cursor-pointer shrink-0"
-                >
-                  Entrer Code
-                </button>
+                {hubErrorMsg && (
+                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-bold flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 shrink-0" />
+                      <span>{hubErrorMsg}</span>
+                    </div>
+                    <button type="button" onClick={() => setHubErrorMsg(null)} className="text-rose-400 hover:text-white p-1">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    disabled={isLoading}
+                    maxLength={6}
+                    value={roomCodeInput}
+                    onChange={(e) => setRoomCodeInput(e.target.value.toUpperCase())}
+                    placeholder="EX: K8T4"
+                    className="flex-1 h-12 px-4 rounded-xl bg-slate-950 border border-slate-700 text-white font-black text-lg text-center tracking-[0.25em] uppercase focus:outline-none focus:border-amber-400 disabled:opacity-60"
+                  />
+                  <button
+                    type="button"
+                    disabled={isLoading}
+                    onClick={handlePasteClipboard}
+                    title="Coller depuis le presse-papier"
+                    className="h-12 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-bold flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                  >
+                    <ClipboardPaste className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {isLoading && joinWaitAction?.type === 'join' ? (
+                  <JoinProgressIndicator
+                    variant="card"
+                    roomCode={roomCodeInput}
+                    elapsedSeconds={joinWaitAction.elapsedSeconds}
+                    onCancel={handleCancelPendingAction}
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    disabled={isLoading || !roomCodeInput.trim()}
+                    onClick={() => handleJoin()}
+                    className="w-full h-12 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm transition active:scale-95 cursor-pointer shadow-lg shadow-amber-500/20 disabled:opacity-50"
+                  >
+                    Rejoindre la Table
+                  </button>
+                )}
               </div>
 
               {/* Card 3 : Matchmaking Instantané (Partie Rapide - Carte Réduite) */}
               <div className="p-4 rounded-2xl bg-slate-900/90 border border-amber-500/30 shadow-md flex flex-col gap-3">
-                <div className="flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsQuickMatchExpanded((prev) => !prev);
+                    triggerHaptic('light');
+                  }}
+                  className="w-full flex items-center justify-between gap-3 text-left cursor-pointer group"
+                >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center shrink-0">
                       <Zap className="w-5 h-5 text-amber-400 fill-amber-400" />
                     </div>
                     <div className="flex flex-col min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <h3 className="text-xs sm:text-sm font-black text-white truncate">Partie Rapide</h3>
+                        <h3 className="text-xs sm:text-sm font-black text-white truncate group-hover:text-amber-300 transition-colors">Partie Rapide</h3>
                         <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
                           Matchmaking
                         </span>
@@ -2355,99 +2409,109 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                       </p>
                     </div>
                   </div>
-                </div>
 
-                {/* Jetons Bet Selector Pills */}
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                    <Coins className="w-3.5 h-3.5 text-amber-400" /> Choisir la mise en Jetons :
-                  </span>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[10, 25, 50].map((bet, idx) => (
+                  <ChevronDown
+                    className={`w-5 h-5 text-slate-400 transition-transform duration-200 shrink-0 group-hover:text-amber-400 ${
+                      showExpanded ? 'rotate-180 text-amber-400' : 'rotate-0'
+                    }`}
+                  />
+                </button>
+
+                {showExpanded && (
+                  <>
+                    {/* Jetons Bet Selector Pills */}
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                        <Coins className="w-3.5 h-3.5 text-amber-400" /> Choisir la mise en Jetons :
+                      </span>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[10, 25, 50].map((bet, idx) => (
+                          <button
+                            key={`${bet}_${idx}`}
+                            type="button"
+                            onClick={() => {
+                              setQuickMatchBet(bet);
+                              triggerHaptic('light');
+                            }}
+                            className={`h-8 rounded-xl text-xs font-black transition cursor-pointer flex items-center justify-center gap-1 ${
+                              quickMatchBet === bet
+                                ? 'bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/20'
+                                : 'bg-slate-950 text-slate-300 border border-slate-800 hover:bg-slate-800'
+                            }`}
+                          >
+                            <span>{bet}</span>
+                            <span className="text-[10px] opacity-80">🪙</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Quick Match Action / Countdown / Progressive Wait */}
+                    {isQuickMatching ? (
+                      quickMatchTimer > 0 ? (
+                        <div className="flex flex-col gap-2">
+                          <div className="w-full h-11 rounded-xl bg-amber-500/20 border border-amber-500/50 flex items-center justify-between px-3">
+                            <div className="flex items-center gap-2">
+                              <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
+                              <span className="text-xs font-black text-amber-300">
+                                Recherche d'une table ({quickMatchTimer}s)...
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={handleCancelQuickMatch}
+                              className="text-xs font-bold text-slate-400 hover:text-white underline cursor-pointer"
+                            >
+                              Annuler
+                            </button>
+                          </div>
+                          <span className="text-[10px] text-slate-400 text-center">
+                            Si aucune table humaine n'est trouvée, lancement automatique avec bots.
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-2">
+                          <JoinProgressIndicator
+                            variant="card"
+                            elapsedSeconds={joinWaitAction?.elapsedSeconds ?? 0}
+                            onCancel={handleCancelQuickMatch}
+                          />
+                        </div>
+                      )
+                    ) : (
                       <button
-                        key={`${bet}_${idx}`}
                         type="button"
-                        onClick={() => {
-                          setQuickMatchBet(bet);
-                          triggerHaptic('light');
-                        }}
-                        className={`h-8 rounded-xl text-xs font-black transition cursor-pointer flex items-center justify-center gap-1 ${
-                          quickMatchBet === bet
-                            ? 'bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/20'
-                            : 'bg-slate-950 text-slate-300 border border-slate-800 hover:bg-slate-800'
-                        }`}
+                        id="btn-quick-play-hero"
+                        onClick={handleStartQuickMatch}
+                        className="w-full h-10 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-300 text-slate-950 text-xs font-black flex items-center justify-center gap-2 shadow-md shadow-amber-500/20 transition active:scale-98 cursor-pointer"
                       >
-                        <span>{bet}</span>
-                        <span className="text-[10px] opacity-80">🪙</span>
+                        <Play className="w-3.5 h-3.5 fill-slate-950" />
+                        <span>Lancer la Recherche ({quickMatchBet} Jetons 🪙)</span>
                       </button>
-                    ))}
-                  </div>
-                </div>
+                    )}
 
-                {/* Quick Match Action / Countdown / Progressive Wait */}
-                {isQuickMatching ? (
-                  quickMatchTimer > 0 ? (
-                    <div className="flex flex-col gap-2">
-                      <div className="w-full h-11 rounded-xl bg-amber-500/20 border border-amber-500/50 flex items-center justify-between px-3">
-                        <div className="flex items-center gap-2">
-                          <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
-                          <span className="text-xs font-black text-amber-300">
-                            Recherche d'une table ({quickMatchTimer}s)...
+                    {!isLoggedIn && (
+                      <div className="pt-2 border-t border-white/[0.08] flex items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <ShieldCheck className="w-3.5 h-3.5 text-amber-400/80 shrink-0" />
+                          <span className="text-[11px] text-slate-300 truncate">
+                            Mode Invité · Victoires non inscrites au Palmarès
                           </span>
                         </div>
                         <button
                           type="button"
-                          onClick={handleCancelQuickMatch}
-                          className="text-xs font-bold text-slate-400 hover:text-white underline cursor-pointer"
+                          id="btn-quick-match-google-link"
+                          disabled={isAuthLoading}
+                          onClick={handleGoogleSignIn}
+                          className="text-[11px] font-bold text-amber-300 hover:text-amber-200 underline flex items-center gap-1 shrink-0 cursor-pointer disabled:opacity-50"
+                          title="Lier votre compte Google pour inscrire vos victoires au classement"
                         >
-                          Annuler
+                          <GoogleIcon className="w-3 h-3" />
+                          <span>{isAuthLoading ? '...' : 'Sauvegarder'}</span>
                         </button>
                       </div>
-                      <span className="text-[10px] text-slate-400 text-center">
-                        Si aucune table humaine n'est trouvée, lancement automatique avec bots.
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-2">
-                      <JoinProgressIndicator
-                        variant="card"
-                        elapsedSeconds={joinWaitAction?.elapsedSeconds ?? 0}
-                        onCancel={handleCancelQuickMatch}
-                      />
-                    </div>
-                  )
-                ) : (
-                  <button
-                    type="button"
-                    id="btn-quick-play-hero"
-                    onClick={handleStartQuickMatch}
-                    className="w-full h-10 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-300 text-slate-950 text-xs font-black flex items-center justify-center gap-2 shadow-md shadow-amber-500/20 transition active:scale-98 cursor-pointer"
-                  >
-                    <Play className="w-3.5 h-3.5 fill-slate-950" />
-                    <span>Lancer la Recherche ({quickMatchBet} Jetons 🪙)</span>
-                  </button>
-                )}
-
-                {!isLoggedIn && (
-                  <div className="pt-2 border-t border-white/[0.08] flex items-center justify-between gap-2 text-xs">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <ShieldCheck className="w-3.5 h-3.5 text-amber-400/80 shrink-0" />
-                      <span className="text-[11px] text-slate-300 truncate">
-                        Mode Invité · Victoires non inscrites au Palmarès
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      id="btn-quick-match-google-link"
-                      disabled={isAuthLoading}
-                      onClick={handleGoogleSignIn}
-                      className="text-[11px] font-bold text-amber-300 hover:text-amber-200 underline flex items-center gap-1 shrink-0 cursor-pointer disabled:opacity-50"
-                      title="Lier votre compte Google pour inscrire vos victoires au classement"
-                    >
-                      <GoogleIcon className="w-3 h-3" />
-                      <span>{isAuthLoading ? '...' : 'Sauvegarder'}</span>
-                    </button>
-                  </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
