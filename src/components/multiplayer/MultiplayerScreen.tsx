@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { getPublicParamNumber } from '../../services/publicConfig';
+import { getTurnTimerChoices } from '../../../server/engine/engineParams';
 import {
   Users,
   Globe,
@@ -196,7 +198,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
   const [fillWithBots, setFillWithBots] = useState<boolean>(false); // Default: wait for humans unless toggled
   const [baseBet, setBaseBet] = useState<number>(10);
   const [initialCapital, setInitialCapital] = useState<number>(100);
-  const [turnTimerSeconds, setTurnTimerSeconds] = useState<number>(15);
+  const [turnTimerSeconds, setTurnTimerSeconds] = useState<number>(() => getPublicParamNumber('turnTimerSeconds'));
   const [enableDoubleKora, setEnableDoubleKora] = useState<boolean>(true);
   const [enableUnder21, setEnableUnder21] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -888,7 +890,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
         fillWithBots: false,
         baseBet: 10,
         initialCapital: 100,
-        turnTimerSeconds: 15,
+        turnTimerSeconds: getPublicParamNumber('turnTimerSeconds'),
         enableDoubleKora: true,
         enableUnder21: true,
         isPublic: false,
@@ -1203,7 +1205,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
       : connectedHumansCount >= roomMaxCapacity && allGuestsReady
     : false;
   const missingHumansToStart = Math.max(0, roomMaxCapacity - connectedHumansCount);
-  const currentTimer = room ? room.turnTimerSeconds ?? 15 : 15;
+  const currentTimer = room ? room.turnTimerSeconds ?? getPublicParamNumber('turnTimerSeconds') : getPublicParamNumber('turnTimerSeconds');
   const hasEmptySeats = seatedPlayers.length < roomMaxCapacity;
 
   // Filtered Public Rooms combining Quick Pillars and Advanced Bottom Sheet
@@ -3837,7 +3839,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
               <div className="flex flex-col gap-1">
                 <span className="text-[11px] text-slate-400 font-bold">Timer de Tour</span>
                 <div className="grid grid-cols-3 gap-1.5">
-                  {[10, 15, 20].map((t, idx) => (
+                  {getTurnTimerChoices(getPublicParamNumber('turnTimerSeconds')).map((t, idx) => (
                     <button
                       key={`${t}_${idx}`}
                       type="button"

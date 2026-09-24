@@ -2,12 +2,10 @@ import { PARAM_BY_KEY, clampParamValue, getParamDefaults } from './engineParams'
 
 export interface KatikaEngineConfig {
   turnTimerSeconds: number;
-  reconnectGracePeriodSeconds: number;
   aiRelayGraceSeconds?: number;
-  reconnectTimeoutSeconds?: number;
-  lobbyDisconnectGraceSeconds?: number;
-  hostLobbyGraceSeconds?: number;
   guestLobbyGraceSeconds?: number;
+  playerGraceSeconds?: number;
+  hostGraceSeconds?: number;
   lobbyWaitTtlMinutes?: number;
   publicAbsentHostVisibilitySeconds?: number;
   hostTakeoverSeconds?: number;
@@ -24,7 +22,6 @@ export interface KatikaEngineConfig {
   botThinkTimeMs: number;
   trickResolutionTimeMs: number;
   instantWinAnimationTimeMs: number;
-  foldForfeitDelayMs?: number;
   defaultTableMaxPlayers?: 2 | 4;
   defaultFillWithBots?: boolean;
   allowJoinInProgress?: boolean;
@@ -44,10 +41,6 @@ export interface KatikaEngineConfig {
 
 const LEGACY_ENGINE_DEFAULTS = {
   joinPushEnabled: true,
-  reconnectGracePeriodSeconds: 180,
-  reconnectTimeoutSeconds: 180,
-  lobbyDisconnectGraceSeconds: 180,
-  hostLobbyGraceSeconds: 180,
   koraMultiplier: 2,
   doubleKoraMultiplier: 4,
   threeSevensMultiplier: 3,
@@ -56,7 +49,6 @@ const LEGACY_ENGINE_DEFAULTS = {
   bettingEconomyEnabled: false,
   maintenanceNotice: 'Serveur de jeu en maintenance administrative.',
   versionPolicy: 'MODERATE',
-  foldForfeitDelayMs: 2000,
   defaultTableMaxPlayers: 2,
   defaultFillWithBots: false,
   allowJoinInProgress: true,

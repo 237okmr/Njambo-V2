@@ -369,44 +369,6 @@ export const KatikaSettingsTab: React.FC<KatikaSettingsTabProps> = ({ onConfigUp
                   { label: 'Prolongé', value: 240 },
                 ]}
               />
-
-              {/* Tolérance Déconnexion Réseau */}
-              <KatikaNumberSliderField
-                id="reconnect-timeout-field"
-                label="Délai de grâce reconnexion réseau (En match)"
-                description="Temps accordé à un joueur déconnecté pendant une partie pour réintégrer la table avant son remplacement par un bot."
-                value={config.reconnectTimeoutSeconds}
-                onChange={(val) => setConfig(prev => ({ ...prev, reconnectTimeoutSeconds: val }))}
-                min={15}
-                max={180}
-                step={5}
-                unit="s"
-                accentColor="emerald"
-                presets={[
-                  { label: 'Strict', value: 30 },
-                  { label: 'Standard', value: 75 },
-                  { label: 'Tolérant', value: 120 },
-                ]}
-              />
-
-              {/* Délai de grâce déconnexion dans le Salon (Lobby) */}
-              <KatikaNumberSliderField
-                id="lobby-disconnect-grace-field"
-                label="Délai de grâce déconnexion Salon (Lobby)"
-                description="Temps accordé à un joueur déconnecté au salon avant libération automatique de son siège (évite les doublons et les sièges fantômes)."
-                value={config.lobbyDisconnectGraceSeconds || 20}
-                onChange={(val) => setConfig(prev => ({ ...prev, lobbyDisconnectGraceSeconds: val }))}
-                min={5}
-                max={60}
-                step={5}
-                unit="s"
-                accentColor="emerald"
-                presets={[
-                  { label: 'Express', value: 10 },
-                  { label: 'Équilibré', value: 20 },
-                  { label: 'Confort', value: 35 },
-                ]}
-              />
             </div>
 
             {/* DEDICATED SECTION: Durée de vie & Gestion des tables en attente (LOBBY) */}

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { getPublicParamNumber } from '../services/publicConfig';
+import { getTurnTimerChoices } from '../../server/engine/engineParams';
 import { MultiplayerRoom, RoomPlayer } from '../types';
 import {
   Users,
@@ -119,7 +121,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
   // Launch conditions: Always require at least 2 human players in a multiplayer room.
   const hasMinimumHumans = connectedHumansCount >= 2;
   const canStartInstantly = hasMinimumHumans && allGuestsReady;
-  const currentTimer = room.turnTimerSeconds ?? 20;
+  const currentTimer = room.turnTimerSeconds ?? getPublicParamNumber('turnTimerSeconds');
   const currentAfkAction = room.afkAction || 'auto_play';
 
   const handleCopyCode = () => {
@@ -403,9 +405,9 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
             <Timer className="w-3 h-3 text-amber-400" />
             {currentTimer > 0 ? `${currentTimer}s` : '∞'}
           </span>
-          <span className="text-indigo-300 font-semibold flex items-center gap-1" title="Délai accordé pour se reconnecter en cas de micro-coupure">
+          <span className="text-indigo-300 font-semibold flex items-center gap-1" title="Délai avant qu'un relais joue à la place d'un joueur déconnecté">
             <span>⏳ Grâce:</span>
-            <b className="text-indigo-200">{room.disconnectGraceSeconds || 30}s</b>
+            <b className="text-indigo-200">{getPublicParamNumber('aiRelayGraceSeconds')}s</b>
           </span>
           {room.enableDoubleKora && (
             <span className="text-purple-300 font-bold flex items-center gap-0.5">
@@ -453,12 +455,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                   </span>
                   {onUpdateSettings && (
                     <div className="flex items-center gap-1">
-                      {[
-                        { val: 10, label: '10s' },
-                        { val: 15, label: '15s' },
-                        { val: 20, label: '20s' },
-                        { val: 30, label: '30s' },
-                      ].map((opt) => (
+                      {getTurnTimerChoices(getPublicParamNumber('turnTimerSeconds')).map((val) => ({ val, label: `${val}s` })).map((opt) => (
                         <button
                           key={opt.val}
                           type="button"
@@ -466,35 +463,6 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                           className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition ${
                             currentTimer === opt.val
                               ? 'bg-amber-500 text-slate-950 border-amber-400 font-black'
-                              : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
-                          }`}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-1">
-                  <span className="text-slate-400 font-medium flex items-center gap-1">
-                    <span>Grâce :</span>
-                  </span>
-                  {onUpdateSettings && (
-                    <div className="flex items-center gap-1">
-                      {[
-                        { val: 15, label: '15s' },
-                        { val: 30, label: '30s' },
-                        { val: 45, label: '45s' },
-                        { val: 60, label: '60s' },
-                      ].map((opt) => (
-                        <button
-                          key={`grace-${opt.val}`}
-                          type="button"
-                          onClick={() => onUpdateSettings({ disconnectGraceSeconds: opt.val })}
-                          className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition ${
-                            (room.disconnectGraceSeconds || 30) === opt.val
-                              ? 'bg-indigo-500 text-white border-indigo-400 font-black'
                               : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
                           }`}
                         >

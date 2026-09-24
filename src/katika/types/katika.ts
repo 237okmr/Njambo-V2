@@ -284,8 +284,6 @@ export interface KatikaPlayer {
 
 export interface KatikaGameConfig {
   turnTimerSeconds: number;
-  reconnectTimeoutSeconds: number;
-  lobbyDisconnectGraceSeconds?: number; // Délai de grâce déconnexion lobby avant éjection (défaut: 20s)
   inactivityTimeoutSeconds: number;
   targetWinningScore: number;
   isMaintenanceMode: boolean;
@@ -304,7 +302,6 @@ export interface KatikaGameConfig {
   botThinkTimeMs?: number;
   trickResolutionTimeMs?: number;
   instantWinAnimationTimeMs?: number;
-  foldForfeitDelayMs?: number;
   
   // Multiplayer & AI Behavior
   defaultTableMaxPlayers?: 2 | 4; // 2 (1vs1) par défaut

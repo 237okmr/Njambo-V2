@@ -309,7 +309,7 @@ JETONS_DISTRIBUÉS:${totalChipsWon.toLocaleString('fr-FR')} | POT_MOYEN:${avgPot
 FORMATS: Solo:${soloGamesCount}, Multi:${multiplayerGamesCount} (2j:${twoPlayersCount}, 3j:${threePlayersCount}, 4j:${fourPlayersCount})
 ABANDONS:${abandonRate}% (Rage-quit post-Kora: ${postKoraAbandonRate}%) | RYTHME: Donne ${avgPartieDurationSec}s, Manche ${avgMancheDurationSec}s
 COMPTES: Total:${playersOverview.totalTracked ?? 0} (Actifs:${playersOverview.activeCount ?? 0}, Avertis:${playersOverview.warnedCount ?? 0}, Bannis:${playersOverview.bannedCount ?? 0})
-MOTEUR_CONFIG: Timer:${config.turnTimerSeconds ?? 15}s | Reco:${config.reconnectTimeoutSeconds ?? 30}s | Kora:x${config.koraMultiplier ?? 2} | DK:x${config.doubleKoraMultiplier ?? 4} | MiseMin:${config.minTableBet ?? 100} | Maint:${config.isMaintenanceMode ? 'ACTIF' : 'OFF'}
+MOTEUR_CONFIG: Timer:${config.turnTimerSeconds ?? 15}s | Grâce:${(config as any).playerGraceSeconds}s | Relais:${(config as any).aiRelayGraceSeconds}s | Kora:x${config.koraMultiplier ?? 2} | DK:x${config.doubleKoraMultiplier ?? 4} | MiseMin:${config.minTableBet ?? 100} | Maint:${config.isMaintenanceMode ? 'ACTIF' : 'OFF'}
 ANOMALIES_DÉTECTÉES:${anomalies.length}`;
   }
 

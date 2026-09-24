@@ -96,8 +96,6 @@ export function isKnownBot(name: string = '', id: string = ''): boolean {
 
 // Les délais viennent du registre (server/engine/engineParams.ts) : une seule source de vérité.
 export const DEFAULT_KATIKA_CONFIG = {
-  reconnectTimeoutSeconds: 180,
-  lobbyDisconnectGraceSeconds: 180,
   inactivityTimeoutSeconds: 120,
   targetWinningScore: 21,
   isMaintenanceMode: false,
@@ -110,7 +108,6 @@ export const DEFAULT_KATIKA_CONFIG = {
   minPwaVersion: '1.2.0',
   currentPwaVersion: '1.3.0',
   neverInterruptActiveMatch: true,
-  foldForfeitDelayMs: 2000,
   defaultTableMaxPlayers: 2, // 1vs1 par défaut
   defaultFillWithBots: false, // 100% humain par défaut
   allowJoinInProgress: true,
@@ -1647,7 +1644,6 @@ export const KatikaService = {
         mockConfig = {
           ...mockConfig,
           turnTimerSeconds: live.turnTimerSeconds ?? mockConfig.turnTimerSeconds,
-          reconnectTimeoutSeconds: live.reconnectTimeoutSeconds ?? live.reconnectGracePeriodSeconds ?? mockConfig.reconnectTimeoutSeconds,
           isMaintenanceMode: live.isMaintenanceMode ?? mockConfig.isMaintenanceMode,
           allowNewRooms: live.allowNewRooms ?? mockConfig.allowNewRooms,
           defaultInitialCapital: live.defaultInitialCapital ?? mockConfig.defaultInitialCapital,

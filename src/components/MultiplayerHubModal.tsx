@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Users, Globe, PlusCircle, ArrowRight, Bot, Shield, Zap, Sparkles, X, Check, Copy, Timer } from 'lucide-react';
 import { getLocalPlayerName, setLocalPlayerName } from '../services/identity';
 import { getKatikaConfigSync } from '../katika/services/katikaService';
+import { getPublicParamNumber } from '../services/publicConfig';
+import { getTurnTimerChoices } from '../../server/engine/engineParams';
 
 interface MultiplayerHubModalProps {
   isOpen: boolean;
@@ -53,7 +55,7 @@ export const MultiplayerHubModal: React.FC<MultiplayerHubModalProps> = ({
   const [initialCapital, setInitialCapital] = useState<number>(100);
   const [afkAction, setAfkAction] = useState<'auto_play' | 'replace_bot'>('replace_bot');
   const [turnTimerSeconds, setTurnTimerSeconds] = useState<number>(() => {
-    return getKatikaConfigSync().turnTimerSeconds || 15;
+    return getPublicParamNumber('turnTimerSeconds');
   });
   const [enableDoubleKora, setEnableDoubleKora] = useState<boolean>(true);
   const [enableUnder21, setEnableUnder21] = useState<boolean>(true);
@@ -66,7 +68,7 @@ export const MultiplayerHubModal: React.FC<MultiplayerHubModalProps> = ({
         const currentCfg = getKatikaConfigSync();
         setMaxPlayers(currentCfg.defaultTableMaxPlayers || 2);
         setFillWithBots(currentCfg.defaultFillWithBots ?? false);
-        setTurnTimerSeconds(currentCfg.turnTimerSeconds || 15);
+        setTurnTimerSeconds(getPublicParamNumber('turnTimerSeconds'));
 
         const params = new URLSearchParams(window.location.search);
         const roomParam = params.get('room');
@@ -315,12 +317,7 @@ export const MultiplayerHubModal: React.FC<MultiplayerHubModalProps> = ({
                 </div>
 
                 <div className="flex-1 grid grid-cols-4 gap-1">
-                  {[
-                    { value: 10, label: '10s' },
-                    { value: 15, label: '15s' },
-                    { value: 20, label: '20s' },
-                    { value: 30, label: '30s' },
-                  ].map((item) => (
+                  {getTurnTimerChoices(getPublicParamNumber('turnTimerSeconds')).map((value) => ({ value, label: `${value}s` })).map((item) => (
                     <button
                       key={item.value}
                       type="button"

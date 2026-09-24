@@ -50,7 +50,7 @@ export const ENGINE_PARAMS: ParamDef[] = [
   },
   {
     key: 'aiRelayGraceSeconds', label: 'Délai avant que le relais prenne le siège', unit: 's',
-    min: 8, max: 60, default: 25, group: 'partie', scope: 'server', effect: 'immediate',
+    min: 8, max: 60, default: 25, group: 'partie', scope: 'both', effect: 'immediate',
     help: 'Attente après une coupure avant qu\'un relais joue à la place du joueur absent.',
   },
   {
@@ -81,6 +81,16 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Durée après laquelle une table en cours sans aucun humain connecté est supprimée.',
   },
   {
+    key: 'playerGraceSeconds', label: 'Grâce d\'un joueur déconnecté entre deux parties', unit: 's',
+    min: 30, max: 600, default: 90, group: 'salons', scope: 'both', effect: 'immediate',
+    help: 'Temps laissé à un joueur déconnecté pour revenir avant d\'être retiré de la table (salle d\'attente ou manche terminée).',
+  },
+  {
+    key: 'hostGraceSeconds', label: 'Grâce de l\'hôte déconnecté', unit: 's',
+    min: 60, max: 1800, default: 180, group: 'salons', scope: 'server', effect: 'immediate',
+    help: 'Temps laissé à l\'hôte déconnecté pour revenir avant le transfert de son rôle à un autre joueur.',
+  },
+  {
     key: 'guestLobbyGraceSeconds', label: 'Grâce d\'un invité déconnecté en salle d\'attente', unit: 's',
     min: 30, max: 600, default: 90, group: 'salons', scope: 'server', effect: 'immediate',
     help: 'Temps laissé à un invité pour revenir avant d\'être retiré de la salle d\'attente.',
@@ -109,6 +119,16 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Durée pendant laquelle un téléphone réutilise la config publique sans la redemander. 0 = pas de cache.',
   },
 ];
+
+/** Choix de chrono proposés à la création d'une table (une seule liste pour tous les écrans). */
+export const TURN_TIMER_CHOICES: readonly number[] = [15, 20, 30];
+
+/** Choix proposés + valeur par défaut du serveur si elle n'en fait pas partie, triés. */
+export function getTurnTimerChoices(defaultSeconds: number): number[] {
+  const set = new Set<number>(TURN_TIMER_CHOICES);
+  if (Number.isFinite(defaultSeconds)) set.add(defaultSeconds);
+  return [...set].sort((a, b) => a - b);
+}
 
 export const PARAM_BY_KEY: Record<string, ParamDef> = Object.fromEntries(
   ENGINE_PARAMS.map((p) => [p.key, p])

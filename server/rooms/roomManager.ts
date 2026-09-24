@@ -3,6 +3,7 @@ import { MultiplayerRoom, RoomPlayer, EmoteMessage, PublicRoomSummary, GameInvit
 import { ClientMessage, ServerMessage } from '../types';
 import { ActiveRoomState, ServerGameEngine, maskOpponentCards, selectBotToReplace, syncRoomPlayersWithGameState, PlayerAlert } from '../engine/serverGameEngine';
 import { getEngineConfig, updateEngineConfig as applyEngineConfigUpdate, KatikaEngineConfig, DEFAULT_ENGINE_CONFIG } from '../engine/engineConfig';
+import { PARAM_BY_KEY, clampParamValue } from '../engine/engineParams';
 import { pushService, buildGameUrl } from '../pushService';
 import { APP_VERSION } from '../../src/version';
 import { verifyFirebaseIdToken } from '../firebaseAdmin';
@@ -675,7 +676,7 @@ export class RoomManager {
         }
 
         const lobbyWaitTtlSecs = (this.engineConfig.lobbyWaitTtlMinutes ?? 30) * 60;
-        const hostGrace = room.status === 'LOBBY' ? lobbyWaitTtlSecs : (state.engineConfig?.hostLobbyGraceSeconds || 180);
+        const hostGrace = room.status === 'LOBBY' ? lobbyWaitTtlSecs : Number(state.engineConfig?.hostGraceSeconds ?? this.engineConfig.hostGraceSeconds);
         const guestGrace = state.engineConfig?.guestLobbyGraceSeconds || this.engineConfig.guestLobbyGraceSeconds || 60;
         const graceSecs = isHost ? hostGrace : guestGrace;
         rp.disconnectGraceExpiresAt = Date.now() + graceSecs * 1000;
@@ -1351,9 +1352,9 @@ export class RoomManager {
       initialCapital: effectiveInitialCapital,
       enableDoubleKora: settings.enableDoubleKora,
       enableUnder21: settings.enableUnder21,
-      turnTimerSeconds: settings.turnTimerSeconds || 15,
+      turnTimerSeconds: clampParamValue(PARAM_BY_KEY.turnTimerSeconds, settings.turnTimerSeconds ?? this.engineConfig.turnTimerSeconds) as number,
       afkAction: settings.afkAction || 'auto_play',
-      disconnectGraceSeconds: (settings as any).disconnectGraceSeconds || this.engineConfig.reconnectGracePeriodSeconds || 30,
+      disconnectGraceSeconds: Number(this.engineConfig.playerGraceSeconds),
       players: [hostPlayer],
       gameState: null,
       mancheNumber: 1,
@@ -1730,7 +1731,7 @@ export class RoomManager {
     } else {
       // Prune permanently disconnected players whose grace expired before joining.
       // Règle du relais : en cours de manche, un joueur absent GARDE son siège (retour possible sans limite).
-      const graceTimeoutMs = (room.disconnectGraceSeconds || this.engineConfig.reconnectGracePeriodSeconds || 30) * 1000;
+      const graceTimeoutMs = Number(this.engineConfig.playerGraceSeconds) * 1000;
       const seatsAreReserved = room.status === 'PLAYING' || room.status === 'PARTIE_OVER';
       room.players = (room.players || []).filter((p) => {
         if (!p.connected && !seatsAreReserved) {
@@ -2027,7 +2028,7 @@ export class RoomManager {
         if (!state.hostTransferTimer || !state.isHostDisconnectTimer) {
           if (state.hostTransferTimer) clearTimeout(state.hostTransferTimer);
           // Délai de grâce étendu (180s / 3 min) pour permettre le partage de code, micro-coupures et reconnexion sereine de l'hôte
-          const hostGraceSecs = this.engineConfig.lobbyDisconnectGraceSeconds || 180;
+          const hostGraceSecs = Number(this.engineConfig.hostGraceSeconds);
           room.hostTransferGraceExpiresAt = Date.now() + hostGraceSecs * 1000;
           this.broadcastRoomState(roomCode);
           this.evaluateAutoStart(roomCode);
@@ -2109,7 +2110,7 @@ export class RoomManager {
     if (isLaunchReady) {
       if (!state.hostTransferTimer) {
         // Démarrer la fenêtre de grâce d'inactivité de l'hôte
-        const graceSeconds = this.engineConfig.lobbyDisconnectGraceSeconds || 180;
+        const graceSeconds = Number(this.engineConfig.hostGraceSeconds);
         room.hostTransferGraceExpiresAt = Date.now() + graceSeconds * 1000;
         this.broadcastRoomState(roomCode);
         state.isHostDisconnectTimer = false;
@@ -2782,8 +2783,10 @@ export class RoomManager {
     if (msg.settings.initialCapital !== undefined) room.initialCapital = msg.settings.initialCapital;
     if (msg.settings.enableDoubleKora !== undefined) room.enableDoubleKora = msg.settings.enableDoubleKora;
     if (msg.settings.enableUnder21 !== undefined) room.enableUnder21 = msg.settings.enableUnder21;
-    if (msg.settings.turnTimerSeconds !== undefined) room.turnTimerSeconds = msg.settings.turnTimerSeconds;
-    if (msg.settings.disconnectGraceSeconds !== undefined) room.disconnectGraceSeconds = msg.settings.disconnectGraceSeconds;
+    if (msg.settings.turnTimerSeconds !== undefined) {
+      room.turnTimerSeconds = clampParamValue(PARAM_BY_KEY.turnTimerSeconds, msg.settings.turnTimerSeconds) as number;
+    }
+    // disconnectGraceSeconds envoyé par un client : ignoré (la grâce vient de la config du serveur).
     if (msg.settings.afkAction !== undefined) room.afkAction = msg.settings.afkAction;
     if (msg.settings.isPublic !== undefined) room.isPublic = msg.settings.isPublic;
 
@@ -3975,7 +3978,7 @@ export class RoomManager {
 
       // 2. Cleanup permanently disconnected players from LOBBY or MANCHE_OVER if grace period expired
       if (room.status === 'LOBBY' || room.status === 'MANCHE_OVER') {
-        const graceTimeoutMs = (room.disconnectGraceSeconds || this.engineConfig.reconnectGracePeriodSeconds || 30) * 1000;
+        const graceTimeoutMs = Number(this.engineConfig.playerGraceSeconds) * 1000;
         const initialCount = (room.players || []).length;
         room.players = (room.players || []).filter((p) => {
           if (!p.connected) {

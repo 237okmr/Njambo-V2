@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getPublicParamNumber } from '../services/publicConfig';
 import { Player, Trick, SUITS_INFO, PartieWinType, GameState, BetIncreaseProposal, RoomPlayer, GamePhase } from '../types';
 import { BetIncreaseProposalWidget } from './BetIncreaseProposalWidget';
 import {
@@ -768,13 +769,13 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
           {/* Multiplayer Ready Status & Auto-advance Bar */}
           {isOnlineMultiplayer && !isMancheOver && (
             <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-2.5 flex flex-col gap-2">
-              {/* Animated countdown progress bar across the 18s duration */}
+              {/* Barre de compte à rebours sur la durée réglée dans katika (transitionDelayMs) */}
               {roundEndRemainingSeconds !== null && roundEndRemainingSeconds !== undefined && roundEndRemainingSeconds > 0 && (
                 <div className="w-full bg-slate-900/90 h-1.5 rounded-full overflow-hidden border border-slate-800/80">
                   <div
                     className="h-full bg-gradient-to-r from-amber-500 via-amber-400 to-emerald-400 transition-all duration-300 rounded-full"
                     style={{
-                      width: `${Math.min(100, Math.max(0, (roundEndRemainingSeconds / 18) * 100))}%`,
+                      width: `${Math.min(100, Math.max(0, (roundEndRemainingSeconds / (getPublicParamNumber('transitionDelayMs') / 1000)) * 100))}%`,
                     }}
                   />
                 </div>
