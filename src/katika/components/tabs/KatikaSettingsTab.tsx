@@ -33,7 +33,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { KatikaGameConfig } from '../../types/katika';
-import { KatikaService, DEFAULT_KATIKA_CONFIG, ProfileAuditReport, SecondaryAdminRecord } from '../../services/katikaService';
+import { KatikaService, DEFAULT_KATIKA_CONFIG, ProfileAuditReport, SecondaryAdminRecord, getLastConfigSaveStatus } from '../../services/katikaService';
 import { useKatikaAuth, KATIKA_AUTHORIZED_EMAIL } from '../../context/KatikaAuthContext';
 import { navigateToKatikaTab } from '../../utils/katikaNavigation';
 import { 
@@ -43,6 +43,7 @@ import {
   ChatStyle 
 } from '../../services/aiAdminChatClient';
 import { KatikaNumberSliderField } from '../settings/KatikaNumberSliderField';
+import { KatikaParamsPanel } from '../settings/KatikaParamsPanel';
 
 interface KatikaSettingsTabProps {
   onConfigUpdated?: (config: KatikaGameConfig) => void;
@@ -116,7 +117,12 @@ export const KatikaSettingsTab: React.FC<KatikaSettingsTabProps> = ({ onConfigUp
       setConfig(updated);
       window.dispatchEvent(new CustomEvent('katika-config-updated', { detail: updated }));
       if (onConfigUpdated) onConfigUpdated(updated);
-      setFeedback('Paramètres Katika enregistrés et appliqués en temps réel !');
+      const saveStatus = getLastConfigSaveStatus();
+      if (saveStatus && !saveStatus.persisted) {
+        setFeedback('Paramètres appliqués, mais la sauvegarde permanente a échoué : ils seront perdus au prochain redémarrage du serveur.');
+      } else {
+        setFeedback('Paramètres Katika enregistrés et appliqués en temps réel !');
+      }
       setTimeout(() => setFeedback(null), 4000);
     } catch (err) {
       console.error(err);
@@ -182,7 +188,7 @@ export const KatikaSettingsTab: React.FC<KatikaSettingsTabProps> = ({ onConfigUp
       {/* Internal Settings Sub-navigation Bar (Tabs Internes) */}
       <div className="flex items-center gap-1 border-b border-slate-800 pb-px text-xs overflow-x-auto whitespace-nowrap scrollbar-none">
         {[
-          { id: 'ENGINE_PACING', label: 'Rythme & Moteur', icon: Clock },
+          { id: 'ENGINE_PACING', label: 'Délais & rythme', icon: Clock },
           { id: 'MULTI_AI', label: 'Multijoueur & Tables', icon: Users },
           { id: 'ECONOMY', label: 'Économie & Système', icon: Coins },
           { id: 'RULES', label: 'Règles & Variantes', icon: Trophy },
@@ -228,135 +234,16 @@ export const KatikaSettingsTab: React.FC<KatikaSettingsTabProps> = ({ onConfigUp
               </span>
             </div>
 
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Ajustez avec précision la granularité temporelle de chaque phase de jeu. Chaque délai peut être configuré via le curseur ou saisi directement dans le champ texte.
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* 1. Temps par Tour */}
-              <KatikaNumberSliderField
-                id="turn-timer-field"
-                label="Temps alloué par tour de jeu"
-                description="Chronomètre maximum dont dispose un joueur ou bot pour poser sa carte à son tour."
-                value={config.turnTimerSeconds}
-                onChange={(val) => setConfig(prev => ({ ...prev, turnTimerSeconds: val }))}
-                min={5}
-                max={60}
-                step={1}
-                unit="s"
-                accentColor="cyan"
-                presets={[
-                  { label: 'Blitz', value: 5 },
-                  { label: 'Standard', value: 15 },
-                  { label: 'Confort', value: 25 },
-                  { label: 'Lent', value: 45 },
-                ]}
-              />
-
-              {/* 2. Réflexion des Bots */}
-              <KatikaNumberSliderField
-                id="bot-think-field"
-                label="Délai de réflexion IA / Bots"
-                description="Temps d'attente artificiel avant qu'un robot ne joue sa carte pour simuler une réflexion humaine."
-                value={config.botThinkTimeMs || 800}
-                onChange={(val) => setConfig(prev => ({ ...prev, botThinkTimeMs: val }))}
-                min={200}
-                max={3000}
-                step={50}
-                unit="ms"
-                accentColor="cyan"
-                presets={[
-                  { label: 'Éclair', value: 400 },
-                  { label: 'Standard', value: 800 },
-                  { label: 'Réaliste', value: 1200 },
-                ]}
-              />
-
-              {/* 3. Ramassage des Plis */}
-              <KatikaNumberSliderField
-                id="trick-resolution-field"
-                label="Délai de ramassage du pli"
-                description="Temps d'affichage des cartes sur la table avant que le pli ne soit collecté par le vainqueur."
-                value={config.trickResolutionTimeMs || 1600}
-                onChange={(val) => setConfig(prev => ({ ...prev, trickResolutionTimeMs: val }))}
-                min={500}
-                max={3500}
-                step={50}
-                unit="ms"
-                accentColor="cyan"
-                presets={[
-                  { label: 'Rapide', value: 1000 },
-                  { label: 'Standard', value: 1600 },
-                  { label: 'Pédagogique', value: 2500 },
-                ]}
-              />
-
-              {/* 4. Transition Inter-Manche */}
-              <KatikaNumberSliderField
-                id="transition-delay-field"
-                label="Transition inter-manche (Fin de donne)"
-                description="Délai accordé aux joueurs pour consulter les scores et gains avant de lancer la distribution suivante."
-                value={config.transitionDelayMs || 12000}
-                onChange={(val) => setConfig(prev => ({ ...prev, transitionDelayMs: val }))}
-                min={3000}
-                max={25000}
-                step={500}
-                unit="ms"
-                accentColor="cyan"
-                presets={[
-                  { label: 'Rapide', value: 6000 },
-                  { label: 'Standard', value: 12000 },
-                  { label: 'Complet', value: 18000 },
-                ]}
-              />
-
-              {/* 5. Animation Victoire Instantanée */}
-              <KatikaNumberSliderField
-                id="instant-win-field"
-                label="Animation victoire instantanée"
-                description="Délai d'affichage spécial lors d'un 'Moins de 21' ou des 'Trois Septs' avant la clôture du round."
-                value={config.instantWinAnimationTimeMs || 3500}
-                onChange={(val) => setConfig(prev => ({ ...prev, instantWinAnimationTimeMs: val }))}
-                min={1500}
-                max={8000}
-                step={250}
-                unit="ms"
-                accentColor="cyan"
-                presets={[
-                  { label: 'Dynamique', value: 2500 },
-                  { label: 'Standard', value: 3500 },
-                  { label: 'Solennel', value: 5000 },
-                ]}
-              />
-
-              {/* 6. Délai après Forfait / Fold */}
-              <KatikaNumberSliderField
-                id="fold-delay-field"
-                label="Délai après forfait / abandon de pli"
-                description="Temps de notification accordé aux joueurs lors d'un abandon anticipé avant la redistribution."
-                value={config.foldForfeitDelayMs || 2000}
-                onChange={(val) => setConfig(prev => ({ ...prev, foldForfeitDelayMs: val }))}
-                min={1000}
-                max={5000}
-                step={200}
-                unit="ms"
-                accentColor="cyan"
-                presets={[
-                  { label: 'Immédiat', value: 1000 },
-                  { label: 'Standard', value: 2000 },
-                  { label: 'Posé', value: 3000 },
-                ]}
-              />
-            </div>
+            <KatikaParamsPanel config={config} setConfig={setConfig} />
 
             {/* Strict Timeout Rule Card */}
             <div className="p-4 rounded-xl bg-red-950/20 border border-red-900/30 text-red-300 space-y-1.5">
               <div className="flex items-center gap-2 font-bold text-red-400 text-xs">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
-                <span>Règle d'or : Forfait automatique en cas d'expiration de tour</span>
+                <span>Règle du relais : jamais de forfait en cours de partie</span>
               </div>
               <p className="text-[11px] text-red-200/80 leading-relaxed">
-                Si le chronomètre de tour d'un joueur humain arrive à zéro sans action, le moteur déclare un forfait pour la manche en cours afin d'éviter tout blocage de la table. La mise de ce joueur reste engagée dans le pot commun.
+                Si le chronomètre d'un joueur expire, une carte neutre est jouée à sa place. Après plusieurs tours manqués, ou après une coupure prolongée, un relais joue jusqu'à la fin de la partie ; le joueur reprend la main dès son retour. Sa mise n'est perdue que si la partie se termine sans lui.
               </p>
             </div>
           </div>
@@ -520,26 +407,6 @@ export const KatikaSettingsTab: React.FC<KatikaSettingsTabProps> = ({ onConfigUp
                   { label: 'Confort', value: 35 },
                 ]}
               />
-
-              {/* Fermeture des salons abandonnés sans humains */}
-              <KatikaNumberSliderField
-                id="empty-room-timeout-field"
-                label="Fermeture des salons abandonnés sans humains"
-                description="Délai d'inactivité avant la suppression automatique et définitive (mémoire & base Firestore) d'une table sans aucun joueur humain connecté."
-                value={config.emptyRoomTimeoutMinutes ?? 5}
-                onChange={(val) => setConfig(prev => ({ ...prev, emptyRoomTimeoutMinutes: val }))}
-                min={1}
-                max={30}
-                step={1}
-                unit="min"
-                accentColor="emerald"
-                presets={[
-                  { label: '2 min', value: 2 },
-                  { label: '5 min (Défaut)', value: 5 },
-                  { label: '10 min', value: 10 },
-                  { label: '15 min', value: 15 },
-                ]}
-              />
             </div>
 
             {/* DEDICATED SECTION: Durée de vie & Gestion des tables en attente (LOBBY) */}
@@ -551,105 +418,11 @@ export const KatikaSettingsTab: React.FC<KatikaSettingsTabProps> = ({ onConfigUp
                     Gestion & Durée de vie des Tables en Attente (Lobby)
                   </h4>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setConfig(prev => ({
-                      ...prev,
-                      lobbyWaitTtlMinutes: 30,
-                      publicAbsentHostVisibilitySeconds: 180,
-                      hostTakeoverSeconds: 180,
-                      guestLobbyGraceSeconds: 60,
-                      joinPushEnabled: true,
-                    }));
-                  }}
-                  className="px-2.5 py-1 rounded bg-slate-900 hover:bg-slate-800 border border-slate-700 text-[10px] text-slate-300 transition cursor-pointer"
-                >
-                  Valeurs par défaut
-                </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {/* 1. Durée de vie globale en attente (lobbyWaitTtlMinutes) */}
-                <KatikaNumberSliderField
-                  id="lobby-wait-ttl-field"
-                  label="Durée de vie d'une table en attente sans humain"
-                  description="Durée maximale de conservation d'une table LOBBY si aucun humain n'est connecté. Permet de maintenir la table ouverte pendant qu'un hôte partage son lien."
-                  value={config.lobbyWaitTtlMinutes ?? 30}
-                  onChange={(val) => setConfig(prev => ({ ...prev, lobbyWaitTtlMinutes: val }))}
-                  min={5}
-                  max={240}
-                  step={5}
-                  unit="min"
-                  accentColor="emerald"
-                  presets={[
-                    { label: '15 min', value: 15 },
-                    { label: '30 min (Défaut)', value: 30 },
-                    { label: '60 min', value: 60 },
-                    { label: '2 h', value: 120 },
-                  ]}
-                />
-
-                {/* 2. Visibilité publique de l'hôte absent (publicAbsentHostVisibilitySeconds) */}
-                <KatikaNumberSliderField
-                  id="public-absent-host-visibility-field"
-                  label="Visibilité publique en cas d'hôte absent"
-                  description="Durée pendant laquelle une table dont l'hôte est absent reste affichée dans la liste publique. Au-delà, elle reste accessible via lien direct ou code."
-                  value={config.publicAbsentHostVisibilitySeconds ?? 180}
-                  onChange={(val) => setConfig(prev => ({ ...prev, publicAbsentHostVisibilitySeconds: val }))}
-                  min={0}
-                  max={1800}
-                  step={30}
-                  unit="s"
-                  accentColor="emerald"
-                  presets={[
-                    { label: '1 min', value: 60 },
-                    { label: '3 min (Défaut)', value: 180 },
-                    { label: '5 min', value: 300 },
-                    { label: '10 min', value: 600 },
-                  ]}
-                />
-
-                {/* 3. Passation hôte de repli (hostTakeoverSeconds) */}
-                <KatikaNumberSliderField
-                  id="host-takeover-field"
-                  label="Délai d'attribution d'un hôte de repli"
-                  description="Temps d'absence de l'hôte avant qu'un invité connecté devienne hôte de repli. Régler à 0 pour désactiver l'hôte de repli."
-                  value={config.hostTakeoverSeconds ?? 180}
-                  onChange={(val) => setConfig(prev => ({ ...prev, hostTakeoverSeconds: val }))}
-                  min={0}
-                  max={1800}
-                  step={30}
-                  unit="s"
-                  accentColor="emerald"
-                  presets={[
-                    { label: 'Désactivé', value: 0 },
-                    { label: '1 min', value: 60 },
-                    { label: '3 min (Défaut)', value: 180 },
-                    { label: '5 min', value: 300 },
-                  ]}
-                />
-
-                {/* 4. Délai de grâce invité au lobby (guestLobbyGraceSeconds) */}
-                <KatikaNumberSliderField
-                  id="guest-lobby-grace-field"
-                  label="Délai de grâce invité déconnecté au lobby"
-                  description="Temps accordé à un invité déconnecté pour revenir au salon avant la libération de son siège."
-                  value={config.guestLobbyGraceSeconds ?? 60}
-                  onChange={(val) => setConfig(prev => ({ ...prev, guestLobbyGraceSeconds: val }))}
-                  min={30}
-                  max={600}
-                  step={10}
-                  unit="s"
-                  accentColor="emerald"
-                  presets={[
-                    { label: '30 s', value: 30 },
-                    { label: '60 s (Défaut)', value: 60 },
-                    { label: '2 min', value: 120 },
-                    { label: '5 min', value: 300 },
-                  ]}
-                />
-              </div>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Les délais des salons (durée de vie d'une table en attente, visibilité d'un hôte absent, hôte de repli, grâce des invités, fermeture des tables sans humain) se règlent dans l'onglet « Délais & rythme », groupe « Salons et tables ».
+              </p>
 
               {/* Toggle notification push quand un humain rejoint */}
               <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-4">
