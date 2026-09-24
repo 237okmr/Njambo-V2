@@ -7,6 +7,8 @@ import { playerProfileService, computeMasteryScore } from '../../services/player
 import { computeEventMasteryScore, getDoualaDateKey, MASTERY_CONFIG } from '../../services/masteryConfig';
 import { PlayerGameHistoryItem } from '../../types/playerProfile';
 import { setBotTimingConfig, setBotDialogueConfig } from '../../utils/ai';
+import { ENGINE_PARAMS, getParamDefaults } from '../../../server/engine/engineParams';
+import { getPublicParam, subscribePublicConfig } from '../../services/publicConfig';
 
 export interface ProfileCorrectionEntry {
   uid: string;
@@ -92,35 +94,26 @@ export function isKnownBot(name: string = '', id: string = ''): boolean {
   });
 }
 
-export const DEFAULT_KATIKA_CONFIG: KatikaGameConfig = {
-  turnTimerSeconds: 15,
-  reconnectTimeoutSeconds: 30,
-  lobbyDisconnectGraceSeconds: 20,
+// Les délais viennent du registre (server/engine/engineParams.ts) : une seule source de vérité.
+export const DEFAULT_KATIKA_CONFIG = {
+  reconnectTimeoutSeconds: 180,
+  lobbyDisconnectGraceSeconds: 180,
   inactivityTimeoutSeconds: 120,
   targetWinningScore: 21,
   isMaintenanceMode: false,
   allowNewRooms: true,
-  defaultInitialCapital: 5000,
-  minTableBet: 100,
+  defaultInitialCapital: 100,
+  minTableBet: 10,
   globalAnnouncement: '',
   bettingEconomyEnabled: false, // Arbitrage 2: désactivé par défaut en mode démonstration / gratuit
   pwaPolicyMode: 'MODERATE',
   minPwaVersion: '1.2.0',
   currentPwaVersion: '1.3.0',
   neverInterruptActiveMatch: true,
-  transitionDelayMs: 12000,
-  botThinkTimeMs: 800,
-  trickResolutionTimeMs: 1600,
-  instantWinAnimationTimeMs: 3500,
   foldForfeitDelayMs: 2000,
   defaultTableMaxPlayers: 2, // 1vs1 par défaut
   defaultFillWithBots: false, // 100% humain par défaut
   allowJoinInProgress: true,
-  emptyRoomTimeoutMinutes: 5,
-  lobbyWaitTtlMinutes: 30,
-  publicAbsentHostVisibilitySeconds: 180,
-  hostTakeoverSeconds: 180,
-  guestLobbyGraceSeconds: 60,
   joinPushEnabled: true,
   defaultAiDifficulty: 'NORMAL',
   hokutoSpawnRatePct: 75,
@@ -142,10 +135,18 @@ export const DEFAULT_KATIKA_CONFIG: KatikaGameConfig = {
   autoBetEscalationInterval: 5,
   autoBetEscalationRatePct: 50,
   maxAutoBetMultiplier: 4,
-};
+  ...getParamDefaults(),
+} as unknown as KatikaGameConfig;
+
+// Version du cache local de config : à chaque changement, l'ancien cache (valeurs périmées) est supprimé une fois.
+const KATIKA_CONFIG_SCHEMA_VERSION = '2';
 
 let mockConfig: KatikaGameConfig = (() => {
   try {
+    if (localStorage.getItem('katika_engine_config_schema') !== KATIKA_CONFIG_SCHEMA_VERSION) {
+      localStorage.removeItem('katika_engine_game_config');
+      localStorage.setItem('katika_engine_config_schema', KATIKA_CONFIG_SCHEMA_VERSION);
+    }
     const saved = localStorage.getItem('katika_engine_game_config');
     if (saved) {
       return { ...DEFAULT_KATIKA_CONFIG, ...JSON.parse(saved) };
@@ -156,21 +157,43 @@ let mockConfig: KatikaGameConfig = (() => {
 
 const configListeners = new Set<(config: KatikaGameConfig) => void>();
 
+export interface ConfigSaveStatus {
+  persisted: boolean;
+  configVersion: number | null;
+  at: number;
+  error?: string;
+}
+let lastConfigSaveStatus: ConfigSaveStatus | null = null;
+
+/** Résultat du dernier enregistrement de config (persisted = sauvegardée dans Firestore, sinon seulement en mémoire serveur). */
+export function getLastConfigSaveStatus(): ConfigSaveStatus | null {
+  return lastConfigSaveStatus;
+}
+
+/** Applique la config publique du serveur (paramètres de portée client ou both) sur la config locale. */
+function withPublicOverrides(cfg: KatikaGameConfig): KatikaGameConfig {
+  const out: Record<string, unknown> = { ...cfg };
+  for (const p of ENGINE_PARAMS) {
+    if (p.scope === 'client' || p.scope === 'both') out[p.key] = getPublicParam(p.key);
+  }
+  return out as unknown as KatikaGameConfig;
+}
+
 export function getKatikaConfigSync(): KatikaGameConfig {
-  return { ...mockConfig };
+  return withPublicOverrides({ ...mockConfig });
 }
 
 export function subscribeKatikaConfig(cb: (config: KatikaGameConfig) => void): () => void {
   configListeners.add(cb);
-  cb({ ...mockConfig });
+  cb(withPublicOverrides({ ...mockConfig }));
   return () => configListeners.delete(cb);
 }
 
 function notifyConfigListeners() {
-  const cfg = { ...mockConfig };
   try {
-    localStorage.setItem('katika_engine_game_config', JSON.stringify(cfg));
+    localStorage.setItem('katika_engine_game_config', JSON.stringify({ ...mockConfig }));
   } catch {}
+  const cfg = withPublicOverrides({ ...mockConfig });
   setBotTimingConfig({
     botThinkTimeMs: cfg.botThinkTimeMs,
     hokutoSpawnRatePct: cfg.hokutoSpawnRatePct,
@@ -192,9 +215,12 @@ function notifyConfigListeners() {
   });
 }
 
+// Quand la config publique du serveur change, les écouteurs (solo, tables) sont prévenus.
+subscribePublicConfig(() => notifyConfigListeners());
+
 // Initial sync on startup
 setBotTimingConfig({
-  botThinkTimeMs: mockConfig.botThinkTimeMs,
+  botThinkTimeMs: withPublicOverrides({ ...mockConfig }).botThinkTimeMs,
   hokutoSpawnRatePct: mockConfig.hokutoSpawnRatePct,
 });
 setBotDialogueConfig({
@@ -1643,6 +1669,10 @@ export const KatikaService = {
           autoBetEscalationRatePct: live.autoBetEscalationRatePct ?? mockConfig.autoBetEscalationRatePct ?? 50,
           maxAutoBetMultiplier: live.maxAutoBetMultiplier ?? mockConfig.maxAutoBetMultiplier ?? 4,
         };
+        // Tous les paramètres du registre : la valeur du serveur fait foi.
+        for (const p of ENGINE_PARAMS) {
+          if (live[p.key] !== undefined) (mockConfig as unknown as Record<string, unknown>)[p.key] = live[p.key];
+        }
         notifyConfigListeners();
       }
     } catch (e) {
@@ -1653,20 +1683,47 @@ export const KatikaService = {
 
   updateConfig: async (newConfig: Partial<KatikaGameConfig>): Promise<KatikaGameConfig> => {
     invalidateKatikaMemoryCache();
+
+    // Seuls les champs réellement modifiés sont envoyés au serveur (jamais la config locale entière).
+    const patch: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(newConfig)) {
+      if (JSON.stringify((mockConfig as unknown as Record<string, unknown>)[key]) !== JSON.stringify(value)) {
+        patch[key] = value;
+      }
+    }
+
     mockConfig = {
       ...mockConfig,
       ...newConfig,
     };
     notifyConfigListeners();
 
-    try {
-      await tikaFetch('/api/katika/engine-config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(mockConfig),
-      });
-    } catch (e) {
-      console.warn('[KatikaService] Failed to persist hot config to server:', e);
+    if (Object.keys(patch).length > 0) {
+      try {
+        const res = await tikaFetch('/api/katika/engine-config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(patch),
+        });
+        if (res.ok) {
+          const saved = await res.json();
+          lastConfigSaveStatus = {
+            persisted: saved.persisted === true,
+            configVersion: typeof saved.configVersion === 'number' ? saved.configVersion : null,
+            at: Date.now(),
+          };
+          // Le serveur a pu ramener une valeur dans ses bornes : on s'aligne sur sa réponse.
+          for (const p of ENGINE_PARAMS) {
+            if (saved[p.key] !== undefined) (mockConfig as unknown as Record<string, unknown>)[p.key] = saved[p.key];
+          }
+          notifyConfigListeners();
+        } else {
+          lastConfigSaveStatus = { persisted: false, configVersion: null, at: Date.now(), error: `HTTP ${res.status}` };
+        }
+      } catch (e) {
+        console.warn('[KatikaService] Failed to persist hot config to server:', e);
+        lastConfigSaveStatus = { persisted: false, configVersion: null, at: Date.now(), error: String(e) };
+      }
     }
 
     mockAuditLogs.unshift({
@@ -1676,7 +1733,7 @@ export const KatikaService = {
       severity: 'WARNING',
       actor: 'Katika Master',
       summary: 'Mise à jour des paramètres du moteur & de l\'économie Katika',
-      details: mockConfig,
+      details: { changed: patch },
     });
 
     return { ...mockConfig };

@@ -33,6 +33,12 @@ const PORT = 3000;
 const instanceId = 'inst_' + Math.random().toString(36).substring(2, 10) + '_' + Date.now().toString(36);
 const bootedAt = new Date().toISOString();
 
+// Filet de sécurité : un rejet de promesse non géré (ex. client Google sans identifiants) est journalisé
+// au lieu d'arrêter le serveur, qui garde les tables en mémoire.
+process.on('unhandledRejection', (reason: unknown) => {
+  console.warn('[Process] Rejet de promesse non géré (journalisé, le serveur continue) :', (reason as any)?.message || reason);
+});
+
 async function startServer() {
   // Config moteur persistée (Firestore) : chargée avant d'accepter la moindre connexion.
   await loadEngineConfigFromStore();
