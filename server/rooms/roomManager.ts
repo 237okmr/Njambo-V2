@@ -400,6 +400,14 @@ export class RoomManager {
     return getEngineConfig();
   }
 
+  /** Recharge la config active après un chargement persistant (démarrage du serveur). */
+  public static refreshEngineConfig(): void {
+    this.engineConfig = getEngineConfig();
+    this.roomStates.forEach((state) => {
+      state.engineConfig = this.engineConfig;
+    });
+  }
+
   public static updateEngineConfig(newConfig: Partial<KatikaEngineConfig>) {
     const updated = applyEngineConfigUpdate(newConfig);
     this.engineConfig = updated;

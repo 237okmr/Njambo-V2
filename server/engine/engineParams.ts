@@ -100,6 +100,14 @@ export const ENGINE_PARAMS: ParamDef[] = [
     min: 5, max: 240, default: 30, group: 'salons', scope: 'server', effect: 'immediate', locked: true,
     help: 'Durée de vie d\'une table en salle d\'attente sans humain connecté. Défaut protégé : 30 min.',
   },
+
+  // ===== Groupe caches et mises à jour =====
+  {
+    key: 'publicConfigCacheSeconds', label: 'Durée de cache de la config publique', unit: 's',
+    min: 0, max: 600, default: 60, group: 'caches-et-mises-a-jour', scope: 'server', effect: 'immediate',
+    advanced: true, allowZero: true,
+    help: 'Durée pendant laquelle un téléphone réutilise la config publique sans la redemander. 0 = pas de cache.',
+  },
 ];
 
 export const PARAM_BY_KEY: Record<string, ParamDef> = Object.fromEntries(

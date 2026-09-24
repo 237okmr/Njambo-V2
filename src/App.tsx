@@ -417,7 +417,6 @@ function GameApp() {
   const isOnlineActive = Boolean(isMultiplayerMode && multiplayerRoom?.gameState);
 
   // Network connection status toast feedback
-  const wasDisconnectedRef = useRef(false);
   const lastProcessedEmoteIdRef = useRef<string | null>(null);
 
   useEffect(() => {

@@ -209,18 +209,12 @@ describe('Auto-réparation de l\'identité client sur SESSION_READY', () => {
       }
     });
 
-    const sentMessages: string[] = [];
     (wsService as any).socket = {
       readyState: 1,
       close: () => {},
-      send: (raw: string) => { sentMessages.push(raw); },
+      send: () => {},
     };
     (wsService as any).authConfirmedOnThisSocket = true;
-    (wsService as any).lastSentMessage = {
-      type: 'PLAY_CARD',
-      playerId: oldTempId,
-      cardId: 'c_7_hearts',
-    };
 
     // 2. Server rejects message and sends expectedPlayerId matching Google UID
     wsService.handleServerMessage({
@@ -230,15 +224,10 @@ describe('Auto-réparation de l\'identité client sur SESSION_READY', () => {
       expectedPlayerId: googleUid,
     });
 
-    // 3. Verify identity realigned to Google UID without SESSION_RESET and message resent once
+    // 3. Verify identity realigned to Google UID sans SESSION_RESET
     assert.strictEqual(getPlayerId(), googleUid, 'Identité doit être réalignée vers googleUid');
     assert.strictEqual(resetErrorOccurred, false, 'Ne doit pas lever SESSION_RESET');
     assert.strictEqual((wsService as any).activeRoomCode, 'ROOM_XYZ', 'La table doit rester intacte');
-    assert.strictEqual(sentMessages.length, 1, 'Le message rejeté doit être renvoyé une fois');
-
-    const resent = JSON.parse(sentMessages[0]);
-    assert.strictEqual(resent.type, 'PLAY_CARD');
-    assert.strictEqual(resent.playerId, googleUid, 'Le message renvoyé doit porter le nouvel identifiant réaligné');
 
     unsubError();
     (auth as any).currentUser = null;

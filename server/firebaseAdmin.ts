@@ -24,6 +24,17 @@ export function getFirebaseAdminDb(): Firestore {
   return adminDb;
 }
 
+/**
+ * Base Firestore de l'application (celle utilisée par le client, voir src/lib/firebase.ts).
+ * Attention : getFirebaseAdminDb() ci-dessus vise la base « (default) », qui n'est pas forcément celle de l'appli.
+ */
+export function getFirebaseAdminAppDb(): Firestore {
+  getFirebaseAdminAuth(); // garantit l'initialisation de l'application admin
+  const configuredId = (firebaseConfig as { firestoreDatabaseId?: string }).firestoreDatabaseId;
+  const databaseId = configuredId && configuredId !== '(default)' ? configuredId : undefined;
+  return databaseId ? getFirestore(adminApp!, databaseId) : getFirestore(adminApp!);
+}
+
 export async function verifyFirebaseIdToken(idToken: string): Promise<{ uid: string; email?: string; emailVerified?: boolean; admin?: boolean } | null> {
   if (!idToken || typeof idToken !== 'string') return null;
   try {

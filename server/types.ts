@@ -145,6 +145,7 @@ export interface ServerMessage {
   matchedRoomCode?: string;
   activeGameRoomCode?: string;
   provisional?: boolean;
+  configVersion?: number;
   protocolVersion?: number;
   serverVersion?: string;
   updateRecommended?: boolean;

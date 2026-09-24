@@ -5,7 +5,8 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { APP_VERSION } from '../version';
 import { playerProfileService } from './playerProfileService';
 import { getPersistentItem, setPersistentItem } from '../utils/storageUtils';
-import { getPlayerId, setLocalPlayerId, setAuthenticatedUid, setInRoomStatus, onIdentityChange } from './identity';
+import { getPlayerId, setLocalPlayerId, setInRoomStatus, onIdentityChange } from './identity';
+import { noteServerConfigVersion } from './publicConfig';
 
 export type ConnectionStateListener = (connected: boolean) => void;
 export type RoomUpdateListener = (room: MultiplayerRoom | null) => void;
@@ -83,21 +84,14 @@ class WebSocketService {
   private isSessionTakenOver: boolean = false;
   private pendingJoinCancelled: boolean = false;
   private sessionRestoredListeners: Set<() => void> = new Set();
-  private reconnectedListeners: Set<() => void> = new Set();
   private wasDisconnected: boolean = false;
   private roomSyncedOnThisSocket: boolean = false;
-  private lastSentMessage: ClientMessage | null = null;
-  private hasRetriedRejectedMessage: boolean = false;
 
   public onSessionRestored(listener: () => void): () => void {
     this.sessionRestoredListeners.add(listener);
     return () => {
       this.sessionRestoredListeners.delete(listener);
     };
-  }
-
-  public onReconnected(listener: () => void): () => void {
-    return this.onSessionRestored(listener);
   }
 
   private checkSessionRestored(): void {
@@ -122,13 +116,6 @@ class WebSocketService {
         l();
       } catch (e) {
         console.warn('[WS] Session restored listener error:', e);
-      }
-    });
-    this.reconnectedListeners.forEach((l) => {
-      try {
-        l();
-      } catch (e) {
-        console.warn('[WS] Reconnected listener error:', e);
       }
     });
   }
@@ -747,6 +734,7 @@ class WebSocketService {
 
     switch (msg.type) {
       case 'SESSION_READY': {
+        noteServerConfigVersion(msg.configVersion);
         const inTable = Boolean(this.activeRoomCode || this.currentRoom);
         const currentLocalId = getPlayerId();
         const serverAssignedId = msg.playerId;
@@ -805,7 +793,6 @@ class WebSocketService {
 
       case 'AUTH_CONFIRMED': {
         this.authConfirmedOnThisSocket = true;
-        this.hasRetriedRejectedMessage = false;
         if (msg.playerId) {
           this.lastConnectedPlayerId = msg.playerId;
         }
@@ -954,6 +941,7 @@ class WebSocketService {
             this.connect();
           }
         } else if (errorCode === 'ROOM_NOT_FOUND') {
+          this.wasDisconnected = false;
           this.activeRoomCode = null;
           this.sessionRoomPlayerId = null;
           this.lastAcceptedState = null;
@@ -1452,9 +1440,6 @@ class WebSocketService {
   }
 
   private send(msg: ClientMessage): void {
-    if (msg.type !== 'AUTH') {
-      this.lastSentMessage = msg;
-    }
     if (msg.clientVersion === undefined) {
       msg.clientVersion = APP_VERSION;
     }

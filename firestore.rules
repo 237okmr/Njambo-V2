@@ -414,6 +414,11 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Config moteur persistée : lue et écrite uniquement par le serveur (SDK admin)
+    match /server_config/{docId} {
+      allow read, write: if false;
+    }
+
     // Abonnements Web Push (lecture/écriture par le serveur avec le SDK client : à migrer au lot 4)
     match /push_subscriptions/{subscriptionId} {
       allow read, write: if true;

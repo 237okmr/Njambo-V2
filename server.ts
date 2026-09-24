@@ -11,6 +11,9 @@ import compression from 'compression';
 import { WebSocketServer } from 'ws';
 import { createServer as createViteServer } from 'vite';
 import { RoomManager } from './server/rooms/roomManager';
+import { loadEngineConfigFromStore, persistEngineConfigToStore, getConfigStoreStatus } from './server/engine/configStore';
+import { getEngineConfig, getEngineConfigVersion } from './server/engine/engineConfig';
+import { getPublicParams, PARAM_BY_KEY } from './server/engine/engineParams';
 import { handleAdminChatMessage, streamAdminChatMessage } from './server/aiAdminChat';
 import { generateVisualSpec } from './server/aiVisual';
 import { pushService, buildGameUrl } from './server/pushService';
@@ -31,6 +34,10 @@ const instanceId = 'inst_' + Math.random().toString(36).substring(2, 10) + '_' +
 const bootedAt = new Date().toISOString();
 
 async function startServer() {
+  // Config moteur persistée (Firestore) : chargée avant d'accepter la moindre connexion.
+  await loadEngineConfigFromStore();
+  RoomManager.refreshEngineConfig();
+
   const app = express();
   app.use(compression());
   app.use(express.json({ limit: '15mb' }));
@@ -112,6 +119,7 @@ async function startServer() {
           playerId: client.playerId,
           reconnectToken: client.reconnectToken,
           provisional: isProvisional,
+          configVersion: getEngineConfigVersion(),
           timestamp: Date.now(),
         })
       );
@@ -295,6 +303,8 @@ async function startServer() {
       instanceId,
       bootedAt,
       activeRooms: RoomManager.getActiveRoomsCount(),
+      configVersion: getEngineConfigVersion(),
+      configStore: getConfigStoreStatus(),
       timestamp: Date.now(),
     });
   });
@@ -794,6 +804,14 @@ async function startServer() {
     }
   });
 
+  // Config publique (lecture seule, sans authentification) : uniquement les paramètres de portée client ou both.
+  app.get('/api/config/public', (req, res) => {
+    const cfg = getEngineConfig() as unknown as Record<string, unknown>;
+    const cacheSeconds = Math.max(0, Number(cfg.publicConfigCacheSeconds ?? PARAM_BY_KEY.publicConfigCacheSeconds.default) || 0);
+    res.setHeader('Cache-Control', `public, max-age=${cacheSeconds}`);
+    res.json({ configVersion: getEngineConfigVersion(), params: getPublicParams(cfg) });
+  });
+
   // Katika Admin Auth Protection Middleware (Firebase ID Token verification)
   const KATIKA_ADMIN_EMAIL = (process.env.KATIKA_ADMIN_EMAIL || '237okmr@gmail.com').toLowerCase();
   app.use('/api/katika', async (req, res, next) => {
@@ -1128,12 +1146,13 @@ async function startServer() {
 
   // Katika Engine Hot Config
   app.get('/api/katika/engine-config', (req, res) => {
-    res.json(RoomManager.getEngineConfig());
+    res.json({ ...RoomManager.getEngineConfig(), configVersion: getEngineConfigVersion() });
   });
 
-  app.post('/api/katika/engine-config', express.json(), (req, res) => {
+  app.post('/api/katika/engine-config', express.json(), async (req, res) => {
     const updated = RoomManager.updateEngineConfig(req.body || {});
-    res.json(updated);
+    const persisted = await persistEngineConfigToStore();
+    res.json({ ...updated, configVersion: getEngineConfigVersion(), persisted });
   });
 
   function buildServerMetricsSnapshot(): any {

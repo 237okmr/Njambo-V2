@@ -5,6 +5,7 @@ import App from './App.tsx';
 import { ErrorBoundary } from './components/common/ErrorBoundary.tsx';
 import { NotificationProvider } from './components/common/NotificationCenter.tsx';
 import './index.css';
+import { initPublicConfig } from './services/publicConfig';
 
 // Wake up backend server without blocking
 if (typeof window !== 'undefined') {
@@ -13,6 +14,11 @@ if (typeof window !== 'undefined') {
   } catch {
     // ignore
   }
+}
+
+// Config publique (délais réglables dans katika) : non bloquante, valeurs par défaut du registre en attendant
+if (typeof window !== 'undefined') {
+  void initPublicConfig();
 }
 
 // Handle unhandled transient database closing or hidden events from iframe lifecycle
