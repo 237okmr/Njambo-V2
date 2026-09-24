@@ -1,0 +1,159 @@
+/**
+ * REGISTRE UNIQUE DES PARAMÈTRES RÉGLABLES (Njambo Kora)
+ *
+ * Règle permanente : aucun délai n'est codé en dur. Tout délai (multijoueur, réseau, session,
+ * modération, notification, cache, interface, katika) se déclare ici et se règle dans katika.
+ * Exceptions : le solo, les animations purement visuelles et les constantes marquées // delay-ok: raison.
+ *
+ * Ce fichier est volontairement sans aucune dépendance : il est importé par le serveur ET par le client.
+ */
+
+export type ParamScope = 'server' | 'client' | 'both' | 'admin';
+export type ParamGroup =
+  | 'partie'
+  | 'connexion'
+  | 'salons'
+  | 'moderation'
+  | 'notifications'
+  | 'caches-et-mises-a-jour'
+  | 'interface'
+  | 'katika';
+export type ParamEffect = 'immediate' | 'next_room' | 'next_connection';
+export type ParamUnit = 's' | 'ms' | 'min' | 'jours' | '';
+
+export interface ParamDef {
+  key: string;
+  label: string;
+  unit: ParamUnit;
+  type?: 'number' | 'boolean';
+  min: number;
+  max: number;
+  default: number | boolean;
+  group: ParamGroup;
+  scope: ParamScope;
+  effect: ParamEffect;
+  advanced?: boolean;
+  help: string;
+  deprecated?: boolean;
+  /** Valeur 0 acceptée en plus de l'intervalle min à max (ex. 0 = désactivé). */
+  allowZero?: boolean;
+  /** Paramètre protégé : valeur et bornes ne doivent jamais être modifiées dans le code. */
+  locked?: boolean;
+}
+
+export const ENGINE_PARAMS: ParamDef[] = [
+  // ===== Groupe partie =====
+  {
+    key: 'turnTimerSeconds', label: 'Chrono de tour (défaut des nouvelles tables)', unit: 's',
+    min: 10, max: 60, default: 20, group: 'partie', scope: 'both', effect: 'next_room',
+    help: 'Temps accordé à un joueur pour jouer sa carte. Ne change pas les tables déjà créées.',
+  },
+  {
+    key: 'aiRelayGraceSeconds', label: 'Délai avant que le relais prenne le siège', unit: 's',
+    min: 8, max: 60, default: 25, group: 'partie', scope: 'server', effect: 'immediate',
+    help: 'Attente après une coupure avant qu\'un relais joue à la place du joueur absent.',
+  },
+  {
+    key: 'transitionDelayMs', label: 'Compte à rebours entre deux parties', unit: 'ms',
+    min: 10000, max: 60000, default: 25000, group: 'partie', scope: 'both', effect: 'immediate',
+    help: 'Durée avant le lancement automatique de la partie suivante (dernière chance de retour).',
+  },
+  {
+    key: 'botThinkTimeMs', label: 'Temps de réflexion des bots', unit: 'ms',
+    min: 0, max: 3000, default: 800, group: 'partie', scope: 'both', effect: 'immediate',
+    help: 'Pause avant qu\'un bot joue sa carte.',
+  },
+  {
+    key: 'trickResolutionTimeMs', label: 'Durée de résolution d\'un pli', unit: 'ms',
+    min: 100, max: 5000, default: 1600, group: 'partie', scope: 'both', effect: 'immediate',
+    help: 'Pause pendant laquelle le pli gagnant reste visible avant d\'être ramassé.',
+  },
+  {
+    key: 'instantWinAnimationTimeMs', label: 'Durée de l\'animation de victoire instantanée', unit: 'ms',
+    min: 100, max: 8000, default: 3500, group: 'partie', scope: 'both', effect: 'immediate',
+    advanced: true, help: 'Durée d\'affichage des trois 7 et des mains de moins de 21.',
+  },
+
+  // ===== Groupe salons =====
+  {
+    key: 'emptyRoomTimeoutMinutes', label: 'Suppression d\'une table sans humain connecté', unit: 'min',
+    min: 3, max: 120, default: 10, group: 'salons', scope: 'server', effect: 'immediate',
+    help: 'Durée après laquelle une table en cours sans aucun humain connecté est supprimée.',
+  },
+  {
+    key: 'guestLobbyGraceSeconds', label: 'Grâce d\'un invité déconnecté en salle d\'attente', unit: 's',
+    min: 30, max: 600, default: 90, group: 'salons', scope: 'server', effect: 'immediate',
+    help: 'Temps laissé à un invité pour revenir avant d\'être retiré de la salle d\'attente.',
+  },
+  {
+    key: 'hostTakeoverSeconds', label: 'Reprise du rôle d\'hôte par un invité', unit: 's',
+    min: 60, max: 1800, default: 180, group: 'salons', scope: 'server', effect: 'immediate', allowZero: true,
+    help: 'Absence de l\'hôte avant qu\'un invité devienne hôte de repli. 0 = jamais.',
+  },
+  {
+    key: 'publicAbsentHostVisibilitySeconds', label: 'Visibilité publique d\'une table à hôte absent', unit: 's',
+    min: 0, max: 1800, default: 180, group: 'salons', scope: 'both', effect: 'immediate', allowZero: true,
+    help: 'Durée pendant laquelle une table publique dont l\'hôte est absent reste listée.',
+  },
+  {
+    key: 'lobbyWaitTtlMinutes', label: 'Durée de vie d\'une table en attente', unit: 'min',
+    min: 5, max: 240, default: 30, group: 'salons', scope: 'server', effect: 'immediate', locked: true,
+    help: 'Durée de vie d\'une table en salle d\'attente sans humain connecté. Défaut protégé : 30 min.',
+  },
+];
+
+export const PARAM_BY_KEY: Record<string, ParamDef> = Object.fromEntries(
+  ENGINE_PARAMS.map((p) => [p.key, p])
+);
+
+/** Valeurs par défaut de tous les paramètres du registre. */
+export function getParamDefaults(): Record<string, number | boolean> {
+  const out: Record<string, number | boolean> = {};
+  for (const p of ENGINE_PARAMS) out[p.key] = p.default;
+  return out;
+}
+
+/** Ramène une valeur brute dans les bornes du paramètre (valeur invalide = défaut). */
+export function clampParamValue(def: ParamDef, raw: unknown): number | boolean {
+  if (def.type === 'boolean') {
+    return typeof raw === 'boolean' ? raw : raw === 'true' || raw === 1;
+  }
+  const n = typeof raw === 'string' && raw.trim() !== '' ? Number(raw) : (raw as number);
+  if (typeof n !== 'number' || !Number.isFinite(n)) return def.default as number;
+  if (n === 0 && def.allowZero) return 0;
+  return Math.min(def.max, Math.max(def.min, n));
+}
+
+export interface ParamPatchResult {
+  accepted: Record<string, number | boolean>;
+  clamped: { key: string; from: unknown; to: number | boolean }[];
+  ignored: string[];
+}
+
+/** Valide un patch : champs du registre bornés, champs inconnus ignorés. */
+export function validateParamPatch(patch: Record<string, unknown> | null | undefined): ParamPatchResult {
+  const result: ParamPatchResult = { accepted: {}, clamped: [], ignored: [] };
+  if (!patch || typeof patch !== 'object') return result;
+  for (const [key, raw] of Object.entries(patch)) {
+    const def = PARAM_BY_KEY[key];
+    if (!def) {
+      result.ignored.push(key);
+      continue;
+    }
+    const value = clampParamValue(def, raw);
+    result.accepted[key] = value;
+    if (value !== raw) result.clamped.push({ key, from: raw, to: value });
+  }
+  return result;
+}
+
+/** Sous-ensemble publiable aux joueurs : uniquement les paramètres de portée client ou both. */
+export function getPublicParams(values: Record<string, unknown>): Record<string, number | boolean> {
+  const out: Record<string, number | boolean> = {};
+  for (const p of ENGINE_PARAMS) {
+    if (p.scope !== 'client' && p.scope !== 'both') continue;
+    const v = values[p.key];
+    out[p.key] = v === undefined ? p.default : clampParamValue(p, v);
+  }
+  return out;
+}

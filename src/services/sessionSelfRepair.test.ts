@@ -147,6 +147,103 @@ describe('Auto-réparation de l\'identité client sur SESSION_READY', () => {
     unsubRoom();
   });
 
+  it('protège la table et conserve l\'UID quand un joueur Google en table reçoit un SESSION_READY provisoire', () => {
+    // 1. Authenticated Google user in active table
+    const googleUid = 'google_user_uid_123';
+    (auth as any).currentUser = {
+      uid: googleUid,
+      isAnonymous: false,
+    };
+    setLocalPlayerId(googleUid);
+    wsService.setReconnectToken('google_token_123');
+
+    (wsService as any).activeRoomCode = 'ROOM_XYZ';
+    (wsService as any).currentRoom = { id: 'ROOM_XYZ', status: 'PLAYING', players: [] } as any;
+
+    let errorNotified = false;
+    const unsubError = wsService.onError(() => {
+      errorNotified = true;
+    });
+
+    // 2. Server sends provisional SESSION_READY with a temporary guest ID
+    const provisionalGuestId = 'usr_temp_guest_456';
+    const provisionalToken = 'tok_temp_456';
+
+    wsService.handleServerMessage({
+      type: 'SESSION_READY',
+      playerId: provisionalGuestId,
+      reconnectToken: provisionalToken,
+      provisional: true,
+      timestamp: Date.now(),
+    });
+
+    // 3. Table remains intact, no SESSION_RESET error, Google UID conserved
+    assert.strictEqual((wsService as any).activeRoomCode, 'ROOM_XYZ', 'La table doit rester intacte');
+    assert.notStrictEqual((wsService as any).currentRoom, null, 'currentRoom ne doit pas être réinitialisé');
+    assert.strictEqual(errorNotified, false, 'Aucune erreur SESSION_RESET ne doit être émise');
+    assert.strictEqual(getPlayerId(), googleUid, 'L\'UID Google doit être conservé dans getPlayerId()');
+    assert.strictEqual(wsService.getLocalPlayerId(), googleUid, 'getLocalPlayerId() doit retourner l\'UID Google');
+
+    unsubError();
+    (auth as any).currentUser = null;
+  });
+
+  it('réaligne l\'identité sans SESSION_RESET lorsqu\'une erreur avec expectedPlayerId est reçue pour un compte Google', () => {
+    // 1. Google user whose local identity was improperly pointing to an old temporary guest ID
+    const googleUid = 'google_user_uid_123';
+    (auth as any).currentUser = {
+      uid: googleUid,
+      isAnonymous: false,
+    };
+
+    const oldTempId = 'usr_old_temp_789';
+    setLocalPlayerId(oldTempId);
+
+    (wsService as any).activeRoomCode = 'ROOM_XYZ';
+    (wsService as any).currentRoom = { id: 'ROOM_XYZ', status: 'PLAYING', players: [] } as any;
+
+    let resetErrorOccurred = false;
+    const unsubError = wsService.onError((_err, code) => {
+      if (code === 'SESSION_RESET') {
+        resetErrorOccurred = true;
+      }
+    });
+
+    const sentMessages: string[] = [];
+    (wsService as any).socket = {
+      readyState: 1,
+      close: () => {},
+      send: (raw: string) => { sentMessages.push(raw); },
+    };
+    (wsService as any).authConfirmedOnThisSocket = true;
+    (wsService as any).lastSentMessage = {
+      type: 'PLAY_CARD',
+      playerId: oldTempId,
+      cardId: 'c_7_hearts',
+    };
+
+    // 2. Server rejects message and sends expectedPlayerId matching Google UID
+    wsService.handleServerMessage({
+      type: 'ERROR',
+      errorCode: 'AUTH_REQUIRED',
+      error: 'Action non autorisée : identifiant joueur invalide pour cette connexion.',
+      expectedPlayerId: googleUid,
+    });
+
+    // 3. Verify identity realigned to Google UID without SESSION_RESET and message resent once
+    assert.strictEqual(getPlayerId(), googleUid, 'Identité doit être réalignée vers googleUid');
+    assert.strictEqual(resetErrorOccurred, false, 'Ne doit pas lever SESSION_RESET');
+    assert.strictEqual((wsService as any).activeRoomCode, 'ROOM_XYZ', 'La table doit rester intacte');
+    assert.strictEqual(sentMessages.length, 1, 'Le message rejeté doit être renvoyé une fois');
+
+    const resent = JSON.parse(sentMessages[0]);
+    assert.strictEqual(resent.type, 'PLAY_CARD');
+    assert.strictEqual(resent.playerId, googleUid, 'Le message renvoyé doit porter le nouvel identifiant réaligné');
+
+    unsubError();
+    (auth as any).currentUser = null;
+  });
+
   it('protège contre l\'ouverture d\'une seconde connexion si connect() est appelé pour la même identité', async () => {
     const currentId = getPlayerId();
     (wsService as any).lastConnectedPlayerId = currentId;

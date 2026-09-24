@@ -103,12 +103,15 @@ async function startServer() {
     const client = RoomManager.registerClient(ws, reconnectToken, requestedPlayerId, sessionId);
     console.log(`[WS] Client connected: ${client.playerId} (token: ${client.reconnectToken.slice(0, 8)}...)`);
 
+    const isProvisional = Boolean((requestedPlayerId && !requestedPlayerId.startsWith('usr_')) || client.isProvisional);
+
     try {
       ws.send(
         JSON.stringify({
           type: 'SESSION_READY',
           playerId: client.playerId,
           reconnectToken: client.reconnectToken,
+          provisional: isProvisional,
           timestamp: Date.now(),
         })
       );

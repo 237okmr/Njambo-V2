@@ -20,6 +20,7 @@ export interface ConnectedClient {
   isAuthenticated?: boolean;
   authUid?: string;
   isAuthenticating?: boolean;
+  isProvisional?: boolean;
   messageQueue?: string[];
 }
 
@@ -512,6 +513,7 @@ export class RoomManager {
   public static registerClient(socket: WebSocket, reconnectToken?: string, requestedPlayerId?: string, sessionId?: string): ConnectedClient {
     let playerId: string;
     let token: string;
+    let isProvisional = false;
 
     if (reconnectToken && this.tokenToPlayerId.has(reconnectToken)) {
       const tokenPlayerId = this.tokenToPlayerId.get(reconnectToken)!;
@@ -519,12 +521,27 @@ export class RoomManager {
         playerId = tokenPlayerId;
         token = reconnectToken;
         this.playerIdToToken.set(playerId, token);
+        if (requestedPlayerId && requestedPlayerId.startsWith('usr_') && requestedPlayerId !== playerId) {
+          this.addAuditLog({
+            id: `log-sub-${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+            timestamp: Date.now(),
+            type: 'AUTH',
+            severity: 'WARNING',
+            actor: 'Auth Manager',
+            summary: "Substitution d'identité invité (token_mismatch)",
+            details: {
+              requestedPlayerId,
+              assignedPlayerId: playerId,
+            },
+          });
+        }
       } else {
         // Google UID token: assign temporary guest until AUTH message confirms identity
         playerId = 'usr_' + Math.random().toString(36).substring(2, 9);
         token = 'tk_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
         this.tokenToPlayerId.set(token, playerId);
         this.playerIdToToken.set(playerId, token);
+        isProvisional = true;
       }
     } else if (requestedPlayerId) {
       if (!requestedPlayerId.startsWith('usr_')) {
@@ -533,6 +550,7 @@ export class RoomManager {
         token = 'tk_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
         this.tokenToPlayerId.set(token, playerId);
         this.playerIdToToken.set(playerId, token);
+        isProvisional = true;
       } else {
         // Guest ID ('usr_...')
         const existingToken = this.playerIdToToken.get(requestedPlayerId);
@@ -548,6 +566,18 @@ export class RoomManager {
             token = 'tk_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
             this.tokenToPlayerId.set(token, playerId);
             this.playerIdToToken.set(playerId, token);
+            this.addAuditLog({
+              id: `log-sub-${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+              timestamp: Date.now(),
+              type: 'AUTH',
+              severity: 'WARNING',
+              actor: 'Auth Manager',
+              summary: "Substitution d'identité invité (token_mismatch)",
+              details: {
+                requestedPlayerId,
+                assignedPlayerId: playerId,
+              },
+            });
           }
         } else {
           // Fresh unbound guest ID
@@ -592,6 +622,7 @@ export class RoomManager {
       isAuthenticated: false,
       authUid: undefined,
       isAuthenticating: false,
+      isProvisional,
       messageQueue: [],
     };
 
@@ -929,6 +960,7 @@ export class RoomManager {
           type: 'ERROR',
           errorCode: 'AUTH_REQUIRED',
           error: 'Action non autorisée : identifiant joueur invalide pour cette connexion.',
+          expectedPlayerId: client.playerId,
         });
         return;
       }

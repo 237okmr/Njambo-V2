@@ -421,14 +421,12 @@ function GameApp() {
   const lastProcessedEmoteIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!isWsConnected) {
-      wasDisconnectedRef.current = true;
-    } else if (wasDisconnectedRef.current) {
-      wasDisconnectedRef.current = false;
+    const unsub = wsService.onSessionRestored(() => {
       triggerToast('Reconnexion réussie ! Vous avez repris le contrôle de votre jeu.');
       triggerHaptic('success');
-    }
-  }, [isWsConnected, triggerToast]);
+    });
+    return () => unsub();
+  }, [triggerToast]);
 
   // Discrete notification when player reconnects and AI relay played trick(s) in their absence
   useEffect(() => {

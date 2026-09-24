@@ -118,6 +118,7 @@ export interface ServerMessage {
     | 'VERSION_HANDSHAKE'
     | 'PARTIE_RESULTS';
   errorCode?: ServerErrorCode;
+  expectedPlayerId?: string;
   room?: MultiplayerRoom;
   playerId?: string;
   reconnectToken?: string;
@@ -143,6 +144,7 @@ export interface ServerMessage {
   partieResults?: PartieResult[];
   matchedRoomCode?: string;
   activeGameRoomCode?: string;
+  provisional?: boolean;
   protocolVersion?: number;
   serverVersion?: string;
   updateRecommended?: boolean;

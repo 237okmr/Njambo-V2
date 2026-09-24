@@ -1,3 +1,5 @@
+import { PARAM_BY_KEY, clampParamValue, getParamDefaults } from './engineParams';
+
 export interface KatikaEngineConfig {
   turnTimerSeconds: number;
   reconnectGracePeriodSeconds: number;
@@ -40,16 +42,9 @@ export interface KatikaEngineConfig {
   maxAutoBetMultiplier?: number;
 }
 
-export const DEFAULT_ENGINE_CONFIG: KatikaEngineConfig = {
-  emptyRoomTimeoutMinutes: 5,
-  lobbyWaitTtlMinutes: 30,
-  publicAbsentHostVisibilitySeconds: 180,
-  hostTakeoverSeconds: 180,
-  guestLobbyGraceSeconds: 60,
+const LEGACY_ENGINE_DEFAULTS = {
   joinPushEnabled: true,
-  turnTimerSeconds: 15,
   reconnectGracePeriodSeconds: 180,
-  aiRelayGraceSeconds: 8,
   reconnectTimeoutSeconds: 180,
   lobbyDisconnectGraceSeconds: 180,
   hostLobbyGraceSeconds: 180,
@@ -61,10 +56,6 @@ export const DEFAULT_ENGINE_CONFIG: KatikaEngineConfig = {
   bettingEconomyEnabled: false,
   maintenanceNotice: 'Serveur de jeu en maintenance administrative.',
   versionPolicy: 'MODERATE',
-  transitionDelayMs: 18000,
-  botThinkTimeMs: 800,
-  trickResolutionTimeMs: 1600,
-  instantWinAnimationTimeMs: 3500,
   foldForfeitDelayMs: 2000,
   defaultTableMaxPlayers: 2,
   defaultFillWithBots: false,
@@ -82,54 +73,60 @@ export const DEFAULT_ENGINE_CONFIG: KatikaEngineConfig = {
   maxAutoBetMultiplier: 4,
 };
 
+// Les paramètres du registre (engineParams.ts) font foi pour tous les délais.
+export const DEFAULT_ENGINE_CONFIG: KatikaEngineConfig = {
+  ...LEGACY_ENGINE_DEFAULTS,
+  ...getParamDefaults(),
+} as KatikaEngineConfig;
+
 let activeEngineConfig: KatikaEngineConfig = { ...DEFAULT_ENGINE_CONFIG };
 
 export function getEngineConfig(): KatikaEngineConfig {
   return { ...activeEngineConfig };
 }
 
-export function updateEngineConfig(patch: Partial<KatikaEngineConfig>): KatikaEngineConfig {
-  const validatedPatch: Partial<KatikaEngineConfig> = { ...patch };
+let configVersion = 0;
 
-  if (patch.lobbyWaitTtlMinutes !== undefined) {
-    const val = Number(patch.lobbyWaitTtlMinutes);
-    validatedPatch.lobbyWaitTtlMinutes = Number.isFinite(val) ? Math.min(240, Math.max(5, val)) : 30;
-  }
+export function getEngineConfigVersion(): number {
+  return configVersion;
+}
 
-  if (patch.publicAbsentHostVisibilitySeconds !== undefined) {
-    const val = Number(patch.publicAbsentHostVisibilitySeconds);
-    validatedPatch.publicAbsentHostVisibilitySeconds = Number.isFinite(val) ? Math.min(1800, Math.max(0, val)) : 180;
-  }
+const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
-  if (patch.hostTakeoverSeconds !== undefined) {
-    const val = Number(patch.hostTakeoverSeconds);
-    if (!Number.isFinite(val) || val < 0) {
-      validatedPatch.hostTakeoverSeconds = 180;
-    } else if (val === 0) {
-      validatedPatch.hostTakeoverSeconds = 0;
-    } else {
-      validatedPatch.hostTakeoverSeconds = Math.min(1800, Math.max(60, val));
+/**
+ * Applique un patch de configuration.
+ * - Paramètres du registre : validés et ramenés dans leurs bornes (valeur invalide = défaut).
+ * - Autres champs historiques (économie, maintenance, katika...) : conservés tels quels, comme avant.
+ */
+export function updateEngineConfig(patch: Partial<KatikaEngineConfig> | Record<string, unknown>): KatikaEngineConfig {
+  const validatedPatch: Record<string, unknown> = {};
+
+  for (const [key, raw] of Object.entries(patch || {})) {
+    if (FORBIDDEN_KEYS.has(key)) continue;
+    const def = PARAM_BY_KEY[key];
+    if (def) {
+      validatedPatch[key] = clampParamValue(def, raw);
+      continue;
     }
+    // Champs historiques : on normalise seulement le type des booléens connus.
+    const known = (DEFAULT_ENGINE_CONFIG as unknown as Record<string, unknown>)[key];
+    validatedPatch[key] = typeof known === 'boolean' ? Boolean(raw) : raw;
   }
 
-  if (patch.guestLobbyGraceSeconds !== undefined) {
-    const val = Number(patch.guestLobbyGraceSeconds);
-    validatedPatch.guestLobbyGraceSeconds = Number.isFinite(val) ? Math.min(600, Math.max(30, val)) : 60;
-  }
+  activeEngineConfig = { ...activeEngineConfig, ...(validatedPatch as Partial<KatikaEngineConfig>) };
+  configVersion += 1;
+  return { ...activeEngineConfig };
+}
 
-  if (patch.emptyRoomTimeoutMinutes !== undefined) {
-    const val = Number(patch.emptyRoomTimeoutMinutes);
-    validatedPatch.emptyRoomTimeoutMinutes = Number.isFinite(val) ? Math.min(120, Math.max(3, val)) : 5;
+/** Charge une config persistée au démarrage (valide les champs du registre, ne change pas la version). */
+export function loadPersistedEngineConfig(values: Record<string, unknown>, version: number): KatikaEngineConfig {
+  const validated: Record<string, unknown> = {};
+  for (const [key, raw] of Object.entries(values || {})) {
+    if (FORBIDDEN_KEYS.has(key)) continue;
+    const def = PARAM_BY_KEY[key];
+    validated[key] = def ? clampParamValue(def, raw) : raw;
   }
-
-  if (patch.joinPushEnabled !== undefined) {
-    validatedPatch.joinPushEnabled = Boolean(patch.joinPushEnabled);
-  }
-
-  if (patch.enableMultiplayerAutoBetEscalation !== undefined) {
-    validatedPatch.enableMultiplayerAutoBetEscalation = Boolean(patch.enableMultiplayerAutoBetEscalation);
-  }
-
-  activeEngineConfig = { ...activeEngineConfig, ...validatedPatch };
+  activeEngineConfig = { ...DEFAULT_ENGINE_CONFIG, ...(validated as Partial<KatikaEngineConfig>) };
+  configVersion = Number.isFinite(version) && version > 0 ? version : 0;
   return { ...activeEngineConfig };
 }

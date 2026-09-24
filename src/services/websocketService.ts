@@ -5,7 +5,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { APP_VERSION } from '../version';
 import { playerProfileService } from './playerProfileService';
 import { getPersistentItem, setPersistentItem } from '../utils/storageUtils';
-import { getPlayerId, setLocalPlayerId, setInRoomStatus, onIdentityChange } from './identity';
+import { getPlayerId, setLocalPlayerId, setAuthenticatedUid, setInRoomStatus, onIdentityChange } from './identity';
 
 export type ConnectionStateListener = (connected: boolean) => void;
 export type RoomUpdateListener = (room: MultiplayerRoom | null) => void;
@@ -82,6 +82,56 @@ class WebSocketService {
   private lastConnectedPlayerId: string | null = null;
   private isSessionTakenOver: boolean = false;
   private pendingJoinCancelled: boolean = false;
+  private sessionRestoredListeners: Set<() => void> = new Set();
+  private reconnectedListeners: Set<() => void> = new Set();
+  private wasDisconnected: boolean = false;
+  private roomSyncedOnThisSocket: boolean = false;
+  private lastSentMessage: ClientMessage | null = null;
+  private hasRetriedRejectedMessage: boolean = false;
+
+  public onSessionRestored(listener: () => void): () => void {
+    this.sessionRestoredListeners.add(listener);
+    return () => {
+      this.sessionRestoredListeners.delete(listener);
+    };
+  }
+
+  public onReconnected(listener: () => void): () => void {
+    return this.onSessionRestored(listener);
+  }
+
+  private checkSessionRestored(): void {
+    if (!this.wasDisconnected) return;
+    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return;
+
+    const currentUser = auth.currentUser;
+    const isGoogleUser = Boolean(currentUser && !currentUser.isAnonymous);
+
+    if (isGoogleUser && !this.authConfirmedOnThisSocket) {
+      return;
+    }
+
+    const inTable = Boolean(this.activeRoomCode || this.currentRoom);
+    if (inTable && !this.roomSyncedOnThisSocket) {
+      return;
+    }
+
+    this.wasDisconnected = false;
+    this.sessionRestoredListeners.forEach((l) => {
+      try {
+        l();
+      } catch (e) {
+        console.warn('[WS] Session restored listener error:', e);
+      }
+    });
+    this.reconnectedListeners.forEach((l) => {
+      try {
+        l();
+      } catch (e) {
+        console.warn('[WS] Reconnected listener error:', e);
+      }
+    });
+  }
 
   public getLocalPlayerId(): string {
     if (this.activeRoomCode && this.sessionRoomPlayerId) {
@@ -328,6 +378,7 @@ class WebSocketService {
             this.isConnecting = false;
             this.connectPromise = null;
             this.lastAcceptedState = null;
+            this.roomSyncedOnThisSocket = false;
             this.startHeartbeat();
             this.notifyConnectionState(true);
 
@@ -473,6 +524,10 @@ class WebSocketService {
               this.offlineQueueListeners.forEach((l) => l(initialQueueLength));
             }
 
+            if (!this.activeRoomCode && !this.currentRoom) {
+              this.checkSessionRestored();
+            }
+
             resolve();
           };
 
@@ -486,6 +541,8 @@ class WebSocketService {
           };
 
           this.socket.onclose = (event) => {
+            this.wasDisconnected = true;
+            this.roomSyncedOnThisSocket = false;
             this.isConnecting = false;
             this.connectPromise = null;
             this.authConfirmedOnThisSocket = false;
@@ -693,6 +750,15 @@ class WebSocketService {
         const inTable = Boolean(this.activeRoomCode || this.currentRoom);
         const currentLocalId = getPlayerId();
         const serverAssignedId = msg.playerId;
+        const currentUser = auth.currentUser;
+        const isGoogleUser = Boolean(currentUser && !currentUser.isAnonymous);
+
+        const isGoogleOrNonGuest = isGoogleUser || !currentLocalId.startsWith('usr_');
+        if ((msg.provisional && isGoogleOrNonGuest) || (isGoogleUser && serverAssignedId && serverAssignedId.startsWith('usr_'))) {
+          console.log(`[WS] Ignoring provisional SESSION_READY identity '${serverAssignedId}'. Keeping local identity '${currentLocalId}'.`);
+          this.checkSessionRestored();
+          break;
+        }
 
         if (serverAssignedId && serverAssignedId !== currentLocalId) {
           if (!inTable) {
@@ -733,11 +799,13 @@ class WebSocketService {
             this.setReconnectToken(msg.reconnectToken);
           }
         }
+        this.checkSessionRestored();
         break;
       }
 
       case 'AUTH_CONFIRMED': {
         this.authConfirmedOnThisSocket = true;
+        this.hasRetriedRejectedMessage = false;
         if (msg.playerId) {
           this.lastConnectedPlayerId = msg.playerId;
         }
@@ -756,6 +824,7 @@ class WebSocketService {
             }
           }
         }
+        this.checkSessionRestored();
         break;
       }
 
@@ -846,23 +915,32 @@ class WebSocketService {
             }
           }
         }
+        this.roomSyncedOnThisSocket = true;
+        this.checkSessionRestored();
         break;
 
-      case 'ERROR':
+      case 'ERROR': {
         const errorCode = msg.errorCode || 'GENERIC';
-        if (errorCode === 'ROOM_NOT_FOUND') {
-          this.activeRoomCode = null;
-          this.sessionRoomPlayerId = null;
-          this.lastAcceptedState = null;
-          setInRoomStatus(false);
-          this.currentRoom = null;
-          try {
-            localStorage.removeItem('njambo_active_room_code');
-          } catch (e) {
-            // ignore
+        let isFirstRepair = false;
+
+        if (errorCode === 'AUTH_REQUIRED') {
+          const currentUser = auth.currentUser;
+          const isGoogleAuthUser = Boolean(currentUser && !currentUser.isAnonymous);
+          const shouldAutoRepair =
+            Boolean(msg.expectedPlayerId) &&
+            isGoogleAuthUser &&
+            msg.expectedPlayerId === currentUser!.uid &&
+            getPlayerId() !== msg.expectedPlayerId;
+
+          if (shouldAutoRepair && msg.expectedPlayerId) {
+            console.warn(`[WS Auto-repair] Server expectedPlayerId '${msg.expectedPlayerId}' matches Google UID. Realigning identity.`);
+            setLocalPlayerId(msg.expectedPlayerId);
+            this.sessionRoomPlayerId = null;
+            if (!this.hasAttemptedAuthRetry) {
+              isFirstRepair = true;
+            }
           }
-          this.notifyRoomUpdate(null);
-        } else if (errorCode === 'AUTH_REQUIRED') {
+
           if (!this.hasAttemptedAuthRetry) {
             this.hasAttemptedAuthRetry = true;
             console.warn('[WS] Server returned AUTH_REQUIRED: attempting one-time reconnection with AUTH.');
@@ -875,16 +953,32 @@ class WebSocketService {
             }
             this.connect();
           }
+        } else if (errorCode === 'ROOM_NOT_FOUND') {
+          this.activeRoomCode = null;
+          this.sessionRoomPlayerId = null;
+          this.lastAcceptedState = null;
+          setInRoomStatus(false);
+          this.currentRoom = null;
+          try {
+            localStorage.removeItem('njambo_active_room_code');
+          } catch (e) {
+            // ignore
+          }
+          this.notifyRoomUpdate(null);
         }
+
         if (msg.error) {
           this.lastServerError = {
             code: errorCode,
             message: msg.error,
             timestamp: Date.now(),
           };
-          this.notifyError(msg.error, errorCode, msg.activeGameRoomCode);
+          if (!isFirstRepair) {
+            this.notifyError(msg.error, errorCode, msg.activeGameRoomCode);
+          }
         }
         break;
+      }
 
       case 'EMOTE':
         if (msg.emote) {
@@ -1358,6 +1452,9 @@ class WebSocketService {
   }
 
   private send(msg: ClientMessage): void {
+    if (msg.type !== 'AUTH') {
+      this.lastSentMessage = msg;
+    }
     if (msg.clientVersion === undefined) {
       msg.clientVersion = APP_VERSION;
     }
