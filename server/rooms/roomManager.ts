@@ -222,25 +222,29 @@ export class RoomManager {
     let expiresAt: number | null = null;
     let message = '';
 
+    const tempBanMinutes = Number(this.engineConfig.fairPlayTempBanMinutes ?? 60);
+    const restrictJoinMinutes = Number(this.engineConfig.fairPlayRestrictJoinMinutes ?? 30);
+    const restrictCreateMinutes = Number(this.engineConfig.fairPlayRestrictCreateMinutes ?? 15);
+
     if (consecutive >= 5) {
       status = 'BANNED';
       sanctionType = 'TEMP_BAN';
-      expiresAt = now + 60 * 60 * 1000; // 1 heure
-      message = '🚫 Sanction Fair-Play : Suspension temporaire du multijoueur pendant 1 heure pour abandons répétés.';
+      expiresAt = now + tempBanMinutes * 60 * 1000;
+      message = `🚫 Sanction Fair-Play : Suspension temporaire du multijoueur pendant ${tempBanMinutes} minute${tempBanMinutes > 1 ? 's' : ''} pour abandons répétés.`;
     } else if (consecutive === 4) {
       status = 'WARNED';
       sanctionType = 'RESTRICT_JOIN_PRIVATE';
-      expiresAt = now + 30 * 60 * 1000; // 30 minutes
-      message = '⚠️ Sanction Fair-Play : Restriction de rejoindre des tables privées pendant 30 minutes.';
+      expiresAt = now + restrictJoinMinutes * 60 * 1000;
+      message = `⚠️ Sanction Fair-Play : Restriction de rejoindre des tables privées pendant ${restrictJoinMinutes} minutes.`;
     } else if (consecutive === 3) {
       status = 'WARNED';
       sanctionType = 'RESTRICT_CREATE_ROOM';
-      expiresAt = now + 15 * 60 * 1000; // 15 minutes
-      message = '⚠️ Sanction Fair-Play : Restriction de création de salon pendant 15 minutes.';
+      expiresAt = now + restrictCreateMinutes * 60 * 1000;
+      message = `⚠️ Sanction Fair-Play : Restriction de création de salon pendant ${restrictCreateMinutes} minutes.`;
     } else if (consecutive === 2) {
       status = 'WARNED';
       sanctionType = 'WARNING';
-      message = '⚠️ Avertissement Fair-Play : 2 abandons consécutifs. Le prochain entraînera une suspension de création de salon (15 min).';
+      message = `⚠️ Avertissement Fair-Play : 2 abandons consécutifs. Le prochain entraînera une suspension de création de salon (${restrictCreateMinutes} min).`;
     } else {
       status = 'WARNED';
       sanctionType = 'WARNING';
@@ -2834,10 +2838,11 @@ export class RoomManager {
     const player = (room.players || []).find((p) => p.id === client.playerId);
     if (!player) return;
 
-    // Rate limiting: 1 emote per 1200ms per player to prevent chat spam
+    // Rate limiting: anti-spam (emoteCooldownMs)
     const now = Date.now();
+    const emoteCooldownMs = Number(this.engineConfig.emoteCooldownMs ?? 1200);
     const lastEmote = this.lastEmoteTimestamps.get(client.playerId) || 0;
-    if (now - lastEmote < 1200) {
+    if (now - lastEmote < emoteCooldownMs) {
       return; // Drop spam emotes
     }
     this.lastEmoteTimestamps.set(client.playerId, now);
@@ -4185,7 +4190,8 @@ export class RoomManager {
       // 4. Filter out expired emotes (older than 3.5 seconds)
       if (room.activeEmotes && room.activeEmotes.length > 0) {
         const initialEmotesCount = room.activeEmotes.length;
-        room.activeEmotes = room.activeEmotes.filter((e) => now - e.timestamp < 3500);
+        const emoteDisplayMs = Number(this.engineConfig.emoteDisplayMs ?? 3500);
+        room.activeEmotes = room.activeEmotes.filter((e) => now - e.timestamp < emoteDisplayMs);
         if (room.activeEmotes.length !== initialEmotesCount) {
           changed = true;
         }
@@ -5175,11 +5181,12 @@ export class RoomManager {
       return;
     }
 
+    const inviteCooldownSeconds = Number(this.engineConfig.directInviteCooldownSeconds ?? 30);
     const invitePairKey = `${client.playerId}_${msg.targetPlayerId}`;
     const lastInviteTime = this.lastDirectInviteTimestamps.get(invitePairKey) || 0;
     const elapsedSeconds = (now - lastInviteTime) / 1000;
-    if (elapsedSeconds < 30) {
-      const remainingSeconds = Math.ceil(30 - elapsedSeconds);
+    if (elapsedSeconds < inviteCooldownSeconds) {
+      const remainingSeconds = Math.ceil(inviteCooldownSeconds - elapsedSeconds);
       this.sendMessage(client.socket, {
         type: 'ERROR',
         errorCode: 'RATE_LIMITED',
@@ -5202,7 +5209,7 @@ export class RoomManager {
       initialCapital: room.initialCapital,
       status: 'PENDING',
       createdAt: now,
-      expiresAt: now + 1000 * 120, // 2 minutes
+      expiresAt: now + Number(this.engineConfig.directInviteLifetimeSeconds ?? 120) * 1000,
     };
 
     this.pendingInvitations.set(inviteId, invitation);
@@ -5417,6 +5424,7 @@ export class RoomManager {
    */
   public static initRoomCleanupInterval(): void {
     if (!this.roomTickInterval) {
+      const tickIntervalMs = Number(this.engineConfig.roomTickIntervalMs ?? 1000);
       this.roomTickInterval = setInterval(() => {
         const roomCodes = Array.from(this.rooms.keys());
         for (const roomCode of roomCodes) {
@@ -5426,7 +5434,7 @@ export class RoomManager {
             this.evaluateAutoStart(roomCode);
           }
         }
-      }, 1000);
+      }, tickIntervalMs);
     }
 
     if (this.cleanupInterval) return;

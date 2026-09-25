@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { getPublicParamNumber } from './services/publicConfig';
 import { AnimatePresence } from 'motion/react';
 import confetti from 'canvas-confetti';
 import { Card, GameState, Player, SavedManche, AIDifficulty, GamePhase, GameInvitation, SoloBetIncreaseMode } from './types';
@@ -1517,7 +1518,12 @@ function GameApp() {
       setIsMpCollectingTrick(false);
       sounds.playTrickWin();
 
-      // Fail-safe safety timer: in case anything interrupts execution, unlock after 1800ms max
+      // Durées réglées dans katika (groupe Partie) : la barre de sécurité laisse une marge de 400 ms
+      // au-delà de la durée normale (affichage du pli + balayage), sans être elle-même un réglage séparé.
+      const trickWinnerViewMs = getPublicParamNumber('trickWinnerViewMs');
+      const trickSweepMs = getPublicParamNumber('trickSweepMs');
+
+      // Fail-safe safety timer: in case anything interrupts execution, unlock after the normal duration + margin
       if (mpSafetyTimerRef.current) clearTimeout(mpSafetyTimerRef.current);
       mpSafetyTimerRef.current = setTimeout(() => {
         isResolvingRef.current = false;
@@ -1528,15 +1534,15 @@ function GameApp() {
         setMpPlays(latest.currentTrick?.plays || []);
         setMpLeadSuit(latest.currentTrick?.leadSuit || null);
         setMpPhase(latest.phase || dbPhase);
-      }, 1800);
+      }, trickWinnerViewMs + trickSweepMs + 400);
 
-      // Step 1: Wait 1050ms to allow players to view the winning card and badge (fluid UX, adaptive resolution)
+      // Step 1: Wait to allow players to view the winning card and badge (fluid UX, adaptive resolution)
       if (mpStep1TimerRef.current) clearTimeout(mpStep1TimerRef.current);
       mpStep1TimerRef.current = setTimeout(() => {
         setIsMpCollectingTrick(true);
         sounds.playCardSweep();
 
-        // Step 2: Sweep animation takes 350ms
+        // Step 2: Sweep animation
         if (mpStep2TimerRef.current) clearTimeout(mpStep2TimerRef.current);
         mpStep2TimerRef.current = setTimeout(() => {
           if (mpSafetyTimerRef.current) clearTimeout(mpSafetyTimerRef.current);
@@ -1549,8 +1555,8 @@ function GameApp() {
           setMpLeadSuit(latest.currentTrick?.leadSuit || null);
           setMpPhase(latest.phase || dbPhase);
           setMultiplayerSelectedCardId(null);
-        }, 350);
-      }, 1050);
+        }, trickSweepMs);
+      }, trickWinnerViewMs);
     } else {
       // Case 4: Normal play update within the current ongoing trick
       lastProcessedTrickRef.current = dbTrickNumber;

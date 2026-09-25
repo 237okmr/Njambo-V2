@@ -116,6 +116,61 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Si un message du serveur est arrivé il y a moins de ce délai, une reprise n\'envoie rien de plus.',
   },
 
+  {
+    key: 'emoteCooldownMs', label: 'Délai minimal entre deux emotes', unit: 'ms',
+    min: 500, max: 5000, default: 1200, group: 'partie', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Empêche un joueur d\'envoyer des emotes trop rapidement (anti-spam).',
+  },
+  {
+    key: 'emoteDisplayMs', label: 'Durée d\'affichage d\'une emote', unit: 'ms',
+    min: 1500, max: 8000, default: 3500, group: 'partie', scope: 'both', effect: 'immediate', advanced: true,
+    help: 'Temps pendant lequel une bulle d\'emote reste visible à la table.',
+  },
+  {
+    key: 'roomTickIntervalMs', label: 'Cadence du battement de table', unit: 'ms',
+    min: 500, max: 5000, default: 1000, group: 'partie', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Fréquence à laquelle le serveur vérifie chaque table (filet de sécurité, grâces, emotes expirées).',
+  },
+  {
+    key: 'trickWinnerViewMs', label: 'Durée d\'affichage du pli gagnant', unit: 'ms',
+    min: 400, max: 3000, default: 1050, group: 'partie', scope: 'both', effect: 'immediate',
+    help: 'Temps pendant lequel le pli remporté reste visible avant d\'être ramassé.',
+  },
+  {
+    key: 'trickSweepMs', label: 'Durée du balayage du pli', unit: 'ms',
+    min: 150, max: 1000, default: 350, group: 'partie', scope: 'both', effect: 'immediate', advanced: true,
+    help: 'Durée de l\'animation qui range les cartes du pli remporté.',
+  },
+
+  // ===== Groupe modération Fair-Play =====
+  {
+    key: 'fairPlayRestrictCreateMinutes', label: 'Restriction de création de table', unit: 'min',
+    min: 5, max: 240, default: 15, group: 'moderation', scope: 'server', effect: 'immediate',
+    help: 'Durée de la sanction après 3 abandons consécutifs : le joueur ne peut plus créer de table.',
+  },
+  {
+    key: 'fairPlayRestrictJoinMinutes', label: 'Restriction de rejoindre une table privée', unit: 'min',
+    min: 5, max: 240, default: 30, group: 'moderation', scope: 'server', effect: 'immediate',
+    help: 'Durée de la sanction après 4 abandons consécutifs : le joueur ne peut plus rejoindre de table privée.',
+  },
+  {
+    key: 'fairPlayTempBanMinutes', label: 'Suspension temporaire du multijoueur', unit: 'min',
+    min: 10, max: 1440, default: 60, group: 'moderation', scope: 'server', effect: 'immediate',
+    help: 'Durée de la sanction après 5 abandons consécutifs : le joueur est suspendu du multijoueur.',
+  },
+
+  // ===== Groupe notifications =====
+  {
+    key: 'directInviteLifetimeSeconds', label: 'Durée de vie d\'une invitation directe', unit: 's',
+    min: 30, max: 600, default: 120, group: 'notifications', scope: 'both', effect: 'immediate',
+    help: 'Temps pendant lequel une invitation envoyée à un ami reste valable.',
+  },
+  {
+    key: 'directInviteCooldownSeconds', label: 'Délai avant de réinviter le même joueur', unit: 's',
+    min: 10, max: 300, default: 30, group: 'notifications', scope: 'server', effect: 'immediate',
+    help: 'Empêche de spammer d\'invitations un même joueur.',
+  },
+
   // ===== Groupe salons =====
   {
     key: 'emptyRoomTimeoutMinutes', label: 'Suppression d\'une table sans humain connecté', unit: 'min',

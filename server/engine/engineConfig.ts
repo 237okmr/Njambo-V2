@@ -16,6 +16,16 @@ export interface KatikaEngineConfig {
   snapshotPeriodicSeconds?: number;
   shutdownFlushSeconds?: number;
   bootRestoreTimeoutSeconds?: number;
+  emoteCooldownMs?: number;
+  emoteDisplayMs?: number;
+  roomTickIntervalMs?: number;
+  trickWinnerViewMs?: number;
+  trickSweepMs?: number;
+  fairPlayRestrictCreateMinutes?: number;
+  fairPlayRestrictJoinMinutes?: number;
+  fairPlayTempBanMinutes?: number;
+  directInviteLifetimeSeconds?: number;
+  directInviteCooldownSeconds?: number;
   roundEndWatchdogMs?: number;
   lobbyWaitTtlMinutes?: number;
   publicAbsentHostVisibilitySeconds?: number;
