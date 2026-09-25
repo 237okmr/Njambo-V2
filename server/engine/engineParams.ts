@@ -89,6 +89,33 @@ export const ENGINE_PARAMS: ParamDef[] = [
     advanced: true, help: 'Durée d\'affichage des trois 7 et des mains de moins de 21.',
   },
 
+  // ===== Groupe connexion =====
+  {
+    key: 'clientReconnectBaseDelayMs', label: 'Délai de base avant la première reconnexion', unit: 'ms',
+    min: 500, max: 5000, default: 1000, group: 'connexion', scope: 'client', effect: 'immediate', advanced: true,
+    help: 'Point de départ de la reconnexion progressive (1 s, 2 s, 4 s...), avant plafonnement.',
+  },
+  {
+    key: 'clientReconnectMaxDelaySeconds', label: 'Délai maximal entre deux tentatives de reconnexion', unit: 's',
+    min: 5, max: 30, default: 10, group: 'connexion', scope: 'client', effect: 'immediate',
+    help: 'Plafond de la reconnexion progressive, pour ne jamais attendre trop longtemps.',
+  },
+  {
+    key: 'clientConnectStuckSeconds', label: 'Connexion considérée bloquée', unit: 's',
+    min: 5, max: 30, default: 12, group: 'connexion', scope: 'client', effect: 'immediate',
+    help: 'Au-delà de ce délai, une connexion qui ne s\'établit pas est abandonnée et relancée (utile en 3G).',
+  },
+  {
+    key: 'resumeDebounceMs', label: 'Regroupement des reprises rapprochées', unit: 'ms',
+    min: 100, max: 2000, default: 300, group: 'connexion', scope: 'client', effect: 'immediate', advanced: true,
+    help: 'Plusieurs signaux de retour au premier plan très rapprochés ne déclenchent qu\'une seule reprise.',
+  },
+  {
+    key: 'resumeIdleSeconds', label: 'Reprise sans nouvel envoi si déjà à jour', unit: 's',
+    min: 5, max: 60, default: 10, group: 'connexion', scope: 'client', effect: 'immediate', advanced: true,
+    help: 'Si un message du serveur est arrivé il y a moins de ce délai, une reprise n\'envoie rien de plus.',
+  },
+
   // ===== Groupe salons =====
   {
     key: 'emptyRoomTimeoutMinutes', label: 'Suppression d\'une table sans humain connecté', unit: 'min',

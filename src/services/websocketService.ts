@@ -6,7 +6,8 @@ import { APP_VERSION } from '../version';
 import { playerProfileService } from './playerProfileService';
 import { getPersistentItem, setPersistentItem } from '../utils/storageUtils';
 import { getPlayerId, setLocalPlayerId, setInRoomStatus, onIdentityChange } from './identity';
-import { noteServerConfigVersion } from './publicConfig';
+import { noteServerConfigVersion, getPublicParamNumber } from './publicConfig';
+import { computeReconnectDelayMs } from './reconnectBackoff';
 
 export type ConnectionStateListener = (connected: boolean) => void;
 export type RoomUpdateListener = (room: MultiplayerRoom | null) => void;
@@ -45,6 +46,11 @@ function getDeviceSessionId(): string {
 class WebSocketService {
   private socket: WebSocket | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
+  private reconnectAttempts = 0;
+  private resumeDebounceTimer: NodeJS.Timeout | null = null;
+  private lastServerMessageAt = 0;
+  private consecutiveReconnectFailures = 0;
+  private unstableConnectionListeners: Set<() => void> = new Set();
   private pingInterval: NodeJS.Timeout | null = null;
   private connectionStateListeners: Set<ConnectionStateListener> = new Set();
   private roomUpdateListeners: Set<RoomUpdateListener> = new Set();
@@ -85,6 +91,10 @@ class WebSocketService {
   private pendingJoinCancelled: boolean = false;
   private sessionRestoredListeners: Set<() => void> = new Set();
   private wasDisconnected: boolean = false;
+  // Table reprise par un autre onglet (fermeture 4001) : conservée pour proposer « Reprendre ici ».
+  private supersededRoomCode: string | null = null;
+  private supersededListeners: Set<(roomCode: string) => void> = new Set();
+  private sessionChannel: BroadcastChannel | null = null;
   private roomSyncedOnThisSocket: boolean = false;
 
   public onSessionRestored(listener: () => void): () => void {
@@ -92,6 +102,47 @@ class WebSocketService {
     return () => {
       this.sessionRestoredListeners.delete(listener);
     };
+  }
+
+  /**
+   * Prévient quand cet onglet a été supplanté par un autre (ouvert sur la même table, par exemple via un
+   * lien WhatsApp) : l'écran peut alors proposer « Reprendre ici » (voir forceReconnect) plutôt que de
+   * simplement afficher une erreur, puisque la table elle-même n'a pas été quittée.
+   */
+  public onSuperseded(listener: (roomCode: string) => void): () => void {
+    this.supersededListeners.add(listener);
+    return () => this.supersededListeners.delete(listener);
+  }
+
+  public getSupersededRoomCode(): string | null {
+    return this.supersededRoomCode;
+  }
+
+  /** Annonce aux autres onglets de ce navigateur que celui-ci est désormais actif sur cette table. */
+  private announceActiveRoom(roomCode: string): void {
+    try {
+      if (!this.sessionChannel && typeof BroadcastChannel !== 'undefined') {
+        this.sessionChannel = new BroadcastChannel('njambo_session');
+        this.sessionChannel.onmessage = (event) => {
+          const data = event.data as { type?: string; roomCode?: string } | undefined;
+          if (data?.type === 'ACTIVE_HERE' && data.roomCode && data.roomCode === this.activeRoomCode) {
+            // Un autre onglet vient de prendre la main sur la même table : pas besoin d'attendre la
+            // fermeture 4001 de ce socket pour le signaler à l'écran.
+            this.supersededRoomCode = data.roomCode;
+            this.supersededListeners.forEach((l) => {
+              try {
+                l(data.roomCode!);
+              } catch (e) {
+                console.warn('[WS] Superseded listener error:', e);
+              }
+            });
+          }
+        };
+      }
+      this.sessionChannel?.postMessage({ type: 'ACTIVE_HERE', roomCode });
+    } catch (e) {
+      // BroadcastChannel indisponible (vieux navigateur) : silencieusement ignoré, sans conséquence grave.
+    }
   }
 
   private checkSessionRestored(): void {
@@ -166,7 +217,7 @@ class WebSocketService {
       }
 
       // High-priority mobile resume & Page Visibility listeners (RFC & Zero-friction auto-sync)
-      const handleAppResume = () => {
+      const handleAppResumeImmediate = () => {
         if (typeof document !== 'undefined' && document.hidden) return;
         if (this.userExplicitlyLeft || this.isSessionTakenOver) return;
 
@@ -174,7 +225,8 @@ class WebSocketService {
         if (!currentActiveRoom) return;
 
         // Check if socket is dead, closing, or hanging in CONNECTING state
-        const isStuckConnecting = this.socket?.readyState === WebSocket.CONNECTING && (Date.now() - this.lastConnectAttemptAt > 3500);
+        const stuckMs = getPublicParamNumber('clientConnectStuckSeconds') * 1000;
+        const isStuckConnecting = this.socket?.readyState === WebSocket.CONNECTING && (Date.now() - this.lastConnectAttemptAt > stuckMs);
         if (!this.socket || this.socket.readyState === WebSocket.CLOSED || this.socket.readyState === WebSocket.CLOSING || isStuckConnecting) {
           console.log('[WS] App resumed from background - reconnecting immediately');
           if (isStuckConnecting && this.socket) {
@@ -193,6 +245,10 @@ class WebSocketService {
             }
           });
         } else if (this.socket.readyState === WebSocket.OPEN && currentActiveRoom && !this.userExplicitlyLeft) {
+          // Un message du serveur est arrivé très récemment : la connexion est déjà à jour, rien à renvoyer.
+          const idleMs = getPublicParamNumber('resumeIdleSeconds') * 1000;
+          if (Date.now() - this.lastServerMessageAt < idleMs) return;
+
           // Socket is open: send instant join/sync and ping
           const playerId = this.getLocalPlayerId();
           const playerName = localStorage.getItem('njambo_player_name') || '';
@@ -208,6 +264,17 @@ class WebSocketService {
             timestamp: Date.now(),
           } as any);
         }
+      };
+
+      // Plusieurs signaux de reprise très rapprochés (visibilitychange + focus, par exemple) ne doivent
+      // déclencher qu'une seule reprise : anti-rebond commun (resumeDebounceMs).
+      const handleAppResume = () => {
+        if (this.resumeDebounceTimer) clearTimeout(this.resumeDebounceTimer);
+        const debounceMs = getPublicParamNumber('resumeDebounceMs');
+        this.resumeDebounceTimer = setTimeout(() => {
+          this.resumeDebounceTimer = null;
+          handleAppResumeImmediate();
+        }, debounceMs);
       };
 
       window.addEventListener('visibilitychange', handleAppResume);
@@ -366,6 +433,8 @@ class WebSocketService {
             this.connectPromise = null;
             this.lastAcceptedState = null;
             this.roomSyncedOnThisSocket = false;
+            this.reconnectAttempts = 0;
+            this.consecutiveReconnectFailures = 0;
             this.startHeartbeat();
             this.notifyConnectionState(true);
 
@@ -520,6 +589,7 @@ class WebSocketService {
 
           this.socket.onmessage = (event) => {
             try {
+              this.lastServerMessageAt = Date.now();
               const msg: ServerMessage = JSON.parse(event.data);
               this.handleServerMessage(msg);
             } catch (e) {
@@ -547,15 +617,24 @@ class WebSocketService {
             if (event.code === 4001) {
               console.log('[WS] Session takeover detected (4001). Halting auto-reconnect.');
               this.isSessionTakenOver = true;
+              // La table reste dans le stockage local : cet onglet a été supplanté (probablement un autre
+              // onglet ouvert sur la même table, ex. via un lien WhatsApp), pas quitté volontairement. On
+              // garde seulement le code pour proposer « Reprendre ici », sans effacer njambo_active_room_code.
+              const takenOverRoomCode = this.activeRoomCode || localStorage.getItem('njambo_active_room_code');
               this.activeRoomCode = null;
               this.sessionRoomPlayerId = null;
               this.lastAcceptedState = null;
               setInRoomStatus(false);
               this.currentRoom = null;
-              try {
-                localStorage.removeItem('njambo_active_room_code');
-              } catch (e) {
-                // ignore
+              if (takenOverRoomCode) {
+                this.supersededRoomCode = takenOverRoomCode;
+                this.supersededListeners.forEach((l) => {
+                  try {
+                    l(takenOverRoomCode);
+                  } catch (e) {
+                    console.warn('[WS] Superseded listener error:', e);
+                  }
+                });
               }
               this.notifyError('SESSION_TAKEOVER');
               return resolve();
@@ -614,9 +693,33 @@ class WebSocketService {
     return this.connect(true);
   }
 
+  /**
+   * Reconnexion progressive (1, 2, 4, 8 s..., plafonnée), avec une variation aléatoire pour éviter que
+   * plusieurs onglets ne retentent au même instant. Aucune tentative si l'onglet est masqué (reprise à la
+   * visibilité) ni si la connexion réseau est explicitement coupée (reprise à l'événement online).
+   */
   private scheduleReconnect(): void {
     if (this.isSessionTakenOver) return;
     if (this.reconnectTimeout) clearTimeout(this.reconnectTimeout);
+    if (typeof document !== 'undefined' && document.hidden) return;
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+
+    const baseMs = getPublicParamNumber('clientReconnectBaseDelayMs');
+    const maxMs = getPublicParamNumber('clientReconnectMaxDelaySeconds') * 1000;
+    const delay = computeReconnectDelayMs(this.reconnectAttempts, baseMs, maxMs);
+    this.reconnectAttempts += 1;
+
+    if (this.reconnectAttempts >= 20 && this.consecutiveReconnectFailures < this.reconnectAttempts) {
+      this.consecutiveReconnectFailures = this.reconnectAttempts;
+      this.unstableConnectionListeners.forEach((l) => {
+        try {
+          l();
+        } catch (e) {
+          console.warn('[WS] Unstable connection listener error:', e);
+        }
+      });
+    }
+
     this.reconnectTimeout = setTimeout(() => {
       if (this.userExplicitlyLeft || this.isSessionTakenOver) return;
       this.connect().then(() => {
@@ -632,7 +735,13 @@ class WebSocketService {
           });
         }
       });
-    }, 1200);
+    }, delay);
+  }
+
+  /** Signale un problème de connexion persistant (20 tentatives infructueuses) pour afficher une bannière. */
+  public onUnstableConnection(listener: () => void): () => void {
+    this.unstableConnectionListeners.add(listener);
+    return () => this.unstableConnectionListeners.delete(listener);
   }
 
   public setPresenceStatus(status: 'ONLINE_IDLE' | 'IN_SOLO' | 'IN_LOBBY' | 'IN_GAME' | 'OFFLINE'): void {
@@ -890,6 +999,8 @@ class WebSocketService {
           } catch (e) {
             // ignore
           }
+          if (this.supersededRoomCode === incomingRoom.id) this.supersededRoomCode = null;
+          this.announceActiveRoom(incomingRoom.id);
           this.notifyRoomUpdate(incomingRoom);
         }
 
