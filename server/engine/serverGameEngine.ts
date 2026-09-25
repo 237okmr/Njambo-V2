@@ -1131,14 +1131,14 @@ export class ServerGameEngine {
 
     // Auto-advance timestamp only for next partie if manche is still ongoing
     if (gs.phase !== 'MANCHE_OVER') {
+      // Le compte à rebours de fin de partie est toujours armé en multijoueur (règle du relais : dernière
+      // chance de retour de l'absent). allowAutoAdvance ne s'applique qu'au solo.
       const transitionDelay = cfg.transitionDelayMs;
-      room.roundEndAutoAdvanceAt = cfg.allowAutoAdvance !== false ? Date.now() + transitionDelay : null;
+      room.roundEndAutoAdvanceAt = Date.now() + transitionDelay;
       room.manchePartiesPlayed = (room.manchePartiesPlayed || 0) + 1;
-      if (cfg.allowAutoAdvance !== false) {
-        activeRoomState.nextPartieTimer = setTimeout(() => {
-          this.advanceToNextPartie(room, onStateChange, activeRoomState);
-        }, transitionDelay);
-      }
+      activeRoomState.nextPartieTimer = setTimeout(() => {
+        this.advanceToNextPartie(room, onStateChange, activeRoomState);
+      }, transitionDelay);
     } else {
       room.roundEndAutoAdvanceAt = null;
     }

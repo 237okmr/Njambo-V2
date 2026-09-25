@@ -6,6 +6,8 @@ export interface KatikaEngineConfig {
   guestLobbyGraceSeconds?: number;
   playerGraceSeconds?: number;
   hostGraceSeconds?: number;
+  forceStartHostAbsentSeconds?: number;
+  roundEndWatchdogMs?: number;
   lobbyWaitTtlMinutes?: number;
   publicAbsentHostVisibilitySeconds?: number;
   hostTakeoverSeconds?: number;

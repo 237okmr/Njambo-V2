@@ -2661,9 +2661,19 @@ export class RoomManager {
     const room = this.rooms.get(client.roomCode);
     if (!room) return;
 
-    // Only host can force the next partie
+    // L'hôte peut toujours forcer le lancement. Si l'hôte est absent depuis assez longtemps, tout autre
+    // joueur assis (non spectateur) peut le faire à sa place, pour éviter qu'une table reste bloquée.
+    const hostPlayer = (room.players || []).find((p) => p.id === room.hostId);
+    const hostAbsentSecs = Number(this.engineConfig.forceStartHostAbsentSeconds);
+    const hostAbsentSince = hostPlayer && !hostPlayer.connected ? (hostPlayer.lastSeen || room.updatedAt) : null;
+    const hostConsideredAbsent = !hostPlayer || (hostAbsentSince !== null && Date.now() - hostAbsentSince >= hostAbsentSecs * 1000);
+
     if (client.playerId !== room.hostId) {
-      return;
+      const requester = (room.players || []).find((p) => p.id === client.playerId);
+      const requesterEligible = requester && requester.isHuman && !requester.isSpectator && !requester.isEliminated;
+      if (!hostConsideredAbsent || !requesterEligible) {
+        return;
+      }
     }
 
     if (room.status !== 'PARTIE_OVER' && room.status !== 'MANCHE_OVER') {
@@ -3973,6 +3983,43 @@ export class RoomManager {
             },
             state
           );
+        }
+      }
+
+      // 1bis. Filet de sécurité : si le compte à rebours de fin de partie a expiré (ou a été perdu) sans
+      // qu'aucun vote de hausse ne soit en cours, le serveur relance lui-même la partie suivante.
+      if (
+        (room.status === 'PARTIE_OVER' || room.gameState?.phase === 'PARTIE_OVER') &&
+        !room.betIncreaseProposal
+      ) {
+        const watchdogMs = Number(this.engineConfig.roundEndWatchdogMs);
+        if (room.roundEndAutoAdvanceAt && now >= room.roundEndAutoAdvanceAt + watchdogMs) {
+          const state = this.getOrCreateActiveState(roomCode, room);
+          ServerGameEngine.advanceToNextPartie(
+            room,
+            (updatedRoom) => {
+              this.broadcastRoomState(updatedRoom.id);
+              this.evaluateAutoStart(updatedRoom.id);
+            },
+            state
+          );
+          changed = true;
+        } else if (!room.roundEndAutoAdvanceAt) {
+          // Compte à rebours manquant (ex. après un vote de hausse refusé) : on le réarme entièrement.
+          const transitionDelay = Number(this.engineConfig.transitionDelayMs);
+          const state = this.getOrCreateActiveState(roomCode, room);
+          room.roundEndAutoAdvanceAt = now + transitionDelay;
+          state.nextPartieTimer = setTimeout(() => {
+            ServerGameEngine.advanceToNextPartie(
+              room,
+              (updatedRoom) => {
+                this.broadcastRoomState(updatedRoom.id);
+                this.evaluateAutoStart(updatedRoom.id);
+              },
+              state
+            );
+          }, transitionDelay);
+          changed = true;
         }
       }
 

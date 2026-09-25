@@ -59,6 +59,16 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Durée avant le lancement automatique de la partie suivante (dernière chance de retour).',
   },
   {
+    key: 'roundEndWatchdogMs', label: 'Filet de sécurité du compte à rebours de fin de partie', unit: 'ms',
+    min: 500, max: 10000, default: 1500, group: 'partie', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Marge après l\'expiration du compte à rebours avant que le serveur relance lui-même la partie suivante, au cas où le minuteur d\'origine aurait été perdu.',
+  },
+  {
+    key: 'forceStartHostAbsentSeconds', label: 'Absence de l\'hôte avant que tout joueur puisse forcer le départ', unit: 's',
+    min: 10, max: 120, default: 20, group: 'partie', scope: 'both', effect: 'immediate',
+    help: 'Si l\'hôte est absent depuis ce délai, un autre joueur présent peut forcer le lancement de la partie suivante.',
+  },
+  {
     key: 'botThinkTimeMs', label: 'Temps de réflexion des bots', unit: 'ms',
     min: 0, max: 3000, default: 800, group: 'partie', scope: 'both', effect: 'immediate',
     help: 'Pause avant qu\'un bot joue sa carte.',
