@@ -6,6 +6,18 @@ import { defineConfig } from 'vite';
 export default defineConfig(() => {
   return {
     plugins: [react(), tailwindcss()],
+    build: {
+      rollupOptions: {
+        output: {
+          // Sépare les grosses bibliothèques dans leur propre fichier : elles changent rarement, donc le
+          // navigateur peut les garder en cache d'une mise à jour à l'autre du reste de l'application.
+          manualChunks: {
+            'vendor-react': ['react', 'react-dom'],
+            'vendor-firebase': ['firebase/app', 'firebase/firestore', 'firebase/auth'],
+          },
+        },
+      },
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

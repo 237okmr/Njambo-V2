@@ -89,6 +89,22 @@ export const ENGINE_PARAMS: ParamDef[] = [
     advanced: true, help: 'Durée d\'affichage des trois 7 et des mains de moins de 21.',
   },
 
+  {
+    key: 'jankSampleSeconds', label: 'Fenêtre de mesure des saccades', unit: 's',
+    min: 2, max: 10, default: 3, group: 'caches-et-mises-a-jour', scope: 'client', effect: 'immediate', advanced: true,
+    help: 'Durée sur laquelle le temps moyen entre deux images est mesuré pour détecter un appareil lent.',
+  },
+  {
+    key: 'jankThresholdMs', label: 'Seuil de saccade (mode léger automatique)', unit: 'ms',
+    min: 30, max: 120, default: 50, group: 'caches-et-mises-a-jour', scope: 'client', effect: 'immediate', advanced: true,
+    help: 'Au-delà de ce temps moyen entre deux images, le mode léger s\'active automatiquement (utile sur iPhone, où les autres signaux manquent).',
+  },
+  {
+    key: 'updateCheckIntervalSeconds', label: 'Fréquence de vérification des mises à jour', unit: 's',
+    min: 60, max: 1800, default: 300, group: 'caches-et-mises-a-jour', scope: 'client', effect: 'immediate',
+    help: 'Fréquence à laquelle l\'application vérifie si une nouvelle version est disponible.',
+  },
+
   // ===== Groupe connexion =====
   {
     key: 'clientReconnectBaseDelayMs', label: 'Délai de base avant la première reconnexion', unit: 'ms',

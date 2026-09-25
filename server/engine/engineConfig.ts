@@ -31,6 +31,9 @@ export interface KatikaEngineConfig {
   fairPlayTempBanMinutes?: number;
   directInviteLifetimeSeconds?: number;
   directInviteCooldownSeconds?: number;
+  jankSampleSeconds?: number;
+  jankThresholdMs?: number;
+  updateCheckIntervalSeconds?: number;
   roundEndWatchdogMs?: number;
   lobbyWaitTtlMinutes?: number;
   publicAbsentHostVisibilitySeconds?: number;

@@ -5,7 +5,8 @@ import App from './App.tsx';
 import { ErrorBoundary } from './components/common/ErrorBoundary.tsx';
 import { NotificationProvider } from './components/common/NotificationCenter.tsx';
 import './index.css';
-import { initPublicConfig } from './services/publicConfig';
+import { initPublicConfig, getPublicParamNumber } from './services/publicConfig';
+import { initPerfMode, startJankSampling } from './services/perfMode';
 
 // Wake up backend server without blocking
 if (typeof window !== 'undefined') {
@@ -18,7 +19,22 @@ if (typeof window !== 'undefined') {
 
 // Config publique (délais réglables dans katika) : non bloquante, valeurs par défaut du registre en attendant
 if (typeof window !== 'undefined') {
-  void initPublicConfig();
+  initPublicConfig().then(() => {
+    // Mode de performance : signaux du navigateur d'abord, détecteur de saccades ensuite (utile sur
+    // iPhone, où deviceMemory/hardwareConcurrency/connection manquent souvent).
+    initPerfMode();
+    startJankSampling(getPublicParamNumber('jankSampleSeconds') * 1000, getPublicParamNumber('jankThresholdMs'));
+  });
+}
+
+// Pause des animations CSS quand l'onglet est masqué (voir la règle html[data-app-hidden] dans index.css) :
+// économise batterie et évite de faire chauffer le téléphone pour rien pendant que l'app est en arrière-plan.
+if (typeof document !== 'undefined') {
+  const applyHiddenAttr = () => {
+    document.documentElement.setAttribute('data-app-hidden', document.hidden ? 'true' : 'false');
+  };
+  applyHiddenAttr();
+  document.addEventListener('visibilitychange', applyHiddenAttr);
 }
 
 // Handle unhandled transient database closing or hidden events from iframe lifecycle
@@ -48,10 +64,10 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker
       .register('/sw.js')
       .then((reg) => {
-        // Check for service worker updates periodically
+        // Check for service worker updates periodically (updateCheckIntervalSeconds, réglable dans katika)
         setInterval(() => {
           reg.update().catch(() => {});
-        }, 60000);
+        }, getPublicParamNumber('updateCheckIntervalSeconds') * 1000);
 
         // Check for updates when switching back to the tab/app
         document.addEventListener('visibilitychange', () => {
