@@ -10,6 +10,7 @@ import { verifyFirebaseIdToken } from '../firebaseAdmin';
 import { shouldBotAcceptBetIncrease, BOT_BET_INCREASE_AGREE_EMOTES, BOT_BET_INCREASE_DECLINE_EMOTES } from '../../src/utils/ai';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../src/lib/firebase';
+import { scheduleRoomSnapshot, deleteRoomSnapshot, saveRoomSnapshotNow, flushAllPendingSnapshots, loadRoomsAtBoot, hashReconnectToken } from './roomSnapshotStore';
 
 export interface ConnectedClient {
   socket: WebSocket;
@@ -92,6 +93,7 @@ export class RoomManager {
     this.roomStates.delete(roomCode);
     this.rooms.delete(roomCode);
     this.deleteRoomTokens(roomCode);
+    if (this.snapshotsEnabled) void deleteRoomSnapshot(roomCode);
   }
 
   public static clearRoomForTest(roomCode: string): void {
@@ -401,6 +403,103 @@ export class RoomManager {
     return getEngineConfig();
   }
 
+  // Activé une seule fois par server.ts après la restauration au démarrage. Reste désactivé pendant les
+  // tests, qui exercent broadcastRoomState en continu et ne doivent jamais toucher Firestore.
+  private static snapshotsEnabled = false;
+
+  public static enableRoomSnapshots(): void {
+    this.snapshotsEnabled = true;
+  }
+
+  // Empreintes des jetons de reconnexion des invités des tables restaurées (playerId -> table + empreinte
+  // SHA-256 du jeton), le temps que ces invités reviennent. Purgées dès la reconnexion vérifiée ou la
+  // destruction de la table. Table à plat (et non par table) car registerClient ne connaît pas encore la
+  // table au moment de la connexion : seul le playerId est disponible à ce stade.
+  private static restoredGuestTokenFingerprints = new Map<string, { roomCode: string; fingerprint: string }>();
+
+  /**
+   * Recharge les tables sauvegardées avant qu'un redémarrage ou un redéploiement ne les efface de la
+   * mémoire. Tout humain assis est marqué déconnecté (comme s'il venait de se déconnecter à l'instant) :
+   * la grâce du relais (aiRelayGraceSeconds) s'arme normalement, sans compter comme tour manqué, forfait
+   * ou absence pour la libération de siège. Un compte Google se reconnecte normalement (vérification
+   * AUTH habituelle) ; un invité doit fournir le jeton correspondant à l'empreinte enregistrée.
+   */
+  public static async restoreRoomsAtBoot(): Promise<void> {
+    const { restored, ignoredCount } = await loadRoomsAtBoot();
+    const now = Date.now();
+
+    for (const snapshot of restored) {
+      const room = snapshot.room;
+      room.restoredAt = now;
+      room.rev = (room.rev || 0) + 1;
+
+      for (const [playerId, fingerprint] of Object.entries(snapshot.tokenFingerprints || {})) {
+        this.restoredGuestTokenFingerprints.set(playerId, { roomCode: room.id, fingerprint });
+      }
+
+      this.rooms.set(room.id, room);
+      const state = this.getOrCreateActiveState(room.id, room);
+
+      const seatedHumans = (room.players || []).filter((p) => p.isHuman && !p.isSpectator && !p.isEliminated);
+      if (room.status === 'PLAYING' || room.status === 'PARTIE_OVER') {
+        seatedHumans.forEach((p) => {
+          p.connected = false;
+          p.lastSeen = now;
+          const gp = room.gameState?.players.find((g) => g.id === p.id);
+          if (gp) gp.connected = false;
+          ServerGameEngine.handlePlayerDisconnect(room, p.id, () => this.broadcastRoomState(room.id), state);
+        });
+        if (room.status === 'PLAYING' && room.gameState?.phase === 'PLAYING') {
+          const current = room.gameState.players[room.gameState.currentTurnIndex];
+          if (current?.isHuman) {
+            ServerGameEngine.scheduleTurnAction(room, () => this.broadcastRoomState(room.id), state);
+          }
+        }
+        if (room.status === 'PARTIE_OVER') {
+          // Le filet de sécurité de tickRoom (lot 3c) réarme un compte à rebours complet dès le tick suivant.
+          room.roundEndAutoAdvanceAt = null;
+        }
+      } else {
+        seatedHumans.forEach((p) => {
+          p.connected = false;
+          p.lastSeen = now;
+        });
+      }
+
+      console.log(`[RoomManager] Table ${room.id} restaurée (statut ${room.status}, ${seatedHumans.length} humain(s)).`);
+    }
+
+    if (restored.length > 0 || ignoredCount > 0) {
+      console.log(`[RoomManager] Restauration au démarrage : ${restored.length} table(s) restaurée(s), ${ignoredCount} ignorée(s).`);
+    }
+  }
+
+  /**
+   * Vérifie le jeton d'un invité qui prétend reprendre l'identité d'un siège d'une table restaurée, dont
+   * le serveur n'a plus le jeton en mémoire (perdu au redémarrage). Empêche qu'un tiers usurpe un siège en
+   * devinant simplement l'identifiant du joueur : seule la personne qui détient le jeton d'origine (conservé
+   * dans son navigateur) peut reprendre la main. Le compte Google n'a pas besoin de ce mécanisme (vérification
+   * AUTH indépendante). Consomme l'empreinte dès qu'elle est vérifiée avec succès (ou définitivement rejetée).
+   */
+  public static verifyRestoredGuestToken(playerId: string, token: string | undefined): boolean {
+    const pending = this.restoredGuestTokenFingerprints.get(playerId);
+    if (!pending) return false;
+    if (!token || hashReconnectToken(token) !== pending.fingerprint) return false;
+    this.restoredGuestTokenFingerprints.delete(playerId);
+    this.setRoomPlayerToken(pending.roomCode, playerId, token);
+    return true;
+  }
+
+  /** Vrai si cet identifiant appartient à un siège de table restaurée dont le jeton n'est pas encore vérifié. */
+  public static hasPendingRestoredGuestToken(playerId: string): boolean {
+    return this.restoredGuestTokenFingerprints.has(playerId);
+  }
+
+  /** Sauvegarde immédiatement toutes les tables modifiées (utilisé à l'arrêt propre du serveur). */
+  public static async flushAllRoomSnapshots(): Promise<void> {
+    await flushAllPendingSnapshots((roomCode) => this.rooms.get(roomCode));
+  }
+
   /** Recharge la config active après un chargement persistant (démarrage du serveur). */
   public static refreshEngineConfig(): void {
     this.engineConfig = getEngineConfig();
@@ -587,6 +686,21 @@ export class RoomManager {
                 assignedPlayerId: playerId,
               },
             });
+          }
+        } else if (this.hasPendingRestoredGuestToken(requestedPlayerId)) {
+          // Identifiant d'un siège d'une table restaurée après un redémarrage (le serveur n'a plus le
+          // jeton en mémoire) : seul le jeton d'origine, dont l'empreinte a été sauvegardée, est accepté.
+          if (reconnectToken && this.verifyRestoredGuestToken(requestedPlayerId, reconnectToken)) {
+            playerId = requestedPlayerId;
+            token = reconnectToken;
+            this.tokenToPlayerId.set(token, playerId);
+            this.playerIdToToken.set(playerId, token);
+          } else {
+            console.warn(`[Security] Denied claim of restored guest ID '${requestedPlayerId}' without matching original reconnectToken.`);
+            playerId = 'usr_' + Math.random().toString(36).substring(2, 9);
+            token = 'tk_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+            this.tokenToPlayerId.set(token, playerId);
+            this.playerIdToToken.set(playerId, token);
           }
         } else {
           // Fresh unbound guest ID
@@ -4091,6 +4205,14 @@ export class RoomManager {
 
     // Synchronize room.players with room.gameState.players for atomic data consistency
     syncRoomPlayersWithGameState(room);
+
+    // Sauvegarde de la table pour la restaurer si le serveur redémarre (débit limité, voir roomSnapshotStore).
+    // this.snapshotsEnabled n'est activé que par le vrai processus serveur (server.ts), jamais pendant les
+    // tests : ceux-ci exercent broadcastRoomState massivement et ne doivent jamais toucher Firestore.
+    // Les tables purement en attente sans aucun humain connecté ne valent pas la peine d'être sauvegardées.
+    if (this.snapshotsEnabled && (room.status !== 'LOBBY' || (room.players || []).some((p) => p.isHuman && p.connected))) {
+      scheduleRoomSnapshot(roomCode, room);
+    }
 
     // Optimize performance: create base clone ONCE per broadcast tick instead of N times for N players
     room.rev = (room.rev || 0) + 1;

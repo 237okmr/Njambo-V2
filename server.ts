@@ -44,6 +44,10 @@ async function startServer() {
   await loadEngineConfigFromStore();
   RoomManager.refreshEngineConfig();
 
+  // Tables en cours sauvegardées (Firestore) : restaurées avant d'accepter la moindre connexion.
+  await RoomManager.restoreRoomsAtBoot();
+  RoomManager.enableRoomSnapshots();
+
   const app = express();
   app.use(compression());
   app.use(express.json({ limit: '15mb' }));
@@ -52,6 +56,23 @@ async function startServer() {
 
   // Initialize Room Cleanup Interval (2h public / 24h private / 15m bots)
   RoomManager.initRoomCleanupInterval();
+
+  // Arrêt propre : on tente de sauvegarder toutes les tables modifiées avant que le processus ne se ferme
+  // (redéploiement, mise à l'échelle...). Le délai est volontairement court (shutdownFlushSeconds).
+  let shuttingDown = false;
+  const gracefulShutdown = async (signal: string) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    const flushSeconds = Number(RoomManager.getEngineConfig().shutdownFlushSeconds ?? 8);
+    console.log(`[Server] Signal ${signal} reçu : sauvegarde des tables (max ${flushSeconds}s) avant arrêt.`);
+    await Promise.race([
+      RoomManager.flushAllRoomSnapshots(),
+      new Promise((resolve) => setTimeout(resolve, flushSeconds * 1000)),
+    ]).catch(() => {});
+    process.exit(0);
+  };
+  process.on('SIGTERM', () => void gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => void gracefulShutdown('SIGINT'));
 
   // WebSocket Server Setup
   const wss = new WebSocketServer({ noServer: true });

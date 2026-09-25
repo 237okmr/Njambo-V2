@@ -8,6 +8,14 @@ export interface KatikaEngineConfig {
   hostGraceSeconds?: number;
   forceStartHostAbsentSeconds?: number;
   absentSeatReleaseAfterParties?: number;
+  roomSnapshotEnabled?: boolean;
+  roomRestoreMaxAgeMinutes?: number;
+  snapshotMaxWritesPerDay?: number;
+  snapshotDebounceSeconds?: number;
+  snapshotMinIntervalSeconds?: number;
+  snapshotPeriodicSeconds?: number;
+  shutdownFlushSeconds?: number;
+  bootRestoreTimeoutSeconds?: number;
   roundEndWatchdogMs?: number;
   lobbyWaitTtlMinutes?: number;
   publicAbsentHostVisibilitySeconds?: number;

@@ -603,6 +603,8 @@ export interface MultiplayerRoom {
   fillWithBots: boolean;
   maxPlayers: number; // 2, 3, or 4
   baseBet: number;
+  /** Horodatage de restauration après un redémarrage serveur (absent sinon). Voir roomSnapshotStore.ts. */
+  restoredAt?: number;
   initialBaseBet?: number;
   initialCapital: number;
   enableDoubleKora: boolean;

@@ -419,6 +419,11 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Sauvegarde des tables en cours (mains des joueurs comprises) : accès uniquement par le SDK admin.
+    match /server_rooms/{roomId} {
+      allow read, write: if false;
+    }
+
     // Abonnements Web Push (lecture/écriture par le serveur avec le SDK client : à migrer au lot 4)
     match /push_subscriptions/{subscriptionId} {
       allow read, write: if true;

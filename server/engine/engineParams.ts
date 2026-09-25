@@ -121,6 +121,46 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Durée pendant laquelle une table publique dont l\'hôte est absent reste listée.',
   },
   {
+    key: 'roomSnapshotEnabled', label: 'Restauration des tables après redémarrage', unit: '', type: 'boolean',
+    min: 0, max: 1, default: true, group: 'salons', scope: 'server', effect: 'immediate',
+    help: 'Sauvegarde les tables en cours pour les restaurer si le serveur redémarre.',
+  },
+  {
+    key: 'roomRestoreMaxAgeMinutes', label: 'Ancienneté maximale d\'une table restaurable', unit: 'min',
+    min: 5, max: 120, default: 20, group: 'salons', scope: 'server', effect: 'immediate',
+    help: 'Une sauvegarde plus ancienne que ce délai est ignorée et supprimée au démarrage.',
+  },
+  {
+    key: 'snapshotMaxWritesPerDay', label: 'Plafond quotidien d\'écritures de sauvegarde', unit: '',
+    min: 1000, max: 100000, default: 15000, group: 'salons', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Au-delà, seules les fins de partie sont sauvegardées (protection du quota Firestore).',
+  },
+  {
+    key: 'snapshotDebounceSeconds', label: 'Délai de repos avant sauvegarde', unit: 's',
+    min: 1, max: 30, default: 3, group: 'salons', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Attente après le dernier changement d\'une table avant de l\'écrire dans la sauvegarde.',
+  },
+  {
+    key: 'snapshotMinIntervalSeconds', label: 'Intervalle minimal entre deux sauvegardes', unit: 's',
+    min: 2, max: 60, default: 5, group: 'salons', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Empêche une table très active de saturer les écritures Firestore.',
+  },
+  {
+    key: 'snapshotPeriodicSeconds', label: 'Sauvegarde périodique de secours', unit: 's',
+    min: 10, max: 300, default: 30, group: 'salons', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Sauvegarde forcée d\'une table modifiée même sans nouveau changement récent.',
+  },
+  {
+    key: 'shutdownFlushSeconds', label: 'Délai de sauvegarde à l\'arrêt du serveur', unit: 's',
+    min: 2, max: 9, default: 8, group: 'salons', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Temps laissé pour sauvegarder toutes les tables avant l\'arrêt du processus.',
+  },
+  {
+    key: 'bootRestoreTimeoutSeconds', label: 'Délai de restauration au démarrage', unit: 's',
+    min: 3, max: 60, default: 10, group: 'salons', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Temps maximal accordé pour recharger les tables sauvegardées avant d\'accepter les connexions.',
+  },
+  {
     key: 'lobbyWaitTtlMinutes', label: 'Durée de vie d\'une table en attente', unit: 'min',
     min: 5, max: 240, default: 30, group: 'salons', scope: 'server', effect: 'immediate', locked: true,
     help: 'Durée de vie d\'une table en salle d\'attente sans humain connecté. Défaut protégé : 30 min.',
