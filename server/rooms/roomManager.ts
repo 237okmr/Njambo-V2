@@ -2315,7 +2315,7 @@ export class RoomManager {
 
     if (shouldAutoStart) {
       if (!state.autoStartTimer) {
-        const delay = 5000; // 5 seconds countdown
+        const delay = Number(this.engineConfig.publicAutoStartSeconds ?? 8) * 1000;
         room.autoStartCountdownAt = Date.now() + delay;
         state.autoStartTimer = setTimeout(() => {
           state.autoStartTimer = null;
@@ -3284,7 +3284,7 @@ export class RoomManager {
       proposerName: player.name,
       agreedPlayerIds: [client.playerId],
       createdAt: Date.now(),
-      expiresAt: Date.now() + 15000, // 15s voting window
+      expiresAt: Date.now() + Number(this.engineConfig.betIncreaseVoteSeconds ?? 20) * 1000,
       previousReadyStates,
     };
 
@@ -3313,7 +3313,9 @@ export class RoomManager {
     const proposedBet = room.betIncreaseProposal.proposedBet;
 
     activeBots.forEach((botPlayer) => {
-      const delay = 800 + Math.random() * 1200; // 800 to 2000 ms
+      const minMs = Number(this.engineConfig.botVoteDelayMinMs ?? 800);
+      const maxMs = Number(this.engineConfig.botVoteDelayMaxMs ?? 2000);
+      const delay = minMs + Math.random() * Math.max(0, maxMs - minMs);
       const timer = setTimeout(() => {
         const currentRoom = this.rooms.get(roomCode);
         if (
@@ -3717,7 +3719,7 @@ export class RoomManager {
         declinedPlayerIds: [],
         createdAt: Date.now(),
         status: 'ACCEPTED',
-        expiresAt: Date.now() + 1000 * 10,
+        expiresAt: Date.now() + Number(this.engineConfig.integrationVoteSeconds ?? 15) * 1000,
       };
     } else {
       room.integrationProposal = {
@@ -3732,7 +3734,7 @@ export class RoomManager {
         declinedPlayerIds: [],
         createdAt: Date.now(),
         status: 'VOTING',
-        expiresAt: Date.now() + 1000 * 10,
+        expiresAt: Date.now() + Number(this.engineConfig.integrationVoteSeconds ?? 15) * 1000,
       };
 
       // 10s vote timer: auto-accept if abstained

@@ -17,6 +17,11 @@ export interface KatikaEngineConfig {
   shutdownFlushSeconds?: number;
   bootRestoreTimeoutSeconds?: number;
   emoteCooldownMs?: number;
+  betIncreaseVoteSeconds?: number;
+  botVoteDelayMinMs?: number;
+  botVoteDelayMaxMs?: number;
+  integrationVoteSeconds?: number;
+  publicAutoStartSeconds?: number;
   emoteDisplayMs?: number;
   roomTickIntervalMs?: number;
   trickWinnerViewMs?: number;

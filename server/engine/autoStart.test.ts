@@ -1,6 +1,7 @@
 import { describe, it, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { RoomManager } from '../rooms/roomManager';
+import { DEFAULT_ENGINE_CONFIG } from './engineConfig';
 import type { MultiplayerRoom, RoomPlayer } from '../../src/types';
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -84,10 +85,11 @@ describe('Multiplayer Public Table Auto-Start', () => {
     assert.equal(room.status, 'LOBBY');
     assert.ok(room.autoStartCountdownAt, 'autoStartCountdownAt doit être défini');
     const delayMs = room.autoStartCountdownAt! - Date.now();
-    assert.ok(delayMs > 3000 && delayMs <= 5100, `Le délai restant (${delayMs}ms) doit être proche de 5000ms`);
+    const expectedMs = Number(DEFAULT_ENGINE_CONFIG.publicAutoStartSeconds ?? 8) * 1000;
+    assert.ok(delayMs > expectedMs - 2000 && delayMs <= expectedMs + 100, `Le délai restant (${delayMs}ms) doit être proche de ${expectedMs}ms`);
 
     // 2. Attente de l'expiration du délai sans aucun appel à START_GAME
-    await sleep(5200);
+    await sleep(expectedMs + 300);
 
     // 3. Vérification que la table est passée en PLAYING
     const updatedRoom = RoomManager.getRoom(roomCode);
