@@ -220,6 +220,8 @@ export interface Player {
   aiRelayPlaysCount?: number;
   forfeitedForManche?: boolean; // siège gelé jusqu'à la fin de la manche
   leftRoom?: boolean; // le joueur a quitté volontairement la salle
+  /** Parties consécutives déclarées forfait pour absence (remis à 0 dès présence). Voir absentSeatReleaseAfterParties. */
+  consecutiveAbsentParties?: number;
 }
 
 export interface PlayedCard {
@@ -383,6 +385,8 @@ export interface RoomPlayer {
   aiRelayPlaysCount?: number;
   forfeitedForManche?: boolean; // siège gelé jusqu'à la fin de la manche
   leftRoom?: boolean; // le joueur a quitté volontairement la salle
+  /** Parties consécutives déclarées forfait pour absence (remis à 0 dès présence). Voir absentSeatReleaseAfterParties. */
+  consecutiveAbsentParties?: number;
 }
 
 export interface PreviousPartieSummary {

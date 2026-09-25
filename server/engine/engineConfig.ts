@@ -7,6 +7,7 @@ export interface KatikaEngineConfig {
   playerGraceSeconds?: number;
   hostGraceSeconds?: number;
   forceStartHostAbsentSeconds?: number;
+  absentSeatReleaseAfterParties?: number;
   roundEndWatchdogMs?: number;
   lobbyWaitTtlMinutes?: number;
   publicAbsentHostVisibilitySeconds?: number;

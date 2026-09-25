@@ -64,6 +64,11 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Marge après l\'expiration du compte à rebours avant que le serveur relance lui-même la partie suivante, au cas où le minuteur d\'origine aurait été perdu.',
   },
   {
+    key: 'absentSeatReleaseAfterParties', label: 'Parties d\'absence avant libération du siège', unit: '',
+    min: 2, max: 10, default: 3, group: 'partie', scope: 'both', effect: 'immediate',
+    help: 'Nombre de parties consécutives déclarées forfait pour absence (tables à 3 ou 4 joueurs) avant que le siège soit confié à un bot et redevienne disponible pour un observateur.',
+  },
+  {
     key: 'forceStartHostAbsentSeconds', label: 'Absence de l\'hôte avant que tout joueur puisse forcer le départ', unit: 's',
     min: 10, max: 120, default: 20, group: 'partie', scope: 'both', effect: 'immediate',
     help: 'Si l\'hôte est absent depuis ce délai, un autre joueur présent peut forcer le lancement de la partie suivante.',

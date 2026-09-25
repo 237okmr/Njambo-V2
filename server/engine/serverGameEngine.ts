@@ -41,7 +41,8 @@ export type PlayerAlert =
   | { kind: 'TIMEOUT_WARNING'; missed: number; maxMissed: number }
   | { kind: 'RELAY_COST'; potShared: boolean; koraPenalty: number }
   | { kind: 'PARTIE_FORFEIT' }
-  | { kind: 'MANCHE_LOST_BY_FORFEIT' };
+  | { kind: 'MANCHE_LOST_BY_FORFEIT' }
+  | { kind: 'SEAT_RELEASED' };
 
 export interface ActiveRoomState {
   room: MultiplayerRoom;
@@ -1273,6 +1274,9 @@ export class ServerGameEngine {
     // tout humain encore absent (déconnecté, ou inactif et n'ayant pas confirmé sa présence) est déclaré forfait
     // POUR CETTE PARTIE : pas de mise, pas de pénalité. Il pourra revenir au début de n'importe quelle partie suivante.
     const newlyForfeitedIds: string[] = [];
+    const seatsToRelease: string[] = [];
+    const seatReleaseThreshold = Number(this.getConfig(activeRoomState).absentSeatReleaseAfterParties ?? 3);
+
     (room.players || []).forEach((p) => {
       const isAbsent = !p.connected || (Boolean(p.relayAbsent) && !p.readyForNextPartie);
       if (p.isHuman && isAbsent && !p.isEliminated && !p.isSpectator) {
@@ -1288,6 +1292,14 @@ export class ServerGameEngine {
           gp.hand = [];
         }
 
+        // Libération du siège (tables de 3 ou 4 joueurs uniquement) : après plusieurs parties d'absence
+        // consécutives, le siège est confié à un bot pour redevenir disponible pour un observateur.
+        p.consecutiveAbsentParties = (p.consecutiveAbsentParties || 0) + 1;
+        if (gp) gp.consecutiveAbsentParties = p.consecutiveAbsentParties;
+        if ((room.maxPlayers || 0) >= 3 && p.consecutiveAbsentParties >= seatReleaseThreshold) {
+          seatsToRelease.push(p.id);
+        }
+
         if (!wasAlreadyForfeit) {
           console.log(`[Pre-Deal Forfeit] Player ${p.name} offline at start of next partie. Declaring forfeit for this partie.`);
           const emote: EmoteMessage = {
@@ -1301,7 +1313,28 @@ export class ServerGameEngine {
           };
           room.activeEmotes = [...(room.activeEmotes || []), emote].slice(-5);
         }
+      } else if (p.isHuman && !p.isSpectator && !p.isEliminated) {
+        // Présent au début de cette partie : le compteur d'absences consécutives repart de zéro.
+        p.consecutiveAbsentParties = 0;
+        const gp = (gs.players || []).find((g) => g.id === p.id);
+        if (gp) gp.consecutiveAbsentParties = 0;
       }
+    });
+
+    // Libérer les sièges identifiés : le siège bascule en bot (capital conservé, comme tout départ de
+    // table), et redevient disponible pour un observateur via le flux d'intégration existant. Le joueur
+    // libéré en est informé (alerte SEAT_RELEASED) et peut redemander à intégrer une table plus tard.
+    seatsToRelease.forEach((playerId) => {
+      // replacePlayerWithBot bascule le siège en bot (isHuman: false) sur room.players ET gs.players,
+      // conserve le capital et le nom (« ... (Bot) »), et gère proprement les minuteurs en cours.
+      // Le siège redevient alors disponible pour un observateur via le flux d'intégration existant
+      // (handleRequestIntegration -> selectBotToReplace), exactement comme n'importe quel autre bot.
+      this.replacePlayerWithBot(room, playerId, () => {}, activeRoomState, 'Absence prolongée');
+      const rp = (room.players || []).find((p) => p.id === playerId);
+      if (rp) rp.isForfeit = false;
+      const gp = (gs.players || []).find((p) => p.id === playerId);
+      if (gp) gp.isForfeit = false;
+      activeRoomState.onPlayerAlert?.(playerId, room, { kind: 'SEAT_RELEASED' });
     });
 
     // Nouvelle partie : plus aucun relais en cours, compteurs d'inactivité remis à zéro.

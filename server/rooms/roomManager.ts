@@ -4203,6 +4203,14 @@ export class RoomManager {
           { openTable: false }
         );
         return;
+      case 'SEAT_RELEASED':
+        send(
+          'FORFEIT_DECLARED',
+          `🪑 Table #${room.id} : siège libéré`,
+          "Après plusieurs parties d'absence, votre siège a été confié à un bot pour ne pas bloquer la table. Votre capital reste en jeu : revenez en observateur pour demander à réintégrer la table.",
+          { openTable: true }
+        );
+        return;
     }
   }
 
