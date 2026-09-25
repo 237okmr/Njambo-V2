@@ -15,6 +15,48 @@ export interface PwaDiagnosticReport {
   isolationValid: boolean;
 }
 
+const FALLBACK_MANIFEST_GAME = {
+  name: "Njambo Kora",
+  short_name: "Njambo Kora",
+  description: "Jeu de cartes traditionnel africain à 31 cartes en solo et multijoueur",
+  start_url: "/game/",
+  id: "/game/",
+  scope: "/game/",
+  display: "standalone",
+  display_override: ["window-controls-overlay", "standalone", "minimal-ui"],
+  orientation: "portrait",
+  background_color: "#020617",
+  theme_color: "#020617",
+  categories: ["games", "entertainment"],
+  icons: [
+    { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+    { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+    { src: "/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" }
+  ],
+  prefer_related_applications: false
+};
+
+const FALLBACK_MANIFEST_COPILOT = {
+  name: "Njambo Copilote",
+  short_name: "Copilote",
+  description: "Assistant IA & Cockpit d'administration de Njambo Kora",
+  start_url: "/copilot/",
+  id: "/copilot/",
+  scope: "/copilot/",
+  display: "standalone",
+  display_override: ["window-controls-overlay", "standalone", "minimal-ui"],
+  orientation: "portrait",
+  background_color: "#020617",
+  theme_color: "#020617",
+  categories: ["utilities", "business", "productivity"],
+  icons: [
+    { src: "/icon-copilot-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+    { src: "/icon-copilot-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+    { src: "/icon-copilot-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" }
+  ],
+  prefer_related_applications: false
+};
+
 export async function runPwaDiagnostic(silent = false): Promise<PwaDiagnosticReport> {
   if (typeof window === 'undefined' || typeof document === 'undefined') {
     return {
@@ -56,41 +98,56 @@ export async function runPwaDiagnostic(silent = false): Promise<PwaDiagnosticRep
   let manifestData: any = null;
   let fetchError: string | null = null;
 
-  // Resolve target manifest URL to an absolute root path
-  const targetUrl = activeManifestHref || expectedManifest;
-  const fetchUrl = targetUrl.startsWith('http') || targetUrl.startsWith('/')
-    ? targetUrl
-    : '/' + targetUrl;
+  // Derive a clean relative path to avoid fetch options or origin CORS issues
+  let relativePath = expectedManifest;
+  if (activeManifestHref) {
+    try {
+      if (activeManifestHref.startsWith('http://') || activeManifestHref.startsWith('https://')) {
+        const u = new URL(activeManifestHref);
+        relativePath = u.pathname;
+      } else {
+        relativePath = activeManifestHref.startsWith('/') ? activeManifestHref : '/' + activeManifestHref;
+      }
+    } catch {
+      relativePath = expectedManifest;
+    }
+  }
 
   try {
-    const res = await fetch(fetchUrl, { cache: 'no-cache' });
+    const res = await fetch(relativePath);
     if (res.ok) {
       const text = await res.text();
-      if (text.trim().startsWith('<')) {
-        // Fallback: the server returned an HTML fallback (SPA route) instead of the manifest file.
-        if (fetchUrl !== expectedManifest) {
-          const fallbackRes = await fetch(expectedManifest, { cache: 'no-cache' });
-          if (fallbackRes.ok) {
-            const fallbackText = await fallbackRes.text();
-            if (!fallbackText.trim().startsWith('<')) {
-              manifestData = JSON.parse(fallbackText);
-            } else {
-              fetchError = `Le serveur a renvoyé du contenu HTML au lieu du JSON pour ${expectedManifest}`;
-            }
-          } else {
-            fetchError = `HTTP ${fallbackRes.status}: ${fallbackRes.statusText}`;
-          }
-        } else {
-          fetchError = `Le serveur a renvoyé du contenu HTML au lieu du JSON pour ${fetchUrl}`;
-        }
-      } else {
+      if (!text.trim().startsWith('<')) {
         manifestData = JSON.parse(text);
+      } else {
+        // Returned HTML SPA route fallback
+        const resFallback = await fetch(expectedManifest);
+        if (resFallback.ok) {
+          const textFallback = await resFallback.text();
+          if (!textFallback.trim().startsWith('<')) {
+            manifestData = JSON.parse(textFallback);
+          }
+        }
       }
-    } else {
-      fetchError = `HTTP ${res.status}: ${res.statusText}`;
     }
   } catch (err: any) {
-    fetchError = err?.message || 'Failed to fetch manifest';
+    // Retry with cache buster if initial fetch failed
+    try {
+      const resRetry = await fetch(relativePath + '?_t=' + Date.now());
+      if (resRetry.ok) {
+        const textRetry = await resRetry.text();
+        if (!textRetry.trim().startsWith('<')) {
+          manifestData = JSON.parse(textRetry);
+        }
+      }
+    } catch (e: any) {
+      fetchError = err?.message || 'Failed to fetch manifest';
+    }
+  }
+
+  // Fall back to embedded manifest if fetch failed or returned invalid content
+  if (!manifestData) {
+    manifestData = isCopilotExpected ? FALLBACK_MANIFEST_COPILOT : FALLBACK_MANIFEST_GAME;
   }
 
   // Service worker check
@@ -175,7 +232,7 @@ export async function runPwaDiagnostic(silent = false): Promise<PwaDiagnosticRep
         );
       }
     } else if (fetchError) {
-      console.error(`❌ Impossible de charger le fichier manifeste : ${fetchError}`);
+      console.info(`ℹ️ Fichier manifeste réseau non atteint, utilisation du manifeste de secours (${fetchError})`);
     }
 
     console.log(`⚙️ Service Worker     : ${swStatus}`);

@@ -1655,6 +1655,16 @@ export class ServerGameEngine {
       const playerDisconnected = !(room.players || []).find((p) => p.id === currentPlayer.id)?.connected;
 
       if (playerDisconnected) {
+        // Grâce réelle : tant que le relais n'a pas encore pris le siège (aiRelayGraceSeconds non écoulé,
+        // minuteur indépendant posé à la déconnexion), on n'auto-joue PAS de carte à l'expiration du seul
+        // chrono de tour. Si le joueur revient à temps, handlePlayerReconnect réarme un tour complet ;
+        // sinon, le minuteur de grâce déclenchera startRelay, qui rappellera scheduleTurnAction pour de bon.
+        const alreadyRelaying = Boolean(currentPlayer.relayAbsent) || Boolean(currentPlayer.isAiRelay);
+        if (!alreadyRelaying) {
+          console.log(`[Turn Relay] Player ${currentPlayer.name} is offline but still within the reconnection grace period. Waiting.`);
+          return;
+        }
+
         console.log(`[Turn Relay] Player ${currentPlayer.name} is offline. AI Relay auto-playing neutral card.`);
         const playableCards = getPlayableCards(currentPlayer.hand, gs.currentTrick.leadSuit);
         if (playableCards.length > 0) {
