@@ -101,12 +101,12 @@ export const PlayZoneFelt: React.FC<PlayZoneFeltProps> = ({
   return (
     <div
       id="play-zone-felt"
-      className={`relative w-full rounded-2xl bg-emerald-900 border transition-all duration-300 sm:border-4 p-1.5 sm:p-2.5 flex flex-col justify-between min-h-[115px] sm:min-h-[160px] overflow-hidden my-auto ${
+      className={`relative w-full rounded-2xl bg-[radial-gradient(ellipse_at_center,#065f46_0%,#044332_55%,#022c22_100%)] border-2 sm:border-4 transition-all duration-300 p-1.5 sm:p-2.5 lg:p-4 lg:max-w-3xl lg:mx-auto flex flex-col justify-between min-h-[115px] sm:min-h-[160px] lg:min-h-0 overflow-hidden my-auto ${
         hasKoraThreat
           ? 'border-rose-500/90 shadow-[inset_0_0_30px_rgba(225,29,72,0.45),0_0_35px_rgba(225,29,72,0.65)] animate-pulse'
           : isDecisiveFifthTrick
-            ? 'border-amber-500/80 shadow-[inset_0_4px_30px_rgba(0,0,0,0.8),0_0_25px_rgba(245,158,11,0.25)]'
-            : 'border-emerald-800/90 shadow-[inset_0_4px_20px_rgba(0,0,0,0.6),0_8px_20px_rgba(0,0,0,0.4)]'
+            ? 'border-amber-500/90 shadow-[inset_0_4px_30px_rgba(0,0,0,0.85),0_0_25px_rgba(245,158,11,0.35)] ring-1 ring-amber-400/50'
+            : 'border-[#78350f]/80 ring-1 ring-amber-500/30 shadow-[inset_0_4px_30px_rgba(0,0,0,0.7),0_10px_25px_rgba(0,0,0,0.5)]'
       } ${mbapActive ? 'animate-mbap-shake' : ''}`}
     >
       {/* 5th Trick Dramatic Tension Vignette */}
@@ -202,9 +202,9 @@ export const PlayZoneFelt: React.FC<PlayZoneFeltProps> = ({
             return (
               <div
                 key={`empty-slot-${index}`}
-                className="h-16 sm:h-24 rounded-xl border-2 border-dashed border-emerald-700/40 bg-emerald-950/20 flex flex-col items-center justify-center text-emerald-600/60"
+                className="h-16 sm:h-24 lg:h-36 xl:h-40 rounded-xl border-2 border-dashed border-emerald-700/40 bg-emerald-950/20 flex flex-col items-center justify-center text-emerald-600/60"
               >
-                <span className="text-[10px] sm:text-xs font-bold">Slot {index + 1}</span>
+                <span className="text-[10px] sm:text-xs lg:text-sm font-bold">Slot {index + 1}</span>
               </div>
             );
           }
@@ -235,7 +235,7 @@ export const PlayZoneFelt: React.FC<PlayZoneFeltProps> = ({
                   ? { duration: 0.42, times: [0, 0.25, 1], ease: ['easeInOut', 'easeIn'] }
                   : { type: 'spring', damping: 20, stiffness: 400, mass: 0.75 }
               }
-              className={`relative h-18 sm:h-24 rounded-xl bg-white text-slate-950 p-1 sm:p-2 flex flex-col justify-between select-none transition-all overflow-hidden animate-card-slam ${
+              className={`relative h-18 sm:h-24 lg:h-36 xl:h-40 rounded-xl bg-white text-slate-950 p-1 sm:p-2 lg:p-2.5 flex flex-col justify-between select-none transition-all overflow-hidden animate-card-slam ${
                 isWinner
                   ? 'border-2 border-amber-400 ring-2 ring-amber-400 ring-offset-2 ring-offset-emerald-950 shadow-amber-400/40 z-20'
                   : isAutoPlayedBot
@@ -245,25 +245,25 @@ export const PlayZoneFelt: React.FC<PlayZoneFeltProps> = ({
             >
               {/* Player name tag at top */}
               <div className="flex items-center justify-between leading-none pointer-events-none border-b border-slate-100 pb-0.5">
-                <span className="text-[9px] sm:text-[10px] font-black uppercase text-slate-700 truncate max-w-[55px] sm:max-w-[70px]">
+                <span className="text-[9px] sm:text-[10px] lg:text-xs font-black uppercase text-slate-700 truncate max-w-[55px] sm:max-w-[70px] lg:max-w-[100px]">
                   {play.playerName.split(' ')[0]}
                 </span>
-                <span className={`text-[10px] sm:text-xs font-black ${suitInfo.color}`}>
+                <span className={`text-[10px] sm:text-xs lg:text-sm font-black ${suitInfo.color}`}>
                   {play.card.value}
                 </span>
               </div>
 
               {/* Center large symbol */}
-              <div className={`self-center text-xl sm:text-3xl leading-none pointer-events-none ${suitInfo.color}`}>
+              <div className={`self-center text-xl sm:text-3xl lg:text-4xl xl:text-5xl leading-none pointer-events-none ${suitInfo.color}`}>
                 {suitInfo.symbol}
               </div>
 
               {/* Bottom value + symbol */}
               <div className="flex items-center justify-between leading-none pointer-events-none">
-                <span className={`text-xs sm:text-sm font-black ${suitInfo.color}`}>
+                <span className={`text-xs sm:text-sm lg:text-base font-black ${suitInfo.color}`}>
                   {play.card.value}
                 </span>
-                <span className={`text-[10px] sm:text-xs font-bold ${suitInfo.color}`}>
+                <span className={`text-[10px] sm:text-xs lg:text-sm font-bold ${suitInfo.color}`}>
                   {suitInfo.symbol}
                 </span>
               </div>

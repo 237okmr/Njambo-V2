@@ -21,6 +21,8 @@ interface OpponentsHistoryBoardProps {
   showBotPersonalityIcons?: boolean;
   activeEmotes?: EmoteMessage[];
   turnRemainingSeconds?: number | null;
+  filterMode?: 'all' | 'opponentsOnly' | 'localOnly';
+  className?: string;
 }
 
 export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
@@ -41,16 +43,18 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
   showBotPersonalityIcons = true,
   activeEmotes = [],
   turnRemainingSeconds = null,
+  filterMode = 'all',
+  className = '',
 }) => {
   // Always display all players in order
   const allPlayers = players && players.length > 0 ? players : opponents || [];
 
   return (
     <div
-      id="opponents-history-board"
-      className="w-full bg-slate-900/95 border border-slate-800 rounded-2xl p-2 sm:p-2.5 shadow-lg flex flex-col gap-1.5 shrink-0"
+      id={filterMode === 'localOnly' ? 'local-player-history-board' : 'opponents-history-board'}
+      className={`w-full bg-slate-900/95 border border-slate-800 rounded-2xl p-2 sm:p-2.5 shadow-lg flex flex-col gap-1.5 shrink-0 ${className}`}
     >
-      {isDealing && (
+      {isDealing && filterMode !== 'localOnly' && (
         <div className="w-full bg-gradient-to-r from-amber-950/80 via-amber-900/90 to-amber-950/80 border border-amber-500/50 rounded-xl px-3 py-1.5 flex items-center justify-between text-amber-200 text-xs font-bold shadow-md animate-pulse">
           <div className="flex items-center gap-2">
             <span className="text-base">🂠</span>
@@ -67,6 +71,9 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
             ? player.id === localPlayerId
             : playerIndex === 0
           : player.isHuman || playerIndex === 0;
+
+        if (filterMode === 'opponentsOnly' && isLocalPlayer) return null;
+        if (filterMode === 'localOnly' && !isLocalPlayer) return null;
 
         const isOnlineRemoteHuman = isMultiplayer && !isLocalPlayer && player.isHuman;
         const isCurrentTurn = currentTurnIndex === playerIndex;
@@ -159,7 +166,7 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
           <div
             key={player.id || `player-${playerIndex}`}
             id={`player-row-${player.id}`}
-            className={`relative flex items-center justify-between gap-2 px-2 py-1.5 rounded-xl transition-all duration-300 ${
+            className={`relative flex flex-row items-center justify-between lg:flex-col lg:items-stretch lg:gap-1.5 gap-2 px-2 py-1.5 lg:p-2 rounded-xl transition-all duration-300 ${
               isForfeit || isFolded
                 ? 'bg-rose-950/40 border border-rose-900/60 opacity-60 grayscale'
                 : isEliminated
@@ -171,195 +178,205 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                   ? 'bg-emerald-950/80 border-2 border-emerald-400 ring-2 ring-emerald-400/60 shadow-lg shadow-emerald-500/30'
                   : 'bg-amber-950/80 border-2 border-yellow-400 ring-2 ring-yellow-400/60 shadow-lg shadow-yellow-500/30'
                 : isCurrentTurn
-                ? 'bg-amber-950/40 border border-amber-500/60 ring-1 ring-amber-400/40'
+                ? 'bg-gradient-to-r from-amber-950/60 via-slate-900/90 to-slate-950 border-2 border-amber-400 ring-2 ring-amber-400/40 shadow-[0_0_18px_rgba(245,158,11,0.3)]'
                 : isLocalPlayer
-                ? 'bg-slate-900/80 border border-emerald-500/30'
+                ? 'bg-amber-950/20 border border-amber-500/40 shadow-sm'
                 : isOnlineRemoteHuman
                 ? 'bg-indigo-950/40 border border-indigo-500/30'
                 : 'bg-slate-950/50 border border-slate-800/80'
             }`}
           >
-            {/* Left: Avatar Badge + Name + Capital + Tricks count + Strategy */}
-            <div className="flex items-center gap-2 shrink-0 min-w-[110px] sm:min-w-[165px]">
-              <div className="relative">
-                <div
-                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-black shadow ${
-                    isForfeit || isFolded
-                      ? 'bg-rose-950 text-rose-300 border border-rose-600'
-                      : isEliminated
-                      ? 'bg-rose-900 text-rose-200 border border-rose-700'
-                      : isDisconnected
-                      ? 'bg-amber-900 text-amber-200 border border-amber-600 animate-pulse'
-                      : isInstantWinner
-                      ? instantWinReveal?.winType === 'UNDER_21'
-                        ? 'bg-emerald-400 text-slate-950 ring-2 ring-emerald-300'
-                        : 'bg-yellow-400 text-slate-950 ring-2 ring-yellow-300'
-                      : isCurrentTurn
-                      ? 'bg-amber-500 text-slate-950 ring-2 ring-amber-300 ring-offset-1 ring-offset-slate-900 animate-pulse'
-                      : isLocalPlayer
-                      ? 'bg-emerald-600 text-slate-100 border border-emerald-400/50'
-                      : isOnlineRemoteHuman
-                      ? 'bg-indigo-600 text-indigo-100 border border-indigo-400/50'
-                      : 'bg-slate-800 text-slate-200 border border-slate-700'
-                  }`}
-                >
-                  {isForfeit || isFolded ? (
-                    <Ban className="w-3.5 h-3.5 text-rose-400" />
-                  ) : isEliminated ? (
-                    <Skull className="w-3.5 h-3.5 text-rose-300" />
-                  ) : isDisconnected ? (
-                    <WifiOff className="w-3.5 h-3.5 text-amber-300" />
-                  ) : isInstantWinner ? (
-                    <Crown className="w-4 h-4 text-slate-950" />
-                  ) : isLocalPlayer ? (
-                    <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-100" />
-                  ) : isOnlineRemoteHuman ? (
-                    <Globe className="w-3.5 h-3.5 text-indigo-200" />
-                  ) : (
-                    <span>{iaIndexNumber}</span>
+            {/* Top row on Desktop (or Left on Mobile): Avatar Badge + Name + Capital + Tricks count + Strategy */}
+            <div className="flex items-center justify-between lg:w-full gap-2 shrink-0 min-w-[110px] sm:min-w-[165px] lg:min-w-0">
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <div
+                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-black shadow ${
+                      isForfeit || isFolded
+                        ? 'bg-rose-950 text-rose-300 border border-rose-600'
+                        : isEliminated
+                        ? 'bg-rose-900 text-rose-200 border border-rose-700'
+                        : isDisconnected
+                        ? 'bg-amber-900 text-amber-200 border border-amber-600 animate-pulse'
+                        : isInstantWinner
+                        ? instantWinReveal?.winType === 'UNDER_21'
+                          ? 'bg-emerald-400 text-slate-950 ring-2 ring-emerald-300'
+                          : 'bg-yellow-400 text-slate-950 ring-2 ring-yellow-300'
+                        : isCurrentTurn
+                        ? 'bg-amber-500 text-slate-950 ring-2 ring-amber-300 ring-offset-1 ring-offset-slate-900 animate-pulse'
+                        : isLocalPlayer
+                        ? 'bg-amber-500 text-slate-950 border border-amber-400/60 shadow-amber-500/20'
+                        : isOnlineRemoteHuman
+                        ? 'bg-indigo-600 text-indigo-100 border border-indigo-400/50'
+                        : 'bg-slate-800 text-slate-200 border border-slate-700'
+                    }`}
+                  >
+                    {isForfeit || isFolded ? (
+                      <Ban className="w-3.5 h-3.5 text-rose-400" />
+                    ) : isEliminated ? (
+                      <Skull className="w-3.5 h-3.5 text-rose-300" />
+                    ) : isDisconnected ? (
+                      <WifiOff className="w-3.5 h-3.5 text-amber-300" />
+                    ) : isInstantWinner ? (
+                      <Crown className="w-4 h-4 text-slate-950" />
+                    ) : isLocalPlayer ? (
+                      <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-950 font-bold" />
+                    ) : isOnlineRemoteHuman ? (
+                      <Globe className="w-3.5 h-3.5 text-indigo-200" />
+                    ) : (
+                      <span>{iaIndexNumber}</span>
+                    )}
+                  </div>
+                  {isThinking && !isEliminated && !isForfeit && !isDisconnected && (
+                    <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+                    </span>
                   )}
                 </div>
-                {isThinking && !isEliminated && !isForfeit && !isDisconnected && (
-                  <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
-                  </span>
-                )}
+
+                <div className="flex flex-col leading-tight">
+                  <div className="flex items-center gap-1">
+                    <span
+                      className={`text-xs font-bold truncate max-w-[65px] sm:max-w-[95px] lg:max-w-[120px] ${
+                        isForfeit
+                          ? 'text-rose-400 line-through'
+                          : isEliminated
+                          ? 'text-rose-400 line-through'
+                          : isInstantWinner
+                          ? 'text-yellow-300 font-black'
+                          : isLocalPlayer
+                          ? 'text-amber-300 font-extrabold'
+                          : isOnlineRemoteHuman
+                          ? 'text-indigo-300 font-bold'
+                          : 'text-slate-100'
+                      }`}
+                      title={player.name}
+                    >
+                      {isLocalPlayer
+                        ? player.name.includes('Vous')
+                          ? 'Vous'
+                          : `${player.name} (Vous)`
+                        : isOnlineRemoteHuman
+                        ? player.name
+                        : player.name.replace(/^Joueur\s+/i, '')}
+                    </span>
+                    {isInstantWinner && (
+                      <span
+                        className={`text-[8px] font-black px-1.5 py-0.2 rounded shadow uppercase animate-pulse ${
+                          instantWinReveal?.winType === 'UNDER_21'
+                            ? 'bg-emerald-400 text-slate-950'
+                            : 'bg-yellow-400 text-slate-950'
+                        }`}
+                      >
+                        {instantWinReveal?.winType === 'UNDER_21' ? '≤ 21 pts' : '3x 7'}
+                      </span>
+                    )}
+                    {!isEliminated && !isForfeit && isDealer && (
+                      <span className="text-[8px] font-black px-1 py-0.2 bg-amber-500/20 text-amber-300 rounded border border-amber-500/30">
+                        D
+                      </span>
+                    )}
+                    {!isEliminated && !isForfeit && isLead && (
+                      <span className="text-[8px] font-black px-1 py-0.2 bg-blue-500/20 text-blue-300 rounded border border-blue-500/30">
+                        E
+                      </span>
+                    )}
+                    {isOnlineRemoteHuman && !isEliminated && !isForfeit && !isDisconnected && (
+                      <span className="text-[8px] font-bold px-1 py-0.2 bg-indigo-500/20 text-indigo-300 rounded border border-indigo-500/30 hidden xs:inline">
+                        En ligne
+                      </span>
+                    )}
+                    {isDisconnected && (
+                      <span
+                        className="text-[8px] font-bold px-1.5 py-0.2 bg-amber-500/20 text-amber-300 rounded border border-amber-500/40 animate-pulse flex items-center gap-0.5"
+                        title="Micro-coupure : Reconnexion en attente"
+                      >
+                        <WifiOff className="w-2.5 h-2.5" />
+                        <span>{graceSecondsLeft > 0 ? `${graceSecondsLeft}s` : 'Déco'}</span>
+                        {player.consecutiveMissedTurns === 1 && (
+                          <span className="text-[7px] text-amber-400 font-mono">(1/2)</span>
+                        )}
+                      </span>
+                    )}
+                    {isForfeit ? (
+                      <span
+                        className="text-[8px] font-extrabold px-1.5 py-0.2 bg-rose-500/30 text-rose-300 rounded border border-rose-500/50 flex items-center gap-0.5"
+                        title="Partie perdue par forfait"
+                      >
+                        <Ban className="w-2.5 h-2.5" />
+                        <span>Forfait</span>
+                      </span>
+                    ) : isFolded ? (
+                      <span
+                        className="text-[8px] font-extrabold px-1.5 py-0.2 bg-rose-500/30 text-rose-300 rounded border border-rose-500/50 flex items-center gap-0.5"
+                        title="A passé cette donne"
+                      >
+                        <span>A passé</span>
+                      </span>
+                    ) : null}
+                    {isCurrentTurn && !instantWinReveal && !isEliminated && !isForfeit && turnRemainingSeconds !== undefined && turnRemainingSeconds !== null && (
+                      <span
+                        className={`text-[8px] font-mono font-black px-1.5 py-0.2 rounded border transition-colors flex items-center gap-0.5 ${
+                          isDisconnected
+                            ? 'bg-amber-950 text-amber-300 border-amber-400 animate-pulse'
+                            : turnRemainingSeconds <= 5
+                            ? 'bg-rose-500/30 text-rose-300 border-rose-500/50 animate-pulse'
+                            : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                        }`}
+                        title={isDisconnected ? "Délai avant coup automatique du bot d'urgence" : "Temps restant pour jouer"}
+                      >
+                        <span>⏳</span>
+                        <span>{turnRemainingSeconds}s</span>
+                        {isDisconnected && <span className="text-[7px] text-amber-300 font-bold uppercase">(Bot)</span>}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                    <span className="flex items-center gap-0.5 font-mono font-bold text-amber-400">
+                      <Coins className="w-2.5 h-2.5" />
+                      <span>{player.capital}</span>
+                    </span>
+                    {isForfeit ? (
+                      <span className="text-[9px] font-bold text-rose-400 uppercase">Forfait</span>
+                    ) : player.isFoldedInRound ? (
+                      <span className="text-[9px] font-bold text-rose-400 uppercase">A passé</span>
+                    ) : player.isAiRelay ? (
+                      <span className="text-[9px] font-bold text-amber-300 uppercase flex items-center gap-0.5">🤖 Relais IA</span>
+                    ) : isDisconnected ? (
+                      <span className="text-[9px] font-bold text-amber-400 uppercase flex items-center gap-0.5">📡 Hors-ligne</span>
+                    ) : !isEliminated ? (
+                      <div className="lg:hidden">
+                        <span className="font-bold text-slate-200">{player.tricksWonInRound}</span>/5 main
+                        {player.tricksWonInRound > 1 ? 's' : ''}
+                      </div>
+                    ) : (
+                      <span className="text-[9px] font-bold text-rose-400 uppercase">Éliminé</span>
+                    )}
+                    {stratInfo && !isEliminated && !isForfeit && !isInstantWinner && (
+                      <span
+                        title={`Style de jeu : ${stratInfo.name} - ${stratInfo.description}`}
+                        className={`text-[9px] px-1 py-0.2 rounded border flex items-center gap-0.5 ${stratInfo.badgeBg}`}
+                      >
+                        <span>{stratInfo.icon}</span>
+                        <span className="hidden sm:inline font-medium">{stratInfo.name}</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              <div className="flex flex-col leading-tight">
-                <div className="flex items-center gap-1">
-                  <span
-                    className={`text-xs font-bold truncate max-w-[65px] sm:max-w-[95px] ${
-                      isForfeit
-                        ? 'text-rose-400 line-through'
-                        : isEliminated
-                        ? 'text-rose-400 line-through'
-                        : isInstantWinner
-                        ? 'text-yellow-300 font-black'
-                        : isLocalPlayer
-                        ? 'text-emerald-300 font-extrabold'
-                        : isOnlineRemoteHuman
-                        ? 'text-indigo-300 font-bold'
-                        : 'text-slate-100'
-                    }`}
-                    title={player.name}
-                  >
-                    {isLocalPlayer
-                      ? player.name.includes('Vous')
-                        ? 'Vous'
-                        : player.name
-                      : isOnlineRemoteHuman
-                      ? player.name
-                      : player.name.replace(/^Joueur\s+/i, '')}
-                  </span>
-                  {isInstantWinner && (
-                    <span
-                      className={`text-[8px] font-black px-1.5 py-0.2 rounded shadow uppercase animate-pulse ${
-                        instantWinReveal?.winType === 'UNDER_21'
-                          ? 'bg-emerald-400 text-slate-950'
-                          : 'bg-yellow-400 text-slate-950'
-                      }`}
-                    >
-                      {instantWinReveal?.winType === 'UNDER_21' ? '≤ 21 pts' : '3x 7'}
-                    </span>
-                  )}
-                  {!isEliminated && !isForfeit && isDealer && (
-                    <span className="text-[8px] font-black px-1 py-0.2 bg-amber-500/20 text-amber-300 rounded border border-amber-500/30">
-                      D
-                    </span>
-                  )}
-                  {!isEliminated && !isForfeit && isLead && (
-                    <span className="text-[8px] font-black px-1 py-0.2 bg-blue-500/20 text-blue-300 rounded border border-blue-500/30">
-                      E
-                    </span>
-                  )}
-                  {isOnlineRemoteHuman && !isEliminated && !isForfeit && !isDisconnected && (
-                    <span className="text-[8px] font-bold px-1 py-0.2 bg-indigo-500/20 text-indigo-300 rounded border border-indigo-500/30 hidden xs:inline">
-                      En ligne
-                    </span>
-                  )}
-                  {isDisconnected && (
-                    <span
-                      className="text-[8px] font-bold px-1.5 py-0.2 bg-amber-500/20 text-amber-300 rounded border border-amber-500/40 animate-pulse flex items-center gap-0.5"
-                      title="Micro-coupure : Reconnexion en attente"
-                    >
-                      <WifiOff className="w-2.5 h-2.5" />
-                      <span>{graceSecondsLeft > 0 ? `${graceSecondsLeft}s` : 'Déco'}</span>
-                      {player.consecutiveMissedTurns === 1 && (
-                        <span className="text-[7px] text-amber-400 font-mono">(1/2)</span>
-                      )}
-                    </span>
-                  )}
-                  {isForfeit ? (
-                    <span
-                      className="text-[8px] font-extrabold px-1.5 py-0.2 bg-rose-500/30 text-rose-300 rounded border border-rose-500/50 flex items-center gap-0.5"
-                      title="Partie perdue par forfait"
-                    >
-                      <Ban className="w-2.5 h-2.5" />
-                      <span>Forfait</span>
-                    </span>
-                  ) : isFolded ? (
-                    <span
-                      className="text-[8px] font-extrabold px-1.5 py-0.2 bg-rose-500/30 text-rose-300 rounded border border-rose-500/50 flex items-center gap-0.5"
-                      title="A passé cette donne"
-                    >
-                      <span>A passé</span>
-                    </span>
-                  ) : null}
-                  {isCurrentTurn && !instantWinReveal && !isEliminated && !isForfeit && turnRemainingSeconds !== undefined && turnRemainingSeconds !== null && (
-                    <span
-                      className={`text-[8px] font-mono font-black px-1.5 py-0.2 rounded border transition-colors flex items-center gap-0.5 ${
-                        isDisconnected
-                          ? 'bg-amber-950 text-amber-300 border-amber-400 animate-pulse'
-                          : turnRemainingSeconds <= 5
-                          ? 'bg-rose-500/30 text-rose-300 border-rose-500/50 animate-pulse'
-                          : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                      }`}
-                      title={isDisconnected ? "Délai avant coup automatique du bot d'urgence" : "Temps restant pour jouer"}
-                    >
-                      <span>⏳</span>
-                      <span>{turnRemainingSeconds}s</span>
-                      {isDisconnected && <span className="text-[7px] text-amber-300 font-bold uppercase">(Bot)</span>}
-                    </span>
-                  )}
+              {/* Right side info on desktop only (tricks won badge) */}
+              {!isEliminated && !isForfeit && (
+                <div className="hidden lg:flex items-center gap-1 bg-slate-900/90 px-2 py-0.5 rounded-lg border border-slate-700/60 text-[10px]">
+                  <span className="font-mono font-black text-amber-400">{player.tricksWonInRound}</span>
+                  <span className="text-slate-400">/ 5 mains</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
-                  <span className="flex items-center gap-0.5 font-mono font-bold text-amber-400">
-                    <Coins className="w-2.5 h-2.5" />
-                    <span>{player.capital}</span>
-                  </span>
-                  {isForfeit ? (
-                    <span className="text-[9px] font-bold text-rose-400 uppercase">Forfait</span>
-                  ) : player.isFoldedInRound ? (
-                    <span className="text-[9px] font-bold text-rose-400 uppercase">A passé</span>
-                  ) : player.isAiRelay ? (
-                    <span className="text-[9px] font-bold text-amber-300 uppercase flex items-center gap-0.5">🤖 Relais IA</span>
-                  ) : isDisconnected ? (
-                    <span className="text-[9px] font-bold text-amber-400 uppercase flex items-center gap-0.5">📡 Hors-ligne</span>
-                  ) : !isEliminated ? (
-                    <div>
-                      <span className="font-bold text-slate-200">{player.tricksWonInRound}</span>/5 main
-                      {player.tricksWonInRound > 1 ? 's' : ''}
-                    </div>
-                  ) : (
-                    <span className="text-[9px] font-bold text-rose-400 uppercase">Éliminé</span>
-                  )}
-                  {stratInfo && !isEliminated && !isForfeit && !isInstantWinner && (
-                    <span
-                      title={`Style de jeu : ${stratInfo.name} - ${stratInfo.description}`}
-                      className={`text-[9px] px-1 py-0.2 rounded border flex items-center gap-0.5 ${stratInfo.badgeBg}`}
-                    >
-                      <span>{stratInfo.icon}</span>
-                      <span className="hidden sm:inline font-medium">{stratInfo.name}</span>
-                    </span>
-                  )}
-                </div>
-              </div>
+              )}
             </div>
 
-            {/* Right: Exactly 5 Slots for the 5 tricks of the round */}
-            <div className="flex items-center gap-1 sm:gap-1.5">
+            {/* Bottom Row on Desktop (or Right on Mobile): Exactly 5 Slots for the 5 tricks of the round */}
+            <div className="flex items-center justify-end lg:justify-start gap-1 sm:gap-1.5 lg:gap-1.5 w-auto lg:w-full lg:pt-0.5">
               {/* If forfeit or eliminated with no cards played, show BANNER */}
               {isForfeit && completedPlays.length === 0 ? (
                 <div className="px-3 py-1 bg-rose-950/60 border border-rose-800/80 rounded-lg text-rose-400 text-[10px] font-extrabold tracking-wider uppercase flex items-center gap-1">
@@ -387,7 +404,7 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                       animate={{ scale: 1, y: 0, opacity: 1 }}
                       transition={{ delay: cIdx * 0.06, type: 'spring', damping: 15 }}
                       title={`${card.label} (${card.value} pts)`}
-                      className={`relative w-7 xs:w-8 sm:w-9 h-9 xs:h-10 sm:h-12 rounded-lg bg-white text-slate-950 flex flex-col justify-between p-0.5 sm:p-1 shadow-md text-[9px] xs:text-[10px] sm:text-xs font-bold select-none ${
+                      className={`relative w-7 xs:w-8 sm:w-9 lg:w-8 xl:w-9 h-9 xs:h-10 sm:h-12 lg:h-11 xl:h-12 rounded-lg bg-white text-slate-950 flex flex-col justify-between p-0.5 sm:p-1 shadow-md text-[9px] xs:text-[10px] sm:text-xs font-bold select-none ${
                         isHighlight
                           ? 'border-2 border-amber-400 ring-2 ring-amber-400 shadow-amber-400/40'
                           : 'border border-slate-300'
@@ -430,12 +447,12 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                             ? ' (Main en cours)'
                             : ''
                         }`}
-                        className={`relative w-7 xs:w-8 sm:w-9 h-9 xs:h-10 sm:h-12 rounded-lg bg-white text-slate-950 flex flex-col justify-between p-0.5 sm:p-1 shadow-md text-[9px] xs:text-[10px] sm:text-xs font-bold border select-none transition-all ${
+                        className={`relative w-7 xs:w-8 sm:w-9 lg:w-8 xl:w-9 h-9 xs:h-10 sm:h-12 lg:h-11 xl:h-12 rounded-lg text-slate-950 flex flex-col justify-between p-0.5 sm:p-1 text-[9px] xs:text-[10px] sm:text-xs font-bold border select-none transition-all ${
                           item.wasWinner
-                            ? 'border-amber-400 ring-2 ring-amber-400 shadow-amber-400/30'
+                            ? 'bg-gradient-to-b from-amber-50 to-amber-100/95 border-2 border-amber-300 ring-2 ring-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.65)] font-black z-10'
                             : item.isCurrent
-                            ? 'border-blue-400 ring-1 ring-blue-400 bg-blue-50/90'
-                            : 'border-slate-300'
+                            ? 'bg-blue-50/90 border-blue-400 ring-1 ring-blue-400 shadow-md'
+                            : 'bg-white border-slate-300 shadow-md'
                         }`}
                       >
                         {/* Top corner value & small suit */}
@@ -479,7 +496,7 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             transition={{ duration: 0.22, ease: 'easeOut' }}
                             title={isLocalPlayer ? 'Carte en main' : 'Carte en main (non jouée)'}
-                            className={`w-7 xs:w-8 sm:w-9 h-9 xs:h-10 sm:h-12 rounded-lg ${
+                            className={`w-7 xs:w-8 sm:w-9 lg:w-8 xl:w-9 h-9 xs:h-10 sm:h-12 lg:h-11 xl:h-12 rounded-lg ${
                               isLocalPlayer
                                 ? 'bg-gradient-to-br from-emerald-800 via-emerald-900 to-slate-950 border-2 border-emerald-400/90 text-emerald-300 shadow-emerald-500/30'
                                 : 'bg-gradient-to-br from-indigo-800 via-indigo-900 to-slate-950 border-2 border-indigo-400/90 text-indigo-300 shadow-indigo-500/30'
@@ -495,7 +512,7 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                         {Array.from({ length: placeholderCount }).map((_, sIdx) => (
                           <div
                             key={`slot-${player.id}-${sIdx}`}
-                            className="w-7 xs:w-8 sm:w-9 h-9 xs:h-10 sm:h-12 rounded-lg border-2 border-dashed border-slate-700/60 bg-slate-950/40 flex items-center justify-center text-slate-700 text-[10px] select-none"
+                            className="w-7 xs:w-8 sm:w-9 lg:w-8 xl:w-9 h-9 xs:h-10 sm:h-12 lg:h-11 xl:h-12 rounded-lg border-2 border-dashed border-slate-700/60 bg-slate-950/40 flex items-center justify-center text-slate-700 text-[10px] select-none"
                             title="Emplacement de carte disponible"
                           />
                         ))}

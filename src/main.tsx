@@ -64,6 +64,14 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker
       .register('/sw.js')
       .then((reg) => {
+        // Un service worker plus récent était déjà en attente depuis une visite précédente (resté bloqué
+        // faute d'avoir déclenché les bons événements) : on le fait passer en contrôle tout de suite. Le
+        // rechargement de la page, lui, reste décidé par useAutoUpdate (src/hooks/useAutoUpdate.ts), qui
+        // sait si une partie est en cours et ne recharge jamais au milieu d'une manche.
+        if (reg.waiting) {
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+
         // Check for service worker updates periodically (updateCheckIntervalSeconds, réglable dans katika)
         setInterval(() => {
           reg.update().catch(() => {});

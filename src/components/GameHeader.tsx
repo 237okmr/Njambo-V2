@@ -204,13 +204,24 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
 
             <div className="h-3 w-px bg-slate-800" />
 
-            {/* Pot Counter */}
-            <div className="flex items-center gap-1">
-              <span className="text-slate-400 text-[10px] sm:text-[11px]">Pot</span>
-              <span className="font-extrabold text-emerald-400 flex items-center gap-0.5 text-[11px] sm:text-xs font-mono">
-                <span>{activeGameState.pot || 0}</span>
-                <span className="text-[11px] text-amber-400 font-normal">🪙</span>
-              </span>
+            {/* Animated Golden Chip Stack Pot Counter */}
+            <div
+              id="header-pot-chip-stack"
+              className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-emerald-950/40 border border-emerald-500/30 shadow-xs"
+              title={`Pot actuel de la donne : ${activeGameState.pot || 0} jetons`}
+            >
+              <div className="relative flex items-center justify-center w-5 h-4 shrink-0">
+                {/* Layered micro-chips in stack */}
+                <div className="absolute top-2 w-3.5 h-1.5 rounded-full bg-gradient-to-r from-amber-600 via-yellow-400 to-amber-700 border border-amber-300/80 shadow-xs" />
+                <div className="absolute top-1 w-3.5 h-1.5 rounded-full bg-gradient-to-r from-amber-500 via-yellow-300 to-amber-600 border border-amber-200/90 shadow-xs" />
+                <div className="absolute top-0 w-3.5 h-1.5 rounded-full bg-gradient-to-r from-yellow-400 via-amber-200 to-yellow-500 border border-yellow-100 shadow-sm animate-pulse" />
+              </div>
+              <div className="flex flex-col leading-none">
+                <span className="text-[9px] uppercase tracking-wider text-emerald-300/80 font-bold">Pot</span>
+                <span className="font-extrabold text-amber-300 text-xs sm:text-sm font-mono tracking-tight flex items-center gap-0.5">
+                  <span>{activeGameState.pot || 0}</span>
+                </span>
+              </div>
             </div>
 
           </div>

@@ -613,7 +613,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
       />
 
       {/* MAIN CONTAINER */}
-      <main className="flex-1 overflow-y-auto max-w-2xl w-full mx-auto p-3 sm:p-5 space-y-4">
+      <main className="flex-1 overflow-y-auto custom-dark-scrollbar max-w-2xl w-full mx-auto p-3 sm:p-5 space-y-4">
         {/* Search bar */}
         <div className="space-y-3">
           <div className="relative">

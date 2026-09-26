@@ -388,7 +388,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
       </div>
 
       {/* Cards Fan Tray with Swipe Gestures */}
-      <div className="flex flex-col items-center justify-center w-full max-w-2xl">
+      <div className="flex flex-col items-center justify-center w-full max-w-2xl lg:max-w-3xl">
         {/* Mobile Gestural Guidance Pill */}
         {isHumanTurn && hand.length > 0 && !isDealing && !instantWinReveal && (
           <div className="flex items-center gap-1 text-[10px] text-amber-400/90 font-medium mb-0.5 animate-pulse select-none">
@@ -399,7 +399,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
 
         <div
           id="human-cards-tray"
-          className="flex items-end justify-center gap-1 sm:gap-3 py-0.5 min-h-[105px] sm:min-h-[185px] overflow-visible w-full"
+          className="flex items-end justify-center gap-1 sm:gap-2.5 lg:gap-3 py-0.5 min-h-[105px] sm:min-h-[160px] lg:min-h-[175px] overflow-visible w-full"
         >
           {(() => {
             const humanDealtCount = isDealing
@@ -429,9 +429,11 @@ export const HumanHand: React.FC<HumanHandProps> = ({
                   // Golden pulse strictly when follow suit is active and matches
                   const shouldGlowGold = isHumanTurn && leadSuit && hasLeadSuit && card.suit === leadSuit;
 
-                  // Angle calculations
+                  // Pronounced physical card fan curve calculation
                   const totalCards = Math.max(5, visibleCards.length + placeholderCount);
-                  const rotationAngle = (idx - (totalCards - 1) / 2) * (totalCards > 3 ? 1.8 : 1.2);
+                  const centerOffset = idx - (totalCards - 1) / 2;
+                  const rotationAngle = centerOffset * (totalCards > 3 ? 5.2 : 3.5);
+                  const arcYOffset = Math.pow(Math.abs(centerOffset), 1.8) * 3.5;
 
                   return (
                     <motion.div
@@ -443,26 +445,37 @@ export const HumanHand: React.FC<HumanHandProps> = ({
                       dragElastic={0.25}
                       onDragEnd={(_, info) => handleDragEnd(card, playable, info)}
                       onClick={() => handleCardClick(card, playable)}
-                      whileHover={playable ? { scale: 1.05, y: -12 } : {}}
+                      whileHover={
+                        playable
+                          ? {
+                              scale: 1.1,
+                              y: -22,
+                              rotate: 0,
+                              zIndex: 35,
+                              transition: { type: 'spring', damping: 15, stiffness: 400 },
+                            }
+                          : {}
+                      }
                       animate={{
                         opacity: 1,
-                        y: isSelected ? -18 : isInstantWinCard ? -12 : 0,
-                        scale: isSelected ? 1.06 : isInstantWinCard ? 1.04 : 1,
+                        y: isSelected ? -24 : isInstantWinCard ? -12 : arcYOffset,
+                        scale: isSelected ? 1.08 : isInstantWinCard ? 1.04 : 1,
                         rotate: isSelected ? 0 : rotationAngle,
+                        zIndex: isSelected ? 30 : isInstantWinCard ? 20 : 10 + idx,
                       }}
                       transition={{ type: 'spring', damping: 20, stiffness: 320 }}
-                      className={`relative w-14 sm:w-24 md:w-28 h-22 sm:h-36 md:h-40 rounded-xl bg-white text-slate-950 p-1 sm:p-2.5 flex flex-col justify-between shadow-2xl select-none text-left cursor-grab active:cursor-grabbing transition-[border-color,box-shadow] duration-150 overflow-hidden ${
+                      className={`relative w-14 sm:w-22 md:w-24 lg:w-20 xl:w-24 h-22 sm:h-32 md:h-36 lg:h-32 xl:h-36 rounded-xl bg-white text-slate-950 p-1 sm:p-2.5 flex flex-col justify-between shadow-2xl select-none text-left cursor-grab active:cursor-grabbing transition-[border-color,box-shadow] duration-150 overflow-hidden ${
                         isDealing
                           ? 'ring-2 ring-amber-400 border-2 border-amber-300 shadow-amber-400/30'
                           : isInstantWinCard
-                          ? 'border-2 border-amber-400 ring-4 ring-amber-400 ring-offset-2 ring-offset-slate-900 shadow-2xl shadow-amber-400/50 z-30'
+                          ? 'border-2 border-amber-400 ring-4 ring-amber-400 ring-offset-2 ring-offset-slate-900 shadow-2xl shadow-amber-400/50'
                           : isSelected
-                          ? 'border-2 border-amber-400 ring-4 ring-amber-400 ring-offset-2 ring-offset-slate-900 shadow-2xl shadow-amber-400/50 z-30'
+                          ? 'border-2 border-amber-400 ring-4 ring-amber-400 ring-offset-2 ring-offset-slate-900 shadow-2xl shadow-amber-400/50'
                           : shouldGlowGold
-                          ? 'golden-glow-pulse border-2 border-amber-400 z-20 cursor-pointer'
+                          ? 'golden-glow-pulse border-2 border-amber-400 cursor-pointer shadow-amber-400/30'
                           : playable
-                          ? 'border-2 border-slate-300 hover:border-amber-300 z-10 cursor-pointer shadow-lg'
-                          : 'border-2 border-slate-300/40 opacity-35 grayscale-[50%] cursor-not-allowed z-0 pointer-events-none'
+                          ? 'border-2 border-slate-300 hover:border-amber-400 hover:shadow-xl cursor-pointer shadow-lg'
+                          : 'border-2 border-slate-300/40 opacity-35 grayscale-[50%] cursor-not-allowed pointer-events-none'
                       }`}
                     >
                       {/* Visual Drag arrow hint when selected */}
@@ -538,9 +551,9 @@ export const HumanHand: React.FC<HumanHandProps> = ({
         className="flex flex-col items-center justify-center shrink-0 w-full lg:w-auto gap-1"
       >
         <div className="flex items-center gap-1 sm:gap-1.5 w-full lg:w-auto justify-center sm:justify-end flex-nowrap overflow-x-hidden">
-          {/* 1. Emote Picker Popover */}
+          {/* 1. Emote Picker Popover (Visible on mobile, moved to sidebar on desktop) */}
           {onSendEmote && (
-            <div className="shrink-0">
+            <div className="shrink-0 lg:hidden">
               <EmotePickerPopover
                 onSendEmote={onSendEmote}
                 disabled={isDealing || isForfeit || isFoldedInRound || isEliminated}
@@ -549,7 +562,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
             </div>
           )}
 
-          {/* 2. Kora Hunter Manual Declaration Button */}
+          {/* 2. Kora Hunter Manual Declaration Button (Visible on mobile, moved to sidebar on desktop) */}
           {enableKoraHunterAlerts &&
             hand.length > 0 &&
             !isDealing &&
@@ -574,7 +587,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
                 }
               }}
               disabled={hasDeclaredKoraInPartie}
-              className={`flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl font-black text-xs transition-all shadow-lg shrink-0 ${
+              className={`flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl font-black text-xs transition-all shadow-lg shrink-0 lg:hidden ${
                 hasDeclaredKoraInPartie
                   ? 'bg-amber-950/80 text-amber-300/80 border border-amber-500/40 cursor-default'
                   : 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 border border-yellow-200 shadow-amber-500/30 active:scale-95 cursor-pointer animate-pulse'
@@ -590,7 +603,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
             </button>
           )}
 
-          {/* 3. Valider Button (Primary CTA) */}
+          {/* 3. Valider Button (Primary CTA - Visible everywhere with contextual card name) */}
           {!instantWinReveal && (
             <button
               id="btn-valider-carte"
@@ -600,18 +613,30 @@ export const HumanHand: React.FC<HumanHandProps> = ({
                 onValidateCard();
               }}
               disabled={!isHumanTurn || !selectedCard || isDealing}
-              className={`flex items-center justify-center gap-1.5 px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-xl font-black uppercase tracking-wider text-xs sm:text-sm btn-juicy shrink-0 ${
+              className={`flex items-center justify-center gap-1.5 px-3.5 sm:px-5 py-1.5 sm:py-2.5 rounded-xl font-black uppercase tracking-wider text-xs sm:text-sm btn-juicy shrink-0 transition-all ${
                 isHumanTurn && selectedCard && !isDealing
-                  ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-[0_3px_0_0_#b45309] active:translate-y-0.5 active:shadow-none cursor-pointer ring-1 ring-amber-300'
+                  ? 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 shadow-[0_4px_0_0_#b45309,0_0_15px_rgba(245,158,11,0.4)] active:translate-y-0.5 active:shadow-none cursor-pointer ring-2 ring-amber-300'
                   : 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed opacity-60'
               }`}
             >
-              <ArrowUpCircle className={`w-4 h-4 ${isHumanTurn && selectedCard && !isDealing ? 'animate-bounce' : ''}`} />
-              <span>Valider</span>
+              <ArrowUpCircle className={`w-4 h-4 shrink-0 ${isHumanTurn && selectedCard && !isDealing ? 'animate-bounce' : ''}`} />
+              <span>
+                {selectedCard && isHumanTurn && !isDealing ? (
+                  <span className="flex items-center gap-1">
+                    <span className="hidden sm:inline">Jouer le</span>
+                    <span className="font-mono text-sm sm:text-base font-black">{selectedCard.value}</span>
+                    <span className={`text-sm ${SUITS_INFO[selectedCard.suit].color}`}>
+                      {SUITS_INFO[selectedCard.suit].symbol}
+                    </span>
+                  </span>
+                ) : (
+                  'Valider'
+                )}
+              </span>
             </button>
           )}
 
-          {/* 4. Forfeit / Abandon Button (Positioned ON THE RIGHT) */}
+          {/* 4. Forfeit / Abandon Button (Visible on mobile, moved to sidebar on desktop) */}
           {onFoldRound && hand.length > 0 && !isDealing && !instantWinReveal && !isForfeit && !isFoldedInRound && !isEliminated && (
             <button
               id="btn-fold-round"
@@ -620,7 +645,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
                 triggerHaptic('light');
                 setShowFoldConfirm(true);
               }}
-              className="flex items-center justify-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl font-bold text-xs bg-rose-950/80 hover:bg-rose-900 text-rose-200 border border-rose-600/60 transition-all cursor-pointer shadow-md active:scale-95 shrink-0"
+              className="flex items-center justify-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl font-bold text-xs bg-rose-950/80 hover:bg-rose-900 text-rose-200 border border-rose-600/60 transition-all cursor-pointer shadow-md active:scale-95 shrink-0 lg:hidden"
               title="Passer cette donne (Déclarer Forfait)"
             >
               <Flag className="w-3.5 h-3.5 text-rose-400 shrink-0" />

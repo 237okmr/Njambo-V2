@@ -1,6 +1,6 @@
 // Njambo Kora & Njambo Copilote Dual PWA Service Worker - v25200 (Network-First Navigation & Isolated Caches)
-const CACHE_GAME = 'njambo-kora-assets-v25356';
-const CACHE_COPILOT = 'katika-copilot-assets-v25356';
+const CACHE_GAME = 'njambo-kora-assets-v25357';
+const CACHE_COPILOT = 'katika-copilot-assets-v25357';
 
 const GAME_ASSETS = [
   '/',

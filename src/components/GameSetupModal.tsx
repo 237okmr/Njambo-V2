@@ -451,7 +451,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
       />
 
       {/* 3. MAIN COMPACT CONTENT BODY (ZERO SCROLL BY DESIGN) */}
-      <main className="flex-1 overflow-y-auto px-3 py-2 sm:py-3 max-w-2xl mx-auto w-full flex flex-col justify-start gap-2.5">
+      <main className="flex-1 overflow-y-auto custom-dark-scrollbar px-3 py-2 sm:py-3 max-w-2xl mx-auto w-full flex flex-col justify-start gap-2.5">
         {/* Feedback Google Auth */}
         {authSuccessMsg && (
           <div className="p-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center gap-2 shadow-sm shrink-0">

@@ -95,13 +95,33 @@ export function useAutoUpdate(isGameActive: boolean = false) {
   }, []);
 
   // Handle update status and prevent automatic disruptive reloads
-  // Instead of auto-reloading immediately, we let the user click the update banner when ready.
-  // If they are in a game, they can finish it, then click update.
+  // Dès qu'une mise à jour est détectée : si aucune partie n'est en cours, on l'applique tout de suite,
+  // sans attendre un clic. Si une partie est en cours, on attend la fin de la manche (isGameActive passe
+  // à faux) pour l'appliquer automatiquement à ce moment précis — jamais au milieu d'un coup.
+  const autoReloadTriggeredRef = useRef<boolean>(false);
   useEffect(() => {
-    if (updateAvailable) {
-      console.log('[AutoUpdate] Une mise à jour est prête. L\'utilisateur sera invité à l\'appliquer via le bandeau.');
+    if (!updateAvailable || autoReloadTriggeredRef.current) return;
+    if (!isGameActive) {
+      console.log('[AutoUpdate] Mise à jour prête, aucune partie en cours : application immédiate.');
+      autoReloadTriggeredRef.current = true;
+      forceReload();
+    } else {
+      console.log('[AutoUpdate] Mise à jour prête : appliquée automatiquement dès la fin de la manche en cours.');
     }
-  }, [updateAvailable]);
+  }, [updateAvailable, isGameActive]);
+
+  // Rattrape la partie qui vient de se terminer pendant qu'une mise à jour était en attente : dès que
+  // isGameActive redevient faux (retour au menu, fin de manche), on applique la mise à jour reportée.
+  const wasGameActiveRef = useRef<boolean>(isGameActive);
+  useEffect(() => {
+    const justBecameInactive = wasGameActiveRef.current && !isGameActive;
+    wasGameActiveRef.current = isGameActive;
+    if (justBecameInactive && updateAvailable && !autoReloadTriggeredRef.current) {
+      console.log('[AutoUpdate] Partie terminée : application de la mise à jour qui était en attente.');
+      autoReloadTriggeredRef.current = true;
+      forceReload();
+    }
+  }, [isGameActive, updateAvailable]);
 
   const forceReload = useCallback(async (forceImmediate: boolean = false) => {
     if (isGameActive && !forceImmediate) {

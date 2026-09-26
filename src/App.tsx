@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { getPublicParamNumber } from './services/publicConfig';
-import { AnimatePresence } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import confetti from 'canvas-confetti';
 import { Card, GameState, Player, SavedManche, AIDifficulty, GamePhase, GameInvitation, SoloBetIncreaseMode } from './types';
 import { DEFAULT_BASE_BET, DEFAULT_INITIAL_CAPITAL } from './utils/deck';
@@ -18,6 +18,7 @@ import { Scoreboard } from './components/Scoreboard';
 import { TrickHistoryBanner } from './components/TrickHistoryBanner';
 import { OpponentsHistoryBoard } from './components/OpponentsHistoryBoard';
 import { HumanHand } from './components/HumanHand';
+import { EmotePickerPopover } from './components/EmotePickerPopover';
 import { RulesModal } from './components/RulesModal';
 import { GameRulesScreen, RulesTabType } from './components/rules/GameRulesScreen';
 import { EndRoundModal } from './components/EndRoundModal';
@@ -74,6 +75,10 @@ import {
   Clock,
   Coins,
   RefreshCw,
+  Crown,
+  Flag,
+  ShieldAlert,
+  X,
 } from 'lucide-react';
 
 export function App() {
@@ -415,6 +420,8 @@ function GameApp() {
   } = useMultiplayerGame();
 
   const [dismissedVersionBanner, setDismissedVersionBanner] = useState<boolean>(false);
+  const [hasDeclaredKoraInPartie, setHasDeclaredKoraInPartie] = useState<boolean>(false);
+  const [showSidebarFoldConfirm, setShowSidebarFoldConfirm] = useState<boolean>(false);
   const isOnlineActive = Boolean(isMultiplayerMode && multiplayerRoom?.gameState);
 
   // Network connection status toast feedback
@@ -1960,6 +1967,13 @@ function GameApp() {
         tricksWonInRound: 0,
       });
 
+  // Reset declaration & fold confirm states when a new round / hand starts
+  const currentHandIdsKey = (currentHumanPlayer?.hand || []).map((c) => c.id).join(',');
+  useEffect(() => {
+    setHasDeclaredKoraInPartie(false);
+    setShowSidebarFoldConfirm(false);
+  }, [currentHandIdsKey, activeGameState?.partieCount]);
+
   const sendEmoteUnified = useCallback(
     (text: string, emoji?: string) => {
       if (
@@ -2212,331 +2226,494 @@ function GameApp() {
           />
         ) : (
           /* VERTICAL GAME SCREEN (Solo & Multiplayer) */
-          <div className="flex-1 flex flex-col justify-between p-1.5 sm:p-2.5 max-w-4xl mx-auto w-full h-full overflow-y-auto overflow-x-hidden gap-1 sm:gap-2">
-            {/* Reconnection In-Progress Banner */}
-            {isOnlineActive && !isWsConnected && (
-              <div
-                id="ws-reconnecting-banner"
-                className="w-full bg-rose-950/90 border border-rose-500/50 rounded-xl px-3 py-2 flex items-center justify-between gap-2 shadow-lg shrink-0 animate-pulse text-xs text-rose-200"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-rose-400 animate-ping shrink-0" />
-                  <span className="font-semibold">Reconnexion en cours...</span>
-                </div>
-                <span className="text-[11px] text-rose-300/80">Votre place et vos jetons sont préservés</span>
-              </div>
-            )}
-
-            {/* Sole Human vs Bots Forfeit Option Banner */}
-            {isSoleHumanAgainstBots && !dismissedForfeitBanner && (
-              <div
-                id="sole-human-forfeit-banner"
-                className="w-full bg-gradient-to-r from-amber-950/80 via-slate-900/95 to-amber-950/80 border border-amber-500/40 rounded-xl px-3 py-2.5 flex flex-col sm:flex-row items-center justify-between gap-2 shadow-xl shrink-0 animate-fade-in"
-              >
-                <div className="flex items-center gap-2 text-center sm:text-left">
-                  <span className="text-xl">⚔️</span>
-                  <div className="text-xs">
-                    <p className="font-bold text-amber-300">
-                      Vos adversaires humains ont quitté la table.
-                    </p>
-                    <p className="text-slate-400">
-                      Réclamez votre part du pot ({humanPotShareEstimate} jetons) avec victoire par forfait, ou relevez le défi contre l'IA.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
-                  <button
-                    type="button"
-                    id="btn-claim-forfeit-victory"
-                    onClick={() => {
-                      triggerHaptic('success');
-                      handleClaimForfeitVictory();
-                    }}
-                    className="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl font-black text-xs bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 shadow-md shadow-amber-500/20 active:scale-95 transition flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
+          <div className="flex-1 flex flex-col justify-between p-1.5 sm:p-2.5 max-w-4xl lg:max-w-7xl mx-auto w-full h-full overflow-y-auto lg:overflow-hidden overflow-x-hidden gap-1 sm:gap-2">
+            <div className="flex flex-col lg:flex-row lg:items-stretch lg:gap-4 lg:h-full lg:min-h-0 w-full flex-1 gap-1 sm:gap-2">
+              
+              {/* 1. Left Arena (on lg:): Banners, Play Zone Felt, Human Hand */}
+              <div className="order-2 lg:order-1 flex flex-col gap-1 sm:gap-2 lg:flex-1 lg:flex lg:flex-col lg:min-h-0 lg:justify-between">
+                {/* Reconnection In-Progress Banner */}
+                {isOnlineActive && !isWsConnected && (
+                  <div
+                    id="ws-reconnecting-banner"
+                    className="w-full bg-rose-950/90 border border-rose-500/50 rounded-xl px-3 py-2 lg:py-1.5 flex items-center justify-between gap-2 shadow-lg shrink-0 animate-pulse text-xs text-rose-200"
                   >
-                    <span>🏆</span>
-                    <span>Réclamer ma part du pot</span>
-                  </button>
-                  <button
-                    type="button"
-                    id="btn-continue-against-bots"
-                    onClick={() => {
-                      triggerHaptic('light');
-                      setDismissedForfeitBanner(true);
-                    }}
-                    className="px-2.5 py-1.5 rounded-xl font-semibold text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600/60 active:scale-95 transition flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
-                  >
-                    <span>⚔️</span>
-                    <span>Continuer vs IA</span>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* 1. Top Section: Vertical Players History Board (All players with cards slots) */}
-            <OpponentsHistoryBoard
-              players={activeGameState.players}
-              currentTurnIndex={activeGameState.currentTurnIndex}
-              isThinkingAI={activeGameState.isThinkingAI}
-              dealerIndex={activeGameState.dealerIndex}
-              leadIndex={activeGameState.leadIndex}
-              baseBet={activeGameState.baseBet}
-              currentTrickPlays={isOnlineActive ? mpPlays : (activeGameState.currentTrick?.plays || [])}
-              trickHistory={activeGameState.tricksHistory || []}
-              instantWinReveal={effectiveInstantWinReveal}
-              isDealing={isDealing}
-              cardsDealtCountByPlayer={activeGameState.cardsDealtCountByPlayer}
-              localPlayerId={isOnlineActive ? localPlayerId : null}
-              isMultiplayer={isOnlineActive}
-              showBotPersonalityIcons={activeGameState.showBotPersonalityIcons}
-              activeEmotes={effectiveActiveEmotes}
-              turnRemainingSeconds={isOnlineActive ? turnRemainingSeconds : null}
-            />
-
-            {/* Multiplayer Proposals (Integration vote, Capacity extension) */}
-            {isOnlineActive && multiplayerRoom && (
-              <div className="w-full flex flex-col items-center gap-2 z-30 px-2 my-1">
-                <IntegrationProposalWidget
-                  proposal={multiplayerRoom.integrationProposal}
-                  players={multiplayerRoom.players}
-                  localPlayerId={localPlayerId}
-                  isSpectator={isOnlineSpectator}
-                  isPendingIntegration={isOnlinePendingIntegration}
-                  canRequestIntegration={canRequestIntegration}
-                  prorataCapitalEstimate={prorataCapitalEstimate}
-                  onRespondVote={handleRespondIntegrationVote}
-                  onRequestIntegration={handleRequestIntegration}
-                />
-                <CapacityExtensionProposalWidget
-                  proposal={multiplayerRoom.capacityExtensionProposal}
-                  players={multiplayerRoom.players}
-                  localPlayerId={localPlayerId}
-                  isHost={multiplayerRoom.hostId === localPlayerId}
-                  onPropose={handleProposeCapacityExtension}
-                  onRespond={handleRespondCapacityExtension}
-                />
-                <EarlyCloseProposalWidget
-                  proposal={multiplayerRoom.earlyCloseProposal}
-                  players={multiplayerRoom.players}
-                  localPlayerId={localPlayerId}
-                  onPropose={handleProposeEarlyClose}
-                  onRespond={handleRespondEarlyClose}
-                />
-              </div>
-            )}
-
-            {/* 2. Middle Section: Play Zone Felt (Tapis vert with played trick cards) */}
-            <div className="shrink-0 flex flex-col justify-center items-center my-0.5 sm:my-1 w-full">
-              <PlayZoneFelt
-                plays={isOnlineActive ? mpPlays : (activeGameState.currentTrick?.plays || [])}
-                leadSuit={isOnlineActive ? mpLeadSuit : (activeGameState.currentTrick?.leadSuit || null)}
-                currentTrickNumber={isOnlineActive ? mpTrickNumber : (activeGameState.currentTrickNumber || 1)}
-                winnerPlay={isOnlineActive ? mpWinnerPlay : currentWinnerPlay}
-                playerCount={activeGameState.players?.filter((p) => !p.isEliminated && !p.isForfeit && !p.isFoldedInRound).length || 4}
-                isDoubleKoraEnabled={activeGameState.enableDoubleKora}
-                trick4WinnerWithThreeName={
-                  (isOnlineActive ? mpTrickNumber : (activeGameState.currentTrickNumber || 1)) === 5 &&
-                  activeGameState.enableDoubleKora &&
-                  activeGameState.consecutiveThreesCountByPlayer &&
-                  Object.keys(activeGameState.consecutiveThreesCountByPlayer).find(
-                    (k) => (activeGameState.consecutiveThreesCountByPlayer?.[Number(k)] || 0) >= 1
-                  )
-                    ? activeGameState.players[
-                        Number(
-                          Object.keys(activeGameState.consecutiveThreesCountByPlayer).find(
-                            (k) => (activeGameState.consecutiveThreesCountByPlayer?.[Number(k)] || 0) >= 1
-                          )
-                        )
-                      ]?.name
-                    : null
-                }
-                isDoubleKoraAchieved={
-                  activeGameState.doubleKoraAchievedByPlayer &&
-                  Object.values(activeGameState.doubleKoraAchievedByPlayer).some(Boolean)
-                }
-                partieWinType={activeGameState.partieWinType}
-                winnerName={activeGameState.partieWinnerName}
-                isDealing={isDealing}
-                dealerIndex={activeGameState.dealerIndex}
-                leadIndex={activeGameState.leadIndex}
-                players={activeGameState.players}
-                instantWinReveal={effectiveInstantWinReveal}
-                isResolvingTrick={isOnlineActive ? isMpResolvingTrick : isResolvingTrick}
-                isCollectingTrick={isOnlineActive ? isMpCollectingTrick : isCollectingTrick}
-                lastCutEvent={activeGameState.lastCutEvent}
-                isKoraHunterActive={Boolean(activeGameState.showKoraHunterAlert)}
-                baseBet={activeGameState.baseBet}
-              />
-            </div>
-
-            {/* 3. Bottom Section: Human Hand / Spectator Console (Interactive cards & validation) */}
-            <div className="flex flex-col gap-1 shrink-0">
-              {isOnlineSpectator && activeGameState.phase !== 'MANCHE_OVER' ? (
-                <div id="multiplayer-spectator-panel" className="w-full bg-slate-900 border-t border-cyan-500/30 px-3 sm:px-6 py-3.5 relative flex flex-col items-center justify-center gap-2.5 shadow-2xl z-30 transition-all duration-300 rounded-2xl">
-                  <div className="flex flex-wrap items-center justify-between w-full gap-2 border-b border-slate-800/80 pb-2">
-                    <div className="flex items-center gap-2 text-cyan-400 font-bold text-xs sm:text-sm tracking-wide">
-                      <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse" />
-                      <span>Mode Spectateur en direct</span>
-                      <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-500/40">
-                        Table #{multiplayerRoom?.id}
-                      </span>
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-rose-400 animate-ping shrink-0" />
+                      <span className="font-semibold">Reconnexion en cours...</span>
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        triggerHaptic('medium');
-                        await handleLeaveMultiplayer();
-                        setCurrentScreen('HOME');
-                        triggerToast('Vous avez quitté le mode spectateur');
-                      }}
-                      className="text-xs font-bold text-rose-400 hover:text-rose-300 flex items-center gap-1.5 cursor-pointer bg-rose-500/10 hover:bg-rose-500/20 px-3 py-1.5 rounded-xl border border-rose-500/25 transition-all active:scale-95 shadow-sm shadow-rose-950/40"
-                    >
-                      <LogOut className="w-3.5 h-3.5 text-rose-400" />
-                      <span>Quitter la table</span>
-                    </button>
+                    <span className="text-[11px] text-rose-300/80">Votre place et vos jetons sont préservés</span>
                   </div>
+                )}
 
-                  {/* Integration Status or Call-To-Action */}
-                  {isOnlinePendingIntegration ? (
-                    <div className="w-full bg-emerald-950/80 border border-emerald-500/60 rounded-xl px-3.5 py-2.5 flex items-center gap-3 text-emerald-100 shadow-md">
-                      <div className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 shrink-0">
-                        <Sparkles className="w-4 h-4 text-emerald-300 animate-bounce" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-xs font-bold text-white">Intégration validée !</span>
-                        <span className="text-[11px] text-emerald-300/90">
-                          Vous entrerez en jeu dès le début de la prochaine partie avec un capital de{' '}
-                          <strong className="text-white font-mono">{prorataCapitalEstimate} 🪙</strong>.
-                        </span>
+                {/* Sole Human vs Bots Forfeit Option Banner */}
+                {isSoleHumanAgainstBots && !dismissedForfeitBanner && (
+                  <div
+                    id="sole-human-forfeit-banner"
+                    className="w-full bg-gradient-to-r from-amber-950/80 via-slate-900/95 to-amber-950/80 border border-amber-500/40 rounded-xl px-3 py-2.5 lg:py-1.5 flex flex-col sm:flex-row items-center justify-between gap-2 shadow-xl shrink-0 animate-fade-in"
+                  >
+                    <div className="flex items-center gap-2 text-center sm:text-left">
+                      <span className="text-xl lg:text-lg">⚔️</span>
+                      <div className="text-xs">
+                        <p className="font-bold text-amber-300">
+                          Vos adversaires humains ont quitté la table.
+                        </p>
+                        <p className="text-slate-400 text-[11px] sm:text-xs">
+                          Réclamez votre part du pot ({humanPotShareEstimate} jetons) avec victoire par forfait, ou relevez le défi contre l'IA.
+                        </p>
                       </div>
                     </div>
-                  ) : canRequestIntegration ? (
-                    <div className="w-full bg-slate-950/80 border border-amber-500/40 rounded-xl px-3.5 py-2.5 flex flex-col sm:flex-row items-center justify-between gap-2.5 shadow-md">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-400 shrink-0">
-                          <UserPlus className="w-4 h-4 text-amber-300" />
-                        </div>
-                        <div className="flex flex-col min-w-0">
-                          <span className="text-xs font-bold text-white">Une place avec bot est disponible !</span>
-                          <span className="text-[11px] text-slate-400">
-                            Capital ajusté au prorata : <strong className="text-amber-300">{prorataCapitalEstimate} 🪙</strong>
+                    <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+                      <button
+                        type="button"
+                        id="btn-claim-forfeit-victory"
+                        onClick={() => {
+                          triggerHaptic('success');
+                          handleClaimForfeitVictory();
+                        }}
+                        className="flex-1 sm:flex-initial px-3 py-1.5 lg:py-1 rounded-xl font-black text-xs bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 shadow-md shadow-amber-500/20 active:scale-95 transition flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
+                      >
+                        <span>🏆</span>
+                        <span>Réclamer ma part du pot</span>
+                      </button>
+                      <button
+                        type="button"
+                        id="btn-continue-against-bots"
+                        onClick={() => {
+                          triggerHaptic('light');
+                          setDismissedForfeitBanner(true);
+                        }}
+                        className="px-2.5 py-1.5 lg:py-1 rounded-xl font-semibold text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600/60 active:scale-95 transition flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
+                      >
+                        <span>⚔️</span>
+                        <span>Continuer vs IA</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Multiplayer Proposals (Integration vote, Capacity extension) */}
+                {isOnlineActive && multiplayerRoom && (
+                  <div className="w-full flex flex-col items-center gap-2 lg:gap-1 z-30 px-2 my-1 lg:my-0.5 shrink-0">
+                    <IntegrationProposalWidget
+                      proposal={multiplayerRoom.integrationProposal}
+                      players={multiplayerRoom.players}
+                      localPlayerId={localPlayerId}
+                      isSpectator={isOnlineSpectator}
+                      isPendingIntegration={isOnlinePendingIntegration}
+                      canRequestIntegration={canRequestIntegration}
+                      prorataCapitalEstimate={prorataCapitalEstimate}
+                      onRespondVote={handleRespondIntegrationVote}
+                      onRequestIntegration={handleRequestIntegration}
+                    />
+                    <CapacityExtensionProposalWidget
+                      proposal={multiplayerRoom.capacityExtensionProposal}
+                      players={multiplayerRoom.players}
+                      localPlayerId={localPlayerId}
+                      isHost={multiplayerRoom.hostId === localPlayerId}
+                      onPropose={handleProposeCapacityExtension}
+                      onRespond={handleRespondCapacityExtension}
+                    />
+                    <EarlyCloseProposalWidget
+                      proposal={multiplayerRoom.earlyCloseProposal}
+                      players={multiplayerRoom.players}
+                      localPlayerId={localPlayerId}
+                      onPropose={handleProposeEarlyClose}
+                      onRespond={handleRespondEarlyClose}
+                    />
+                  </div>
+                )}
+
+                {/* Middle Section: Play Zone Felt (Tapis vert with played trick cards) */}
+                <div className="shrink-0 flex flex-col justify-center items-center my-0.5 sm:my-1 lg:my-0 w-full lg:flex-1 lg:justify-center">
+                  <PlayZoneFelt
+                    plays={isOnlineActive ? mpPlays : (activeGameState.currentTrick?.plays || [])}
+                    leadSuit={isOnlineActive ? mpLeadSuit : (activeGameState.currentTrick?.leadSuit || null)}
+                    currentTrickNumber={isOnlineActive ? mpTrickNumber : (activeGameState.currentTrickNumber || 1)}
+                    winnerPlay={isOnlineActive ? mpWinnerPlay : currentWinnerPlay}
+                    playerCount={activeGameState.players?.filter((p) => !p.isEliminated && !p.isForfeit && !p.isFoldedInRound).length || 4}
+                    isDoubleKoraEnabled={activeGameState.enableDoubleKora}
+                    trick4WinnerWithThreeName={
+                      (isOnlineActive ? mpTrickNumber : (activeGameState.currentTrickNumber || 1)) === 5 &&
+                      activeGameState.enableDoubleKora &&
+                      activeGameState.consecutiveThreesCountByPlayer &&
+                      Object.keys(activeGameState.consecutiveThreesCountByPlayer).find(
+                        (k) => (activeGameState.consecutiveThreesCountByPlayer?.[Number(k)] || 0) >= 1
+                      )
+                        ? activeGameState.players[
+                            Number(
+                              Object.keys(activeGameState.consecutiveThreesCountByPlayer).find(
+                                (k) => (activeGameState.consecutiveThreesCountByPlayer?.[Number(k)] || 0) >= 1
+                              )
+                            )
+                          ]?.name
+                        : null
+                    }
+                    isDoubleKoraAchieved={
+                      activeGameState.doubleKoraAchievedByPlayer &&
+                      Object.values(activeGameState.doubleKoraAchievedByPlayer).some(Boolean)
+                    }
+                    partieWinType={activeGameState.partieWinType}
+                    winnerName={activeGameState.partieWinnerName}
+                    isDealing={isDealing}
+                    dealerIndex={activeGameState.dealerIndex}
+                    leadIndex={activeGameState.leadIndex}
+                    players={activeGameState.players}
+                    instantWinReveal={effectiveInstantWinReveal}
+                    isResolvingTrick={isOnlineActive ? isMpResolvingTrick : isResolvingTrick}
+                    isCollectingTrick={isOnlineActive ? isMpCollectingTrick : isCollectingTrick}
+                    lastCutEvent={activeGameState.lastCutEvent}
+                    isKoraHunterActive={Boolean(activeGameState.showKoraHunterAlert)}
+                    baseBet={activeGameState.baseBet}
+                  />
+                </div>
+
+                {/* Bottom Section: Human Hand / Spectator Console */}
+                <div className="flex flex-col gap-1 shrink-0">
+                  {isOnlineSpectator && activeGameState.phase !== 'MANCHE_OVER' ? (
+                    <div id="multiplayer-spectator-panel" className="w-full bg-slate-900 border-t border-cyan-500/30 px-3 sm:px-6 py-3.5 relative flex flex-col items-center justify-center gap-2.5 shadow-2xl z-30 transition-all duration-300 rounded-2xl">
+                      <div className="flex flex-wrap items-center justify-between w-full gap-2 border-b border-slate-800/80 pb-2">
+                        <div className="flex items-center gap-2 text-cyan-400 font-bold text-xs sm:text-sm tracking-wide">
+                          <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse" />
+                          <span>Mode Spectateur en direct</span>
+                          <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-500/40">
+                            Table #{multiplayerRoom?.id}
                           </span>
                         </div>
+
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            triggerHaptic('medium');
+                            await handleLeaveMultiplayer();
+                            setCurrentScreen('HOME');
+                            triggerToast('Vous avez quitté le mode spectateur');
+                          }}
+                          className="text-xs font-bold text-rose-400 hover:text-rose-300 flex items-center gap-1.5 cursor-pointer bg-rose-500/10 hover:bg-rose-500/20 px-3 py-1.5 rounded-xl border border-rose-500/25 transition-all active:scale-95 shadow-sm shadow-rose-950/40"
+                        >
+                          <LogOut className="w-3.5 h-3.5 text-rose-400" />
+                          <span>Quitter la table</span>
+                        </button>
+                      </div>
+
+                      {/* Integration Status or Call-To-Action */}
+                      {isOnlinePendingIntegration ? (
+                        <div className="w-full bg-emerald-950/80 border border-emerald-500/60 rounded-xl px-3.5 py-2.5 flex items-center gap-3 text-emerald-100 shadow-md">
+                          <div className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 shrink-0">
+                            <Sparkles className="w-4 h-4 text-emerald-300 animate-bounce" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-xs font-bold text-white">Intégration validée !</span>
+                            <span className="text-[11px] text-emerald-300/90">
+                              Vous entrerez en jeu dès le début de la prochaine partie avec un capital de{' '}
+                              <strong className="text-white font-mono">{prorataCapitalEstimate} 🪙</strong>.
+                            </span>
+                          </div>
+                        </div>
+                      ) : canRequestIntegration ? (
+                        <div className="w-full bg-slate-950/80 border border-amber-500/40 rounded-xl px-3.5 py-2.5 flex flex-col sm:flex-row items-center justify-between gap-2.5 shadow-md">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-400 shrink-0">
+                              <UserPlus className="w-4 h-4 text-amber-300" />
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-xs font-bold text-white">Une place avec bot est disponible !</span>
+                              <span className="text-[11px] text-slate-400">
+                                Capital ajusté au prorata : <strong className="text-amber-300">{prorataCapitalEstimate} 🪙</strong>
+                              </span>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            id="btn-request-integration-spectator"
+                            onClick={() => {
+                              triggerHaptic('medium');
+                              handleRequestIntegration();
+                            }}
+                            className="h-9 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 font-black text-xs transition shadow-md shadow-amber-500/20 cursor-pointer flex items-center gap-1.5 shrink-0"
+                          >
+                            <UserPlus className="w-3.5 h-3.5" />
+                            <span>Intégrer la Table</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-400 text-center">
+                          Vous assistez aux échanges de cartes en direct. Vous pouvez réagir en temps réel avec la table ci-dessous :
+                        </p>
+                      )}
+
+                      {/* Spectator Live Emote Bar */}
+                      <div className="flex items-center gap-1.5 overflow-x-auto max-w-full py-1">
+                        {[
+                          { text: '🔥 Beau jeu !', emoji: '🔥' },
+                          { text: '👏 Chapeau', emoji: '👏' },
+                          { text: '😱 Incroyable', emoji: '😱' },
+                          { text: '🏆 Victoire', emoji: '🏆' },
+                          { text: '⚔️ Courage', emoji: '⚔️' },
+                          { text: '🍀 Bien joué', emoji: '🍀' },
+                        ].map((em) => (
+                          <button
+                            key={em.text}
+                            type="button"
+                            onClick={() => {
+                              triggerHaptic('light');
+                              sendEmoteUnified(em.text, em.emoji);
+                            }}
+                            className="h-8 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 border border-slate-700 text-xs text-slate-200 flex items-center gap-1 shrink-0 cursor-pointer transition"
+                          >
+                            <span>{em.emoji}</span>
+                            <span className="hidden xs:inline text-[11px] font-medium">{em.text.replace(em.emoji, '').trim()}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : !isOnlineActive && currentHumanPlayer.isEliminated && activeGameState.phase !== 'MANCHE_OVER' ? (
+                    <div id="spectator-simulation-panel" className="w-full bg-slate-900 border-t border-red-500/30 px-3 sm:px-8 py-4 sm:py-6 relative flex flex-col items-center justify-center gap-3 shadow-2xl z-30 transition-all duration-300 rounded-xl">
+                      <div className="flex flex-col items-center text-center gap-1.5">
+                        <div className="flex items-center gap-2 text-red-400 font-bold text-xs sm:text-sm tracking-wide uppercase">
+                          <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                          Mode Spectateur
+                        </div>
+                        <p className="text-sm sm:text-base text-slate-100 font-medium">
+                          Vous avez été éliminé de la manche en cours.
+                        </p>
+                        <p className="text-xs sm:text-sm text-slate-400 max-w-lg">
+                          Les autres joueurs continuent à s'affronter. Vous pouvez observer le dénouement en direct ou simuler instantanément la fin de la partie pour obtenir les résultats.
+                        </p>
                       </div>
 
                       <button
-                        type="button"
-                        id="btn-request-integration-spectator"
+                        id="btn-simulate-to-end"
                         onClick={() => {
                           triggerHaptic('medium');
-                          handleRequestIntegration();
+                          sounds.playShuffle();
+                          simulateToEnd();
                         }}
-                        className="h-9 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 font-black text-xs transition shadow-md shadow-amber-500/20 cursor-pointer flex items-center gap-1.5 shrink-0"
+                        className="flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg transition-all duration-150 transform active:scale-95"
                       >
-                        <UserPlus className="w-3.5 h-3.5" />
-                        <span>Intégrer la Table</span>
+                        <FastForward className="w-4 h-4" />
+                        Simuler le reste de la partie
                       </button>
                     </div>
                   ) : (
-                    <p className="text-xs text-slate-400 text-center">
-                      Vous assistez aux échanges de cartes en direct. Vous pouvez réagir en temps réel avec la table ci-dessous :
-                    </p>
+                    <HumanHand
+                      hand={currentHumanPlayer.hand}
+                      selectedCardId={isOnlineActive ? multiplayerSelectedCardId : gameState.humanSelectedCardId}
+                      isHumanTurn={isCurrentHumanTurn}
+                      onSelectCard={handleGeneralSelectCard}
+                      onDirectPlayCard={handleGeneralPlayCard}
+                      onValidateCard={handleGeneralValidateCard}
+                      onFoldRound={handleGeneralFoldRound}
+                      leadSuit={isOnlineActive ? mpLeadSuit : (activeGameState.currentTrick?.leadSuit || null)}
+                      playerName={currentHumanPlayer.name}
+                      isDealing={isDealing}
+                      cardsDealtCountByPlayer={activeGameState.cardsDealtCountByPlayer}
+                      isForfeit={Boolean(currentHumanPlayer.isForfeit)}
+                      isFoldedInRound={Boolean(currentHumanPlayer.isFoldedInRound)}
+                      isEliminated={Boolean(currentHumanPlayer.isEliminated)}
+                      baseBet={activeGameState.baseBet || 10}
+                      pot={activeGameState.pot || 0}
+                      currentTrickNumber={activeGameState.currentTrickNumber || 1}
+                      currentTrick={activeGameState.currentTrick}
+                      tricksHistory={activeGameState.tricksHistory || []}
+                      players={activeGameState.players || []}
+                      instantWinReveal={instantWinReveal}
+                      enableKoraHunterAlerts={activeGameState.enableKoraHunterAlerts}
+                      onTriggerKoraHunterAlert={handleTriggerKoraHunterAlertUnified}
+                      onSendEmote={sendEmoteUnified}
+                      onProposeBetIncrease={() => {
+                        const currentBet = activeGameState.baseBet || 10;
+                        const newBet = Math.round(currentBet * 1.5);
+                        if (isOnlineActive) {
+                          handleProposeBetIncrease(newBet);
+                        } else {
+                          handleProposeBetIncreaseSolo(newBet);
+                        }
+                      }}
+                      activeEmotes={effectiveActiveEmotes}
+                      localPlayerId={isOnlineActive ? localPlayerId : 'human'}
+                    />
                   )}
+                </div>
+              </div>
 
-                  {/* Spectator Live Emote Bar */}
-                  <div className="flex items-center gap-1.5 overflow-x-auto max-w-full py-1">
-                    {[
-                      { text: '🔥 Beau jeu !', emoji: '🔥' },
-                      { text: '👏 Chapeau', emoji: '👏' },
-                      { text: '😱 Incroyable', emoji: '😱' },
-                      { text: '🏆 Victoire', emoji: '🏆' },
-                      { text: '⚔️ Courage', emoji: '⚔️' },
-                      { text: '🍀 Bien joué', emoji: '🍀' },
-                    ].map((em) => (
+              {/* 2. Right Sidebar (on lg:, 1st on mobile): Players History Board + Desktop Action Bar */}
+              <div className="order-1 lg:order-2 flex flex-col shrink-0 lg:w-72 lg:shrink-0 lg:h-full lg:min-h-0 lg:justify-between">
+                <OpponentsHistoryBoard
+                  filterMode="all"
+                  className="w-full lg:overflow-y-auto lg:flex-1 custom-dark-scrollbar overflow-x-hidden"
+                  players={activeGameState.players}
+                  currentTurnIndex={activeGameState.currentTurnIndex}
+                  isThinkingAI={activeGameState.isThinkingAI}
+                  dealerIndex={activeGameState.dealerIndex}
+                  leadIndex={activeGameState.leadIndex}
+                  baseBet={activeGameState.baseBet}
+                  currentTrickPlays={isOnlineActive ? mpPlays : (activeGameState.currentTrick?.plays || [])}
+                  trickHistory={activeGameState.tricksHistory || []}
+                  instantWinReveal={effectiveInstantWinReveal}
+                  isDealing={isDealing}
+                  cardsDealtCountByPlayer={activeGameState.cardsDealtCountByPlayer}
+                  localPlayerId={isOnlineActive ? localPlayerId : null}
+                  isMultiplayer={isOnlineActive}
+                  showBotPersonalityIcons={activeGameState.showBotPersonalityIcons}
+                  activeEmotes={effectiveActiveEmotes}
+                  turnRemainingSeconds={isOnlineActive ? turnRemainingSeconds : null}
+                />
+
+                {/* Desktop Secondary Action Bar (Répliques, Kora, Forfait) - hidden on mobile */}
+                {!isOnlineSpectator && !currentHumanPlayer.isEliminated && activeGameState.phase !== 'MANCHE_OVER' && (
+                  <div
+                    id="desktop-sidebar-action-bar"
+                    className="hidden lg:flex items-center gap-1.5 p-2 bg-slate-900/95 border border-slate-800 rounded-2xl shadow-lg mt-2 shrink-0"
+                  >
+                    {/* 1. Emote & Bet Propose */}
+                    <div className="shrink-0">
+                      <EmotePickerPopover
+                        onSendEmote={sendEmoteUnified}
+                        disabled={isDealing || currentHumanPlayer.isForfeit || currentHumanPlayer.isFoldedInRound || currentHumanPlayer.isEliminated}
+                        onProposeBetIncrease={() => {
+                          const currentBet = activeGameState.baseBet || 10;
+                          const newBet = Math.round(currentBet * 1.5);
+                          if (isOnlineActive) {
+                            handleProposeBetIncrease(newBet);
+                          } else {
+                            handleProposeBetIncreaseSolo(newBet);
+                          }
+                        }}
+                      />
+                    </div>
+
+                    {/* 2. Kora Hunter declaration */}
+                    {activeGameState.enableKoraHunterAlerts &&
+                      currentHumanPlayer.hand.length > 0 &&
+                      !isDealing &&
+                      !effectiveInstantWinReveal &&
+                      !currentHumanPlayer.isForfeit &&
+                      !currentHumanPlayer.isFoldedInRound &&
+                      !currentHumanPlayer.isEliminated && (
                       <button
-                        key={em.text}
+                        id="btn-sidebar-kora-hunter"
+                        type="button"
+                        onClick={() => {
+                          if (hasDeclaredKoraInPartie) return;
+                          triggerHaptic('heavy');
+                          try {
+                            sounds.playKora();
+                          } catch (e) {
+                            // Ignore sound error
+                          }
+                          setHasDeclaredKoraInPartie(true);
+                          handleTriggerKoraHunterAlertUnified();
+                        }}
+                        disabled={hasDeclaredKoraInPartie}
+                        className={`flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl font-black text-xs transition-all shadow-md flex-1 ${
+                          hasDeclaredKoraInPartie
+                            ? 'bg-amber-950/80 text-amber-300/80 border border-amber-500/40 cursor-default'
+                            : 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 border border-yellow-200 shadow-amber-500/30 active:scale-95 cursor-pointer animate-pulse'
+                        }`}
+                        title={
+                          hasDeclaredKoraInPartie
+                            ? 'Alerte Kora déjà transmise pour cette partie'
+                            : 'Lancer l\'Alerte Anonyme "Chasseur de Kora" à la table'
+                        }
+                      >
+                        <Crown className="w-3.5 h-3.5 text-slate-950 fill-slate-950 shrink-0" />
+                        <span>{hasDeclaredKoraInPartie ? 'Déclarée' : 'Kora'}</span>
+                      </button>
+                    )}
+
+                    {/* 3. Forfait / Abandon button */}
+                    {currentHumanPlayer.hand.length > 0 &&
+                      !isDealing &&
+                      !effectiveInstantWinReveal &&
+                      !currentHumanPlayer.isForfeit &&
+                      !currentHumanPlayer.isFoldedInRound &&
+                      !currentHumanPlayer.isEliminated && (
+                      <button
+                        id="btn-sidebar-fold-round"
                         type="button"
                         onClick={() => {
                           triggerHaptic('light');
-                          sendEmoteUnified(em.text, em.emoji);
+                          setShowSidebarFoldConfirm(true);
                         }}
-                        className="h-8 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 border border-slate-700 text-xs text-slate-200 flex items-center gap-1 shrink-0 cursor-pointer transition"
+                        className="flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl font-bold text-xs bg-rose-950/80 hover:bg-rose-900 text-rose-200 border border-rose-600/60 transition-all cursor-pointer shadow-md active:scale-95 flex-1"
+                        title="Passer cette donne (Déclarer Forfait)"
                       >
-                        <span>{em.emoji}</span>
-                        <span className="hidden xs:inline text-[11px] font-medium">{em.text.replace(em.emoji, '').trim()}</span>
+                        <Flag className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                        <span>Forfait</span>
                       </button>
-                    ))}
+                    )}
                   </div>
-                </div>
-              ) : !isOnlineActive && currentHumanPlayer.isEliminated && activeGameState.phase !== 'MANCHE_OVER' ? (
-                <div id="spectator-simulation-panel" className="w-full bg-slate-900 border-t border-red-500/30 px-3 sm:px-8 py-4 sm:py-6 relative flex flex-col items-center justify-center gap-3 shadow-2xl z-30 transition-all duration-300 rounded-xl">
-                  <div className="flex flex-col items-center text-center gap-1.5">
-                    <div className="flex items-center gap-2 text-red-400 font-bold text-xs sm:text-sm tracking-wide uppercase">
-                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                      Mode Spectateur
-                    </div>
-                    <p className="text-sm sm:text-base text-slate-100 font-medium">
-                      Vous avez été éliminé de la manche en cours.
-                    </p>
-                    <p className="text-xs sm:text-sm text-slate-400 max-w-lg">
-                      Les autres joueurs continuent à s'affronter. Vous pouvez observer le dénouement en direct ou simuler instantanément la fin de la partie pour obtenir les résultats.
-                    </p>
-                  </div>
+                )}
+              </div>
 
-                  <button
-                    id="btn-simulate-to-end"
-                    onClick={() => {
-                      triggerHaptic('medium');
-                      sounds.playShuffle();
-                      simulateToEnd();
-                    }}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg transition-all duration-150 transform active:scale-95"
-                  >
-                    <FastForward className="w-4 h-4" />
-                    Simuler le reste de la partie
-                  </button>
-                </div>
-              ) : (
-                <HumanHand
-                  hand={currentHumanPlayer.hand}
-                  selectedCardId={isOnlineActive ? multiplayerSelectedCardId : gameState.humanSelectedCardId}
-                  isHumanTurn={isCurrentHumanTurn}
-                  onSelectCard={handleGeneralSelectCard}
-                  onDirectPlayCard={handleGeneralPlayCard}
-                  onValidateCard={handleGeneralValidateCard}
-                  onFoldRound={handleGeneralFoldRound}
-                  leadSuit={isOnlineActive ? mpLeadSuit : (activeGameState.currentTrick?.leadSuit || null)}
-                  playerName={currentHumanPlayer.name}
-                  isDealing={isDealing}
-                  cardsDealtCountByPlayer={activeGameState.cardsDealtCountByPlayer}
-                  isForfeit={Boolean(currentHumanPlayer.isForfeit)}
-                  isFoldedInRound={Boolean(currentHumanPlayer.isFoldedInRound)}
-                  isEliminated={Boolean(currentHumanPlayer.isEliminated)}
-                  baseBet={activeGameState.baseBet || 10}
-                  pot={activeGameState.pot || 0}
-                  currentTrickNumber={activeGameState.currentTrickNumber || 1}
-                  currentTrick={activeGameState.currentTrick}
-                  tricksHistory={activeGameState.tricksHistory || []}
-                  players={activeGameState.players || []}
-                  instantWinReveal={instantWinReveal}
-                  enableKoraHunterAlerts={activeGameState.enableKoraHunterAlerts}
-                  onTriggerKoraHunterAlert={handleTriggerKoraHunterAlertUnified}
-                  onSendEmote={sendEmoteUnified}
-                  onProposeBetIncrease={() => {
-                    const currentBet = activeGameState.baseBet || 10;
-                    const newBet = Math.round(currentBet * 1.5);
-                    if (isOnlineActive) {
-                      handleProposeBetIncrease(newBet);
-                    } else {
-                      handleProposeBetIncreaseSolo(newBet);
-                    }
-                  }}
-                  activeEmotes={effectiveActiveEmotes}
-                  localPlayerId={isOnlineActive ? localPlayerId : 'human'}
-                />
-              )}
             </div>
+
+            {/* Confirmation Modal for Fold Round triggered from Desktop Sidebar */}
+            <AnimatePresence>
+              {showSidebarFoldConfirm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                  <motion.div
+                    initial={{ scale: 0.92, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.92, opacity: 0 }}
+                    className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl relative text-left"
+                  >
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                      <div className="flex items-center gap-2 text-amber-400 font-black text-base sm:text-lg">
+                        <ShieldAlert className="w-5 h-5 text-amber-400" />
+                        <span>Passer cette donne ?</span>
+                      </div>
+                      <button
+                        onClick={() => setShowSidebarFoldConfirm(false)}
+                        className="text-slate-400 hover:text-slate-200 p-1 rounded-lg hover:bg-slate-800"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    <div className="py-4 space-y-3 text-xs sm:text-sm text-slate-300">
+                      <p>En passant cette donne :</p>
+                      <ul className="space-y-2 bg-slate-950/60 p-3 rounded-xl border border-slate-800 text-slate-300">
+                        <li className="flex items-start gap-2">
+                          <span className="text-rose-400 font-bold">•</span>
+                          <span>Votre mise initiale de <strong className="text-amber-400">{activeGameState.baseBet || 10} jetons</strong> est perdue pour cette donne.</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-rose-400 font-bold">•</span>
+                          <span>Toutes les pénalités de fin de donne (<strong className="text-slate-200">Victoire simple</strong>, <strong className="text-amber-300">Kora ×2</strong> ou <strong className="text-orange-400">Double Kora ×4</strong>) restent exigibles et seront reversées au vainqueur.</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-emerald-400 font-bold">•</span>
+                          <span>Vous restez assis à la table en spectateur et rejouerez automatiquement dès la donne suivante.</span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-800">
+                      <button
+                        type="button"
+                        onClick={() => setShowSidebarFoldConfirm(false)}
+                        className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+                      >
+                        Annuler
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowSidebarFoldConfirm(false);
+                          handleGeneralFoldRound();
+                        }}
+                        className="px-4 py-2 rounded-xl text-xs sm:text-sm font-black bg-rose-600 hover:bg-rose-500 text-white shadow-lg transition-all active:scale-95 flex items-center gap-1.5"
+                      >
+                        <Flag className="w-4 h-4" />
+                        <span>Confirmer et passer</span>
+                      </button>
+                    </div>
+                  </motion.div>
+                </div>
+              )}
+            </AnimatePresence>
           </div>
         )}
       </main>
