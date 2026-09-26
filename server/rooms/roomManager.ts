@@ -953,7 +953,7 @@ export class RoomManager {
           console.warn(`[Auth] ID token verification failed for client ${client.playerId}`);
           this.sendMessage(client.socket, {
             type: 'ERROR',
-            errorCode: 'JOIN_REFUSED',
+            errorCode: 'AUTH_TOKEN_INVALID',
             error: 'Authentification Google invalide ou expirée.',
           });
           return;

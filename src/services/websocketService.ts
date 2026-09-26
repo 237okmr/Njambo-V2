@@ -86,6 +86,10 @@ class WebSocketService {
   private authConfirmedOnThisSocket: boolean = false;
   private pendingAuthMessages: string[] = [];
   private hasAttemptedAuthRetry: boolean = false;
+  // Une nouvelle tentative après un jeton Google refusé (expiré, invalide) doit forcer un jeton tout
+  // neuf : redemander sans forcer risquerait de récupérer exactement le même jeton périmé en cache, et
+  // d'échouer indéfiniment de la même façon, sans jamais se réparer.
+  private forceTokenRefreshOnNextConnect: boolean = false;
   private lastConnectedPlayerId: string | null = null;
   private isSessionTakenOver: boolean = false;
   private pendingJoinCancelled: boolean = false;
@@ -407,7 +411,9 @@ class WebSocketService {
       const currentUser = auth.currentUser;
       if (currentUser && !currentUser.isAnonymous) {
         try {
-          idToken = await currentUser.getIdToken();
+          const forceRefresh = this.forceTokenRefreshOnNextConnect;
+          this.forceTokenRefreshOnNextConnect = false;
+          idToken = await currentUser.getIdToken(forceRefresh);
         } catch (e) {
           console.warn('[WS] Failed to get auth ID token for handshake:', e);
         }
@@ -1040,15 +1046,18 @@ class WebSocketService {
           }
         }
 
-        // AUTH_REQUIRED (identifiant rejeté par le serveur) et AUTH_TIMEOUT (vérification Google trop
-        // lente côté serveur, au-delà de googleVerifyTimeoutSeconds) se réparent de la même façon : une
-        // reconnexion complète, qui renvoie un message AUTH tout neuf avec un jeton frais. Sans cela, un
-        // compte Google dont la toute première vérification a expiré restait bloqué pour le reste de la
-        // session : le serveur gardait son identifiant provisoire, alors que l'appareil utilisait déjà
-        // sa vraie identité Google pour la suite — chaque action suivante était alors rejetée.
-        if (errorCode === 'AUTH_REQUIRED' || errorCode === 'AUTH_TIMEOUT') {
+        // AUTH_REQUIRED (identifiant rejeté par le serveur), AUTH_TIMEOUT (vérification Google trop
+        // lente côté serveur) et AUTH_TOKEN_INVALID (jeton Google refusé, expiré) se réparent de la même
+        // façon : une reconnexion complète. Pour AUTH_TOKEN_INVALID en particulier, on force en plus la
+        // récupération d'un jeton tout neuf (forceTokenRefreshOnNextConnect) : sans cela, redemander le
+        // jeton normalement peut renvoyer exactement le même jeton périmé depuis le cache du navigateur,
+        // et échouer indéfiniment de la même façon, sans jamais se réparer.
+        if (errorCode === 'AUTH_REQUIRED' || errorCode === 'AUTH_TIMEOUT' || errorCode === 'AUTH_TOKEN_INVALID') {
           if (!this.hasAttemptedAuthRetry) {
             this.hasAttemptedAuthRetry = true;
+            if (errorCode === 'AUTH_TOKEN_INVALID') {
+              this.forceTokenRefreshOnNextConnect = true;
+            }
             console.warn(`[WS] Server returned ${errorCode}: attempting one-time reconnection with AUTH.`);
             if (this.socket) {
               try {

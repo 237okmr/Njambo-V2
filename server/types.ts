@@ -87,6 +87,7 @@ export type ServerErrorCode =
   | 'JOIN_REFUSED'
   | 'AUTH_REQUIRED'
   | 'AUTH_TIMEOUT'
+  | 'AUTH_TOKEN_INVALID'
   | 'RATE_LIMITED'
   | 'BANNED'
   | 'FORBIDDEN'
