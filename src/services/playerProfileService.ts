@@ -18,6 +18,32 @@ import {
 } from 'firebase/firestore';
 import { estimateNetFromHistoryRecord } from '../utils/settlement';
 import { auth, db } from '../lib/firebase';
+
+/**
+ * Attend que Firebase Auth ait fini de restaurer (ou non) une session existante avant de faire confiance
+ * à auth.currentUser. Juste après l'ouverture de l'application, auth.currentUser peut être temporairement
+ * null même pour un compte Google déjà connecté : cette attente évite qu'une partie qui se termine dans
+ * cette toute petite fenêtre soit enregistrée localement mais jamais envoyée à Firestore (ni jamais
+ * retentée ensuite), un cas particulièrement fréquent en solo hors ligne, jouable dès l'ouverture de
+ * l'application. Résolue immédiatement si Firebase Auth a déjà déterminé son état.
+ */
+let authReadyPromise: Promise<void> | null = null;
+export function waitForAuthReady(): Promise<void> {
+  if (!authReadyPromise) {
+    authReadyPromise = (auth as any).authStateReady
+      ? (auth as any).authStateReady()
+      : new Promise<void>((resolve) => {
+          const unsub = onAuthStateChanged(auth, () => {
+            unsub();
+            resolve();
+          });
+          // Filet de sécurité : ne jamais bloquer indéfiniment si l'écouteur ne se déclenche pas.
+          setTimeout(resolve, 5000);
+        });
+  }
+  return authReadyPromise;
+}
+
 import {
   PlayerProfile,
   PlayerStats,
@@ -589,9 +615,11 @@ export const playerProfileService = {
   async flushOfflineSyncQueue(): Promise<{ syncedCount: number; remainingCount: number }> {
     const queue = this.getPendingOfflineQueue();
     if (queue.length === 0) return { syncedCount: 0, remainingCount: 0 };
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      return { syncedCount: 0, remainingCount: queue.length };
-    }
+    await waitForAuthReady();
+    // Ne plus se fier à navigator.onLine pour décider de tenter ou non : cet indicateur est connu pour
+    // être peu fiable sur mobile (il peut rester à true en zone sans réseau réel, ou à false alors que la
+    // connexion est bien revenue). On tente directement l'écriture ; Firestore échoue vite si hors ligne,
+    // et l'élément reste alors en file (voir la boucle ci-dessous), sans rien perdre.
     if (!auth.currentUser) {
       return { syncedCount: 0, remainingCount: queue.length };
     }
@@ -931,6 +959,7 @@ export const playerProfileService = {
     } catch {}
 
     // Firestore persistence for Google authenticated users (with offline queue tolerance - Lot 3 - B)
+    await waitForAuthReady();
     if (this.isGoogleAuthenticated() && auth.currentUser) {
       const uid = auth.currentUser.uid;
       const { email: _unusedEmail, ...profilePayloadWithoutEmail } = updatedProfile;
@@ -1136,6 +1165,7 @@ export const playerProfileService = {
     } catch {}
 
     // If authenticated with Google in Firestore, persist there asynchronously (with offline queue tolerance - Lot 3 - B)
+    await waitForAuthReady();
     if (this.isGoogleAuthenticated() && auth.currentUser) {
       const uid = auth.currentUser.uid;
       const { email: _unusedEmail, ...profilePayloadWithoutEmail } = updatedProfile;
@@ -1262,6 +1292,7 @@ export const playerProfileService = {
     this.saveLocalProfile(updatedProfile);
 
     // Sync to Firestore & log to Katika fair-play audit (with offline queue tolerance - Lot 3 - B)
+    await waitForAuthReady();
     if (this.isGoogleAuthenticated() && auth.currentUser) {
       const uid = auth.currentUser.uid;
       const { email: _unusedEmail, ...profilePayloadWithoutEmail } = updatedProfile;

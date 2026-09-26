@@ -26,6 +26,7 @@ import {
   DEFAULT_PLAYER_STATS,
 } from '../services/playerProfileService';
 import { FriendService } from '../services/friendService';
+import { useVisibleInterval } from '../hooks/useVisibleInterval';
 
 interface PlayerProfileContextValue {
   profile: PlayerProfile;
@@ -111,13 +112,30 @@ export const PlayerProfileProvider: React.FC<{ children: ReactNode }> = ({ child
       console.log('[PlayerProfileContext] Network recovered: flushing offline queue');
       flushOfflineQueue();
     };
+    // Le retour au premier plan est un signal bien plus fiable que l'événement réseau sur mobile
+    // (celui-ci est connu pour manquer ou arriver en retard) : on retente à chaque réouverture.
+    const handleVisible = () => {
+      if (!document.hidden) flushOfflineQueue();
+    };
 
     window.addEventListener('online', handleOnline);
-    if (typeof navigator !== 'undefined' && navigator.onLine) {
-      flushOfflineQueue();
-    }
-    return () => window.removeEventListener('online', handleOnline);
+    document.addEventListener('visibilitychange', handleVisible);
+    // Tentative immédiate au montage, sans condition sur navigator.onLine (peu fiable) : flushOfflineQueue
+    // échoue silencieusement et sans casse si l'appareil est réellement hors ligne.
+    flushOfflineQueue();
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      document.removeEventListener('visibilitychange', handleVisible);
+    };
   }, [flushOfflineQueue]);
+
+  // Filet de sécurité périodique (toutes les 2 minutes, en pause si l'app est en arrière-plan) : couvre
+  // les cas où ni l'événement réseau ni le retour au premier plan ne se sont déclenchés correctement,
+  // notamment les joueurs solo qui restent longtemps hors ligne puis retrouvent une connexion sans que le
+  // navigateur ne le signale (fréquent sur certains appareils Android d'entrée de gamme).
+  useVisibleInterval(() => {
+    if (offlineQueueCount > 0) flushOfflineQueue();
+  }, 120000);
 
   // Derive honorific title
   const { currentTitle, nextTitle, progressPercent } = useMemo(() => {

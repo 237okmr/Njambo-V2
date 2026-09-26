@@ -157,11 +157,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   return (
     <div
       id="home-screen"
-      className="min-h-[100dvh] h-[100dvh] w-full bg-slate-950 text-slate-100 flex flex-col justify-between relative overflow-y-auto overflow-x-hidden font-sans select-none p-3 sm:p-4 no-scrollbar"
+      className="min-h-[100dvh] h-[100dvh] w-full bg-gradient-to-b from-[#0b0805] via-[#080604] to-[#050403] text-slate-100 flex flex-col justify-between relative overflow-y-auto overflow-x-hidden font-sans select-none p-3 sm:p-4 no-scrollbar"
     >
-      {/* Subtle Ambient Background Glows */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 left-10 w-60 h-60 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+      {/* Lueur ambrée unique, qui respire lentement derrière le titre (piste "Braise sous les cendres") */}
+      <div className="home-glow absolute top-[30%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 sm:w-96 sm:h-96 rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.55)_0%,rgba(217,119,6,0.22)_45%,rgba(217,119,6,0)_72%)] pointer-events-none" />
 
       {/* Background Played Cards ("Cartes Jouées en Arrière-Plan") */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden select-none z-0">
@@ -170,7 +169,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           initial={{ opacity: 0, scale: 0.8, rotate: -25 }}
           animate={{ opacity: 1, scale: 1, rotate: -18 }}
           transition={{ duration: 0.8, delay: 0.1 }}
-          className="absolute top-[8%] left-[2%] sm:left-[8%] w-20 sm:w-24 h-28 sm:h-34 rounded-xl bg-slate-100 text-slate-900 border-2 border-amber-400/60 p-2 flex flex-col justify-between shadow-2xl opacity-25 sm:opacity-30 backdrop-blur-[1px]"
+          className="absolute top-[8%] left-[2%] sm:left-[8%] w-20 sm:w-24 h-28 sm:h-34 rounded-xl bg-slate-100 text-slate-900 border-2 border-amber-400/60 p-2 flex flex-col justify-between shadow-2xl opacity-40 sm:opacity-45"
         >
           <div className="flex flex-col items-start leading-none">
             <span className="text-xs sm:text-sm font-black text-rose-600">10</span>
@@ -191,7 +190,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           initial={{ opacity: 0, scale: 0.8, rotate: 25 }}
           animate={{ opacity: 1, scale: 1, rotate: 16 }}
           transition={{ duration: 0.8, delay: 0.15 }}
-          className="absolute top-[10%] right-[2%] sm:right-[8%] w-20 sm:w-24 h-28 sm:h-34 rounded-xl bg-slate-100 text-slate-900 border-2 border-slate-300/50 p-2 flex flex-col justify-between shadow-2xl opacity-25 sm:opacity-30 backdrop-blur-[1px]"
+          className="absolute top-[10%] right-[2%] sm:right-[8%] w-20 sm:w-24 h-28 sm:h-34 rounded-xl bg-slate-100 text-slate-900 border-2 border-slate-300/50 p-2 flex flex-col justify-between shadow-2xl opacity-40 sm:opacity-45"
         >
           <div className="flex flex-col items-start leading-none">
             <span className="text-xs sm:text-sm font-black text-slate-900">10</span>
@@ -209,7 +208,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           initial={{ opacity: 0, scale: 0.8, rotate: -40 }}
           animate={{ opacity: 1, scale: 1, rotate: -32 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="absolute bottom-[16%] left-[3%] sm:left-[9%] w-20 sm:w-24 h-28 sm:h-34 rounded-xl bg-slate-100 text-slate-900 border-2 border-amber-400/80 p-2 flex flex-col justify-between shadow-2xl opacity-20 sm:opacity-25 backdrop-blur-[1px]"
+          className="absolute bottom-[16%] left-[3%] sm:left-[9%] w-20 sm:w-24 h-28 sm:h-34 rounded-xl bg-slate-100 text-slate-900 border-2 border-amber-400/80 p-2 flex flex-col justify-between shadow-2xl opacity-36 sm:opacity-40"
         >
           <div className="flex flex-col items-start leading-none">
             <span className="text-xs sm:text-sm font-black text-rose-600">3</span>
@@ -230,7 +229,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           initial={{ opacity: 0, scale: 0.8, rotate: 40 }}
           animate={{ opacity: 1, scale: 1, rotate: 28 }}
           transition={{ duration: 0.8, delay: 0.25 }}
-          className="absolute bottom-[20%] right-[3%] sm:right-[9%] w-20 sm:w-24 h-28 sm:h-34 rounded-xl bg-slate-100 text-slate-900 border-2 border-slate-300/50 p-2 flex flex-col justify-between shadow-2xl opacity-20 sm:opacity-25 backdrop-blur-[1px]"
+          className="absolute bottom-[20%] right-[3%] sm:right-[9%] w-20 sm:w-24 h-28 sm:h-34 rounded-xl bg-slate-100 text-slate-900 border-2 border-slate-300/50 p-2 flex flex-col justify-between shadow-2xl opacity-36 sm:opacity-40"
         >
           <div className="flex flex-col items-start leading-none">
             <span className="text-xs sm:text-sm font-black text-emerald-700">10</span>
@@ -248,7 +247,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           initial={{ opacity: 0, rotate: 8 }}
           animate={{ opacity: 1, rotate: 12 }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className="absolute top-[42%] -left-[4%] sm:left-[1%] w-18 sm:w-22 h-26 sm:h-30 rounded-xl bg-slate-100 text-slate-900 border border-slate-300/40 p-1.5 flex flex-col justify-between shadow-xl opacity-15 sm:opacity-20"
+          className="absolute top-[42%] -left-[4%] sm:left-[1%] w-18 sm:w-22 h-26 sm:h-30 rounded-xl bg-slate-100 text-slate-900 border border-slate-300/40 p-1.5 flex flex-col justify-between shadow-xl opacity-30 sm:opacity-34"
         >
           <div className="flex flex-col items-start leading-none">
             <span className="text-xs font-black text-amber-600">9</span>
@@ -266,7 +265,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           initial={{ opacity: 0, rotate: -12 }}
           animate={{ opacity: 1, rotate: -15 }}
           transition={{ duration: 0.8, delay: 0.35 }}
-          className="absolute top-[46%] -right-[4%] sm:right-[1%] w-18 sm:w-22 h-26 sm:h-30 rounded-xl bg-slate-100 text-slate-900 border border-slate-300/40 p-1.5 flex flex-col justify-between shadow-xl opacity-15 sm:opacity-20"
+          className="absolute top-[46%] -right-[4%] sm:right-[1%] w-18 sm:w-22 h-26 sm:h-30 rounded-xl bg-slate-100 text-slate-900 border border-slate-300/40 p-1.5 flex flex-col justify-between shadow-xl opacity-30 sm:opacity-34"
         >
           <div className="flex flex-col items-start leading-none">
             <span className="text-xs font-black text-slate-900">8</span>

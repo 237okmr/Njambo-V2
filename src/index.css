@@ -312,4 +312,30 @@ html[data-app-hidden='true'] *:not(.perf-keep-anim) {
   animation-play-state: paused !important;
 }
 
+/*
+ * Piste A « Braise sous les cendres » -- ecran d'accueil. Une seule lueur ambree qui respire lentement
+ * derriere le titre. Coupee en mode leger (telephone modeste ou onglet en arriere-plan) : elle reste
+ * visible, simplement figee sur son etat median, pour ne rien retirer visuellement.
+ */
+@keyframes home-glow-breathe {
+  0% {
+    opacity: 0.3;
+    transform: translate(-50%, -50%) scale(0.94);
+  }
+  100% {
+    opacity: 0.55;
+    transform: translate(-50%, -50%) scale(1.07);
+  }
+}
+
+.home-glow {
+  animation: home-glow-breathe 7s ease-in-out infinite alternate;
+}
+
+html[data-perf='light'] .home-glow {
+  animation: none;
+  opacity: 0.42;
+  transform: translate(-50%, -50%) scale(1);
+}
+
 
