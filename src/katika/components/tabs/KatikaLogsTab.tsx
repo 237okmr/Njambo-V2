@@ -21,6 +21,7 @@ import {
 import { KatikaAuditLog } from '../../types/katika';
 import { KatikaService } from '../../services/katikaService';
 import { KATIKA_NAVIGATE_EVENT, KatikaNavigationEventDetail } from '../../utils/katikaNavigation';
+import { KatikaConnectionHealthPanel } from './KatikaConnectionHealthPanel';
 
 export const KatikaLogsTab: React.FC = () => {
   const [logs, setLogs] = useState<KatikaAuditLog[]>([]);
@@ -108,6 +109,8 @@ export const KatikaLogsTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <KatikaConnectionHealthPanel />
+
       {/* Search, Filter & Export Bar */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-4 rounded-xl bg-slate-900/90 border border-slate-800">
         <div className="flex items-center gap-2 flex-1 max-w-md bg-slate-800/90 px-3 py-2 rounded-lg border border-slate-700/60">

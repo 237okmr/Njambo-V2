@@ -12,6 +12,7 @@ import { WebSocketServer } from 'ws';
 import { createServer as createViteServer } from 'vite';
 import { RoomManager } from './server/rooms/roomManager';
 import { loadEngineConfigFromStore, persistEngineConfigToStore, getConfigStoreStatus } from './server/engine/configStore';
+import { recordConnection, recordDisconnection, startMetricsFlushLoop, getTodaySnapshot } from './server/rooms/connectionMetrics';
 import { getEngineConfig, getEngineConfigVersion } from './server/engine/engineConfig';
 import { getPublicParams, PARAM_BY_KEY } from './server/engine/engineParams';
 import { handleAdminChatMessage, streamAdminChatMessage } from './server/aiAdminChat';
@@ -47,6 +48,7 @@ async function startServer() {
   // Tables en cours sauvegardées (Firestore) : restaurées avant d'accepter la moindre connexion.
   await RoomManager.restoreRoomsAtBoot();
   RoomManager.enableRoomSnapshots();
+  startMetricsFlushLoop();
 
   const app = express();
   app.use(compression());
@@ -113,6 +115,7 @@ async function startServer() {
   });
 
   wss.on('connection', (ws: any, req) => {
+    recordConnection();
     // Initial alive state
     ws.isAlive = true;
     ws.on('pong', () => {
@@ -159,8 +162,9 @@ async function startServer() {
       RoomManager.handleMessage(client, data.toString());
     });
 
-    ws.on('close', () => {
+    ws.on('close', (code: number) => {
       console.log(`[WS] Client disconnected: ${client.playerId}`);
+      recordDisconnection(client.playerId, code);
       RoomManager.handleDisconnect(client.playerId, ws);
     });
 
@@ -332,6 +336,7 @@ async function startServer() {
       activeRooms: RoomManager.getActiveRoomsCount(),
       configVersion: getEngineConfigVersion(),
       configStore: getConfigStoreStatus(),
+      connectionMetrics: getTodaySnapshot(),
       timestamp: Date.now(),
     });
   });

@@ -104,6 +104,16 @@ export const ENGINE_PARAMS: ParamDef[] = [
     min: 60, max: 1800, default: 300, group: 'caches-et-mises-a-jour', scope: 'client', effect: 'immediate',
     help: 'Fréquence à laquelle l\'application vérifie si une nouvelle version est disponible.',
   },
+  {
+    key: 'metricsFlushSeconds', label: 'Fréquence de sauvegarde des mesures de connexion', unit: 's',
+    min: 30, max: 600, default: 60, group: 'caches-et-mises-a-jour', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Fréquence à laquelle les compteurs de connexions, déconnexions et relais sont écrits dans Firestore.',
+  },
+  {
+    key: 'metricsRetentionDays', label: 'Conservation des mesures de connexion', unit: 'jours',
+    min: 3, max: 90, default: 14, group: 'caches-et-mises-a-jour', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Durée de conservation des mesures quotidiennes de connexion dans Firestore (nettoyage manuel, non automatisé).',
+  },
 
   // ===== Groupe connexion =====
   {

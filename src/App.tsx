@@ -772,6 +772,22 @@ function GameApp() {
 
       setDeepLinkWaitState({ active: true, roomCode: cleanCode, elapsedSeconds: 0 });
 
+      // Déjà assis à cette table (le lien vient d'un rafraîchissement ou d'un second clic) : rien à refaire.
+      const alreadyHere = wsService.getCurrentRoom()?.id === cleanCode;
+      if (alreadyHere) {
+        setDeepLinkWaitState(null);
+        setIsMultiplayerMode(true);
+        setShowMultiplayerHub(false);
+        setTimeout(() => {
+          try {
+            window.history.replaceState({}, document.title, window.location.pathname);
+          } catch {
+            // ignore
+          }
+        }, 400);
+        return;
+      }
+
       handleJoinRoom(cleanCode, localPlayerName).then((res) => {
         setDeepLinkWaitState((prev) => {
           if (!prev || !prev.active) return null; // already cancelled

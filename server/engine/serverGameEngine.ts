@@ -31,6 +31,7 @@ import {
 import { getEngineConfig, KatikaEngineConfig } from './engineConfig';
 import { computePartieOutcome, applyPartiePayout, detectInstantWin } from '../../src/utils/gameRules';
 import { buildPartieResult, computeForfeitPenalty, FORFAIT_PENALITE_DES_PLI, FORFAIT_INACTIVITE_GELE_LE_SIEGE } from '../../src/utils/settlement';
+import { recordRelayTriggered, recordSeatReleased } from '../rooms/connectionMetrics';
 
 /**
  * Événements « table en danger » remontés au gestionnaire de salles pour notifier le joueur.
@@ -1330,6 +1331,7 @@ export class ServerGameEngine {
       // Le siège redevient alors disponible pour un observateur via le flux d'intégration existant
       // (handleRequestIntegration -> selectBotToReplace), exactement comme n'importe quel autre bot.
       this.replacePlayerWithBot(room, playerId, () => {}, activeRoomState, 'Absence prolongée');
+      recordSeatReleased();
       const rp = (room.players || []).find((p) => p.id === playerId);
       if (rp) rp.isForfeit = false;
       const gp = (gs.players || []).find((p) => p.id === playerId);
@@ -1835,6 +1837,7 @@ export class ServerGameEngine {
     if (gs.phase !== 'PLAYING' && gs.phase !== 'TRICK_RESOLVED') return;
     if (rp.relayAbsent) return; // idempotent
 
+    recordRelayTriggered();
     rp.relayAbsent = true;
     gp.relayAbsent = true;
     if (!rp.connected) {

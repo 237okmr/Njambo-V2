@@ -34,6 +34,8 @@ export interface KatikaEngineConfig {
   jankSampleSeconds?: number;
   jankThresholdMs?: number;
   updateCheckIntervalSeconds?: number;
+  metricsFlushSeconds?: number;
+  metricsRetentionDays?: number;
   roundEndWatchdogMs?: number;
   lobbyWaitTtlMinutes?: number;
   publicAbsentHostVisibilitySeconds?: number;

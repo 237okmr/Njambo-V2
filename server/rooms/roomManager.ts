@@ -11,6 +11,7 @@ import { shouldBotAcceptBetIncrease, BOT_BET_INCREASE_AGREE_EMOTES, BOT_BET_INCR
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../src/lib/firebase';
 import { scheduleRoomSnapshot, deleteRoomSnapshot, saveRoomSnapshotNow, flushAllPendingSnapshots, loadRoomsAtBoot, hashReconnectToken } from './roomSnapshotStore';
+import { recordReconnection, recordIdentitySubstitution, recordRejectedInvalidIdentifier, recordSeatReleased, recordRoomRestored, recordRelayTriggered } from './connectionMetrics';
 
 export interface ConnectedClient {
   socket: WebSocket;
@@ -470,6 +471,7 @@ export class RoomManager {
         });
       }
 
+      recordRoomRestored();
       console.log(`[RoomManager] Table ${room.id} restaurée (statut ${room.status}, ${seatedHumans.length} humain(s)).`);
     }
 
@@ -629,11 +631,13 @@ export class RoomManager {
 
     if (reconnectToken && this.tokenToPlayerId.has(reconnectToken)) {
       const tokenPlayerId = this.tokenToPlayerId.get(reconnectToken)!;
+      recordReconnection(tokenPlayerId);
       if (tokenPlayerId.startsWith('usr_')) {
         playerId = tokenPlayerId;
         token = reconnectToken;
         this.playerIdToToken.set(playerId, token);
         if (requestedPlayerId && requestedPlayerId.startsWith('usr_') && requestedPlayerId !== playerId) {
+          recordIdentitySubstitution();
           this.addAuditLog({
             id: `log-sub-${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
             timestamp: Date.now(),
@@ -701,6 +705,7 @@ export class RoomManager {
             this.playerIdToToken.set(playerId, token);
           } else {
             console.warn(`[Security] Denied claim of restored guest ID '${requestedPlayerId}' without matching original reconnectToken.`);
+            recordRejectedInvalidIdentifier();
             playerId = 'usr_' + Math.random().toString(36).substring(2, 9);
             token = 'tk_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
             this.tokenToPlayerId.set(token, playerId);
