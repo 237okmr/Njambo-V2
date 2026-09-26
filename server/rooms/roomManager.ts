@@ -931,7 +931,7 @@ export class RoomManager {
 
     client.isAuthenticating = true;
 
-    const AUTH_TIMEOUT_MS = 8000;
+    const AUTH_TIMEOUT_MS = Number(this.engineConfig.googleVerifyTimeoutSeconds ?? 15) * 1000;
     let timeoutId: NodeJS.Timeout | null = null;
     const timeoutPromise = new Promise<never>((_, reject) => {
       timeoutId = setTimeout(() => {

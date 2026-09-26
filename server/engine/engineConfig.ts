@@ -36,6 +36,7 @@ export interface KatikaEngineConfig {
   updateCheckIntervalSeconds?: number;
   metricsFlushSeconds?: number;
   metricsRetentionDays?: number;
+  googleVerifyTimeoutSeconds?: number;
   roundEndWatchdogMs?: number;
   lobbyWaitTtlMinutes?: number;
   publicAbsentHostVisibilitySeconds?: number;

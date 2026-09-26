@@ -1038,13 +1038,21 @@ class WebSocketService {
               isFirstRepair = true;
             }
           }
+        }
 
+        // AUTH_REQUIRED (identifiant rejeté par le serveur) et AUTH_TIMEOUT (vérification Google trop
+        // lente côté serveur, au-delà de googleVerifyTimeoutSeconds) se réparent de la même façon : une
+        // reconnexion complète, qui renvoie un message AUTH tout neuf avec un jeton frais. Sans cela, un
+        // compte Google dont la toute première vérification a expiré restait bloqué pour le reste de la
+        // session : le serveur gardait son identifiant provisoire, alors que l'appareil utilisait déjà
+        // sa vraie identité Google pour la suite — chaque action suivante était alors rejetée.
+        if (errorCode === 'AUTH_REQUIRED' || errorCode === 'AUTH_TIMEOUT') {
           if (!this.hasAttemptedAuthRetry) {
             this.hasAttemptedAuthRetry = true;
-            console.warn('[WS] Server returned AUTH_REQUIRED: attempting one-time reconnection with AUTH.');
+            console.warn(`[WS] Server returned ${errorCode}: attempting one-time reconnection with AUTH.`);
             if (this.socket) {
               try {
-                this.socket.close(1000, 'AUTH_REQUIRED retry');
+                this.socket.close(1000, `${errorCode} retry`);
               } catch (e) {
                 // ignore
               }

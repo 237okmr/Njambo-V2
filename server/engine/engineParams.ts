@@ -115,6 +115,12 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Durée de conservation des mesures quotidiennes de connexion dans Firestore (nettoyage manuel, non automatisé).',
   },
 
+  {
+    key: 'googleVerifyTimeoutSeconds', label: 'Délai de vérification d\'un compte Google', unit: 's',
+    min: 5, max: 30, default: 15, group: 'connexion', scope: 'server', effect: 'immediate',
+    help: 'Temps laissé au serveur pour confirmer un compte Google avant d\'abandonner (utile en connexion lente).',
+  },
+
   // ===== Groupe connexion =====
   {
     key: 'clientReconnectBaseDelayMs', label: 'Délai de base avant la première reconnexion', unit: 'ms',
