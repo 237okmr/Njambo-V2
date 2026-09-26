@@ -8,6 +8,7 @@ import { motion, PanInfo, AnimatePresence } from 'motion/react';
 import { EmotePickerPopover } from './EmotePickerPopover';
 import { QuickContextualReaction } from './QuickContextualReaction';
 import { SpeechBubble } from './SpeechBubble';
+import { useIsDesktop } from '../hooks/useIsDesktop';
 
 interface HumanHandProps {
   hand: Card[];
@@ -69,6 +70,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
   localPlayerId = null,
 }) => {
   const cardsList = Array.isArray(hand) ? hand : [];
+  const isDesktop = useIsDesktop();
   const hasLeadSuit = leadSuit ? cardsList.some((c) => c.suit === leadSuit) : false;
   const leadSuitInfo = leadSuit ? SUITS_INFO[leadSuit] : null;
 
@@ -399,7 +401,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
 
         <div
           id="human-cards-tray"
-          className="flex items-end justify-center gap-1 sm:gap-2.5 lg:gap-3 py-0.5 min-h-[105px] sm:min-h-[160px] lg:min-h-[175px] overflow-visible w-full"
+          className="flex items-end justify-center gap-1 sm:gap-3 lg:gap-3 py-0.5 min-h-[105px] sm:min-h-[185px] lg:min-h-[175px] overflow-visible w-full"
         >
           {(() => {
             const humanDealtCount = isDealing
@@ -429,11 +431,15 @@ export const HumanHand: React.FC<HumanHandProps> = ({
                   // Golden pulse strictly when follow suit is active and matches
                   const shouldGlowGold = isHumanTurn && leadSuit && hasLeadSuit && card.suit === leadSuit;
 
-                  // Pronounced physical card fan curve calculation
+                  // Angle calculations & pronounced fan curve on desktop
                   const totalCards = Math.max(5, visibleCards.length + placeholderCount);
                   const centerOffset = idx - (totalCards - 1) / 2;
-                  const rotationAngle = centerOffset * (totalCards > 3 ? 5.2 : 3.5);
-                  const arcYOffset = Math.pow(Math.abs(centerOffset), 1.8) * 3.5;
+                  const rotationAngle = isDesktop
+                    ? centerOffset * (totalCards > 3 ? 5.2 : 3.5)
+                    : centerOffset * (totalCards > 3 ? 1.8 : 1.2);
+                  const arcYOffset = isDesktop
+                    ? Math.pow(Math.abs(centerOffset), 1.8) * 3.5
+                    : 0;
 
                   return (
                     <motion.div
@@ -447,35 +453,37 @@ export const HumanHand: React.FC<HumanHandProps> = ({
                       onClick={() => handleCardClick(card, playable)}
                       whileHover={
                         playable
-                          ? {
-                              scale: 1.1,
-                              y: -22,
-                              rotate: 0,
-                              zIndex: 35,
-                              transition: { type: 'spring', damping: 15, stiffness: 400 },
-                            }
+                          ? isDesktop
+                            ? {
+                                scale: 1.1,
+                                y: -22,
+                                rotate: 0,
+                                zIndex: 35,
+                                transition: { type: 'spring', damping: 15, stiffness: 400 },
+                              }
+                            : { scale: 1.05, y: -12 }
                           : {}
                       }
                       animate={{
                         opacity: 1,
-                        y: isSelected ? -24 : isInstantWinCard ? -12 : arcYOffset,
-                        scale: isSelected ? 1.08 : isInstantWinCard ? 1.04 : 1,
+                        y: isSelected ? (isDesktop ? -24 : -18) : isInstantWinCard ? -12 : (isDesktop ? arcYOffset : 0),
+                        scale: isSelected ? (isDesktop ? 1.08 : 1.06) : isInstantWinCard ? 1.04 : 1,
                         rotate: isSelected ? 0 : rotationAngle,
-                        zIndex: isSelected ? 30 : isInstantWinCard ? 20 : 10 + idx,
+                        zIndex: isSelected ? 30 : isInstantWinCard ? 20 : (isDesktop ? 10 + idx : undefined),
                       }}
                       transition={{ type: 'spring', damping: 20, stiffness: 320 }}
-                      className={`relative w-14 sm:w-22 md:w-24 lg:w-20 xl:w-24 h-22 sm:h-32 md:h-36 lg:h-32 xl:h-36 rounded-xl bg-white text-slate-950 p-1 sm:p-2.5 flex flex-col justify-between shadow-2xl select-none text-left cursor-grab active:cursor-grabbing transition-[border-color,box-shadow] duration-150 overflow-hidden ${
+                      className={`relative w-14 sm:w-24 md:w-28 lg:w-20 xl:w-24 h-22 sm:h-36 md:h-40 lg:h-32 xl:h-36 rounded-xl bg-white text-slate-950 p-1 sm:p-2.5 flex flex-col justify-between shadow-2xl select-none text-left cursor-grab active:cursor-grabbing transition-[border-color,box-shadow] duration-150 overflow-hidden ${
                         isDealing
                           ? 'ring-2 ring-amber-400 border-2 border-amber-300 shadow-amber-400/30'
                           : isInstantWinCard
-                          ? 'border-2 border-amber-400 ring-4 ring-amber-400 ring-offset-2 ring-offset-slate-900 shadow-2xl shadow-amber-400/50'
+                          ? 'border-2 border-amber-400 ring-4 ring-amber-400 ring-offset-2 ring-offset-slate-900 shadow-2xl shadow-amber-400/50 z-30'
                           : isSelected
-                          ? 'border-2 border-amber-400 ring-4 ring-amber-400 ring-offset-2 ring-offset-slate-900 shadow-2xl shadow-amber-400/50'
+                          ? 'border-2 border-amber-400 ring-4 ring-amber-400 ring-offset-2 ring-offset-slate-900 shadow-2xl shadow-amber-400/50 z-30'
                           : shouldGlowGold
-                          ? 'golden-glow-pulse border-2 border-amber-400 cursor-pointer shadow-amber-400/30'
+                          ? 'golden-glow-pulse border-2 border-amber-400 z-20 cursor-pointer'
                           : playable
-                          ? 'border-2 border-slate-300 hover:border-amber-400 hover:shadow-xl cursor-pointer shadow-lg'
-                          : 'border-2 border-slate-300/40 opacity-35 grayscale-[50%] cursor-not-allowed pointer-events-none'
+                          ? 'border-2 border-slate-300 hover:border-amber-300 z-10 cursor-pointer shadow-lg'
+                          : 'border-2 border-slate-300/40 opacity-35 grayscale-[50%] cursor-not-allowed z-0 pointer-events-none'
                       }`}
                     >
                       {/* Visual Drag arrow hint when selected */}
@@ -603,7 +611,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
             </button>
           )}
 
-          {/* 3. Valider Button (Primary CTA - Visible everywhere with contextual card name) */}
+          {/* 3. Valider Button (Primary CTA - Visible everywhere, contextual on desktop) */}
           {!instantWinReveal && (
             <button
               id="btn-valider-carte"
@@ -613,15 +621,15 @@ export const HumanHand: React.FC<HumanHandProps> = ({
                 onValidateCard();
               }}
               disabled={!isHumanTurn || !selectedCard || isDealing}
-              className={`flex items-center justify-center gap-1.5 px-3.5 sm:px-5 py-1.5 sm:py-2.5 rounded-xl font-black uppercase tracking-wider text-xs sm:text-sm btn-juicy shrink-0 transition-all ${
+              className={`flex items-center justify-center gap-1.5 px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-xl font-black uppercase tracking-wider text-xs sm:text-sm btn-juicy shrink-0 ${
                 isHumanTurn && selectedCard && !isDealing
-                  ? 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 shadow-[0_4px_0_0_#b45309,0_0_15px_rgba(245,158,11,0.4)] active:translate-y-0.5 active:shadow-none cursor-pointer ring-2 ring-amber-300'
+                  ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-[0_3px_0_0_#b45309] active:translate-y-0.5 active:shadow-none cursor-pointer ring-1 ring-amber-300'
                   : 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed opacity-60'
               }`}
             >
-              <ArrowUpCircle className={`w-4 h-4 shrink-0 ${isHumanTurn && selectedCard && !isDealing ? 'animate-bounce' : ''}`} />
+              <ArrowUpCircle className={`w-4 h-4 ${isHumanTurn && selectedCard && !isDealing ? 'animate-bounce' : ''}`} />
               <span>
-                {selectedCard && isHumanTurn && !isDealing ? (
+                {isDesktop && selectedCard && isHumanTurn && !isDealing ? (
                   <span className="flex items-center gap-1">
                     <span className="hidden sm:inline">Jouer le</span>
                     <span className="font-mono text-sm sm:text-base font-black">{selectedCard.value}</span>

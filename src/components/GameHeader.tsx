@@ -204,10 +204,19 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
 
             <div className="h-3 w-px bg-slate-800" />
 
-            {/* Animated Golden Chip Stack Pot Counter */}
+            {/* Mobile Pot Counter (<1024px) */}
+            <div className="flex items-center gap-1 lg:hidden">
+              <span className="text-slate-400 text-[10px] sm:text-[11px]">Pot</span>
+              <span className="font-extrabold text-emerald-400 flex items-center gap-0.5 text-[11px] sm:text-xs font-mono">
+                <span>{activeGameState.pot || 0}</span>
+                <span className="text-[11px] text-amber-400 font-normal">🪙</span>
+              </span>
+            </div>
+
+            {/* Desktop Animated Golden Chip Stack Pot Counter (>=1024px) */}
             <div
               id="header-pot-chip-stack"
-              className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-emerald-950/40 border border-emerald-500/30 shadow-xs"
+              className="hidden lg:flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-emerald-950/40 border border-emerald-500/30 shadow-xs"
               title={`Pot actuel de la donne : ${activeGameState.pot || 0} jetons`}
             >
               <div className="relative flex items-center justify-center w-5 h-4 shrink-0">

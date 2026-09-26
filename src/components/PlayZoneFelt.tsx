@@ -101,12 +101,12 @@ export const PlayZoneFelt: React.FC<PlayZoneFeltProps> = ({
   return (
     <div
       id="play-zone-felt"
-      className={`relative w-full rounded-2xl bg-[radial-gradient(ellipse_at_center,#065f46_0%,#044332_55%,#022c22_100%)] border-2 sm:border-4 transition-all duration-300 p-1.5 sm:p-2.5 lg:p-4 lg:max-w-3xl lg:mx-auto flex flex-col justify-between min-h-[115px] sm:min-h-[160px] lg:min-h-0 overflow-hidden my-auto ${
+      className={`relative w-full rounded-2xl bg-emerald-900 lg:bg-[radial-gradient(ellipse_at_center,#065f46_0%,#044332_55%,#022c22_100%)] border transition-all duration-300 sm:border-4 p-1.5 sm:p-2.5 lg:p-4 lg:max-w-3xl lg:mx-auto flex flex-col justify-between min-h-[115px] sm:min-h-[160px] lg:min-h-0 overflow-hidden my-auto ${
         hasKoraThreat
           ? 'border-rose-500/90 shadow-[inset_0_0_30px_rgba(225,29,72,0.45),0_0_35px_rgba(225,29,72,0.65)] animate-pulse'
           : isDecisiveFifthTrick
-            ? 'border-amber-500/90 shadow-[inset_0_4px_30px_rgba(0,0,0,0.85),0_0_25px_rgba(245,158,11,0.35)] ring-1 ring-amber-400/50'
-            : 'border-[#78350f]/80 ring-1 ring-amber-500/30 shadow-[inset_0_4px_30px_rgba(0,0,0,0.7),0_10px_25px_rgba(0,0,0,0.5)]'
+            ? 'border-amber-500/80 shadow-[inset_0_4px_30px_rgba(0,0,0,0.8),0_0_25px_rgba(245,158,11,0.25)] lg:border-amber-500/90 lg:ring-1 lg:ring-amber-400/50 lg:shadow-[inset_0_4px_30px_rgba(0,0,0,0.85),0_0_25px_rgba(245,158,11,0.35)]'
+            : 'border-emerald-800/90 shadow-[inset_0_4px_20px_rgba(0,0,0,0.6),0_8px_20px_rgba(0,0,0,0.4)] lg:border-[#78350f]/80 lg:ring-1 lg:ring-amber-500/30 lg:shadow-[inset_0_4px_30px_rgba(0,0,0,0.7),0_10px_25px_rgba(0,0,0,0.5)]'
       } ${mbapActive ? 'animate-mbap-shake' : ''}`}
     >
       {/* 5th Trick Dramatic Tension Vignette */}
