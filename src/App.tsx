@@ -2230,7 +2230,7 @@ function GameApp() {
             <div className="flex flex-col lg:flex-row lg:items-stretch lg:gap-4 lg:h-full lg:min-h-0 w-full flex-1 gap-1 sm:gap-2">
               
               {/* 1. Left Arena (on lg:): Banners, Play Zone Felt, Human Hand */}
-              <div className="order-2 lg:order-1 flex flex-col gap-1 sm:gap-2 lg:flex-1 lg:flex lg:flex-col lg:min-h-0 lg:justify-between">
+              <div className="order-2 lg:order-1 flex flex-1 flex-col justify-between gap-1 sm:gap-2 lg:min-h-0">
                 {/* Reconnection In-Progress Banner */}
                 {isOnlineActive && !isWsConnected && (
                   <div
