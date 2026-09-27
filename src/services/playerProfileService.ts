@@ -474,7 +474,11 @@ export const playerProfileService = {
             email: parsed.email || null,
             photoURL: parsed.photoURL || null,
             avatarId: (parsed.avatarId as AvatarOptionId) || 'lion',
-            isGuest: parsed.isGuest !== false,
+            // Si l'information n'a pas pu être sauvegardée (undefined/null), on ne suppose JAMAIS le pire :
+            // un profil déjà enregistré avec un identifiant réel n'est traité comme invité que si
+            // isGuest vaut explicitement true. Cela évite qu'un compte Google authentifié ne bascule
+            // silencieusement en invité anonyme faute d'une seule information manquante.
+            isGuest: Boolean(parsed.isGuest),
             chips: typeof parsed.chips === 'number' && !isNaN(parsed.chips) ? parsed.chips : fallbackChips,
             stats: finalStats,
             scoreVersion: parsed.scoreVersion,

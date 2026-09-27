@@ -1067,6 +1067,26 @@ class WebSocketService {
               }
             }
             this.connect();
+          } else {
+            // La reconnexion a déjà été tentée une fois et l'échec se reproduit à l'identique : ce n'est
+            // plus un simple incident passager. Le plus souvent, cela signifie qu'une identité différente
+            // (ex. après une déconnexion volontaire ou un effacement des données) essaie de reprendre une
+            // table qui ne lui appartient plus. On oublie cette ancienne table au lieu de retenter
+            // indéfiniment, pour ne pas laisser l'application coincée sur un blocage qui ne se réparera
+            // jamais tout seul.
+            console.warn(`[WS] ${errorCode} persists after retry: forgetting the stale active room.`);
+            this.wasDisconnected = false;
+            this.activeRoomCode = null;
+            this.sessionRoomPlayerId = null;
+            this.lastAcceptedState = null;
+            setInRoomStatus(false);
+            this.currentRoom = null;
+            try {
+              localStorage.removeItem('njambo_active_room_code');
+            } catch (e) {
+              // ignore
+            }
+            this.notifyRoomUpdate(null);
           }
         } else if (errorCode === 'ROOM_NOT_FOUND') {
           this.wasDisconnected = false;
