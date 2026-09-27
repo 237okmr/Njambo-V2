@@ -39,6 +39,8 @@ export interface KatikaEngineConfig {
   googleVerifyTimeoutSeconds?: number;
   authRetryMaxAttempts?: number;
   authRetryBaseDelayMs?: number;
+  publicTablesRequireGoogleAuth?: boolean;
+  privateTablesRequireGoogleAuth?: boolean;
   roundEndWatchdogMs?: number;
   lobbyWaitTtlMinutes?: number;
   publicAbsentHostVisibilitySeconds?: number;

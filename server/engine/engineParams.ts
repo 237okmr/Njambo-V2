@@ -214,6 +214,17 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Point de départ du délai croissant entre deux tentatives de vérification du compte Google.',
   },
 
+  {
+    key: 'publicTablesRequireGoogleAuth', label: 'Compte Google requis sur les tables publiques', unit: '', type: 'boolean',
+    min: 0, max: 1, default: false, group: 'salons', scope: 'server', effect: 'immediate',
+    help: 'Prérogative katika : n\'est jamais visible ni modifiable par les joueurs, y compris l\'hôte. Ne s\'applique pas (encore) aux futures tables Kora Cash, qui auront leur propre politique.',
+  },
+  {
+    key: 'privateTablesRequireGoogleAuth', label: 'Compte Google requis sur les tables privées', unit: '', type: 'boolean',
+    min: 0, max: 1, default: false, group: 'salons', scope: 'server', effect: 'immediate',
+    help: 'Prérogative katika : n\'est jamais visible ni modifiable par les joueurs, y compris l\'hôte. Ne s\'applique pas (encore) aux futures tables Kora Cash, qui auront leur propre politique.',
+  },
+
   // ===== Groupe salons =====
   {
     key: 'emptyRoomTimeoutMinutes', label: 'Suppression d\'une table sans humain connecté', unit: 'min',

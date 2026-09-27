@@ -408,6 +408,19 @@ export class RoomManager {
     return getEngineConfig();
   }
 
+  /**
+   * Prérogative katika, jamais un choix du joueur ni de l'hôte : une table publique ou privée exige-t-elle
+   * un compte Google, selon le réglage global correspondant ? Toujours recalculé en direct (jamais figé à
+   * la création d'une table), pour que tout changement dans katika s'applique immédiatement à toutes les
+   * tables déjà ouvertes, sans opération de rattrapage. Les tables Kora Cash (à venir) auront leur propre
+   * politique, distincte de celle-ci.
+   */
+  public static getRequireGoogleAuthForRoom(isPublic: boolean): boolean {
+    return isPublic
+      ? Boolean(this.engineConfig.publicTablesRequireGoogleAuth)
+      : Boolean(this.engineConfig.privateTablesRequireGoogleAuth);
+  }
+
   // Activé une seule fois par server.ts après la restauration au démarrage. Reste désactivé pendant les
   // tests, qui exercent broadcastRoomState en continu et ne doivent jamais toucher Firestore.
   private static snapshotsEnabled = false;
@@ -1424,15 +1437,19 @@ export class RoomManager {
       enableUnder21: true,
       turnTimerSeconds: this.engineConfig.turnTimerSeconds,
       isPublic: true,
-      requireGoogleAuth: false,
       afkAction: 'auto_play',
     };
     const effectiveBaseBet = Math.max(minBet, settings.baseBet || minBet);
     const effectiveInitialCapital = Math.max(effectiveBaseBet * 5, settings.initialCapital || this.engineConfig.defaultInitialCapital || 100);
     const validMaxPlayers = Math.min(4, Math.max(2, settings.maxPlayers || this.engineConfig.defaultTableMaxPlayers || 2));
 
-    // Host policy: Enforce Google login ONLY if the host explicitly enabled requireGoogleAuth
-    if (settings.requireGoogleAuth && msg.isGuest) {
+    // Prérogative katika, jamais un choix envoyé par le client : dérivé du réglage global correspondant
+    // au type de table (publique ou privée), jamais de ce que l'hôte ou son application auraient demandé.
+    const effectiveIsPublic = settings.isPublic !== undefined ? settings.isPublic : true;
+    const requireGoogleAuth = this.getRequireGoogleAuthForRoom(effectiveIsPublic);
+
+    // Host policy: Enforce Google login ONLY if katika requires it for this table type
+    if (requireGoogleAuth && msg.isGuest) {
       this.sendMessage(client.socket, {
         type: 'ERROR',
         errorCode: 'JOIN_REFUSED',
@@ -1468,7 +1485,7 @@ export class RoomManager {
       originalHostId: client.playerId,
       hostName: hostPlayer.name,
       isPublic: settings.isPublic !== undefined ? settings.isPublic : true,
-      requireGoogleAuth: settings.requireGoogleAuth || false,
+      requireGoogleAuth, // valeur uniquement informative : le contrôle réel se fait toujours en direct (getRequireGoogleAuthForRoom)
       status: 'LOBBY',
       fillWithBots: settings.fillWithBots,
       maxPlayers: validMaxPlayers,
@@ -1713,12 +1730,13 @@ export class RoomManager {
       }
     }
 
-    // Host policy: Enforce Google login ONLY if room has requireGoogleAuth explicitly set
-    if (room.requireGoogleAuth && !existingPlayer && msg.isGuest) {
+    // Prérogative katika, jamais un réglage de l'hôte : toujours recalculée en direct pour que tout
+    // changement dans katika s'applique immédiatement, y compris aux tables déjà ouvertes.
+    if (this.getRequireGoogleAuthForRoom(room.isPublic) && !existingPlayer && msg.isGuest) {
       this.sendMessage(client.socket, {
         type: 'ERROR',
         errorCode: 'JOIN_REFUSED',
-        error: "Connexion Google requise : L'hôte de cette table a restreint l'accès aux comptes Google.",
+        error: "Connexion Google requise : cette table exige un compte Google.",
       });
       return;
     }

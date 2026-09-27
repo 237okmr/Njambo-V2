@@ -1841,27 +1841,6 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   Moins de 21
                 </span>
               )}
-              {isHost && (
-                <button
-                  type="button"
-                  id="btn-toggle-google-auth-lock"
-                  onClick={() => {
-                    if (onUpdateSettings) {
-                      onUpdateSettings({ requireGoogleAuth: !room.requireGoogleAuth });
-                      triggerHaptic('light');
-                    }
-                  }}
-                  className={`px-2 py-0.5 rounded-md font-bold text-[10px] border flex items-center gap-1 cursor-pointer transition ${
-                    room.requireGoogleAuth
-                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                      : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-slate-200'
-                  }`}
-                  title="Exiger un compte Google vérifié pour rejoindre le salon"
-                >
-                  <Lock className="w-2.5 h-2.5" />
-                  <span>Google Auth : {room.requireGoogleAuth ? 'Actif 🔒' : 'Libre'}</span>
-                </button>
-              )}
             </div>
           </div>
 
