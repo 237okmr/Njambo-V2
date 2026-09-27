@@ -203,6 +203,17 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Empêche de spammer d\'invitations un même joueur.',
   },
 
+  {
+    key: 'authRetryMaxAttempts', label: 'Tentatives de vérification Google', unit: '',
+    min: 1, max: 5, default: 3, group: 'connexion', scope: 'client', effect: 'immediate',
+    help: 'Nombre de tentatives avant d\'abandonner la vérification du compte Google et de continuer en invité.',
+  },
+  {
+    key: 'authRetryBaseDelayMs', label: 'Délai de base entre deux tentatives Google', unit: 'ms',
+    min: 500, max: 5000, default: 1500, group: 'connexion', scope: 'client', effect: 'immediate', advanced: true,
+    help: 'Point de départ du délai croissant entre deux tentatives de vérification du compte Google.',
+  },
+
   // ===== Groupe salons =====
   {
     key: 'emptyRoomTimeoutMinutes', label: 'Suppression d\'une table sans humain connecté', unit: 'min',

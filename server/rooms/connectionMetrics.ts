@@ -23,6 +23,8 @@ export interface DailyMetrics {
   rejectedInvalidIdentifier: number;
   sessionTakeovers: number;
   disconnectionsByPlayer: Record<string, number>;
+  authTimeouts: number;
+  authTokenInvalid: number;
 }
 
 function emptyMetrics(dateKey: string): DailyMetrics {
@@ -40,6 +42,8 @@ function emptyMetrics(dateKey: string): DailyMetrics {
     rejectedInvalidIdentifier: 0,
     sessionTakeovers: 0,
     disconnectionsByPlayer: {},
+    authTimeouts: 0,
+    authTokenInvalid: 0,
   };
 }
 
@@ -108,6 +112,16 @@ export function recordIdentitySubstitution(): void {
 export function recordRejectedInvalidIdentifier(): void {
   rollIfNewDay();
   current.rejectedInvalidIdentifier += 1;
+}
+
+export function recordAuthTimeout(): void {
+  rollIfNewDay();
+  current.authTimeouts += 1;
+}
+
+export function recordAuthTokenInvalid(): void {
+  rollIfNewDay();
+  current.authTokenInvalid += 1;
 }
 
 export interface MetricsSnapshot extends DailyMetrics {

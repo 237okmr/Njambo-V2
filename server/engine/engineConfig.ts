@@ -37,6 +37,8 @@ export interface KatikaEngineConfig {
   metricsFlushSeconds?: number;
   metricsRetentionDays?: number;
   googleVerifyTimeoutSeconds?: number;
+  authRetryMaxAttempts?: number;
+  authRetryBaseDelayMs?: number;
   roundEndWatchdogMs?: number;
   lobbyWaitTtlMinutes?: number;
   publicAbsentHostVisibilitySeconds?: number;

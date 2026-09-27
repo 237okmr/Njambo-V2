@@ -435,6 +435,15 @@ function GameApp() {
     return () => unsub();
   }, [triggerToast]);
 
+  // Toutes les tentatives de vérification du compte Google ont échoué : on continue en invité pour
+  // cette partie, plutôt que de laisser le joueur deviner pourquoi la connexion se comportait bizarrement.
+  useEffect(() => {
+    const unsub = wsService.onGoogleAuthExhausted(() => {
+      triggerToast("Ton compte Google n'a pas pu être confirmé : tu continues en invité pour cette partie.");
+    });
+    return () => unsub();
+  }, [triggerToast]);
+
   // Discrete notification when player reconnects and AI relay played trick(s) in their absence
   useEffect(() => {
     if (!isOnlineActive || !multiplayerRoom?.activeEmotes) return;

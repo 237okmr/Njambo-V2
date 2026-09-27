@@ -13,6 +13,8 @@ interface ConnectionMetrics {
   rejectedInvalidIdentifier: number;
   sessionTakeovers: number;
   playersWithMultipleDisconnects: number;
+  authTimeouts: number;
+  authTokenInvalid: number;
 }
 
 /**
@@ -92,6 +94,8 @@ export const KatikaConnectionHealthPanel: React.FC = () => {
           {stat('Prises de contrôle (4001)', metrics.sessionTakeovers)}
           {stat('Identifiants rejetés', metrics.rejectedInvalidIdentifier, 'bug d\'identité possible si > 0')}
           {stat('Joueurs instables', metrics.playersWithMultipleDisconnects, '3 déconnexions ou plus aujourd\'hui')}
+          {stat('Délais vérif. Google', metrics.authTimeouts, 'connexions Google trop lentes à confirmer')}
+          {stat('Jetons Google refusés', metrics.authTokenInvalid, 'jeton expiré ou invalide')}
         </div>
       )}
     </div>

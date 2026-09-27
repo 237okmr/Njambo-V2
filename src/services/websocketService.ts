@@ -85,7 +85,13 @@ class WebSocketService {
   private authSentOnThisSocket: boolean = false;
   private authConfirmedOnThisSocket: boolean = false;
   private pendingAuthMessages: string[] = [];
-  private hasAttemptedAuthRetry: boolean = false;
+  // Nombre de tentatives de vérification Google déjà effectuées sur cette connexion (authRetryMaxAttempts
+  // dans le registre, 3 par défaut). Remis à zéro à chaque connexion réussie.
+  private authRetryCount: number = 0;
+  private authRetryTimer: ReturnType<typeof setTimeout> | null = null;
+  // Prévient l'écran quand toutes les tentatives de vérification Google ont échoué, pour afficher un
+  // message clair ("compte Google non confirmé, vous continuez en invité") plutôt que de laisser deviner.
+  private googleAuthExhaustedListeners: Set<() => void> = new Set();
   // Une nouvelle tentative après un jeton Google refusé (expiré, invalide) doit forcer un jeton tout
   // neuf : redemander sans forcer risquerait de récupérer exactement le même jeton périmé en cache, et
   // d'échouer indéfiniment de la même façon, sans jamais se réparer.
@@ -441,6 +447,7 @@ class WebSocketService {
             this.roomSyncedOnThisSocket = false;
             this.reconnectAttempts = 0;
             this.consecutiveReconnectFailures = 0;
+            this.authRetryCount = 0;
             this.startHeartbeat();
             this.notifyConnectionState(true);
 
@@ -750,6 +757,12 @@ class WebSocketService {
     return () => this.unstableConnectionListeners.delete(listener);
   }
 
+  /** Prévient quand la vérification du compte Google a échoué après toutes les tentatives prévues. */
+  public onGoogleAuthExhausted(listener: () => void): () => void {
+    this.googleAuthExhaustedListeners.add(listener);
+    return () => this.googleAuthExhaustedListeners.delete(listener);
+  }
+
   public setPresenceStatus(status: 'ONLINE_IDLE' | 'IN_SOLO' | 'IN_LOBBY' | 'IN_GAME' | 'OFFLINE'): void {
     this.currentPresenceStatus = status;
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
@@ -958,7 +971,7 @@ class WebSocketService {
           return;
         }
 
-        this.hasAttemptedAuthRetry = false;
+        this.authRetryCount = 0;
         if (msg.playerId) {
           const canonicalId = getPlayerId();
           if (msg.playerId !== canonicalId) {
@@ -1040,7 +1053,7 @@ class WebSocketService {
             console.warn(`[WS Auto-repair] Server expectedPlayerId '${msg.expectedPlayerId}' matches Google UID. Realigning identity.`);
             setLocalPlayerId(msg.expectedPlayerId);
             this.sessionRoomPlayerId = null;
-            if (!this.hasAttemptedAuthRetry) {
+            if (this.authRetryCount === 0) {
               isFirstRepair = true;
             }
           }
@@ -1048,33 +1061,41 @@ class WebSocketService {
 
         // AUTH_REQUIRED (identifiant rejeté par le serveur), AUTH_TIMEOUT (vérification Google trop
         // lente côté serveur) et AUTH_TOKEN_INVALID (jeton Google refusé, expiré) se réparent de la même
-        // façon : une reconnexion complète. Pour AUTH_TOKEN_INVALID en particulier, on force en plus la
-        // récupération d'un jeton tout neuf (forceTokenRefreshOnNextConnect) : sans cela, redemander le
-        // jeton normalement peut renvoyer exactement le même jeton périmé depuis le cache du navigateur,
-        // et échouer indéfiniment de la même façon, sans jamais se réparer.
+        // façon : plusieurs reconnexions complètes (authRetryMaxAttempts, 3 par défaut), avec un délai
+        // croissant entre chaque (authRetryBaseDelayMs). Pour AUTH_TOKEN_INVALID en particulier, on force
+        // en plus la récupération d'un jeton tout neuf (forceTokenRefreshOnNextConnect) : sans cela,
+        // redemander le jeton normalement peut renvoyer exactement le même jeton périmé depuis le cache
+        // du navigateur, et échouer indéfiniment de la même façon, sans jamais se réparer.
         if (errorCode === 'AUTH_REQUIRED' || errorCode === 'AUTH_TIMEOUT' || errorCode === 'AUTH_TOKEN_INVALID') {
-          if (!this.hasAttemptedAuthRetry) {
-            this.hasAttemptedAuthRetry = true;
+          const maxAttempts = getPublicParamNumber('authRetryMaxAttempts');
+          if (this.authRetryCount < maxAttempts) {
+            const baseMs = getPublicParamNumber('authRetryBaseDelayMs');
+            const delay = computeReconnectDelayMs(this.authRetryCount, baseMs, baseMs * 8);
+            this.authRetryCount += 1;
             if (errorCode === 'AUTH_TOKEN_INVALID') {
               this.forceTokenRefreshOnNextConnect = true;
             }
-            console.warn(`[WS] Server returned ${errorCode}: attempting one-time reconnection with AUTH.`);
-            if (this.socket) {
-              try {
-                this.socket.close(1000, `${errorCode} retry`);
-              } catch (e) {
-                // ignore
+            console.warn(`[WS] Server returned ${errorCode}: tentative ${this.authRetryCount}/${maxAttempts} dans ${delay}ms.`);
+            if (this.authRetryTimer) clearTimeout(this.authRetryTimer);
+            this.authRetryTimer = setTimeout(() => {
+              this.authRetryTimer = null;
+              if (this.socket) {
+                try {
+                  this.socket.close(1000, `${errorCode} retry`);
+                } catch (e) {
+                  // ignore
+                }
               }
-            }
-            this.connect();
+              this.connect();
+            }, delay);
           } else {
-            // La reconnexion a déjà été tentée une fois et l'échec se reproduit à l'identique : ce n'est
-            // plus un simple incident passager. Le plus souvent, cela signifie qu'une identité différente
-            // (ex. après une déconnexion volontaire ou un effacement des données) essaie de reprendre une
-            // table qui ne lui appartient plus. On oublie cette ancienne table au lieu de retenter
-            // indéfiniment, pour ne pas laisser l'application coincée sur un blocage qui ne se réparera
-            // jamais tout seul.
-            console.warn(`[WS] ${errorCode} persists after retry: forgetting the stale active room.`);
+            // Toutes les tentatives ont échoué à l'identique : ce n'est plus un simple incident passager.
+            // Le plus souvent, cela signifie qu'une identité différente (ex. après une déconnexion
+            // volontaire ou un effacement des données) essaie de reprendre une table qui ne lui appartient
+            // plus, ou que la vérification Google est durablement indisponible. On oublie cette ancienne
+            // table au lieu de retenter indéfiniment, et on informe clairement le joueur plutôt que de le
+            // laisser deviner pourquoi ça ne marche pas.
+            console.warn(`[WS] ${errorCode} persists after ${maxAttempts} attempts: forgetting the stale active room.`);
             this.wasDisconnected = false;
             this.activeRoomCode = null;
             this.sessionRoomPlayerId = null;
@@ -1087,6 +1108,13 @@ class WebSocketService {
               // ignore
             }
             this.notifyRoomUpdate(null);
+            this.googleAuthExhaustedListeners.forEach((l) => {
+              try {
+                l();
+              } catch (e) {
+                console.warn('[WS] Google auth exhausted listener error:', e);
+              }
+            });
           }
         } else if (errorCode === 'ROOM_NOT_FOUND') {
           this.wasDisconnected = false;

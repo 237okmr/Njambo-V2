@@ -11,7 +11,7 @@ import { shouldBotAcceptBetIncrease, BOT_BET_INCREASE_AGREE_EMOTES, BOT_BET_INCR
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../src/lib/firebase';
 import { scheduleRoomSnapshot, deleteRoomSnapshot, saveRoomSnapshotNow, flushAllPendingSnapshots, loadRoomsAtBoot, hashReconnectToken } from './roomSnapshotStore';
-import { recordReconnection, recordIdentitySubstitution, recordRejectedInvalidIdentifier, recordSeatReleased, recordRoomRestored, recordRelayTriggered } from './connectionMetrics';
+import { recordReconnection, recordIdentitySubstitution, recordRejectedInvalidIdentifier, recordSeatReleased, recordRoomRestored, recordRelayTriggered, recordAuthTimeout, recordAuthTokenInvalid } from './connectionMetrics';
 
 export interface ConnectedClient {
   socket: WebSocket;
@@ -951,6 +951,7 @@ export class RoomManager {
         client.isAuthenticating = false;
         if (!result || !result.uid) {
           console.warn(`[Auth] ID token verification failed for client ${client.playerId}`);
+          recordAuthTokenInvalid();
           this.sendMessage(client.socket, {
             type: 'ERROR',
             errorCode: 'AUTH_TOKEN_INVALID',
@@ -1043,14 +1044,15 @@ export class RoomManager {
 
         if (err?.message === 'AUTH_TIMEOUT') {
           const timestamp = new Date().toISOString();
-          console.warn(`[Auth Timeout] Google ID token verification timed out (8s) for playerId '${client.playerId}' at ${timestamp}`);
+          recordAuthTimeout();
+          console.warn(`[Auth Timeout] Google ID token verification timed out (${Math.round(AUTH_TIMEOUT_MS / 1000)}s) for playerId '${client.playerId}' at ${timestamp}`);
           this.addAuditLog({
             id: `log-${Date.now()}`,
             timestamp: Date.now(),
             type: 'AUTH',
             severity: 'WARNING',
             actor: 'Auth Manager',
-            summary: `Timeout vérification Google (8s) pour le joueur (${client.playerId})`,
+            summary: `Timeout vérification Google (${Math.round(AUTH_TIMEOUT_MS / 1000)}s) pour le joueur (${client.playerId})`,
             details: { playerId: client.playerId, timestamp },
           });
           this.sendMessage(client.socket, {

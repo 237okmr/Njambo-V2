@@ -517,6 +517,14 @@ export const playerProfileService = {
    * Saves profile locally and syncs legacy keys for engine compatibility.
    */
   saveLocalProfile(profile: PlayerProfile): void {
+    // Garde-fou : si Firebase confirme, à l'instant présent, une session Google active, on ne laisse
+    // jamais un profil marqué par erreur "invité" être écrit tel quel. Ferme la porte à toute nouvelle
+    // variante du bug corrigé plus haut (isGuest devenu vrai par erreur), même dans un chemin de code
+    // qu'on n'aurait pas encore identifié.
+    if (profile.isGuest && this.isGoogleAuthenticated()) {
+      console.warn('[PlayerProfile] saveLocalProfile: isGuest=true contredit une session Google active. Correction avant écriture.');
+      profile = { ...profile, isGuest: false, uid: auth.currentUser!.uid };
+    }
     try {
       localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
       if (!profile.isGuest && profile.uid) {
