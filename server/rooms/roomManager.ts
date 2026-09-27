@@ -5393,16 +5393,26 @@ export class RoomManager {
       }
     }
 
-    // 1. Look for an available public room in LOBBY with matching settings or empty seats
+    // 1. Cherche une table publique en attente, avec une place libre, dont la mise est proche de celle
+    // demandée (jamais une table à une mise très différente : un joueur qui règle 100 jetons ne doit
+    // jamais se retrouver assigné à une table à 10 jetons sans l'avoir choisi).
+    const requestedBet = Number(msg.settings?.baseBet) || this.engineConfig.minTableBet || 10;
+    const toleranceRatio = Number(this.engineConfig.quickMatchBetToleranceRatio ?? 2);
     let candidateRoom: MultiplayerRoom | null = null;
+    let candidateBetDiff = Infinity;
     for (const room of this.rooms.values()) {
       if (
         room.isPublic !== false &&
         room.status === 'LOBBY' &&
-        (room.players || []).length < room.maxPlayers
+        (room.players || []).length < room.maxPlayers &&
+        room.baseBet >= requestedBet / toleranceRatio &&
+        room.baseBet <= requestedBet * toleranceRatio
       ) {
-        candidateRoom = room;
-        break;
+        const betDiff = Math.abs(room.baseBet - requestedBet);
+        if (betDiff < candidateBetDiff) {
+          candidateRoom = room;
+          candidateBetDiff = betDiff;
+        }
       }
     }
 
