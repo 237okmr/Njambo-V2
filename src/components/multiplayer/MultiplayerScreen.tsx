@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { getPublicParamNumber } from '../../services/publicConfig';
+import { useVisibleInterval } from '../../hooks/useVisibleInterval';
 import { getTurnTimerChoices } from '../../../server/engine/engineParams';
 import {
   Users,
@@ -143,6 +144,19 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
 }) => {
   // 3-Pillar Navigation Tabs (Zero horizontal scroll)
   const [activeTab, setActiveTab] = useState<MultiplayerTab>('play');
+
+  // Rend le bouton "Remplir avec des bots" plus visible dès que l'attente dépasse botFillReminderSeconds
+  // (même seuil que la relance côté serveur), pour qu'un hôte qui ne remarquerait pas le bouton au premier
+  // coup d'œil finisse par le voir.
+  const [isLongWait, setIsLongWait] = useState(false);
+  useVisibleInterval(() => {
+    if (!room?.createdAt || room.fillWithBots) {
+      if (isLongWait) setIsLongWait(false);
+      return;
+    }
+    const reminderMs = getPublicParamNumber('botFillReminderSeconds') * 1000;
+    setIsLongWait(Date.now() - room.createdAt >= reminderMs);
+  }, 3000);
 
   // Active game conflict state (Confirmation dialog when trying to join/create during an active match)
   const [activeGameConflict, setActiveGameConflict] = useState<{
@@ -1787,8 +1801,9 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
 
             {/* Host or Guest Emergency Action: Switch or Vote Bots */}
             {!room.fillWithBots && (
-              <div className="pt-2 border-t border-slate-800 flex items-center justify-between gap-2">
-                <span className="text-[11px] text-slate-400">
+              <div className={`pt-2 border-t flex items-center justify-between gap-2 ${isLongWait ? 'border-amber-700/60' : 'border-slate-800'}`}>
+                <span className={`text-[11px] flex items-center gap-1 ${isLongWait ? 'text-amber-300 font-bold' : 'text-slate-400'}`}>
+                  {isLongWait && <Clock className="w-3 h-3 animate-pulse" />}
                   {isHost
                     ? "L'attente est trop longue ?"
                     : (room.botVotes && room.botVotes.length > 0)
@@ -1808,7 +1823,9 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                     }
                   }}
                   className={`h-8 px-3 rounded-lg border text-[11px] font-bold flex items-center gap-1.5 cursor-pointer transition active:scale-95 ${
-                    !isHost && room.botVotes?.includes(localPlayerId)
+                    isLongWait
+                      ? 'bg-amber-500/30 hover:bg-amber-500/40 text-amber-200 border-amber-500/60 animate-pulse'
+                      : !isHost && room.botVotes?.includes(localPlayerId)
                       ? 'bg-indigo-600/40 text-indigo-200 border-indigo-500/60'
                       : 'bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border-indigo-500/40'
                   }`}

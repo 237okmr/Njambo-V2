@@ -4086,6 +4086,25 @@ export class RoomManager {
         }
       }
 
+      // 0bis. Relance "table en attente" : si une table publique n'est toujours pas complète après
+      // botFillReminderSeconds, et que personne n'a activé le remplissage par des bots, on prévient
+      // l'hôte une seule fois (le bouton devient aussi plus visible côté client au même seuil).
+      if (
+        room.status === 'LOBBY' &&
+        room.isPublic !== false &&
+        !room.fillWithBots &&
+        !room.botFillReminderSent &&
+        (room.players || []).filter((p) => !p.isSpectator).length < room.maxPlayers
+      ) {
+        const reminderMs = Number(this.engineConfig.botFillReminderSeconds ?? 45) * 1000;
+        if (now - room.createdAt >= reminderMs) {
+          room.botFillReminderSent = true;
+          changed = true;
+          const state = this.getOrCreateActiveState(roomCode, room);
+          state.onPlayerAlert?.(room.hostId, room, { kind: 'BOT_FILL_REMINDER' });
+        }
+      }
+
       // 1. Auto-expire bet increase proposals after 15 seconds
       if (
         room.betIncreaseProposal &&
@@ -4363,6 +4382,14 @@ export class RoomManager {
           'FORFEIT_DECLARED',
           `🪑 Table #${room.id} : siège libéré`,
           "Après plusieurs parties d'absence, votre siège a été confié à un bot pour ne pas bloquer la table. Votre capital reste en jeu : revenez en observateur pour demander à réintégrer la table.",
+          { openTable: true }
+        );
+        return;
+      case 'BOT_FILL_REMINDER':
+        send(
+          'FORFEIT_DECLARED',
+          `⏳ Table #${room.id} : personne ne rejoint ?`,
+          "L'attente se prolonge. Vous pouvez remplir les sièges restants avec des bots pour lancer la partie tout de suite.",
           { openTable: true }
         );
         return;

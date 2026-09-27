@@ -43,7 +43,8 @@ export type PlayerAlert =
   | { kind: 'RELAY_COST'; potShared: boolean; koraPenalty: number }
   | { kind: 'PARTIE_FORFEIT' }
   | { kind: 'MANCHE_LOST_BY_FORFEIT' }
-  | { kind: 'SEAT_RELEASED' };
+  | { kind: 'SEAT_RELEASED' }
+  | { kind: 'BOT_FILL_REMINDER' };
 
 export interface ActiveRoomState {
   room: MultiplayerRoom;

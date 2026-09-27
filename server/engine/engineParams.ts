@@ -225,6 +225,17 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Prérogative katika : n\'est jamais visible ni modifiable par les joueurs, y compris l\'hôte. Ne s\'applique pas (encore) aux futures tables Kora Cash, qui auront leur propre politique.',
   },
 
+  {
+    key: 'quickMatchBetToleranceRatio', label: 'Tolérance de mise pour la Partie Rapide', unit: '',
+    min: 1, max: 5, default: 2, group: 'salons', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Une table dont la mise est jusqu\'à ce facteur plus haute ou plus basse que la mise demandée est considérée comme proche. Ex. 2 : accepte de moitié à double.',
+  },
+  {
+    key: 'botFillReminderSeconds', label: 'Relance pour remplir avec des bots', unit: 's',
+    min: 15, max: 300, default: 45, group: 'salons', scope: 'both', effect: 'immediate',
+    help: 'Après ce délai d\'attente sans table complète, une relance est envoyée à l\'hôte et le bouton "Remplir avec des bots" devient plus visible.',
+  },
+
   // ===== Groupe salons =====
   {
     key: 'emptyRoomTimeoutMinutes', label: 'Suppression d\'une table sans humain connecté', unit: 'min',

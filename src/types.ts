@@ -621,6 +621,8 @@ export interface MultiplayerRoom {
   hostTransferGraceExpiresAt?: number | null; // Timestamp when host role will auto-transfer due to inactivity
   bannedPlayerIds?: string[]; // Player IDs kicked by host
   botVotes?: string[]; // Player IDs who voted to start with bots in lobby
+  /** Vrai dès que la relance "table en attente" (botFillReminderSeconds) a été envoyée, pour ne l'envoyer qu'une fois. */
+  botFillReminderSent?: boolean;
   hostAbsentSince?: number;
   lastJoinPushTime?: number;
   joinPushCount?: number;
