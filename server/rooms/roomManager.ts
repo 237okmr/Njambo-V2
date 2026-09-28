@@ -1635,7 +1635,7 @@ export class RoomManager {
     let updateRecommended = false;
 
     if (clientProto < this.CURRENT_PROTOCOL_VERSION) {
-      if (this.engineConfig.versionPolicy === 'STRICT') {
+      if (this.engineConfig.strictProtocolVersionCheck) {
         this.sendMessage(client.socket, {
           type: 'ERROR',
           errorCode: 'GENERIC',

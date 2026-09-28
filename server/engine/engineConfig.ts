@@ -43,6 +43,7 @@ export interface KatikaEngineConfig {
   privateTablesRequireGoogleAuth?: boolean;
   quickMatchBetToleranceRatio?: number;
   botFillReminderSeconds?: number;
+  strictProtocolVersionCheck?: boolean;
   roundEndWatchdogMs?: number;
   lobbyWaitTtlMinutes?: number;
   publicAbsentHostVisibilitySeconds?: number;
@@ -55,7 +56,6 @@ export interface KatikaEngineConfig {
   isMaintenanceMode: boolean;
   bettingEconomyEnabled: boolean;
   maintenanceNotice: string;
-  versionPolicy: 'PERMISSIVE' | 'MODERATE' | 'STRICT';
   transitionDelayMs: number;
   botThinkTimeMs: number;
   trickResolutionTimeMs: number;
@@ -86,7 +86,6 @@ const LEGACY_ENGINE_DEFAULTS = {
   isMaintenanceMode: false,
   bettingEconomyEnabled: false,
   maintenanceNotice: 'Serveur de jeu en maintenance administrative.',
-  versionPolicy: 'MODERATE',
   defaultTableMaxPlayers: 2,
   defaultFillWithBots: false,
   allowJoinInProgress: true,

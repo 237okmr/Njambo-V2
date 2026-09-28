@@ -236,6 +236,12 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Après ce délai d\'attente sans table complète, une relance est envoyée à l\'hôte et le bouton "Remplir avec des bots" devient plus visible.',
   },
 
+  {
+    key: 'strictProtocolVersionCheck', label: 'Rejeter les clients avec un protocole obsolète', unit: '', type: 'boolean',
+    min: 0, max: 1, default: false, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Si activé, un appareil dont l\'application n\'est pas encore à jour est refusé à la connexion plutôt que simplement invité à se mettre à jour. À utiliser avec prudence : peut bloquer des joueurs pendant la propagation d\'une mise à jour.',
+  },
+
   // ===== Groupe salons =====
   {
     key: 'emptyRoomTimeoutMinutes', label: 'Suppression d\'une table sans humain connecté', unit: 'min',
