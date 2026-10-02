@@ -88,6 +88,12 @@ class WebSocketService {
   // Nombre de tentatives de vérification Google déjà effectuées sur cette connexion (authRetryMaxAttempts
   // dans le registre, 3 par défaut). Remis à zéro à chaque connexion réussie.
   private authRetryCount: number = 0;
+  // Instant où l'application est passée en arrière-plan (null = au premier plan ou durée déjà consommée).
+  private hiddenSinceAt: number | null = null;
+  // Si vrai, la prochaine table reçue du serveur est oubliée quand sa manche est déjà terminée (retour d'absence).
+  private forgetRoomIfFinishedOnJoin: boolean = false;
+  // Table oubliée après une manche terminée : ses mises à jour tardives sont ignorées jusqu'à ce que le joueur en rejoigne une.
+  private forgottenRoomCode: string | null = null;
   private authRetryTimer: ReturnType<typeof setTimeout> | null = null;
   // Prévient l'écran quand toutes les tentatives de vérification Google ont échoué, pour afficher un
   // message clair ("compte Google non confirmé, vous continuez en invité") plutôt que de laisser deviner.
@@ -221,6 +227,8 @@ class WebSocketService {
         if (savedRoom) {
           this.activeRoomCode = savedRoom;
           setInRoomStatus(true);
+          // Page rechargée avec une table en mémoire : si sa manche est déjà terminée, elle sera oubliée à la réponse du serveur.
+          this.forgetRoomIfFinishedOnJoin = true;
         }
       } catch (e) {
         // ignore
@@ -229,9 +237,14 @@ class WebSocketService {
       // High-priority mobile resume & Page Visibility listeners (RFC & Zero-friction auto-sync)
       const handleAppResumeImmediate = () => {
         if (typeof document !== 'undefined' && document.hidden) return;
-        if (this.userExplicitlyLeft || this.isSessionTakenOver) return;
+        if (this.isSessionTakenOver) return;
 
-        // Un retour au premier plan est une nouvelle chance de réparer l'identité Google, même sans table active.
+        // Durée d'absence, consommée une seule fois : les signaux de reprise suivants (focus, pageshow) ne la revoient pas.
+        const awayMs = this.hiddenSinceAt ? Date.now() - this.hiddenSinceAt : 0;
+        this.hiddenSinceAt = null;
+
+        // Un retour au premier plan est une nouvelle chance de réparer l'identité Google, même sans table active
+        // et même après un départ volontaire : seul le retour vers une TABLE dépend de userExplicitlyLeft (voir plus bas).
         this.authRetryCount = 0;
         const resumeUser = auth.currentUser;
         const resumeExpectsGoogle = Boolean(
@@ -257,8 +270,23 @@ class WebSocketService {
           }
         }
 
+        if (this.userExplicitlyLeft) return;
+
         const currentActiveRoom = this.activeRoomCode || localStorage.getItem('njambo_active_room_code');
         if (!currentActiveRoom) return;
+
+        // Manche terminée pendant l'absence : retour au menu, la table est oubliée (clientForgetFinishedTableAfterSeconds).
+        const forgetAfterMs = getPublicParamNumber('clientForgetFinishedTableAfterSeconds') * 1000;
+        if (awayMs >= forgetAfterMs) {
+          if (this.currentRoom?.status === 'MANCHE_OVER') {
+            this.forgetFinishedRoom();
+            return;
+          }
+          if (!this.currentRoom) {
+            // État de la table inconnu (page rechargée par le système) : on le saura à la réponse du serveur.
+            this.forgetRoomIfFinishedOnJoin = true;
+          }
+        }
 
         // Check if socket is dead, closing, or hanging in CONNECTING state
         const stuckMs = getPublicParamNumber('clientConnectStuckSeconds') * 1000;
@@ -268,7 +296,9 @@ class WebSocketService {
           if (isStuckConnecting && this.socket) {
             try { this.socket.close(); } catch (e) { /* ignore */ }
           }
-          this.connect().then(() => {
+          this.connect().then(async () => {
+            // Compte Google : pas de JOIN_ROOM avant la restauration de la session Google (sinon rejet « identifiant joueur invalide »).
+            if (!(await this.ensureGoogleIdentityReady())) return;
             if (!this.userExplicitlyLeft && currentActiveRoom && this.socket && this.socket.readyState === WebSocket.OPEN) {
               const playerId = this.getLocalPlayerId();
               const playerName = localStorage.getItem('njambo_player_name') || '';
@@ -285,20 +315,23 @@ class WebSocketService {
           const idleMs = getPublicParamNumber('resumeIdleSeconds') * 1000;
           if (Date.now() - this.lastServerMessageAt < idleMs) return;
 
-          // Socket is open: send instant join/sync and ping
-          const playerId = this.getLocalPlayerId();
-          const playerName = localStorage.getItem('njambo_player_name') || '';
-          this.send({
-            type: 'JOIN_ROOM',
-            roomCode: currentActiveRoom,
-            playerId,
-            playerName,
+          // Socket is open: send instant join/sync and ping (après restauration de la session Google).
+          void this.ensureGoogleIdentityReady().then((identityReady) => {
+            if (!identityReady || this.userExplicitlyLeft) return;
+            const playerId = this.getLocalPlayerId();
+            const playerName = localStorage.getItem('njambo_player_name') || '';
+            this.send({
+              type: 'JOIN_ROOM',
+              roomCode: currentActiveRoom,
+              playerId,
+              playerName,
+            });
+            this.send({
+              type: 'PING',
+              playerId,
+              timestamp: Date.now(),
+            } as any);
           });
-          this.send({
-            type: 'PING',
-            playerId,
-            timestamp: Date.now(),
-          } as any);
         }
       };
 
@@ -314,7 +347,12 @@ class WebSocketService {
       };
 
       window.addEventListener('visibilitychange', handleAppResume);
-      document.addEventListener('visibilitychange', () => this.sendPresence());
+      document.addEventListener('visibilitychange', () => {
+        if (typeof document !== 'undefined' && document.hidden && !this.hiddenSinceAt) {
+          this.hiddenSinceAt = Date.now();
+        }
+        this.sendPresence();
+      });
       window.addEventListener('pageshow', handleAppResume);
       window.addEventListener('focus', handleAppResume);
       window.addEventListener('online', () => {
@@ -518,9 +556,9 @@ class WebSocketService {
                   continue;
                 }
 
-                // Preserve critical social invites if fresh (< 30 seconds)
+                // Preserve critical social invites if fresh (clientQueueInviteMaxAgeSeconds)
                 if (msg.type === 'SEND_DIRECT_INVITE' || msg.type === 'RESPOND_DIRECT_INVITE') {
-                  if (ageMs <= 30000) {
+                  if (ageMs <= getPublicParamNumber('clientQueueInviteMaxAgeSeconds') * 1000) {
                     filteredPending.push(raw);
                   }
                   continue;
@@ -532,16 +570,16 @@ class WebSocketService {
                   continue;
                 }
 
-                // Ready actions: keep if recent (< 15 seconds)
+                // Ready actions: keep if recent (clientQueueReadyMaxAgeSeconds)
                 if (msg.type === 'SET_READY' || msg.type === 'READY_NEXT_PARTIE') {
-                  if (ageMs <= 15000) {
+                  if (ageMs <= getPublicParamNumber('clientQueueReadyMaxAgeSeconds') * 1000) {
                     filteredPending.push(raw);
                   }
                   continue;
                 }
 
-                // General messages: keep if < 10 seconds
-                if (ageMs <= 10000) {
+                // General messages: keep if recent (clientQueueGeneralMaxAgeSeconds)
+                if (ageMs <= getPublicParamNumber('clientQueueGeneralMaxAgeSeconds') * 1000) {
                   filteredPending.push(raw);
                 }
               } catch {
@@ -919,10 +957,10 @@ class WebSocketService {
 
   private startHeartbeat(): void {
     this.stopHeartbeat();
-    // 25s client heartbeat (harmonized with server RFC-6455 20s transport ping/pong to save battery)
+    // Rythme réglable dans katika (clientPresenceIntervalSeconds, 25 s par défaut), en complément du ping/pong transport serveur.
     this.pingInterval = setInterval(() => {
       this.sendPresence(true);
-    }, 25000);
+    }, getPublicParamNumber('clientPresenceIntervalSeconds') * 1000);
   }
 
   private stopHeartbeat(): void {
@@ -1085,6 +1123,22 @@ class WebSocketService {
           const incomingEpoch = incomingRoom.epoch || 0;
           const incomingRev = incomingRoom.rev || 0;
 
+          // Table oubliée après une manche terminée : on ignore ses messages tardifs (course avec LEAVE_ROOM).
+          if (this.forgottenRoomCode && incomingRoom.id === this.forgottenRoomCode) {
+            this.checkSessionRestored();
+            break;
+          }
+
+          // Retour d'absence : si la manche est déjà terminée, retour au menu et table oubliée.
+          if (this.forgetRoomIfFinishedOnJoin) {
+            this.forgetRoomIfFinishedOnJoin = false;
+            if (incomingRoom.status === 'MANCHE_OVER') {
+              this.forgetFinishedRoom(incomingRoom.id);
+              this.checkSessionRestored();
+              break;
+            }
+          }
+
           // Stale state rejection for SYNC_STATE:
           // Ignore if same room, same server epoch, and incoming revision is <= last accepted revision
           if (msg.type === 'SYNC_STATE' && this.lastAcceptedState) {
@@ -1214,6 +1268,7 @@ class WebSocketService {
             });
           }
         } else if (errorCode === 'ROOM_NOT_FOUND') {
+          this.forgetRoomIfFinishedOnJoin = false;
           this.wasDisconnected = false;
           this.activeRoomCode = null;
           this.sessionRoomPlayerId = null;
@@ -1363,6 +1418,8 @@ class WebSocketService {
 
     this.pendingJoinCancelled = false;
     this.userExplicitlyLeft = false;
+    this.forgottenRoomCode = null;
+    this.forgetRoomIfFinishedOnJoin = false;
     this.lastAcceptedState = null;
     this.send({
       type: 'CREATE_ROOM',
@@ -1383,6 +1440,8 @@ class WebSocketService {
     await this.connect();
     this.pendingJoinCancelled = false;
     this.userExplicitlyLeft = false;
+    this.forgottenRoomCode = null;
+    this.forgetRoomIfFinishedOnJoin = false;
     const upperCode = roomCode.toUpperCase();
     if (this.lastAcceptedState && this.lastAcceptedState.roomId !== upperCode) {
       this.lastAcceptedState = null;
@@ -1676,6 +1735,40 @@ class WebSocketService {
       playerId,
       agree,
     });
+  }
+
+  /**
+   * La manche de la table est terminée et le joueur revient après une absence : retour au menu, la table est
+   * oubliée. Contrairement à leaveRoom(), userExplicitlyLeft n'est PAS armé, pour que la reconnexion et la
+   * réparation d'identité restent actives. Le serveur libère le siège (LEAVE_ROOM). Ensuite, les mises à jour
+   * tardives de cette table sont ignorées (forgottenRoomCode) jusqu'à ce que le joueur en rejoigne une.
+   */
+  private forgetFinishedRoom(knownRoomCode?: string): void {
+    const roomCode =
+      knownRoomCode ||
+      this.activeRoomCode ||
+      this.currentRoom?.id ||
+      localStorage.getItem('njambo_active_room_code');
+    if (!roomCode) return;
+    this.forgottenRoomCode = roomCode;
+    this.forgetRoomIfFinishedOnJoin = false;
+    this.send({
+      type: 'LEAVE_ROOM',
+      roomCode,
+      playerId: this.getLocalPlayerId(),
+    });
+    this.activeRoomCode = null;
+    this.sessionRoomPlayerId = null;
+    this.lastAcceptedState = null;
+    this.pendingInRoomMessages = [];
+    setInRoomStatus(false);
+    this.currentRoom = null;
+    try {
+      localStorage.removeItem('njambo_active_room_code');
+    } catch (e) {
+      // ignore
+    }
+    this.notifyRoomUpdate(null);
   }
 
   public leaveRoom(): void {

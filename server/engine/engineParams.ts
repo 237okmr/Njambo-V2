@@ -218,6 +218,31 @@ export const ENGINE_PARAMS: ParamDef[] = [
     min: 3, max: 30, default: 10, group: 'connexion', scope: 'client', effect: 'immediate',
     help: 'Temps maximal pendant lequel l\'application attend que la session Google soit restaurée (au démarrage ou au retour d\'arrière-plan) avant de se connecter ou de créer une table.',
   },
+  {
+    key: 'clientForgetFinishedTableAfterSeconds', label: 'Absence avant d\'oublier une table terminée', unit: 's',
+    min: 5, max: 600, default: 15, group: 'connexion', scope: 'client', effect: 'immediate',
+    help: 'Si le joueur revient dans l\'application après au moins cette durée d\'absence et que la manche de sa table est terminée, il revient au menu : la table est oubliée et son siège libéré. Plus court : retour au menu plus rapide. Plus long : il retrouve l\'écran de fin de manche après une courte absence.',
+  },
+  {
+    key: 'clientPresenceIntervalSeconds', label: 'Rythme du signal de présence', unit: 's',
+    min: 10, max: 60, default: 25, group: 'connexion', scope: 'client', effect: 'next_connection', advanced: true,
+    help: 'Fréquence à laquelle l\'application signale sa présence au serveur et mesure la latence. Plus court : présence plus fraîche mais plus de batterie et de données. S\'applique à la prochaine connexion.',
+  },
+  {
+    key: 'clientQueueInviteMaxAgeSeconds', label: 'Conservation d\'une invitation hors connexion', unit: 's',
+    min: 10, max: 120, default: 30, group: 'connexion', scope: 'client', effect: 'immediate', advanced: true,
+    help: 'Pendant une coupure, une invitation en attente d\'envoi est conservée jusqu\'à cet âge, puis abandonnée à la reconnexion.',
+  },
+  {
+    key: 'clientQueueReadyMaxAgeSeconds', label: 'Conservation d\'un « Prêt » hors connexion', unit: 's',
+    min: 5, max: 60, default: 15, group: 'connexion', scope: 'client', effect: 'immediate', advanced: true,
+    help: 'Pendant une coupure, un « Prêt » ou « Partie suivante » en attente d\'envoi est conservé jusqu\'à cet âge, puis abandonné.',
+  },
+  {
+    key: 'clientQueueGeneralMaxAgeSeconds', label: 'Conservation des autres messages hors connexion', unit: 's',
+    min: 5, max: 60, default: 10, group: 'connexion', scope: 'client', effect: 'immediate', advanced: true,
+    help: 'Pendant une coupure, les autres messages en attente d\'envoi sont conservés jusqu\'à cet âge, puis abandonnés. Les cartes jouées sont toujours abandonnées.',
+  },
 
   {
     key: 'publicTablesRequireGoogleAuth', label: 'Compte Google requis sur les tables publiques', unit: '', type: 'boolean',

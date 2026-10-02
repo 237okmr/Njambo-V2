@@ -3192,8 +3192,18 @@ export class RoomManager {
   }
 
   private static handleLeaveRoom(client: ConnectedClient, msg: ClientMessage): void {
-    if (!client.roomCode) return;
-    this.forceRemovePlayer(client.roomCode, client.playerId, true);
+    // Après une reconnexion, la socket peut ne plus être rattachée à la table : on retombe alors sur le code de
+    // table envoyé par le client, seulement si ce joueur y a bien un siège (il ne peut retirer que lui-même).
+    let roomCode = client.roomCode;
+    if (!roomCode && msg.roomCode) {
+      const candidate = msg.roomCode.toUpperCase();
+      const candidateRoom = this.rooms.get(candidate);
+      if (candidateRoom && (candidateRoom.players || []).some((p) => p.id === client.playerId)) {
+        roomCode = candidate;
+      }
+    }
+    if (!roomCode) return;
+    this.forceRemovePlayer(roomCode, client.playerId, true);
   }
 
   private static handleFoldRound(client: ConnectedClient, msg: ClientMessage): void {
