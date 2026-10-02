@@ -213,6 +213,11 @@ export const ENGINE_PARAMS: ParamDef[] = [
     min: 500, max: 5000, default: 1500, group: 'connexion', scope: 'client', effect: 'immediate', advanced: true,
     help: 'Point de départ du délai croissant entre deux tentatives de vérification du compte Google.',
   },
+  {
+    key: 'clientAuthReadyWaitSeconds', label: 'Attente de la session Google', unit: 's',
+    min: 3, max: 30, default: 10, group: 'connexion', scope: 'client', effect: 'immediate',
+    help: 'Temps maximal pendant lequel l\'application attend que la session Google soit restaurée (au démarrage ou au retour d\'arrière-plan) avant de se connecter ou de créer une table.',
+  },
 
   {
     key: 'publicTablesRequireGoogleAuth', label: 'Compte Google requis sur les tables publiques', unit: '', type: 'boolean',

@@ -1009,6 +1009,7 @@ export class RoomManager {
 
         client.isAuthenticated = true;
         client.authUid = verifiedUid;
+        this.lastSecurityAuditBySocket.delete(client.socket);
         this.clients.set(verifiedUid, client);
 
         // Bind a reconnect token for this verified user
@@ -1085,6 +1086,37 @@ export class RoomManager {
       });
   }
 
+  // Dernier motif de refus de sécurité journalisé par socket : évite d'inonder le Journal d'Audit en cas de boucle.
+  private static lastSecurityAuditBySocket = new WeakMap<WebSocket, string>();
+
+  private static auditSecurityRejection(
+    client: ConnectedClient,
+    reason: 'PLAYER_ID_MISMATCH' | 'AUTH_NOT_VERIFIED',
+    msg: ClientMessage
+  ): void {
+    if (this.lastSecurityAuditBySocket.get(client.socket) === reason) return;
+    this.lastSecurityAuditBySocket.set(client.socket, reason);
+    this.addAuditLog({
+      id: `log-sec-${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      timestamp: Date.now(),
+      type: 'AUTH',
+      severity: 'WARNING',
+      actor: 'Auth Manager',
+      summary:
+        reason === 'PLAYER_ID_MISMATCH'
+          ? "Action refusée : identifiant joueur différent de celui de la connexion"
+          : "Action refusée : identité Google non vérifiée sur la connexion",
+      details: {
+        actionType: msg.type,
+        claimedPlayerId: msg.playerId,
+        connectionPlayerId: client.playerId,
+        isAuthenticated: client.isAuthenticated,
+        isProvisional: client.isProvisional ?? false,
+        isAuthenticating: client.isAuthenticating,
+      },
+    });
+  }
+
   public static handleMessage(client: ConnectedClient, rawData: string): void {
     if (client.isAuthenticating) {
       if (!client.messageQueue) client.messageQueue = [];
@@ -1103,6 +1135,7 @@ export class RoomManager {
       // Step 3 (Security): Reject any msg.playerId different from client.playerId
       if (msg.playerId && msg.playerId !== client.playerId) {
         console.warn(`[Security] Rejected message: msg.playerId '${msg.playerId}' != client.playerId '${client.playerId}' (type: ${msg.type})`);
+        this.auditSecurityRejection(client, 'PLAYER_ID_MISMATCH', msg);
         this.sendMessage(client.socket, {
           type: 'ERROR',
           errorCode: 'AUTH_REQUIRED',
@@ -1115,6 +1148,7 @@ export class RoomManager {
       // Step 1 (Security): A non-guest playerId (Google UID) is rejected without valid AUTH
       if (!client.playerId.startsWith('usr_') && !client.isAuthenticated) {
         console.warn(`[Security] Unauthenticated client attempting action with Google UID '${client.playerId}' without AUTH verification.`);
+        this.auditSecurityRejection(client, 'AUTH_NOT_VERIFIED', msg);
         this.sendMessage(client.socket, {
           type: 'ERROR',
           errorCode: 'AUTH_REQUIRED',

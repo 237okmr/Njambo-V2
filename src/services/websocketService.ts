@@ -231,6 +231,32 @@ class WebSocketService {
         if (typeof document !== 'undefined' && document.hidden) return;
         if (this.userExplicitlyLeft || this.isSessionTakenOver) return;
 
+        // Un retour au premier plan est une nouvelle chance de réparer l'identité Google, même sans table active.
+        this.authRetryCount = 0;
+        const resumeUser = auth.currentUser;
+        const resumeExpectsGoogle = Boolean(
+          (resumeUser && !resumeUser.isAnonymous) || !this.getLocalPlayerId().startsWith('usr_')
+        );
+        if (resumeExpectsGoogle) {
+          const resumeSocketOpen = Boolean(this.socket && this.socket.readyState === WebSocket.OPEN);
+          if (resumeSocketOpen && !this.authSentOnThisSocket && !this.authConfirmedOnThisSocket) {
+            this.scheduleTokenRetryOnSocket(this.socket as WebSocket, 0);
+          } else if (resumeSocketOpen && this.authSentOnThisSocket && !this.authConfirmedOnThisSocket) {
+            // AUTH envoyé mais jamais confirmé, et aucun message serveur depuis resumeIdleSeconds : connexion probablement morte.
+            const resumeIdleMs = getPublicParamNumber('resumeIdleSeconds') * 1000;
+            if (Date.now() - this.lastServerMessageAt >= resumeIdleMs) {
+              try {
+                this.socket?.close(1000, 'Resume: AUTH unconfirmed');
+              } catch (e) {
+                // ignore
+              }
+              this.connect();
+            }
+          } else if (!this.socket || this.socket.readyState === WebSocket.CLOSED || this.socket.readyState === WebSocket.CLOSING) {
+            this.connect();
+          }
+        }
+
         const currentActiveRoom = this.activeRoomCode || localStorage.getItem('njambo_active_room_code');
         if (!currentActiveRoom) return;
 
@@ -334,6 +360,9 @@ class WebSocketService {
     // Outside room: only close and reconnect if the player identity actually changed or socket does not exist
     if (!this.socket || this.socket.readyState === WebSocket.CLOSED || this.socket.readyState === WebSocket.CLOSING) {
       this.connect();
+    } else if (isGoogleUser && this.socket.readyState === WebSocket.OPEN && !this.authSentOnThisSocket && !this.authConfirmedOnThisSocket) {
+      console.log('[WS] Google session restored outside room: sending AUTH on the open socket.');
+      this.scheduleTokenRetryOnSocket(this.socket, 0);
     } else if (this.lastConnectedPlayerId && this.lastConnectedPlayerId !== currentId) {
       console.log('[WS] Auth identity changed outside room (from', this.lastConnectedPlayerId, 'to', currentId, '): reconnecting.');
       try {
@@ -399,7 +428,7 @@ class WebSocketService {
         if (typeof (auth as any).authStateReady === 'function') {
           await Promise.race([
             auth.authStateReady(),
-            new Promise((resolve) => setTimeout(resolve, 3000)),
+            new Promise((resolve) => setTimeout(resolve, getPublicParamNumber('clientAuthReadyWaitSeconds') * 1000)),
           ]);
         }
       } catch (e) {
@@ -447,7 +476,7 @@ class WebSocketService {
             this.roomSyncedOnThisSocket = false;
             this.reconnectAttempts = 0;
             this.consecutiveReconnectFailures = 0;
-            this.authRetryCount = 0;
+            // authRetryCount n'est PAS remis à zéro ici : il l'est seulement quand le serveur confirme l'AUTH (AUTH_CONFIRMED).
             this.startHeartbeat();
             this.notifyConnectionState(true);
 
@@ -461,6 +490,13 @@ class WebSocketService {
               };
               this.socket.send(JSON.stringify(authMsg));
               this.authSentOnThisSocket = true;
+            } else if (
+              !idToken &&
+              this.socket &&
+              ((currentUser && !currentUser.isAnonymous) || (playerId && !playerId.startsWith('usr_')))
+            ) {
+              // Compte Google attendu mais jeton indisponible à l'ouverture : on retente sur la même socket.
+              this.scheduleTokenRetryOnSocket(this.socket, 0);
             }
 
             // Intelligent Offline Queue Purge (Lot 2 Resilience)
@@ -692,6 +728,66 @@ class WebSocketService {
     return this.connectPromise;
   }
 
+  /**
+   * La socket est ouverte sans AUTH (jeton Google indisponible : réseau pas revenu après un retour
+   * d'arrière-plan, session Firebase pas encore restaurée). On redemande le jeton sur la MÊME socket :
+   * tentative immédiate, puis délai croissant (authRetryBaseDelayMs), au plus authRetryMaxAttempts fois.
+   * En dernier recours : une reconnexion complète, bornée par authRetryCount (remis à zéro seulement
+   * quand le serveur confirme l'AUTH), puis information du joueur via googleAuthExhaustedListeners.
+   */
+  private scheduleTokenRetryOnSocket(socketRef: WebSocket, attempt: number = 0): void {
+    const maxAttempts = getPublicParamNumber('authRetryMaxAttempts');
+    if (attempt >= maxAttempts) {
+      if (this.socket !== socketRef || this.authSentOnThisSocket || this.authConfirmedOnThisSocket) return;
+      if (this.authRetryCount < maxAttempts) {
+        this.authRetryCount += 1;
+        this.forceTokenRefreshOnNextConnect = true;
+        try {
+          socketRef.close(1000, 'AUTH token unavailable');
+        } catch (e) {
+          // ignore
+        }
+        this.connect();
+      } else {
+        this.googleAuthExhaustedListeners.forEach((l) => {
+          try {
+            l();
+          } catch (e) {
+            console.warn('[WS] Google auth exhausted listener error:', e);
+          }
+        });
+      }
+      return;
+    }
+
+    const baseMs = getPublicParamNumber('authRetryBaseDelayMs');
+    const delay = attempt === 0 ? 0 : computeReconnectDelayMs(attempt - 1, baseMs, baseMs * 8);
+    setTimeout(async () => {
+      if (this.socket !== socketRef || socketRef.readyState !== WebSocket.OPEN) return;
+      if (this.authSentOnThisSocket || this.authConfirmedOnThisSocket) return;
+      try {
+        const user = auth.currentUser;
+        if (user && !user.isAnonymous) {
+          const freshToken = await user.getIdToken(attempt > 0);
+          if (this.socket === socketRef && socketRef.readyState === WebSocket.OPEN && !this.authSentOnThisSocket) {
+            const authMsg: ClientMessage = {
+              type: 'AUTH',
+              playerId: user.uid,
+              idToken: freshToken,
+              timestamp: Date.now(),
+            };
+            socketRef.send(JSON.stringify(authMsg));
+            this.authSentOnThisSocket = true;
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('[WS] Token retry on open socket failed:', e);
+      }
+      this.scheduleTokenRetryOnSocket(socketRef, attempt + 1);
+    }, delay);
+  }
+
   public forceReconnect(): Promise<void> {
     this.isSessionTakenOver = false;
     this.userExplicitlyLeft = false;
@@ -921,6 +1017,7 @@ class WebSocketService {
 
       case 'AUTH_CONFIRMED': {
         this.authConfirmedOnThisSocket = true;
+        this.authRetryCount = 0;
         if (msg.playerId) {
           this.lastConnectedPlayerId = msg.playerId;
         }
@@ -1211,6 +1308,35 @@ class WebSocketService {
     }
   }
 
+  /**
+   * Avant une action sensible (création de table), attend que la session Google soit restaurée (au plus
+   * clientAuthReadyWaitSeconds). Renvoie false si l'identité locale est celle d'un compte Google mais que
+   * la session Firebase n'est pas revenue : on n'envoie alors rien au serveur plutôt que d'envoyer un
+   * identifiant Google en mode invité (rejet « identifiant joueur invalide »).
+   */
+  private async ensureGoogleIdentityReady(): Promise<boolean> {
+    const maxMs = getPublicParamNumber('clientAuthReadyWaitSeconds') * 1000;
+    try {
+      if (typeof (auth as any).authStateReady === 'function') {
+        await Promise.race([
+          auth.authStateReady(),
+          new Promise<void>((resolve) => setTimeout(resolve, maxMs)),
+        ]);
+      }
+    } catch (e) {
+      console.warn('[WS] ensureGoogleIdentityReady wait error:', e);
+    }
+    const user = auth.currentUser;
+    const isGoogleUser = Boolean(user && !user.isAnonymous);
+    const expectsGoogle = isGoogleUser || !this.getLocalPlayerId().startsWith('usr_');
+    if (!expectsGoogle) return true;
+    if (!isGoogleUser) return false;
+    if (this.socket && this.socket.readyState === WebSocket.OPEN && !this.authSentOnThisSocket && !this.authConfirmedOnThisSocket) {
+      this.scheduleTokenRetryOnSocket(this.socket, 0);
+    }
+    return true;
+  }
+
   public async createRoom(
     hostName: string,
     settings: {
@@ -1226,6 +1352,11 @@ class WebSocketService {
     confirmLeaveCurrent?: boolean
   ): Promise<void> {
     await this.connect();
+    const identityReady = await this.ensureGoogleIdentityReady();
+    if (!identityReady) {
+      this.notifyError('Ton compte Google n\'est pas encore reconnecté. Patiente quelques secondes puis réessaie.', 'GENERIC');
+      return;
+    }
     const playerId = this.getLocalPlayerId();
 
     const activeSanction = playerProfileService.getActiveSanction();
