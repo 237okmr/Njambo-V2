@@ -228,6 +228,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
 
   useEffect(() => {
     if (!joinWaitAction) return;
+    // delay-ok: cadence d'un compteur de secondes affiché (une seconde reste une seconde), pas un délai de jeu
     const interval = setInterval(() => {
       setJoinWaitAction((prev) => (prev ? { ...prev, elapsedSeconds: prev.elapsedSeconds + 1 } : null));
     }, 1000);
@@ -336,6 +337,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
     };
 
     updateGrace();
+    // delay-ok: rafraîchissement visuel du compte à rebours de transfert d'hôte (la grâce, elle, est réglable : hostGraceSeconds)
     const interval = setInterval(updateGrace, 500);
     return () => clearInterval(interval);
   }, [room?.hostTransferGraceExpiresAt, room?.players, room?.hostId]);
@@ -362,6 +364,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
   // Check socket connection status periodically
   useEffect(() => {
     if (!isOpen) return;
+    // delay-ok: rafraîchissement visuel de l'indicateur de connexion (lecture d'un état local, aucun appel réseau)
     const interval = setInterval(() => {
       setIsConnected(webSocketService.isConnected());
     }, 2000);
@@ -481,7 +484,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
     };
 
     pollFriendsPresence();
-    const interval = setInterval(pollFriendsPresence, 4000);
+    const interval = setInterval(pollFriendsPresence, getPublicParamNumber('clientFriendsPollSeconds') * 1000);
     return () => clearInterval(interval);
   }, [isOpen, activeTab, acceptedFriends, localContacts, isLoggedIn]);
 
@@ -510,7 +513,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
           triggerHaptic('success');
           setTimeout(() => {
             setFriendAcceptedToast(null);
-          }, 6000);
+          }, getPublicParamNumber('uiFriendToastDurationMs'));
         }
       } else {
         initialCloudFriendsLoadedRef.current = true;
@@ -583,6 +586,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
     }
 
     let remaining = 3;
+    // delay-ok: cadence d'un compte à rebours affiché à la seconde avant la Partie Rapide, pas un délai de jeu
     quickMatchIntervalRef.current = setInterval(async () => {
       remaining -= 1;
       setQuickMatchTimer(remaining);
@@ -801,7 +805,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
     navigator.clipboard.writeText(room.id);
     setCopied(true);
     triggerHaptic('light');
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(() => setCopied(false), getPublicParamNumber('uiCopyConfirmMs'));
   };
 
   const handleCopyLink = async () => {
@@ -826,7 +830,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
     navigator.clipboard.writeText(shareUrl);
     setCopiedLink(true);
     triggerHaptic('light');
-    setTimeout(() => setCopiedLink(false), 2000);
+    setTimeout(() => setCopiedLink(false), getPublicParamNumber('uiCopyConfirmMs'));
   };
 
   const handleWhatsAppShare = () => {
@@ -853,7 +857,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
       await webSocketService.sendDirectInvite(targetPlayerId, room.id);
       setHubSuccessMsg('Invitation envoyée !');
       triggerHaptic('success');
-      setTimeout(() => setHubSuccessMsg(null), 3000);
+      setTimeout(() => setHubSuccessMsg(null), getPublicParamNumber('uiToastDurationMs'));
     } catch (e: any) {
       const errorMsg = e?.message || "Impossible d'envoyer l'invitation.";
       if (errorMsg.includes('Connexion Google requise')) {
@@ -935,7 +939,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
         if (friend.id) {
           handleSendDirectInvite(friend.id);
         }
-      }, 600);
+      }, getPublicParamNumber('clientInviteAfterCreateDelayMs'));
     } catch (err: any) {
       setHubErrorMsg(err.message || 'Erreur lors de la création du défi.');
     } finally {
@@ -966,7 +970,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
       if (ok) {
         setHubSuccessMsg(`Demande acceptée ! ${request.displayName} est désormais votre ami.`);
         triggerHaptic('success');
-        setTimeout(() => setHubSuccessMsg(null), 3000);
+        setTimeout(() => setHubSuccessMsg(null), getPublicParamNumber('uiToastDurationMs'));
       } else {
         setHubErrorMsg("Impossible d'accepter la demande.");
       }
@@ -985,7 +989,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
       if (ok) {
         setHubSuccessMsg(`Demande de ${request.displayName} déclinée.`);
         triggerHaptic('light');
-        setTimeout(() => setHubSuccessMsg(null), 3000);
+        setTimeout(() => setHubSuccessMsg(null), getPublicParamNumber('uiToastDurationMs'));
       }
     } catch (e: any) {
       console.error('Error declining friend request:', e);
@@ -1002,7 +1006,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
       if (ok) {
         setHubSuccessMsg(`Demande envoyée à ${request.displayName} annulée.`);
         triggerHaptic('light');
-        setTimeout(() => setHubSuccessMsg(null), 3000);
+        setTimeout(() => setHubSuccessMsg(null), getPublicParamNumber('uiToastDurationMs'));
       }
     } catch (e: any) {
       console.error('Error canceling sent request:', e);
@@ -1020,7 +1024,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
     }
     setHubSuccessMsg(`${friendName} a été retiré de votre liste d'amis.`);
     triggerHaptic('light');
-    setTimeout(() => setHubSuccessMsg(null), 3000);
+    setTimeout(() => setHubSuccessMsg(null), getPublicParamNumber('uiToastDurationMs'));
   };
 
   const handleBlockPlayer = async (targetUid: string, displayName?: string, friendCode?: string) => {
@@ -1039,7 +1043,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
 
       setHubSuccessMsg(`Joueur ${displayName || ''} bloqué avec succès.`);
       triggerHaptic('heavy');
-      setTimeout(() => setHubSuccessMsg(null), 3000);
+      setTimeout(() => setHubSuccessMsg(null), getPublicParamNumber('uiToastDurationMs'));
     } catch (e: any) {
       console.error('Error blocking player:', e);
       setHubErrorMsg('Erreur lors du blocage du joueur.');
@@ -1086,13 +1090,13 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
       if (res.success) {
         setHubSuccessMsg(res.message);
         triggerHaptic('success');
-        setTimeout(() => setHubSuccessMsg(null), 3500);
+        setTimeout(() => setHubSuccessMsg(null), getPublicParamNumber('uiToastLongDurationMs'));
         // Refresh search results to reflect pending status
         handleSearchFriend(newFriendInput);
       } else {
         setHubErrorMsg(res.message);
         triggerHaptic('heavy');
-        setTimeout(() => setHubErrorMsg(null), 3500);
+        setTimeout(() => setHubErrorMsg(null), getPublicParamNumber('uiToastLongDurationMs'));
       }
     } catch (e: any) {
       setHubErrorMsg(e?.message || "Erreur lors de l'envoi de la demande");
@@ -1120,7 +1124,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
     setShowAddFriendModal(false);
     setHubSuccessMsg('Contact local hors-ligne ajouté !');
     triggerHaptic('success');
-    setTimeout(() => setHubSuccessMsg(null), 3000);
+    setTimeout(() => setHubSuccessMsg(null), getPublicParamNumber('uiToastDurationMs'));
   };
 
   const handleBack = async () => {
@@ -1719,7 +1723,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                               await onAlertUnreadyPlayers();
                               setAlertSent(true);
                               triggerHaptic('heavy');
-                              setTimeout(() => setAlertSent(false), 3000);
+                              setTimeout(() => setAlertSent(false), getPublicParamNumber('uiToastDurationMs'));
                             } catch (err) {
                               console.error(err);
                             }
@@ -1960,7 +1964,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                                   await FriendService.acceptCloudFriendRequest(profile.uid, p.id, p.name, (p as any).avatarSeed || (p as any).avatarId);
                                   setHubSuccessMsg(`Demande acceptée ! ${p.name} est maintenant votre ami.`);
                                   triggerHaptic('success');
-                                  setTimeout(() => setHubSuccessMsg(null), 3500);
+                                  setTimeout(() => setHubSuccessMsg(null), getPublicParamNumber('uiToastLongDurationMs'));
                                 } catch (e: any) {
                                   setHubErrorMsg(e?.message || 'Erreur lors de l’acceptation');
                                 } finally {
@@ -3462,7 +3466,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                                       await FriendService.acceptCloudFriendRequest(profile.uid, r.id, r.name, (r as any).avatarSeed || (r as any).avatarId);
                                       setHubSuccessMsg(`Demande acceptée ! ${r.name} est maintenant votre ami.`);
                                       triggerHaptic('success');
-                                      setTimeout(() => setHubSuccessMsg(null), 3500);
+                                      setTimeout(() => setHubSuccessMsg(null), getPublicParamNumber('uiToastLongDurationMs'));
                                     } catch (e: any) {
                                       setHubErrorMsg(e?.message || 'Erreur lors de l’acceptation');
                                     } finally {

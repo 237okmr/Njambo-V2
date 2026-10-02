@@ -49,6 +49,13 @@ export interface KatikaEngineConfig {
   publicAbsentHostVisibilitySeconds?: number;
   hostTakeoverSeconds?: number;
   joinPushEnabled?: boolean;
+  joinCodeAttemptWindowSeconds?: number;
+  friendPresenceFreshSeconds?: number;
+  userPresenceRetentionMinutes?: number;
+  joinPushCooldownSeconds?: number;
+  serverWsPingIntervalSeconds?: number;
+  pushTestCooldownSeconds?: number;
+  leaderboardServerCacheSeconds?: number;
   koraMultiplier: number;
   doubleKoraMultiplier: number;
   threeSevensMultiplier: number;

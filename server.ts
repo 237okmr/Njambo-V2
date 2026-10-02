@@ -94,24 +94,31 @@ async function startServer() {
 
   // Native Transport-Level Keep-Alive Heartbeat (RFC 6455 ws.ping/pong)
   // Keeps sockets active across Cloud Run ingress and 4G/5G mobile operators without killing sleeping clients
-  const wsHeartbeatInterval = setInterval(() => {
-    wss.clients.forEach((client) => {
-      const ws = client as any;
-      if (ws.isAlive === false) {
-        console.log(`[WS Heartbeat] Terminating inactive socket without pong response`);
-        return ws.terminate();
-      }
-      ws.isAlive = false;
-      try {
-        ws.ping();
-      } catch (err) {
-        // ignore socket errors during ping
-      }
-    });
-  }, 20000);
+  let wsHeartbeatTimer: NodeJS.Timeout | null = null;
+  const scheduleWsHeartbeat = () => {
+    // Période relue à chaque tour : réglable dans katika (serverWsPingIntervalSeconds), effet immédiat.
+    const periodMs = Number(getEngineConfig().serverWsPingIntervalSeconds ?? 20) * 1000;
+    wsHeartbeatTimer = setTimeout(() => {
+      wss.clients.forEach((client) => {
+        const ws = client as any;
+        if (ws.isAlive === false) {
+          console.log(`[WS Heartbeat] Terminating inactive socket without pong response`);
+          return ws.terminate();
+        }
+        ws.isAlive = false;
+        try {
+          ws.ping();
+        } catch (err) {
+          // ignore socket errors during ping
+        }
+      });
+      scheduleWsHeartbeat();
+    }, periodMs);
+  };
+  scheduleWsHeartbeat();
 
   wss.on('close', () => {
-    clearInterval(wsHeartbeatInterval);
+    if (wsHeartbeatTimer) clearTimeout(wsHeartbeatTimer);
   });
 
   wss.on('connection', (ws: any, req) => {
@@ -308,7 +315,7 @@ async function startServer() {
       return res.status(401).json({ success: false, error: 'Identité non vérifiée' });
     }
     const now = Date.now();
-    if (now - (lastPushTestAt.get(resolvedId) || 0) < 15_000) {
+    if (now - (lastPushTestAt.get(resolvedId) || 0) < Number(getEngineConfig().pushTestCooldownSeconds ?? 15) * 1000) {
       return res.status(429).json({ success: false, error: 'Patientez quelques secondes avant un nouveau test.' });
     }
     lastPushTestAt.set(resolvedId, now);
@@ -349,7 +356,7 @@ async function startServer() {
   // Leaderboard Server Cache (60s cache to respect Firestore Quotas while keeping leaderboard fresh)
   let cachedLeaderboardUsers: any[] = [];
   let leaderboardCacheTimestamp = 0;
-  const LEADERBOARD_CACHE_TTL = 60 * 1000;
+  // TTL du cache serveur du Palmarès : leaderboardServerCacheSeconds (katika), relu à chaque lecture.
 
   function calculateMasteryScore(stats: any): number {
     return computeMasteryScoreFromStats(stats);
@@ -360,7 +367,7 @@ async function startServer() {
       const force = req.query.force === 'true';
       const timeframe = (req.query.timeframe as string) || 'ALL'; // 'ALL' | 'WEEK' | 'MONTH'
 
-      if (force || Date.now() - leaderboardCacheTimestamp > LEADERBOARD_CACHE_TTL || cachedLeaderboardUsers.length === 0) {
+      if (force || Date.now() - leaderboardCacheTimestamp > Number(getEngineConfig().leaderboardServerCacheSeconds ?? 60) * 1000 || cachedLeaderboardUsers.length === 0) {
         if (db) {
           try {
             // 1. Requêtes Firestore paginées (avec secours sans orderBy pour capter tous les profils réels)
@@ -474,7 +481,9 @@ async function startServer() {
 
             // 3. Filtrage temporel : ignorer les dates futures ou hors fenêtre
             const now = Date.now();
+            // delay-ok: borne de validation de sécurité du Palmarès (tolérance d'horloge), pas un délai de jeu
             const MAX_FUTURE_DRIFT_MS = 60 * 1000; // 1 minute max tolérance d'horloge
+            // delay-ok: fenêtre de validité des parties comptées au Palmarès, règle de produit et non un délai
             const MAX_WINDOW_AGE_MS = 60 * 24 * 60 * 60 * 1000; // 60 jours
 
             const validRecords = uniqueRecords.filter(({ data: g }) => {
@@ -535,7 +544,9 @@ async function startServer() {
 
             // 5. Agrégation des statistiques par creatorUid avec plafonds journaliers en fuseau Africa/Douala
             const gameStatsByPlayer = new Map<string, any>();
+            // delay-ok: définition de la période « Semaine » du Palmarès, pas un délai
             const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
+            // delay-ok: définition de la période « Mois » du Palmarès, pas un délai
             const oneMonthAgo = now - 30 * 24 * 60 * 60 * 1000;
 
             // Plafonds journaliers par joueur (fuseau horaire Africa/Douala)
@@ -1409,6 +1420,7 @@ async function startServer() {
 
   function checkAiRateLimit(): AiRateLimitResult {
     const now = Date.now();
+    // delay-ok: définition de la limite « par heure » du copilote (maxPerHour), pas un délai de jeu
     const windowMs = 60 * 60 * 1000; // 1 heure glissante
     const maxPerHour = getMaxAiPerHour();
 
@@ -1423,6 +1435,7 @@ async function startServer() {
         allowed: false,
         status: 429,
         message: 'Limite du copilote atteinte, réessaie dans 1 min.',
+        // delay-ok: indication affichée avec le message « réessaie dans 1 min », pas un délai appliqué
         retryAfterMinutes: 1,
       };
     }

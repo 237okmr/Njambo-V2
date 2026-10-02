@@ -3,6 +3,7 @@ import { Card, MultiplayerRoom, EmoteMessage } from '../types';
 import { wsService } from '../services/websocketService';
 import { sounds } from '../utils/sound';
 import { getPlayerId } from '../services/identity';
+import { getPublicParamNumber } from '../services/publicConfig';
 
 export function getLocalPlayerId(): string {
   return getPlayerId();
@@ -84,13 +85,13 @@ export function useMultiplayerGame() {
         return;
       }
       setServerErrorMessage(err);
-      setTimeout(() => setServerErrorMessage(null), 4000);
+      setTimeout(() => setServerErrorMessage(null), getPublicParamNumber('uiErrorMessageDurationMs'));
     });
 
     const unsubAlert = wsService.onLobbyAlert((alert) => {
       setServerErrorMessage(alert);
       sounds.playCutSlash();
-      setTimeout(() => setServerErrorMessage(null), 5000);
+      setTimeout(() => setServerErrorMessage(null), getPublicParamNumber('uiAlertDurationMs'));
     });
 
     const unsubVersion = wsService.onVersionStatus((data) => {
@@ -104,7 +105,7 @@ export function useMultiplayerGame() {
     const unsubOffline = wsService.onOfflineQueueFlushed((count) => {
       if (count > 0) {
         setOfflineNotice(`⚡ ${count} action(s) hors-ligne synchronisée(s) !`);
-        setTimeout(() => setOfflineNotice(null), 4000);
+        setTimeout(() => setOfflineNotice(null), getPublicParamNumber('uiErrorMessageDurationMs'));
       }
     });
 
@@ -146,6 +147,7 @@ export function useMultiplayerGame() {
     };
 
     updateTimer();
+    // delay-ok: rafraîchissement visuel du compte à rebours affiché (le délai de tour, lui, est réglable : turnTimerSeconds)
     const interval = setInterval(updateTimer, 500);
     return () => clearInterval(interval);
   }, [
@@ -176,6 +178,7 @@ export function useMultiplayerGame() {
     };
 
     updateRoundEndTimer();
+    // delay-ok: rafraîchissement visuel du compte à rebours de fin de partie affiché (le délai, lui, est réglable : transitionDelayMs)
     const interval = setInterval(updateRoundEndTimer, 500);
     return () => clearInterval(interval);
   }, [isMultiplayerMode, multiplayerRoom?.status, multiplayerRoom?.roundEndAutoAdvanceAt]);
@@ -227,7 +230,7 @@ export function useMultiplayerGame() {
             return;
           }
           resolve({ success: false, error: 'Connexion impossible. Vérifie ton réseau puis réessaie.' });
-        }, 60000);
+        }, getPublicParamNumber('clientTableActionTimeoutSeconds') * 1000);
         
         wsService.createRoom(settings.playerName, {
           fillWithBots: settings.fillWithBots,
@@ -284,7 +287,7 @@ export function useMultiplayerGame() {
           return;
         }
         resolve({ success: false, error: 'Connexion impossible. Vérifie ton réseau puis réessaie.' });
-      }, 60000);
+      }, getPublicParamNumber('clientTableActionTimeoutSeconds') * 1000);
 
       wsService.joinRoom(roomId, playerName, confirmLeaveCurrent).catch((err: any) => {
         unsubRoom();
@@ -335,7 +338,7 @@ export function useMultiplayerGame() {
           return;
         }
         resolve({ success: false, error: 'Connexion impossible. Vérifie ton réseau puis réessaie.' });
-      }, 60000);
+      }, getPublicParamNumber('clientTableActionTimeoutSeconds') * 1000);
 
       wsService.quickMatch(settings, confirmLeaveCurrent).catch((err: any) => {
         unsubRoom();

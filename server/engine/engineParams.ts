@@ -224,6 +224,91 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Si le joueur revient dans l\'application après au moins cette durée d\'absence et que la manche de sa table est terminée, il revient au menu : la table est oubliée et son siège libéré. Plus court : retour au menu plus rapide. Plus long : il retrouve l\'écran de fin de manche après une courte absence.',
   },
   {
+    key: 'integrationVoteSeconds', label: 'Durée du vote d\'intégration d\'un nouveau joueur', unit: 's',
+    min: 5, max: 60, default: 10, group: 'partie', scope: 'server', effect: 'immediate',
+    help: 'Temps laissé aux joueurs pour voter l\'arrivée d\'un observateur à la table. Sans réponse, l\'arrivée est acceptée automatiquement à l\'échéance.',
+  },
+  {
+    key: 'joinCodeAttemptWindowSeconds', label: 'Fenêtre anti-devinette des codes de table', unit: 's',
+    min: 5, max: 120, default: 20, group: 'moderation', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Après 6 codes de table erronés dans cette fenêtre, le joueur doit patienter jusqu\'à la fin de la fenêtre avant de réessayer.',
+  },
+  {
+    key: 'friendPresenceFreshSeconds', label: 'Fraîcheur de la présence des amis', unit: 's',
+    min: 10, max: 120, default: 25, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Un ami est considéré en ligne si son dernier signal de présence date de moins de cette durée. Doit rester supérieur au rythme du signal de présence des joueurs.',
+  },
+  {
+    key: 'userPresenceRetentionMinutes', label: 'Conservation de la présence d\'un joueur inactif', unit: 'min',
+    min: 5, max: 120, default: 15, group: 'caches-et-mises-a-jour', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Au-delà de cette durée sans signal, la présence mémorisée d\'un joueur est supprimée de la mémoire du serveur.',
+  },
+  {
+    key: 'joinPushCooldownSeconds', label: 'Intervalle entre deux notifications « joueur arrivé »', unit: 's',
+    min: 30, max: 600, default: 120, group: 'notifications', scope: 'server', effect: 'immediate',
+    help: 'Délai minimal entre deux notifications envoyées à l\'hôte absent quand quelqu\'un rejoint sa table.',
+  },
+  {
+    key: 'serverWsPingIntervalSeconds', label: 'Rythme du ping serveur des connexions', unit: 's',
+    min: 10, max: 60, default: 20, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Fréquence du ping envoyé par le serveur pour garder les connexions actives et fermer celles qui ne répondent plus.',
+  },
+  {
+    key: 'pushTestCooldownSeconds', label: 'Intervalle entre deux tests de notification', unit: 's',
+    min: 5, max: 120, default: 15, group: 'notifications', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Délai minimal entre deux envois de notification de test par le même joueur.',
+  },
+  {
+    key: 'leaderboardServerCacheSeconds', label: 'Cache serveur du Palmarès', unit: 's',
+    min: 10, max: 600, default: 60, group: 'caches-et-mises-a-jour', scope: 'server', effect: 'immediate',
+    help: 'Durée pendant laquelle le serveur réutilise le Palmarès calculé avant de le recalculer (économie des quotas Firestore).',
+  },
+  {
+    key: 'clientTableActionTimeoutSeconds', label: 'Attente maximale d\'une création, d\'un accès ou d\'une Partie Rapide', unit: 's',
+    min: 15, max: 120, default: 60, group: 'connexion', scope: 'client', effect: 'immediate',
+    help: 'En connexion lente, durée pendant laquelle l\'application attend la réponse du serveur (avec bouton Annuler) avant d\'abandonner.',
+  },
+  {
+    key: 'clientFriendsPollSeconds', label: 'Rafraîchissement de la présence des amis', unit: 's',
+    min: 2, max: 30, default: 4, group: 'connexion', scope: 'client', effect: 'immediate', advanced: true,
+    help: 'Fréquence à laquelle l\'écran Amis redemande la présence des amis au serveur.',
+  },
+  {
+    key: 'clientInviteAfterCreateDelayMs', label: 'Pause avant l\'invitation d\'un ami après création de table', unit: 'ms',
+    min: 300, max: 3000, default: 600, group: 'connexion', scope: 'client', effect: 'immediate', advanced: true,
+    help: 'Pause laissée à la table pour se stabiliser avant d\'envoyer l\'invitation directe à l\'ami défié.',
+  },
+  {
+    key: 'uiToastDurationMs', label: 'Durée des messages de confirmation', unit: 'ms',
+    min: 1000, max: 10000, default: 3000, group: 'interface', scope: 'client', effect: 'immediate', advanced: true,
+    help: 'Temps d\'affichage des messages de confirmation courts de l\'écran Jouer.',
+  },
+  {
+    key: 'uiToastLongDurationMs', label: 'Durée des messages longs', unit: 'ms',
+    min: 1000, max: 10000, default: 3500, group: 'interface', scope: 'client', effect: 'immediate', advanced: true,
+    help: 'Temps d\'affichage des messages un peu plus longs (réussites détaillées et erreurs) de l\'écran Jouer.',
+  },
+  {
+    key: 'uiCopyConfirmMs', label: 'Durée de la confirmation « Copié »', unit: 'ms',
+    min: 1000, max: 5000, default: 2000, group: 'interface', scope: 'client', effect: 'immediate', advanced: true,
+    help: 'Temps pendant lequel la mention « Copié » reste affichée après une copie de code ou de lien.',
+  },
+  {
+    key: 'uiErrorMessageDurationMs', label: 'Durée des messages d\'erreur et de synchronisation', unit: 'ms',
+    min: 1000, max: 10000, default: 4000, group: 'interface', scope: 'client', effect: 'immediate', advanced: true,
+    help: 'Temps d\'affichage des messages d\'erreur du serveur et de la mention « actions synchronisées ».',
+  },
+  {
+    key: 'uiAlertDurationMs', label: 'Durée des alertes de salon', unit: 'ms',
+    min: 1000, max: 10000, default: 5000, group: 'interface', scope: 'client', effect: 'immediate', advanced: true,
+    help: 'Temps d\'affichage d\'une alerte de salon envoyée par le serveur.',
+  },
+  {
+    key: 'uiFriendToastDurationMs', label: 'Durée de l\'annonce « ami accepté »', unit: 'ms',
+    min: 2000, max: 15000, default: 6000, group: 'interface', scope: 'client', effect: 'immediate', advanced: true,
+    help: 'Temps d\'affichage de l\'annonce quand une demande d\'ami est acceptée.',
+  },
+  {
     key: 'clientPresenceIntervalSeconds', label: 'Rythme du signal de présence', unit: 's',
     min: 10, max: 60, default: 25, group: 'connexion', scope: 'client', effect: 'next_connection', advanced: true,
     help: 'Fréquence à laquelle l\'application signale sa présence au serveur et mesure la latence. Plus court : présence plus fraîche mais plus de batterie et de données. S\'applique à la prochaine connexion.',

@@ -134,6 +134,7 @@ export class RoomManager {
   }> = [
     {
       id: 'log-1',
+      // delay-ok: horodatage d'exemple du journal d'audit initial, pas un délai de jeu
       timestamp: Date.now() - 1000 * 60 * 5,
       type: 'AUTH',
       severity: 'INFO',
@@ -142,6 +143,7 @@ export class RoomManager {
     },
     {
       id: 'log-2',
+      // delay-ok: horodatage d'exemple du journal d'audit initial, pas un délai de jeu
       timestamp: Date.now() - 1000 * 60 * 20,
       type: 'KATIKA_ACTION',
       severity: 'INFO',
@@ -1643,7 +1645,7 @@ export class RoomManager {
         if (prev && prev.resetAt > now) {
           prev.count += 1;
         } else {
-          this.failedJoinAttempts.set(clientKey, { count: 1, resetAt: now + 20000 });
+          this.failedJoinAttempts.set(clientKey, { count: 1, resetAt: now + Number(this.engineConfig.joinCodeAttemptWindowSeconds ?? 20) * 1000 });
         }
       }
 
@@ -2922,7 +2924,7 @@ export class RoomManager {
     };
 
     const active = (room.activeEmotes || []).filter(
-      (e) => now - e.timestamp < 3500 && e.playerId !== player.id
+      (e) => now - e.timestamp < Number(this.engineConfig.emoteDisplayMs ?? 3500) && e.playerId !== player.id
     );
     room.activeEmotes = [...active, emote].slice(-5);
     room.updatedAt = Date.now();
@@ -2938,7 +2940,7 @@ export class RoomManager {
           this.broadcastRoomState(client.roomCode!);
         }
       }
-    }, 3600);
+    }, Number(this.engineConfig.emoteDisplayMs ?? 3500) + 100); // + 100 ms de marge technique après l'expiration d'affichage
   }
 
   private static handleUpdateSettings(client: ConnectedClient, msg: ClientMessage): void {
@@ -3788,7 +3790,7 @@ export class RoomManager {
         declinedPlayerIds: [],
         createdAt: Date.now(),
         status: 'ACCEPTED',
-        expiresAt: Date.now() + Number(this.engineConfig.integrationVoteSeconds ?? 15) * 1000,
+        expiresAt: Date.now() + Number(this.engineConfig.integrationVoteSeconds ?? 10) * 1000,
       };
     } else {
       room.integrationProposal = {
@@ -3803,10 +3805,11 @@ export class RoomManager {
         declinedPlayerIds: [],
         createdAt: Date.now(),
         status: 'VOTING',
-        expiresAt: Date.now() + Number(this.engineConfig.integrationVoteSeconds ?? 15) * 1000,
+        expiresAt: Date.now() + Number(this.engineConfig.integrationVoteSeconds ?? 10) * 1000,
       };
 
-      // 10s vote timer: auto-accept if abstained
+      // Vote d'intégration : acceptation automatique en cas d'abstention, à l'échéance affichée aux joueurs (integrationVoteSeconds).
+      const integrationVoteMs = Number(this.engineConfig.integrationVoteSeconds ?? 10) * 1000;
       setTimeout(() => {
         if (this.rooms.has(roomCode)) {
           const r = this.rooms.get(roomCode)!;
@@ -3816,7 +3819,7 @@ export class RoomManager {
               id: 'em_' + Math.random().toString(36).substring(2, 9),
               playerId: 'system',
               playerName: 'Table',
-              text: `🤝 Intégration acceptée pour ${r.integrationProposal.applicantName} (délai de 10s écoulé).`,
+              text: `🤝 Intégration acceptée pour ${r.integrationProposal.applicantName} (délai de ${Math.round(integrationVoteMs / 1000)}s écoulé).`,
               emoji: '✅',
               timestamp: Date.now(),
               isBot: true,
@@ -3827,7 +3830,7 @@ export class RoomManager {
     this.evaluateAutoStart(roomCode);
           }
         }
-      }, 10500);
+      }, integrationVoteMs + 500); // + 500 ms de marge technique après l'échéance affichée
     }
 
     room.updatedAt = Date.now();
@@ -5112,7 +5115,7 @@ export class RoomManager {
       const friendClient = this.clients.get(friendId);
       const isSocketOpen = friendClient && friendClient.socket.readyState === WebSocket.OPEN;
 
-      if (presence && (now - presence.lastSeenAt < 25000 || isSocketOpen)) {
+      if (presence && (now - presence.lastSeenAt < Number(this.engineConfig.friendPresenceFreshSeconds ?? 25) * 1000 || isSocketOpen)) {
         if (presence.currentRoomCode && this.rooms.has(presence.currentRoomCode)) {
           const room = this.rooms.get(presence.currentRoomCode)!;
           const humanPlayers = (room.players || []).filter((p) => p.isHuman && !p.isSpectator);
@@ -5547,6 +5550,7 @@ export class RoomManager {
 
     if (this.cleanupInterval) return;
 
+    // delay-ok: cadence interne du ménage des tables (les durées de vie, elles, sont réglables : emptyRoomTimeoutMinutes, lobbyWaitTtlMinutes)
     this.cleanupInterval = setInterval(() => {
       const now = Date.now();
       const defaultTimeoutMinutes = this.engineConfig.emptyRoomTimeoutMinutes ?? 5;
@@ -5634,15 +5638,16 @@ export class RoomManager {
         }
       });
 
-      // Clean up stale user presences (> 15 mins inactive)
+      // Clean up stale user presences (userPresenceRetentionMinutes sans signal)
       this.userPresences.forEach((pres, key) => {
-        if (now - pres.lastSeenAt > 15 * 60 * 1000) {
+        if (now - pres.lastSeenAt > Number(this.engineConfig.userPresenceRetentionMinutes ?? 15) * 60 * 1000) {
           this.userPresences.delete(key);
         }
       });
 
       // Clean up stale emote rate limiters (> 1 min inactive)
       this.lastEmoteTimestamps.forEach((ts, key) => {
+        // delay-ok: purge mémoire du limiteur d'emotes, sans effet visible (le délai réglable emoteCooldownMs ne dépasse pas 5 s)
         if (now - ts > 60000) {
           this.lastEmoteTimestamps.delete(key);
         }
@@ -5746,7 +5751,7 @@ export class RoomManager {
     if (isHostConnected) return;
 
     const now = Date.now();
-    if (room.lastJoinPushTime && (now - room.lastJoinPushTime < 120_000)) return;
+    if (room.lastJoinPushTime && (now - room.lastJoinPushTime < Number(this.engineConfig.joinPushCooldownSeconds ?? 120) * 1000)) return;
     if ((room.joinPushCount || 0) >= 3) return;
 
     room.joinPushCount = (room.joinPushCount || 0) + 1;
