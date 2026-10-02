@@ -1,4 +1,6 @@
 import { GoogleGenAI, ThinkingLevel } from '@google/genai';
+import { getEngineConfig } from './engine/engineConfig';
+import { buildEconomyRuleForChat, isKoraCashEnabled } from '../src/katika/visual/moneyPolicy';
 
 export interface AdminChatImage {
   data: string; // base64 without prefix or with prefix stripped
@@ -755,43 +757,9 @@ export function buildSystemInstruction(
 
   const metricsSection = buildContextualMetricsSection(userMessage, metricsSnapshot, detected);
 
-  // Bloc Générateur de Visuel Réseaux Sociaux (Injecté si wantsSocial)
+  // Les visuels sont produits par la route dédiée /api/katika/ai-visual : le chat ne décrit plus le format.
   const socialGeneratorBlock = detected.wantsSocial
-    ? `\nCADRE CRÉATION DE VISUELS RÉSEAUX SOCIAUX & MARKETING :
-Quand l'administrateur demande un visuel, une affiche, un flyer, un mème ou un post pour les réseaux :
-1. Rédige d'abord un court message d'accompagnement pour les réseaux sociaux (WhatsApp / Facebook) avec émojis et liens du jeu avec UTM.
-2. Inclus IMPÉRATIVEMENT un bloc JSON valide dans un bloc \`\`\`json { ... } \`\`\` au format VisualSpec V2 strict :
-\`\`\`json
-{
-  "version": 2,
-  "format": "SQUARE",
-  "palette": "EMERALD_GOLD",
-  "pattern": "NDOP_CHEVRON",
-  "blocks": [
-    { "id": "b-badge", "type": "BADGE", "text": "NJAMBO KORA", "priority": 1 },
-    { "id": "b-hook", "type": "HOOK", "text": "ACCROCHE PERCUTANTE", "accentWords": ["KORA"], "priority": 1 },
-    { "id": "b-body", "type": "BODY", "text": "Texte court et percutant adapté au thème demandé.", "priority": 2 }
-  ],
-  "cta": { "text": "Rejoins la partie en ligne" },
-  "footer": { "text": "njambo-kora.ai.studio", "whatsapp": true, "app": true }
-}
-\`\`\`
-Types de blocs valides dans "blocks" :
-- BADGE (text ≤ 28 chars)
-- HOOK (text ≤ 8 mots, accentWords optionnel)
-- BODY (text ≤ 22 mots)
-- BULLETS (items: string[], max 4 items)
-- STAT (value, label, sublabel)
-- CARDS (cards: [{ rank: "3", suit: "♥", label?: string, highlight?: boolean }], max 5 cartes, arrangement: "FAN"|"ROW"|"DUEL")
-- COMPARE (leftTitle, leftText, rightTitle, rightText)
-- QUOTE (text ≤ 25 mots, author?: string)
-Palettes autorisées : "EMERALD_GOLD", "SUNSET_ORANGE", "ROYAL_INDIGO", "DARK_SLATE", "CHAMPAGNE_GOLD".
-Règles Njambo : 31 cartes (♥ ♦ ♣ de 3 à 10, ♠ de 3 à 9). Pas d'As, Roi, Dame, Valet, 2, 10♠. Kora uniquement au 5e pli avec un 3.
-
-⚠️ INTERDICTION STRICTE D'INVENTION DE JOUEURS OU DE STATS :
-- Ne JAMAIS inventer un pseudo, un joueur fictif (ex: "Big Smig", "King", etc.), ni des scores ou nombres de victoires inventés de toutes pièces.
-- Si le visuel porte sur un joueur ou le classement : utilise EXCLUSIVEMENT un joueur issu du "CLASSEMENT OFFICIEL DES JOUEURS HUMAINS" fourni dans la télémétrie.
-- Si aucun joueur humain n'est listé dans la télémétrie ou si les données ne fournissent pas de champion certifié : oriente le visuel vers un appel communautaire au trône ("Le trône de Njambo Kora t'attend !", "Qui sera le 1er Maître du Kora ?", "Défie les meilleurs sur le tapis"). Ne jamais créer de faux profil.\n`
+    ? `\nCRÉATION DE VISUELS : les visuels sont produits par le Studio (route dédiée). Ici, ne génère AUCUN JSON de visuel : propose seulement l'idée, l'angle et la légende en texte. Ne jamais inventer de joueur, de pseudo ni de statistique.\n`
     : '';
 
   // Bloc Monétisation & Cadre Légal (Injecté uniquement si wantsMonetization)
@@ -823,7 +791,7 @@ Règles du jeu : 31 cartes (♥ ♦ ♣ de 3 à 10, ♠ de 3 à 9 ; ni As, Roi, 
 Règles de fonctionnement :
 1. Lecture seule absolue : conseiller analytique sans action directe en base ni ban automatique. L'administrateur valide et agit manuellement via les liens #katika-nav.
 2. Ancrage factuel : Pour tout audit, analyse technique ou diagnostic (#m_ pour un match, #log_ pour un log, #p_ pour un joueur, #table_ pour une table, #note_ pour une note de carnet), chaque fait doit citer son identifiant réel source. Si un compteur est à 0 ou une donnée introuvable, indique qu'aucune donnée n'est enregistrée. Si le nombre de joueurs humains actifs est inférieur à 10 ou celui des parties inférieur à 30, signale que les ratios sont peu significatifs avant toute conclusion. Pour tout classement, utilise le classement Palmarès (Score de Maîtrise) tel que fourni dans les données. Pour la création de visuels créatifs, mèmes ou marketing, concentre-toi sur l'impact visuel et les règles du jeu sans imposer de rapport de métriques si non sollicité, MAIS INTERDICTION ABSOLUE d'inventer des pseudos ou scores de joueurs fictifs (si aucun joueur réel n'est fourni, formule le visuel sous forme de défi communautaire ou de trône vacant).
-3. Économie : aujourd'hui l'économie est exclusivement en jetons virtuels ; aucune monnaie réelle n'est implémentée. Un modèle à mises réelles avec prélèvement (rake) est envisagé mais non décidé : ne jamais le présenter comme acquis, ne jamais affirmer une règle légale précise sans source, recommander une validation par un juriste. Les dotations de tournoi sont proposées comme options chiffrées en jetons virtuels, avec la mention « Jetons virtuels d'amusement — Aucune valeur monétaire réelle ».
+3. ${buildEconomyRuleForChat(isKoraCashEnabled(getEngineConfig()))}
 4. Liens et confidentialité : tout lien de jeu proposé doit comporter des paramètres UTM (?utm_source=...&utm_medium=social&utm_campaign=...). Ne cite jamais d'adresse email ni d'adresse IP.
 5. Navigation #katika-nav : [Table {code}](#katika-nav:ROOMS:{code}), [Joueur {id}](#katika-nav:PLAYERS:{id}), [Moteur](#katika-nav:SETTINGS), [Audit](#katika-nav:LOGS:{query}), [Matches](#katika-nav:MATCHES:{query}), [KPIs](#katika-nav:DASHBOARD).
 6. Carnet de bord : Tu peux proposer des entrées de carnet en texte ; tu n'écris jamais dans le carnet, l'admin les saisit lui-même.

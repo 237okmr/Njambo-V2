@@ -2,8 +2,9 @@
  * Schéma JSON de la spécification visuelle (VisualSpec V2)
  * Au format responseSchema pour le SDK Gemini (@google/genai).
  * Structure à plat (sans oneOf / anyOf) pour une compatibilité parfaite avec Gemini.
- * TypeScript pur, sans import externe.
+ * Les listes de valeurs (formats, palettes, motifs, types de blocs) viennent de visualSpec.ts (source unique).
  */
+import { VISUAL_BLOCK_TYPES, VISUAL_FORMATS, VISUAL_PALETTES, VISUAL_PATTERNS } from './visualSpec';
 
 export const VISUAL_SPEC_JSON_SCHEMA = {
   type: 'OBJECT' as const,
@@ -14,17 +15,17 @@ export const VISUAL_SPEC_JSON_SCHEMA = {
     },
     format: {
       type: 'STRING' as const,
-      enum: ['SQUARE', 'STORY', 'BANNER'],
+      enum: [...VISUAL_FORMATS],
       description: 'Format du visuel : SQUARE (1080x1080), STORY (1080x1920) ou BANNER (1920x1080)',
     },
     palette: {
       type: 'STRING' as const,
-      enum: ['EMERALD_GOLD', 'EBONY_GOLD', 'SUNSET_TERRACOTTA', 'ROYAL_SAPPHIRE'],
+      enum: [...VISUAL_PALETTES],
       description: 'Palette de couleurs officielle Katika',
     },
     pattern: {
       type: 'STRING' as const,
-      enum: ['NDOP_CHEVRON', 'DIAMONDS', 'MINIMAL'],
+      enum: [...VISUAL_PATTERNS],
       description: 'Motif culturel d\'arrière-plan',
     },
     blocks: {
@@ -36,20 +37,7 @@ export const VISUAL_SPEC_JSON_SCHEMA = {
           id: { type: 'STRING' as const, description: 'Identifiant unique du bloc (ex: b_1)' },
           type: {
             type: 'STRING' as const,
-            enum: [
-              'BADGE',
-              'HOOK',
-              'BODY',
-              'BULLETS',
-              'STAT',
-              'QUOTE',
-              'COMPARE',
-              'CARDS',
-              'STEPS',
-              'EVENT',
-              'IMAGE',
-              'SPACER',
-            ],
+            enum: [...VISUAL_BLOCK_TYPES],
             description: 'Type de bloc visuel',
           },
           priority: { type: 'INTEGER' as const, description: 'Priorité de rendu (1 = ne pas supprimer, 2 = normal, 3 = optionnel)' },
@@ -160,4 +148,44 @@ export const VISUAL_SPEC_JSON_SCHEMA = {
     },
   },
   required: ['version', 'format', 'palette', 'pattern', 'blocks', 'cta'],
+};
+
+/**
+ * Schéma de la réponse « 3 variantes en un seul appel » : chaque variante est une VisualSpec V2
+ * complétée par un angle et le texte du post (histoire, question, hashtags).
+ */
+export const VISUAL_VARIANTS_JSON_SCHEMA = {
+  type: 'OBJECT' as const,
+  properties: {
+    variants: {
+      type: 'ARRAY' as const,
+      description: 'Exactement 3 variantes distinctes du même brief',
+      items: {
+        type: 'OBJECT' as const,
+        properties: {
+          ...VISUAL_SPEC_JSON_SCHEMA.properties,
+          angle: {
+            type: 'STRING' as const,
+            enum: ['HUMOUR', 'DEFI', 'CLAIR'],
+            description: 'Angle de la variante',
+          },
+          story: {
+            type: 'STRING' as const,
+            description: 'Mini-histoire du post (40 mots maximum), qui complète le visuel sans le répéter',
+          },
+          question: {
+            type: 'STRING' as const,
+            description: 'Question du post qui fait réagir (12 mots maximum)',
+          },
+          hashtags: {
+            type: 'ARRAY' as const,
+            items: { type: 'STRING' as const },
+            description: '0 à 3 hashtags',
+          },
+        },
+        required: [...VISUAL_SPEC_JSON_SCHEMA.required, 'angle', 'story', 'question'],
+      },
+    },
+  },
+  required: ['variants'],
 };

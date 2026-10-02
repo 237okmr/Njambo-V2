@@ -19,6 +19,36 @@ export type VisualBlockType =
   | 'IMAGE'
   | 'SPACER';
 
+/**
+ * SOURCE UNIQUE des valeurs autorisées d'un visuel.
+ * Le schéma IA, le validateur et les prompts doivent s'y référer : ne jamais recopier ces listes ailleurs.
+ */
+export const VISUAL_PALETTES = [
+  'EMERALD_GOLD',
+  'EBONY_GOLD',
+  'SUNSET_TERRACOTTA',
+  'ROYAL_SAPPHIRE',
+] as const satisfies readonly SocialVisualPalette[];
+
+export const VISUAL_PATTERNS = ['NDOP_CHEVRON', 'DIAMONDS', 'MINIMAL'] as const satisfies readonly SocialVisualPattern[];
+
+export const VISUAL_FORMATS = ['SQUARE', 'STORY', 'BANNER'] as const satisfies readonly VisualFormat[];
+
+export const VISUAL_BLOCK_TYPES = [
+  'BADGE',
+  'HOOK',
+  'BODY',
+  'BULLETS',
+  'STAT',
+  'QUOTE',
+  'COMPARE',
+  'CARDS',
+  'STEPS',
+  'EVENT',
+  'IMAGE',
+  'SPACER',
+] as const satisfies readonly VisualBlockType[];
+
 export interface BaseVisualBlock {
   id: string;
   type: VisualBlockType;
@@ -74,12 +104,15 @@ export interface CardItem {
   suit: NjamboSuit | string;
   label?: string;
   highlight?: boolean;
+  /** Disposition TRICK : libellé du joueur sous la carte (ex. « Joueur A »). */
+  player?: string;
 }
 
 export interface CardsBlock extends BaseVisualBlock {
   type: 'CARDS';
   cards: CardItem[]; // 1 to 5 cards
-  arrangement?: 'FAN' | 'ROW' | 'DUEL';
+  /** TRICK = un pli : une carte par joueur, avec son libellé et la carte gagnante mise en valeur. */
+  arrangement?: 'FAN' | 'ROW' | 'DUEL' | 'TRICK';
 }
 
 export interface StepsBlock extends BaseVisualBlock {
@@ -148,6 +181,17 @@ export interface VisualCaptions {
   x?: string;
 }
 
+/**
+ * Texte du post qui accompagne un visuel : il COMPLÈTE le visuel (histoire + question), il ne le répète pas.
+ */
+export interface VisualPost {
+  story: string; // ≤ 40 mots, voix d'Hokuto
+  question: string; // ≤ 12 mots, fait réagir
+  hashtags?: string[]; // 0 à 3, parmi ALLOWED_POST_HASHTAGS
+}
+
+export const ALLOWED_POST_HASHTAGS = ['#NjamboKora', '#JeuDeCartes', '#Katika', '#Kora', '#BêtaTest'] as const;
+
 export interface VisualSpec {
   version: 2;
   format: VisualFormat;
@@ -158,6 +202,7 @@ export interface VisualSpec {
   footer?: VisualFooter;
   meta?: VisualMeta;
   captions?: VisualCaptions;
+  post?: VisualPost;
 }
 
 export const BLOCK_LIMITS = {
@@ -179,6 +224,9 @@ export const BLOCK_LIMITS = {
   STEPS_MAX_ITEMS: 5,
   STEPS_ITEM_MAX_WORDS: 6,
   CTA_TEXT_MAX_WORDS: 5,
+  POST_STORY_MAX_WORDS: 40,
+  POST_QUESTION_MAX_WORDS: 12,
+  POST_HASHTAGS_MAX: 3,
 } as const;
 
 export interface BlockFieldDef {

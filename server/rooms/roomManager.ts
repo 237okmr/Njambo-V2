@@ -7,6 +7,7 @@ import { PARAM_BY_KEY, clampParamValue } from '../engine/engineParams';
 import { pushService, buildGameUrl } from '../pushService';
 import { APP_VERSION } from '../../src/version';
 import { verifyFirebaseIdToken } from '../firebaseAdmin';
+import { saveKoraMoment } from './koraMomentStore';
 import { shouldBotAcceptBetIncrease, BOT_BET_INCREASE_AGREE_EMOTES, BOT_BET_INCREASE_DECLINE_EMOTES } from '../../src/utils/ai';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../src/lib/firebase';
@@ -597,6 +598,9 @@ export class RoomManager {
         },
         onPartieResult: (result: PartieResult, r: MultiplayerRoom) => {
           this.handleNewPartieResult(result, r);
+        },
+        onKoraMoment: (moment) => {
+          void saveKoraMoment(moment);
         },
       };
       this.roomStates.set(roomCode, state);

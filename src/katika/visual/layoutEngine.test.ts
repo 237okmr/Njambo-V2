@@ -5,6 +5,30 @@ import { VisualSpec, VisualBlock } from './visualSpec';
 import { TYPE_SCALE, SAFE_ZONES, FORMAT_DIMENSIONS } from './brandTokens';
 
 describe('Layout Engine v2 - Tests de robustesse et conformité', () => {
+  it('TRICK : réserve plus de hauteur qu\'une simple rangée de cartes', () => {
+    const make = (arrangement: 'ROW' | 'TRICK'): VisualSpec => ({
+      version: 2,
+      format: 'SQUARE',
+      palette: 'EMERALD_GOLD',
+      pattern: 'NDOP_CHEVRON',
+      blocks: [
+        { id: 'h', type: 'HOOK', text: 'LE KORA DU DIMANCHE', priority: 1 },
+        {
+          id: 'c',
+          type: 'CARDS',
+          arrangement,
+          cards: [
+            { rank: '3', suit: '♥', player: 'Joueur A' },
+            { rank: '9', suit: '♠', player: 'Joueur B' },
+          ],
+        },
+      ],
+      cta: { text: 'Viens jouer' },
+    });
+    const rowHeight = computeLayout(make('ROW'), defaultMeasure).blocks.find((b) => b.id === 'c')!.height;
+    const trickHeight = computeLayout(make('TRICK'), defaultMeasure).blocks.find((b) => b.id === 'c')!.height;
+    assert.ok(trickHeight > rowHeight);
+  });
   it('7 blocs très longs en STORY : aucun bloc hors zone sûre, aucun chevauchement, polices ≥ minimum', () => {
     const longSpec: VisualSpec = {
       version: 2,

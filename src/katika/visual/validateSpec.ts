@@ -1,10 +1,16 @@
 import { sanitizeNjamboCard } from '../types/socialVisuals';
 import { buildCaptions } from './captionEngine';
 import {
+  ALLOWED_POST_HASHTAGS,
   BLOCK_LIMITS,
+  VISUAL_BLOCK_TYPES,
+  VISUAL_FORMATS,
+  VISUAL_PALETTES,
+  VISUAL_PATTERNS,
   VisualBlock,
   VisualBlockType,
   VisualFormat,
+  VisualPost,
   VisualSpec,
 } from './visualSpec';
 import { SocialVisualPalette, SocialVisualPattern } from '../types/socialVisuals';
@@ -56,32 +62,10 @@ export const FORBIDDEN_TOPICS = [
   'politique',
 ];
 
-const VALID_FORMATS: VisualFormat[] = ['SQUARE', 'STORY', 'BANNER'];
-const VALID_PALETTES: SocialVisualPalette[] = [
-  'EMERALD_GOLD',
-  'EBONY_GOLD',
-  'SUNSET_TERRACOTTA',
-  'ROYAL_SAPPHIRE',
-];
-const VALID_PATTERNS: SocialVisualPattern[] = [
-  'NDOP_CHEVRON',
-  'DIAMONDS',
-  'MINIMAL',
-];
-const VALID_BLOCK_TYPES: VisualBlockType[] = [
-  'BADGE',
-  'HOOK',
-  'BODY',
-  'BULLETS',
-  'STAT',
-  'QUOTE',
-  'COMPARE',
-  'CARDS',
-  'STEPS',
-  'EVENT',
-  'IMAGE',
-  'SPACER',
-];
+const VALID_FORMATS: VisualFormat[] = [...VISUAL_FORMATS];
+const VALID_PALETTES: SocialVisualPalette[] = [...VISUAL_PALETTES];
+const VALID_PATTERNS: SocialVisualPattern[] = [...VISUAL_PATTERNS];
+const VALID_BLOCK_TYPES: VisualBlockType[] = [...VISUAL_BLOCK_TYPES];
 
 /**
  * Nettoie les identifiants techniques dans un texte (#p_, #m_, #usr_, UUIDs, etc.)
@@ -445,6 +429,7 @@ export function validateAndRepairSpec(
           suit: string;
           label?: string;
           highlight?: boolean;
+          player?: string;
         }> = [];
 
         rawCards.slice(0, BLOCK_LIMITS.CARDS_MAX_ITEMS).forEach((c: any) => {
@@ -471,11 +456,14 @@ export function validateAndRepairSpec(
             }
           }
 
+          const player = c.player ? truncateChars(processText(String(c.player)), 14).text : undefined;
+
           sanitizedCards.push({
             rank: cleanRank,
             suit: cleanSuit,
             label,
             highlight: Boolean(c.highlight),
+            ...(player ? { player } : {}),
           });
         });
 
@@ -483,7 +471,7 @@ export function validateAndRepairSpec(
           sanitizedCards.push({ rank: '3', suit: '♥', label: 'KORA' });
         }
 
-        const arrangement = ['FAN', 'ROW', 'DUEL'].includes(b.arrangement)
+        const arrangement = ['FAN', 'ROW', 'DUEL', 'TRICK'].includes(b.arrangement)
           ? b.arrangement
           : 'FAN';
 
@@ -626,6 +614,41 @@ export function validateAndRepairSpec(
       }
     : { app: true, whatsapp: true };
 
+  // Post d'accompagnement : nettoyé comme tout texte public (identifiants, « gratuit », argent réel...)
+  let post: VisualPost | undefined;
+  if (raw.post && typeof raw.post === 'object') {
+    const { text: story, truncated: storyTruncated } = truncateWords(
+      processText(String(raw.post.story || '')),
+      BLOCK_LIMITS.POST_STORY_MAX_WORDS
+    );
+    const { text: question, truncated: questionTruncated } = truncateWords(
+      processText(String(raw.post.question || '')),
+      BLOCK_LIMITS.POST_QUESTION_MAX_WORDS
+    );
+    if (storyTruncated) {
+      warnings.push(`Histoire du post tronquée à ${BLOCK_LIMITS.POST_STORY_MAX_WORDS} mots.`);
+    }
+    if (questionTruncated) {
+      warnings.push(`Question du post tronquée à ${BLOCK_LIMITS.POST_QUESTION_MAX_WORDS} mots.`);
+    }
+
+    const allowedTags = new Map<string, string>(
+      ALLOWED_POST_HASHTAGS.map((h): [string, string] => [h.toLowerCase(), h])
+    );
+    const hashtags: string[] = [];
+    (Array.isArray(raw.post.hashtags) ? raw.post.hashtags : []).forEach((h: any) => {
+      const key = String(h || '').trim().toLowerCase();
+      const canonical = allowedTags.get(key.startsWith('#') ? key : `#${key}`);
+      if (canonical && !hashtags.includes(canonical) && hashtags.length < BLOCK_LIMITS.POST_HASHTAGS_MAX) {
+        hashtags.push(canonical);
+      }
+    });
+
+    if (story || question) {
+      post = { story, question, hashtags };
+    }
+  }
+
   const spec: VisualSpec = {
     version: 2,
     format,
@@ -639,6 +662,7 @@ export function validateAndRepairSpec(
       needsReview,
       warnings,
     },
+    ...(post ? { post } : {}),
   };
 
   // Génère ou met à jour les légendes réseaux

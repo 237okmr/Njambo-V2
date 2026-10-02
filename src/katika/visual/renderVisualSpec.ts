@@ -516,6 +516,22 @@ export async function renderVisualSpecToCanvas(
 
             drawPlayingCard(ctx, cx + 30, y + 10, cardW, cardH, cards[1].rank, cards[1].suit, cards[1].label, cards[1].highlight);
           }
+        } else if (arrangement === 'TRICK') {
+          // Un pli : une carte par joueur, libellé du joueur sous la carte, carte gagnante mise en valeur
+          const trickGap = 18;
+          const totalTrickW = cards.length * cardW + (cards.length - 1) * trickGap;
+          let trickX = cx - totalTrickW / 2;
+          cards.forEach((c) => {
+            drawPlayingCard(ctx, trickX, y + 10, cardW, cardH, c.rank, c.suit, c.label, c.highlight);
+            if (c.player) {
+              ctx.font = 'bold 22px system-ui, sans-serif';
+              ctx.fillStyle = c.highlight ? style.goldAccent : '#e2e8f0';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'alphabetic';
+              ctx.fillText(c.player, trickX + cardW / 2, y + 10 + cardH + 32);
+            }
+            trickX += cardW + trickGap;
+          });
         } else {
           // ROW
           const totalRowW = cards.length * cardW + (cards.length - 1) * 16;

@@ -1,5 +1,10 @@
 import { CopilotSettingsService } from './copilotSettingsService';
 import { tikaFetch } from './tikaFetch';
+import type { KoraMoment } from '../../../server/engine/koraMoment';
+import { buildLocalRemixVariants, shouldFallbackToLocalRemix } from '../visual/localRemix';
+import { getMemeHistory, recordMemeHistory } from '../data/memeBank';
+import { recordPostQuestion, withQuestionHint } from '../visual/postHistory';
+import { encodeVariantsReply } from '../visual/variantsPayload';
 
 export interface ChatMessage {
   id: string;
@@ -273,6 +278,64 @@ export const AiAdminChatClient = {
       config: params.config || this.getPreferences(),
       metricsSnapshot: params.metricsSnapshot,
     };
+  },
+
+  /**
+   * Visuels : un seul appel à la route dédiée /api/katika/ai-visual (schéma imposé),
+   * au lieu de passer par le chat et son long prompt de format.
+   * Renvoie un texte Markdown contenant le visuel dans un bloc json que le rendu du chat sait afficher.
+   */
+  async generateVisualReply(params: {
+    brief: string;
+    config?: ChatBotPreferences;
+    metricsSnapshot?: any;
+    moment?: KoraMoment;
+  }): Promise<string> {
+    const response = await tikaFetch('/api/katika/ai-visual', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        brief: withQuestionHint(params.brief),
+        model: params.config?.model,
+        metricsSnapshot: params.metricsSnapshot,
+        moment: params.moment,
+      }),
+    });
+
+    const data = await response.json();
+
+    // Quota ou plafond horaire atteint : remix local sans IA (banque de mèmes), sauf pour un vrai moment Kora.
+    if ((!response.ok || data.success === false) && !params.moment && shouldFallbackToLocalRemix(response.status, data)) {
+      const { specs, memeIds } = buildLocalRemixVariants(3, { avoidIds: getMemeHistory() });
+      memeIds.forEach((id) => recordMemeHistory(id));
+      if (specs.length > 0) {
+        return encodeVariantsReply(
+          specs.map((spec) => ({ spec })),
+          'Quota IA atteint pour le moment : voici des idées tirées de la banque de mèmes, sans appel IA.'
+        );
+      }
+    }
+
+    if (!response.ok || data.success === false) {
+      throw new Error(data.error || 'Échec de la génération du visuel.');
+    }
+
+    const list: any[] = Array.isArray(data.variants) && data.variants.length > 0 ? data.variants : [data];
+    const variants = list
+      .filter((v) => v && v.spec)
+      .map((v) => ({ spec: v.spec, angle: v.angle, needsReview: Boolean(v.needsReview) }));
+    if (variants.length === 0) {
+      throw new Error('Le visuel généré est invalide. Reformule ta demande ou réessaie dans un instant.');
+    }
+
+    recordPostQuestion(variants[0].spec?.post?.question);
+    const note =
+      variants.length > 1
+        ? `Voici ${variants.length} idées de visuel. Balaie pour les voir, puis copie le post.`
+        : 'Voici ton visuel, prêt à publier.';
+    return encodeVariantsReply(variants, note);
   },
 
   async sendMessage(params: {

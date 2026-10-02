@@ -17,6 +17,8 @@ import { KatikaTab } from '../types/katika';
 import { navigateToKatikaTab } from '../utils/katikaNavigation';
 import { KatikaSocialCardPreview } from './social/KatikaSocialCardPreview';
 import { SocialVisualCardData } from '../types/socialVisuals';
+import { KatikaVisualVariants } from './KatikaVisualVariants';
+import { decodeVariantsReply } from '../visual/variantsPayload';
 import { VisualSpec } from '../visual/visualSpec';
 import { downloadSpecPng } from '../visual/renderVisualSpec';
 import { validateAndRepairSpec } from '../visual/validateSpec';
@@ -24,6 +26,8 @@ import { validateAndRepairSpec } from '../visual/validateSpec';
 interface KatikaChatMessageRendererProps {
   content: string;
   onNavigate?: (tab: KatikaTab, query?: string) => void;
+  /** Mobile : texte de 15 px, sélectionnable à la pression longue. */
+  comfortable?: boolean;
 }
 
 function tryParseVisualSpec(raw: string): { spec: VisualSpec; warnings: string[]; needsReview: boolean } | null {
@@ -82,7 +86,24 @@ function tryParseSocialCard(raw: string): SocialVisualCardData | null {
 export const KatikaChatMessageRenderer: React.FC<KatikaChatMessageRendererProps> = ({
   content,
   onNavigate,
+  comfortable = false,
 }) => {
+  // Plusieurs variantes de visuel : carrousel avec barre d'actions (copier, télécharger, partager)
+  const variantsReply = decodeVariantsReply(content);
+  if (variantsReply) {
+    return (
+      <div className="flex flex-col space-y-3">
+        {variantsReply.text && (
+          <p className={`${comfortable ? 'text-[15px]' : 'text-xs'} leading-relaxed text-slate-200`}>{variantsReply.text}</p>
+        )}
+        <KatikaVisualVariants
+          variants={variantsReply.variants}
+          onEdit={!comfortable && onNavigate ? () => onNavigate('SETTINGS', 'composer') : undefined}
+        />
+      </div>
+    );
+  }
+
   // Pre-process content to extract social card JSON or V2 VisualSpec if present
   let cleanContent = content;
   const parsedV2 = tryParseVisualSpec(content);
@@ -159,7 +180,7 @@ export const KatikaChatMessageRenderer: React.FC<KatikaChatMessageRendererProps>
   return (
     <div className="flex flex-col space-y-4">
       {cleanContent && (
-      <div className="markdown-body text-xs space-y-2.5 leading-relaxed text-slate-200 selection:bg-amber-500/30">
+      <div className={`markdown-body ${comfortable ? 'text-[15px] select-text' : 'text-xs'} space-y-2.5 leading-relaxed text-slate-200 selection:bg-amber-500/30`}>
         <Markdown
           components={{
           a: ({ href, children, ...props }) => {
@@ -201,7 +222,7 @@ export const KatikaChatMessageRenderer: React.FC<KatikaChatMessageRendererProps>
           },
           table: ({ children }) => (
             <div className="my-3 overflow-x-auto rounded-xl border border-slate-700/80 bg-slate-950/90 shadow-md">
-              <table className="w-full text-left text-xs border-collapse divide-y divide-slate-800">
+              <table className={`w-full text-left ${comfortable ? 'text-sm' : 'text-xs'} border-collapse divide-y divide-slate-800`}>
                 {children}
               </table>
             </div>

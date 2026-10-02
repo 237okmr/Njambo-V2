@@ -11,6 +11,7 @@ import {
   KatikaDetectedAnomaly,
 } from '../services/katikaMetricsSnapshot';
 import { buildLocalHealthReport } from '../utils/localReports';
+import type { KoraMoment } from '../../../server/engine/koraMoment';
 
 interface SendMessageOptions {
   text?: string;
@@ -21,6 +22,8 @@ interface SendMessageOptions {
     sizeBytes?: number;
   };
   includeMetrics?: boolean;
+  /** Vrai moment Kora à illustrer : le visuel est alors généré avec le pli réel. */
+  moment?: KoraMoment;
 }
 
 interface KatikaAiChatContextType {
@@ -432,7 +435,25 @@ export const KatikaAiChatProvider: React.FC<{ children: React.ReactNode }> = ({ 
         });
 
         let reply = '';
-        if (prefs.disableStreaming) {
+        if ((isVisualCreativePrompt || options.moment) && !options.image) {
+          // Visuels : un seul appel via la route dédiée (schéma imposé), sans repasser par le chat
+          reply = await AiAdminChatClient.generateVisualReply({
+            brief: text,
+            config: prefs,
+            metricsSnapshot: snapshotToSend,
+            moment: options.moment,
+          });
+          accumulatedText = reply;
+          setThreads((prev) =>
+            prev.map((t) => {
+              if (t.id !== activeThreadId) return t;
+              const msgs = t.messages.map((m) =>
+                m.id === assistantId ? { ...m, content: reply } : m
+              );
+              return { ...t, messages: msgs, updatedAt: Date.now() };
+            })
+          );
+        } else if (prefs.disableStreaming) {
           // Static Mode: Standard POST request, extremely robust on unstable network connections
           reply = await AiAdminChatClient.sendMessage({
             message: text,

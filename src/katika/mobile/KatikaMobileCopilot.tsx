@@ -37,6 +37,9 @@ import { NjamboCopilotInstallModal } from '../components/pwa/NjamboCopilotInstal
 import { KatikaCopilotSettingsModal } from '../components/copilot/KatikaCopilotSettingsModal';
 import { KatikaAdminNotesPanel } from '../components/modals/KatikaAdminNotesPanel';
 import { setPwaIdentity } from '../utils/pwaManifestSwitcher';
+import { KatikaMomentPicker } from '../components/KatikaMomentPicker';
+import { KatikaAiQuotaGauge } from '../components/KatikaAiQuotaGauge';
+import type { KoraMoment } from '../../../server/engine/koraMoment';
 
 const MOBILE_QUICK_PROMPTS = [
   {
@@ -90,6 +93,8 @@ export const KatikaMobileCopilot: React.FC = () => {
 
   const [inputVal, setInputVal] = useState('');
   const [showSocialModal, setShowSocialModal] = useState(false);
+  const [showMomentPicker, setShowMomentPicker] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const [showAdminNotes, setShowAdminNotes] = useState(false);
   const [showCopilotSettings, setShowCopilotSettings] = useState(false);
   const [showThreadDrawer, setShowThreadDrawer] = useState(false);
@@ -309,10 +314,18 @@ export const KatikaMobileCopilot: React.FC = () => {
     handleSend(prompt);
   };
 
+  // Visuel à partir d'un vrai Kora : le pli est dessiné d'après la partie réelle
+  const handleMomentPick = async (moment: KoraMoment) => {
+    await sendMessage({
+      text: 'Crée un visuel pour ce vrai Kora de la table.',
+      includeMetrics: false,
+      moment,
+    });
+  };
+
   // KPIs derived
   const activeRooms = metricsSnapshot?.summary?.activeRooms ?? 0;
   const connectedPlayers = metricsSnapshot?.summary?.connectedPlayers ?? 0;
-  const totalManches = metricsSnapshot?.summary?.totalManches ?? 0;
   const hasAnomalies = (anomalies && anomalies.length > 0);
 
   return (
@@ -321,7 +334,7 @@ export const KatikaMobileCopilot: React.FC = () => {
       className="h-[100dvh] w-full bg-slate-950 text-slate-100 flex flex-col font-sans select-none overflow-hidden relative"
     >
       {/* Top Mobile App Bar */}
-      <header className="shrink-0 h-14 bg-slate-900/90 border-b border-slate-800 backdrop-blur px-3.5 flex items-center justify-between z-30">
+      <header className="shrink-0 h-12 bg-slate-900/90 border-b border-slate-800 backdrop-blur px-3.5 flex items-center justify-between z-30">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="relative">
             <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
@@ -336,64 +349,36 @@ export const KatikaMobileCopilot: React.FC = () => {
                 PRO
               </span>
             </div>
-            <p className="text-[10px] text-slate-400 truncate">
-              {loadingMetrics ? 'Actualisation...' : `En direct • ${prefs?.model || 'gemini-3.6-flash'}`}
-            </p>
+            <div className="flex items-center gap-1.5 text-[11px] text-slate-300 font-mono whitespace-nowrap overflow-hidden">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+              <span className="truncate">
+                {loadingMetrics ? 'Actualisation…' : `${activeRooms} salons · ${connectedPlayers} joueurs`}
+              </span>
+              <KatikaAiQuotaGauge refreshKey={`${messages.length}-${isLoading ? 'busy' : 'idle'}`} />
+            </div>
           </div>
         </div>
 
         {/* Header Action Buttons */}
         <div className="flex items-center gap-1">
-          {/* Direct Install PWA Button on mobile browser */}
-          {!isCopilotPwaInstalled && (
-            <button
-              type="button"
-              onClick={handleInstallCopilotApp}
-              title="Installer l'application Njambo Copilote"
-              className="h-8 px-2 rounded-lg bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-bold text-[11px] flex items-center gap-1 shadow-sm active:scale-95 transition cursor-pointer"
-            >
-              <Download className="w-3.5 h-3.5 text-slate-950" />
-              <span className="hidden xs:inline">Installer</span>
-            </button>
-          )}
-
-          {/* Refresh live metrics */}
-          <button
-            type="button"
-            onClick={() => refreshLiveMetrics()}
-            disabled={loadingMetrics}
-            title="Rafraîchir les données"
-            className="w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 flex items-center justify-center transition active:scale-95 disabled:opacity-50 cursor-pointer"
-          >
-            <RotateCw className={`w-4 h-4 ${loadingMetrics ? 'animate-spin text-amber-400' : ''}`} />
-          </button>
 
           {/* Social visual studio button */}
           <button
             type="button"
             onClick={() => setShowSocialModal(true)}
             title="Studio Visuels Réseaux"
-            className="w-8 h-8 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 flex items-center justify-center transition active:scale-95 cursor-pointer"
+            className="w-11 h-11 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 flex items-center justify-center transition active:scale-95 cursor-pointer"
           >
             <Sparkles className="w-4 h-4" />
           </button>
 
-          {/* Admin Notes Carnet button */}
-          <button
-            type="button"
-            onClick={() => setShowAdminNotes(true)}
-            title="Carnet de Bord & Roadmap"
-            className="w-8 h-8 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 flex items-center justify-center transition active:scale-95 cursor-pointer"
-          >
-            <BookOpen className="w-4 h-4" />
-          </button>
 
           {/* Threads drawer button */}
           <button
             type="button"
             onClick={() => setShowThreadDrawer(true)}
             title="Historique des discussions"
-            className="w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 flex items-center justify-center transition active:scale-95 cursor-pointer"
+            className="w-11 h-11 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 flex items-center justify-center transition active:scale-95 cursor-pointer"
           >
             <MessageSquare className="w-4 h-4" />
           </button>
@@ -403,17 +388,53 @@ export const KatikaMobileCopilot: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowMenuDropdown(!showMenuDropdown)}
-              className="w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 flex items-center justify-center transition cursor-pointer"
+              className="w-11 h-11 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 flex items-center justify-center transition cursor-pointer"
             >
               <MoreVertical className="w-4 h-4" />
             </button>
 
             {showMenuDropdown && (
-              <div className="absolute right-0 top-10 w-56 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl p-1.5 z-50 text-xs space-y-1 animate-in fade-in zoom-in-95 duration-150">
+              <div className="absolute right-0 top-12 w-64 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl p-1.5 z-50 text-xs space-y-1 animate-in fade-in zoom-in-95 duration-150">
                 <div className="px-2.5 py-1.5 border-b border-slate-800 text-[10px] text-slate-400 font-mono truncate">
                   Connecté : <span className="text-amber-300">{KATIKA_AUTHORIZED_EMAIL}</span>
                 </div>
                 
+                {/* Actions déplacées de l'en-tête pour gagner de la place */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMenuDropdown(false);
+                    refreshLiveMetrics();
+                  }}
+                  disabled={loadingMetrics}
+                  className="w-full min-h-[44px] text-left px-2.5 py-2 rounded-lg hover:bg-slate-800 text-slate-200 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  <RotateCw className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Rafraîchir les données</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMenuDropdown(false);
+                    setShowAdminNotes(true);
+                  }}
+                  className="w-full min-h-[44px] text-left px-2.5 py-2 rounded-lg hover:bg-slate-800 text-slate-200 flex items-center gap-2 cursor-pointer"
+                >
+                  <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Carnet de bord & Roadmap</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMenuDropdown(false);
+                    setShowShortcuts((v) => !v);
+                  }}
+                  className="w-full min-h-[44px] text-left px-2.5 py-2 rounded-lg hover:bg-slate-800 text-slate-200 flex items-center gap-2 cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{showShortcuts ? 'Masquer les raccourcis' : 'Afficher les raccourcis'}</span>
+                </button>
+
                 {/* Install Njambo Copilote Action */}
                 {!isCopilotPwaInstalled && (
                   <button
@@ -525,23 +546,9 @@ export const KatikaMobileCopilot: React.FC = () => {
       </header>
 
       {/* Proactive Live Status & Alerts Strip */}
-      <div className="shrink-0 bg-slate-900/60 border-b border-slate-800/80 px-3.5 py-2">
-        <div className="flex items-center justify-between text-[11px]">
-          <div className="flex items-center gap-3 overflow-x-auto scrollbar-none font-mono">
-            <span className="flex items-center gap-1.5 text-slate-300">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <strong className="text-white">{activeRooms}</strong> salons
-            </span>
-            <span className="text-slate-600">•</span>
-            <span className="text-slate-300">
-              <strong className="text-white">{connectedPlayers}</strong> joueurs
-            </span>
-            <span className="text-slate-600">•</span>
-            <span className="text-amber-400 font-semibold">
-              {totalManches} manches
-            </span>
-          </div>
-
+      {hasAnomalies && (
+      <div className="shrink-0 bg-slate-900/60 border-b border-slate-800/80 px-3.5 py-1.5">
+        <div className="flex items-center justify-end text-[11px]">
           {hasAnomalies && (
             <button
               type="button"
@@ -589,21 +596,38 @@ export const KatikaMobileCopilot: React.FC = () => {
           </div>
         )}
       </div>
+      )}
 
-      {/* Quick Prompts Carousel */}
+      {/* Quick Prompts Carousel : visible à l'écran vide, ou à la demande depuis le menu */}
+      {(messages.length === 0 || showShortcuts) && (
       <div className="shrink-0 bg-slate-950/80 border-b border-slate-900 px-3 py-2 overflow-x-auto scrollbar-none flex items-center gap-2 z-10">
+        <button
+          type="button"
+          onClick={() => setShowMomentPicker(true)}
+          disabled={isLoading}
+          className="shrink-0 px-3 py-2 min-h-[40px] rounded-lg bg-amber-500/15 border border-amber-500/40 text-amber-200 text-[13px] font-semibold transition cursor-pointer disabled:opacity-50"
+        >
+          🃏 Kora de la semaine
+        </button>
         {MOBILE_QUICK_PROMPTS.map((qp, idx) => (
           <button
             key={idx}
             type="button"
             onClick={() => handleQuickPromptClick(qp.prompt)}
             disabled={isLoading}
-            className="shrink-0 px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-850 active:bg-slate-800 border border-slate-800 text-slate-300 text-[11px] font-medium transition cursor-pointer disabled:opacity-50"
+            className="shrink-0 px-3 py-2 min-h-[40px] rounded-lg bg-slate-900 hover:bg-slate-850 active:bg-slate-800 border border-slate-800 text-slate-300 text-[13px] font-medium transition cursor-pointer disabled:opacity-50"
           >
             {qp.label}
           </button>
         ))}
       </div>
+      )}
+
+      <KatikaMomentPicker
+        open={showMomentPicker}
+        onClose={() => setShowMomentPicker(false)}
+        onPick={handleMomentPick}
+      />
 
       {/* Chat Messages Stream Area */}
       <main className="flex-1 overflow-y-auto px-3 py-4 space-y-4">
@@ -646,7 +670,7 @@ export const KatikaMobileCopilot: React.FC = () => {
               >
                 {/* Message Bubble */}
                 <div
-                  className={`max-w-[92%] rounded-2xl p-3.5 text-xs shadow-md ${
+                  className={`max-w-[92%] rounded-2xl p-3.5 text-[15px] leading-relaxed select-text shadow-md ${
                     isUser
                       ? 'bg-amber-500 text-slate-950 font-medium rounded-tr-sm'
                       : 'bg-slate-900 border border-slate-800/90 text-slate-200 rounded-tl-sm'
@@ -668,6 +692,7 @@ export const KatikaMobileCopilot: React.FC = () => {
                     <div className="whitespace-pre-wrap">{msg.content}</div>
                   ) : (
                     <KatikaChatMessageRenderer
+                      comfortable
                       content={msg.content}
                       onNavigate={(tab) => {
                         handleSend(`Explique-moi les détails de la section ${tab}.`);
@@ -677,7 +702,7 @@ export const KatikaMobileCopilot: React.FC = () => {
                 </div>
 
                 {/* Timestamp */}
-                <span className="text-[9px] text-slate-500 px-1 font-mono">
+                <span className="text-[11px] text-slate-500 px-1 font-mono">
                   {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
@@ -762,7 +787,7 @@ export const KatikaMobileCopilot: React.FC = () => {
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               placeholder="Message à l'agent Katika..."
-              className="w-full bg-transparent text-xs text-slate-100 placeholder-slate-500 focus:outline-none resize-none leading-relaxed max-h-28"
+              className="w-full bg-transparent text-base text-slate-100 placeholder-slate-500 focus:outline-none resize-none leading-relaxed max-h-28"
             />
           </div>
 

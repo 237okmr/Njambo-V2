@@ -198,7 +198,7 @@ function computeSingleBlockHeight(
     }
     case 'CARDS': {
       const count = block.cards?.length || 1;
-      const height = count > 3 ? 200 : 160;
+      const height = block.arrangement === 'TRICK' ? 215 : count > 3 ? 200 : 160;
       const lines = (block.cards || []).map((c) => `${c.rank}${c.suit}`);
       return { block, height, fontSize: 32, lines };
     }

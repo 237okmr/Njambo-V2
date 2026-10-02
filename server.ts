@@ -16,7 +16,9 @@ import { recordConnection, recordDisconnection, startMetricsFlushLoop, getTodayS
 import { getEngineConfig, getEngineConfigVersion } from './server/engine/engineConfig';
 import { getPublicParams, PARAM_BY_KEY } from './server/engine/engineParams';
 import { handleAdminChatMessage, streamAdminChatMessage } from './server/aiAdminChat';
-import { generateVisualSpec } from './server/aiVisual';
+import { generateVisualVariants } from './server/aiVisual';
+import { listKoraMoments } from './server/rooms/koraMomentStore';
+import { isKoraMoment } from './src/katika/visual/situation';
 import { pushService, buildGameUrl } from './server/pushService';
 import { verifyFirebaseIdToken, listAdminUsers, setAdminUserClaim, getFirebaseAdminDb } from './server/firebaseAdmin';
 import { collection, getDocs, query, limit, orderBy, startAfter } from 'firebase/firestore';
@@ -1403,7 +1405,13 @@ async function startServer() {
   const aiRequestTimestamps: number[] = [];
   let isAiRequestRunning = false;
 
+  // Plafond horaire : réglage katika « copilotMaxRequestsPerHour » (relu à chaque requête).
+  // La variable d'environnement KATIKA_AI_MAX_PER_HOUR ne sert plus qu'au démarrage, tant que katika n'a rien enregistré.
   function getMaxAiPerHour(): number {
+    const fromKatika = Number(RoomManager.getEngineConfig().copilotMaxRequestsPerHour);
+    if (Number.isFinite(fromKatika) && fromKatika > 0) {
+      return Math.floor(fromKatika);
+    }
     const raw = process.env.KATIKA_AI_MAX_PER_HOUR;
     if (raw) {
       const parsed = parseInt(raw, 10);
@@ -1411,7 +1419,7 @@ async function startServer() {
         return parsed;
       }
     }
-    return 20; // 20 requêtes par heure glissante par défaut
+    return 20;
   }
 
   type AiRateLimitResult =
@@ -1434,7 +1442,7 @@ async function startServer() {
       return {
         allowed: false,
         status: 429,
-        message: 'Limite du copilote atteinte, réessaie dans 1 min.',
+        message: 'Limite du copilote atteinte : une requête IA est déjà en cours, patiente quelques secondes.',
         // delay-ok: indication affichée avec le message « réessaie dans 1 min », pas un délai appliqué
         retryAfterMinutes: 1,
       };
@@ -1455,6 +1463,20 @@ async function startServer() {
 
     return { allowed: true };
   }
+
+  // Jauge de quota affichée dans le copilote : requêtes utilisées sur l'heure glissante, plafond, attente avant libération.
+  function getAiQuotaStatus(): { used: number; max: number; resetInMinutes: number } {
+    const now = Date.now();
+    // delay-ok: définition de la fenêtre « par heure » du quota, pas un délai de jeu
+    const windowMs = 60 * 60 * 1000;
+    const recent = aiRequestTimestamps.filter((t) => t > now - windowMs);
+    const resetInMinutes = recent.length > 0 ? Math.max(1, Math.ceil((recent[0] + windowMs - now) / 60000)) : 0;
+    return { used: recent.length, max: getMaxAiPerHour(), resetInMinutes };
+  }
+
+  app.get('/api/katika/ai-quota', (_req, res) => {
+    res.json({ success: true, ...getAiQuotaStatus() });
+  });
 
   function acquireAiSlot(): void {
     isAiRequestRunning = true;
@@ -1558,15 +1580,46 @@ async function startServer() {
     }
 
     try {
-      const { brief, presetId, format, palette, model, metricsSnapshot } = req.body || {};
+      const { brief, presetId, format, palette, model, metricsSnapshot, moment } = req.body || {};
       if (!brief && !presetId) {
         return res.status(400).json({ success: false, error: 'Un brief texte ou un identifiant de recette est requis.' });
       }
 
       acquireAiSlot();
       try {
-        const result = await generateVisualSpec({ brief: brief || '', config: { presetId, format, palette, model }, metricsSnapshot });
-        res.json({ success: true, ...result });
+        const result = await generateVisualVariants({
+          brief: brief || '',
+          config: { presetId, format, palette, model },
+          metricsSnapshot,
+          moment: isKoraMoment(moment) ? moment : undefined,
+        });
+
+        // Compteur horaire : un appel Gemini = une requête comptée (acquireAiSlot a déjà compté la première).
+        for (let i = 1; i < result.callsMade; i++) {
+          aiRequestTimestamps.push(Date.now());
+        }
+
+        if (result.variants.length === 0) {
+          const status = result.quotaExceeded ? 429 : 502;
+          return res.status(status).json({
+            success: false,
+            quotaExceeded: result.quotaExceeded,
+            error: result.quotaExceeded
+              ? 'Quota Gemini atteint pour le moment. Réessaie plus tard.'
+              : 'Aucun visuel valide n\'a pu être généré. Reformule ta demande ou réessaie dans un instant.',
+          });
+        }
+
+        // Compatibilité : la première variante reste exposée à la racine (spec, warnings, needsReview).
+        const first = result.variants[0];
+        res.json({
+          success: true,
+          variants: result.variants,
+          callsMade: result.callsMade,
+          spec: first.spec,
+          warnings: first.warnings,
+          needsReview: first.needsReview,
+        });
       } finally {
         releaseAiSlot();
       }
@@ -1574,6 +1627,17 @@ async function startServer() {
       console.error('[Katika AI Visual API] Handler error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Erreur interne de génération du visuel IA.';
       res.status(500).json({ success: false, error: errorMessage });
+    }
+  });
+
+  // Moments Kora enregistrés (fiches anonymes de plis) : réservé à l'admin Katika (garde /api/katika ci-dessus)
+  app.get('/api/katika/moments', async (_req, res) => {
+    try {
+      const moments = await listKoraMoments();
+      res.json({ success: true, moments });
+    } catch (err: unknown) {
+      console.error('[Katika Moments] Erreur de lecture:', err);
+      res.status(500).json({ success: false, error: 'Lecture des moments Kora impossible pour le moment.' });
     }
   });
 

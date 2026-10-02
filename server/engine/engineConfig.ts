@@ -56,6 +56,9 @@ export interface KatikaEngineConfig {
   serverWsPingIntervalSeconds?: number;
   pushTestCooldownSeconds?: number;
   leaderboardServerCacheSeconds?: number;
+  copilotMaxRequestsPerHour?: number;
+  /** Réservé : bouton général Kora Cash (mode à argent réel, à venir). Faux tant que Kora Cash n'est pas ouvert. */
+  koraCashEnabled?: boolean;
   koraMultiplier: number;
   doubleKoraMultiplier: number;
   threeSevensMultiplier: number;
@@ -85,6 +88,7 @@ export interface KatikaEngineConfig {
 }
 
 const LEGACY_ENGINE_DEFAULTS = {
+  koraCashEnabled: false,
   joinPushEnabled: true,
   koraMultiplier: 2,
   doubleKoraMultiplier: 4,

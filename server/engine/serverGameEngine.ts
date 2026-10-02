@@ -17,6 +17,7 @@ import {
   PartieResultWinType,
   PartieEndReason,
 } from '../../src/types';
+import { buildKoraMoment, KoraMoment } from './koraMoment';
 import { build31Deck, dealCards, determineTrickWinner, getPlayableCards, isCardPlayable, shuffleDeck } from '../../src/utils/deck';
 import {
   chooseAICard,
@@ -66,6 +67,8 @@ export interface ActiveRoomState {
   onPartieCompleted?: (room: MultiplayerRoom) => void;
   partieResults?: PartieResult[];
   onPartieResult?: (result: PartieResult, room: MultiplayerRoom) => void;
+  /** Appelé quand une partie se termine par un Kora ou un Double Kora réussi (fiche anonyme, sans mise ni nom). */
+  onKoraMoment?: (moment: KoraMoment) => void;
 }
 
 export function maskOpponentCards(room: MultiplayerRoom, viewerPlayerId: string): MultiplayerRoom {
@@ -1000,6 +1003,24 @@ export class ServerGameEngine {
         ...(gs.doubleKoraAchievedByPlayer || {}),
         [partieWinnerIndex]: true,
       };
+    }
+
+    // Moment Kora : fiche anonyme enregistrée pour le Studio Social (jamais bloquante pour la partie).
+    if (winType === 'KORA' || winType === 'DOUBLE_KORA') {
+      try {
+        activeRoomState.onKoraMoment?.(
+          buildKoraMoment({
+            roomId: room.id,
+            partieCount: gs.partieCount,
+            kind: winType,
+            winnerSeat: partieWinnerIndex,
+            playerCount: gs.players.length,
+            tricks: gs.tricksHistory,
+          })
+        );
+      } catch (err) {
+        console.warn('[KoraMoment] Enregistrement ignoré :', (err as Error)?.message || err);
+      }
     }
 
     const winner = gs.players[partieWinnerIndex];

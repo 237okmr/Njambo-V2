@@ -124,3 +124,64 @@ describe('validateAndRepairSpec Engine', () => {
     );
   });
 });
+
+describe('validateAndRepairSpec - post d\'accompagnement', () => {
+  const baseSpec = {
+    version: 2,
+    format: 'SQUARE',
+    palette: 'EMERALD_GOLD',
+    pattern: 'NDOP_CHEVRON',
+    blocks: [{ id: 'b1', type: 'HOOK', text: 'LE KORA DU SIÈCLE', priority: 1 }],
+    cta: { text: 'Viens jouer' },
+  };
+
+  it('conserve le post, le tronque et filtre les hashtags non autorisés', () => {
+    const longStory = Array.from({ length: 60 }, (_, i) => `mot${i}`).join(' ');
+    const { spec } = validateAndRepairSpec({
+      ...baseSpec,
+      post: {
+        story: longStory,
+        question: 'Tu aurais joué quoi à ma place ?',
+        hashtags: ['#NjamboKora', 'kora', '#Foot', '#NjamboKora', '#Katika', '#JeuDeCartes'],
+      },
+    });
+    assert.ok(spec?.post);
+    assert.ok(spec!.post!.story.split(/\s+/).length <= 40);
+    assert.strictEqual(spec!.post!.question, 'Tu aurais joué quoi à ma place ?');
+    assert.deepStrictEqual(spec!.post!.hashtags, ['#NjamboKora', '#Kora', '#Katika']);
+  });
+
+  it('ne produit pas de post quand story et question sont vides', () => {
+    const { spec } = validateAndRepairSpec({ ...baseSpec, post: { story: '', question: '' } });
+    assert.strictEqual(spec?.post, undefined);
+  });
+});
+
+describe('validateAndRepairSpec - pli (disposition TRICK)', () => {
+  it('conserve la disposition TRICK et les libellés de joueurs', () => {
+    const { spec } = validateAndRepairSpec({
+      version: 2,
+      format: 'SQUARE',
+      palette: 'EMERALD_GOLD',
+      pattern: 'NDOP_CHEVRON',
+      blocks: [
+        { id: 'b1', type: 'HOOK', text: 'LE KORA DU DIMANCHE', priority: 1 },
+        {
+          id: 'b2',
+          type: 'CARDS',
+          arrangement: 'TRICK',
+          cards: [
+            { rank: '7', suit: '♥', player: 'Joueur A' },
+            { rank: '3', suit: '♠', player: 'Joueur B', highlight: true, label: 'KORA' },
+          ],
+        },
+      ],
+      cta: { text: 'Viens jouer' },
+    });
+    const cards = spec?.blocks.find((b) => b.type === 'CARDS');
+    assert.ok(cards && cards.type === 'CARDS');
+    assert.strictEqual(cards.arrangement, 'TRICK');
+    assert.strictEqual(cards.cards[0].player, 'Joueur A');
+    assert.strictEqual(cards.cards[1].label, 'KORA');
+  });
+});

@@ -424,6 +424,11 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Moments Kora (fiches anonymes de plis, sans nom ni mise) : accès uniquement par le SDK admin du serveur.
+    match /kora_moments/{momentId} {
+      allow read, write: if false;
+    }
+
     // Abonnements Web Push (lecture/écriture par le serveur avec le SDK client : à migrer au lot 4)
     match /push_subscriptions/{subscriptionId} {
       allow read, write: if true;

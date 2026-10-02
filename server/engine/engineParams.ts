@@ -441,6 +441,13 @@ export const ENGINE_PARAMS: ParamDef[] = [
     advanced: true, allowZero: true,
     help: 'Durée pendant laquelle un téléphone réutilise la config publique sans la redemander. 0 = pas de cache.',
   },
+
+  // ===== Groupe katika (administration) =====
+  {
+    key: 'copilotMaxRequestsPerHour', label: 'Requêtes IA du copilote par heure', unit: '',
+    min: 1, max: 200, default: 20, group: 'katika', scope: 'server', effect: 'immediate',
+    help: 'Plafond de requêtes IA du copilote Katika sur une heure glissante (protège le quota Gemini gratuit). Un visuel compte pour 1 à 3 requêtes selon les relances.',
+  },
 ];
 
 /** Choix de chrono proposés à la création d'une table (une seule liste pour tous les écrans). */

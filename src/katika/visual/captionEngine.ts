@@ -1,4 +1,7 @@
 import { CTA_LIBRARY, CtaIntent } from '../data/ctaLibrary';
+import { getSocialLinks } from '../services/copilotSettingsService';
+import { buildTrackedAppUrl, generateUtmCampaign } from '../types/socialVisuals';
+import { hashString, pickLocalPost, QuestionType } from './hokutoBank';
 import { VisualSpec } from './visualSpec';
 
 export interface CaptionLinks {
@@ -10,6 +13,8 @@ export interface CaptionLinks {
 export interface CaptionOptions {
   links?: CaptionLinks;
   campaign?: string;
+  /** Types de question utilisés récemment : la banque locale les évite quand elle choisit une question. */
+  avoidQuestionTypes?: QuestionType[];
 }
 
 export interface BuiltCaptions {
@@ -17,6 +22,8 @@ export interface BuiltCaptions {
   whatsappGroup: string;
   whatsappStatus: string;
 }
+
+const DEFAULT_FACEBOOK_HASHTAGS = '#NjamboKora #JeuDeCartes #Katika';
 
 function sanitizeGratuit(text: string): string {
   if (!text) return '';
@@ -40,51 +47,38 @@ function limitEmojis(text: string, maxEmojis: number): string {
   );
 }
 
+/**
+ * Les légendes COMPLÈTENT le visuel : mini-histoire, question qui fait réagir, appel à l'action, liens suivis.
+ * Elles ne recopient plus le texte du visuel (corps, puces, chiffres...), seulement les infos pratiques d'un événement.
+ * Histoire et question viennent de spec.post (IA) ou, à défaut, de la banque locale d'Hokuto.
+ */
 export function buildCaptions(spec: VisualSpec, options: CaptionOptions = {}): BuiltCaptions {
-  const appUrl = options.links?.appUrl || 'https://njambo-kora.ai.studio';
-  const whatsappGroupUrl = options.links?.whatsappGroupUrl || 'https://chat.whatsapp.com/njambokora';
-  const facebookUrl = options.links?.facebookUrl || '';
+  // Liens réels (réglages du copilote, avec secours vers les constantes officielles) et liens de jeu suivis (UTM)
+  const storedLinks = getSocialLinks();
+  const baseAppUrl = options.links?.appUrl || storedLinks.appUrl;
+  const whatsappGroupUrl = options.links?.whatsappGroupUrl || storedLinks.whatsappUrl;
+  const facebookUrl = options.links?.facebookUrl || storedLinks.facebookUrl;
+  const campaign = options.campaign || generateUtmCampaign();
+  const appUrlFacebook = buildTrackedAppUrl('facebook', campaign, 'social', baseAppUrl);
+  const appUrlGroup = buildTrackedAppUrl('whatsapp', campaign, 'group', baseAppUrl);
+  const appUrlStatus = buildTrackedAppUrl('whatsapp', campaign, 'status', baseAppUrl);
 
   let hookText = '';
   let badgeText = '';
-  let bodyText = '';
-  const bulletLines: string[] = [];
-  let statLine = '';
-  let quoteLine = '';
-  let compareLine = '';
-  let stepsLine = '';
+  const visualWords: string[] = [];
   let eventLine = '';
 
   for (const block of spec.blocks) {
     if (block.type === 'HOOK') {
       hookText = sanitizeGratuit(block.text || '');
+      visualWords.push(hookText);
     } else if (block.type === 'BADGE') {
       badgeText = sanitizeGratuit(block.text || '');
-    } else if (block.type === 'BODY') {
-      bodyText = sanitizeGratuit(block.text || '');
-    } else if (block.type === 'BULLETS') {
-      (block.items || []).forEach((it) => {
-        bulletLines.push(`✅ ${sanitizeGratuit(it)}`);
-      });
-    } else if (block.type === 'STAT') {
-      statLine = `📊 ${block.value || ''} — ${sanitizeGratuit(block.label || '')}${
-        block.sublabel ? ` (${sanitizeGratuit(block.sublabel)})` : ''
-      }`;
-    } else if (block.type === 'QUOTE') {
-      quoteLine = `💬 « ${sanitizeGratuit(block.text || '')} »${
-        block.author ? ` — ${block.author}` : ''
-      }`;
-    } else if (block.type === 'COMPARE') {
-      compareLine = `⚡ ${sanitizeGratuit(block.leftTitle || '')} (${sanitizeGratuit(
-        block.leftText || ''
-      )}) VS ${sanitizeGratuit(block.rightTitle || '')} (${sanitizeGratuit(
-        block.rightText || ''
-      )})`;
-    } else if (block.type === 'STEPS') {
-      const stepsFormatted = (block.items || [])
-        .map((st, i) => `${i + 1}. ${sanitizeGratuit(st)}`)
-        .join(' ➔ ');
-      stepsLine = `🎯 Étapes : ${stepsFormatted}`;
+      visualWords.push(badgeText);
+    } else if (block.type === 'BODY' || block.type === 'QUOTE') {
+      visualWords.push(block.text || '');
+    } else if (block.type === 'BULLETS' || block.type === 'STEPS') {
+      visualWords.push(...(block.items || []));
     } else if (block.type === 'EVENT') {
       const parts: string[] = [];
       if (block.date) parts.push(`Date: ${block.date}`);
@@ -100,65 +94,54 @@ export function buildCaptions(spec: VisualSpec, options: CaptionOptions = {}): B
 
   const intent = (spec.cta?.intent as CtaIntent) || 'PLAY';
   const ctaConfig = CTA_LIBRARY[intent] || CTA_LIBRARY.PLAY;
-  const ctaFormula = sanitizeGratuit(ctaConfig.captionFormulas[0] || '🎮 Viens jouer à la bêta :');
+  const seed = `${hookText}|${badgeText}`;
+
+  // Formule d'appel à l'action : elle varie d'un post à l'autre (choix stable pour un même visuel)
+  const formulas = ctaConfig.captionFormulas;
+  const ctaFormula = sanitizeGratuit(formulas[hashString(seed) % formulas.length] || '🎮 Viens jouer à la bêta :');
+
+  // Histoire et question : IA d'abord, banque locale d'Hokuto sinon
+  const hasAiPost = Boolean(spec.post && (spec.post.story || spec.post.question));
+  const local = pickLocalPost(visualWords.join(' '), seed, options.avoidQuestionTypes || []);
+  const story = sanitizeGratuit((spec.post?.story || '').trim() || local.story);
+  const question = sanitizeGratuit((spec.post?.question || '').trim() || local.question);
+
+  const aiHashtags = (spec.post?.hashtags || []).join(' ').trim();
+  const facebookHashtags = aiHashtags || DEFAULT_FACEBOOK_HASHTAGS;
 
   // --- 1. CAPTION FACEBOOK ---
-  // Accroche limitée à 90 caractères (respecte la consigne ≤ 90-100 car.)
-  const fbHook = truncateChars(hookText || badgeText || 'Njambo Kora', 90);
+  // Sans post de l'IA, une accroche courte (≤ 90 caractères, visible avant « voir plus ») ouvre le texte.
   const fbParts: string[] = [];
-
-  if (fbHook) fbParts.push(fbHook);
-  if (badgeText && badgeText !== fbHook) fbParts.push(`[${badgeText}]`);
-  if (bodyText) fbParts.push(bodyText);
-  if (bulletLines.length > 0) fbParts.push(bulletLines.join('\n'));
-  if (statLine) fbParts.push(statLine);
-  if (quoteLine) fbParts.push(quoteLine);
-  if (compareLine) fbParts.push(compareLine);
-  if (stepsLine) fbParts.push(stepsLine);
+  if (!hasAiPost) {
+    fbParts.push(truncateChars(hookText || badgeText || 'Njambo Kora', 90));
+  }
+  fbParts.push(story);
+  fbParts.push(question);
   if (eventLine) fbParts.push(eventLine);
-
   fbParts.push(ctaFormula);
-
   if (whatsappGroupUrl) {
     fbParts.push(`💬 Groupe WhatsApp : ${whatsappGroupUrl}`);
   }
-  fbParts.push(`🎮 Joue en bêta : ${appUrl}`);
-
-  const fbHashtags = '#NjamboKora #JeuDeCartes #Katika #Afrique #BêtaTest';
-  fbParts.push(fbHashtags);
-
-  const rawFb = fbParts.join('\n\n');
-  const facebook = limitEmojis(rawFb, 3);
+  fbParts.push(`🎮 Joue en bêta : ${appUrlFacebook}`);
+  fbParts.push(facebookHashtags);
+  const facebook = limitEmojis(fbParts.join('\n\n'), 3);
 
   // --- 2. CAPTION GROUPE WHATSAPP ---
-  const waGroupParts: string[] = [];
-  if (hookText) waGroupParts.push(hookText);
-  if (badgeText && badgeText !== hookText) waGroupParts.push(`[${badgeText}]`);
-  if (bodyText) waGroupParts.push(bodyText);
-  if (bulletLines.length > 0) waGroupParts.push(bulletLines.join('\n'));
-  if (statLine) waGroupParts.push(statLine);
-  if (quoteLine) waGroupParts.push(quoteLine);
-  if (compareLine) waGroupParts.push(compareLine);
-  if (stepsLine) waGroupParts.push(stepsLine);
+  const waGroupParts: string[] = [story, question];
   if (eventLine) waGroupParts.push(eventLine);
-
   waGroupParts.push(ctaFormula);
-  waGroupParts.push(`🎮 Tester la bêta : ${appUrl}`);
-
+  waGroupParts.push(`🎮 Tester la bêta : ${appUrlGroup}`);
   if (facebookUrl && facebookUrl.trim().length > 0) {
     waGroupParts.push(`👍 Page Facebook : ${facebookUrl.trim()}`);
   }
-
   // Aucun hashtag sur WhatsApp
   const whatsappGroup = waGroupParts.join('\n\n').replace(/#\w+/g, '').trim();
 
   // --- 3. CAPTION STATUT WHATSAPP ---
-  // Max 3 lignes, 1 seul lien
-  const statusLine1 = truncateChars(hookText || badgeText || 'Njambo Kora Bêta', 70);
+  // 3 lignes, 1 seul lien : la question (et non l'accroche du visuel), l'appel à l'action, le lien suivi
+  const statusLine1 = truncateChars(question, 70);
   const statusLine2 = spec.cta?.text || ctaConfig.label || 'Viens tester la bêta !';
-  const statusLine3 = appUrl;
-
-  const whatsappStatus = `${statusLine1}\n${statusLine2}\n${statusLine3}`.replace(/#\w+/g, '').trim();
+  const whatsappStatus = `${statusLine1}\n${statusLine2}\n${appUrlStatus}`.replace(/#\w+/g, '').trim();
 
   return {
     facebook,
