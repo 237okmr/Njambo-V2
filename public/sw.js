@@ -38,6 +38,9 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
+  if (event.data && event.data.type === 'CLIENT_DISPLAY_MODE' && event.source && event.source.id) {
+    event.waitUntil(saveClientMode(event.source.id, !!event.data.standalone));
+  }
 });
 
 self.addEventListener('install', (event) => {
@@ -63,7 +66,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
-          if (key !== CACHE_GAME && key !== CACHE_COPILOT) {
+          if (key !== CACHE_GAME && key !== CACHE_COPILOT && key !== CACHE_CLIENT_MODE) {
             console.log('[ServiceWorker] Removing old cache:', key);
             return caches.delete(key);
           }
@@ -186,6 +189,44 @@ self.addEventListener('fetch', (event) => {
 const PWA_SCOPES = ['/game/', '/copilot/'];
 const DEFAULT_SCOPE = '/game/';
 
+// Mode d'affichage des fenêtres (PWA installée ou onglet navigateur), annoncé par l'app.
+// Une fois qu'une fenêtre PWA a été vue sur l'appareil, seules les fenêtres PWA comptent pour les notifications.
+const CACHE_CLIENT_MODE = 'njambo-client-mode-v1';
+const CLIENT_MODE_PREFIX = '/__client-mode/';
+const PWA_SEEN_KEY = '/__pwa-seen';
+
+async function saveClientMode(clientId, standalone) {
+  try {
+    const cache = await caches.open(CACHE_CLIENT_MODE);
+    await cache.put(new Request(CLIENT_MODE_PREFIX + clientId), new Response(standalone ? '1' : '0'));
+    if (standalone) await cache.put(new Request(PWA_SEEN_KEY), new Response('1'));
+    const live = new Set((await self.clients.matchAll({ type: 'window', includeUncontrolled: true })).map((c) => c.id));
+    const keys = await cache.keys();
+    await Promise.all(keys.map((req) => {
+      const p = new URL(req.url).pathname;
+      if (!p.startsWith(CLIENT_MODE_PREFIX)) return null;
+      return live.has(p.slice(CLIENT_MODE_PREFIX.length)) ? null : cache.delete(req);
+    }));
+  } catch (e) {
+    // sans mémoire de mode : comportement historique
+  }
+}
+
+async function getPreferredWindowClients(scopePath) {
+  const clients = await getWindowClients(scopePath);
+  try {
+    const cache = await caches.open(CACHE_CLIENT_MODE);
+    if (!(await cache.match(new Request(PWA_SEEN_KEY)))) return clients;
+    const flags = await Promise.all(clients.map(async (c) => {
+      const res = await cache.match(new Request(CLIENT_MODE_PREFIX + c.id));
+      return res ? (await res.text()) === '1' : false;
+    }));
+    return clients.filter((_, i) => flags[i]);
+  } catch (e) {
+    return clients;
+  }
+}
+
 function scopeForData(data) {
   return data && data.app === 'copilot' ? '/copilot/' : DEFAULT_SCOPE;
 }
@@ -277,7 +318,7 @@ self.addEventListener('push', (event) => {
     // Le message de test (SYSTEM) est toujours affiché.
     let appVisible = false;
     if (type !== 'SYSTEM') {
-      const clients = await getWindowClients(scopeForData(data));
+      const clients = await getPreferredWindowClients(scopeForData(data));
       const visibleClient = clients.find((c) => c.visibilityState === 'visible');
       if (visibleClient) {
         appVisible = true;
@@ -332,7 +373,7 @@ self.addEventListener('notificationclick', (event) => {
   const scopePath = target.pathname.startsWith('/copilot/') ? '/copilot/' : '/game/';
 
   event.waitUntil((async () => {
-    const clients = await getWindowClients(scopePath);
+    const clients = await getPreferredWindowClients(scopePath);
     const client =
       clients.find((c) => c.focused) ||
       clients.find((c) => c.visibilityState === 'visible') ||

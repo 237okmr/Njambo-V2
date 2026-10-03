@@ -72,6 +72,18 @@ if ('serviceWorker' in navigator) {
           reg.waiting.postMessage({ type: 'SKIP_WAITING' });
         }
 
+        // Annonce au service worker si cette fenêtre est la PWA installée ou un onglet navigateur,
+        // pour que les notifications push visent uniquement la PWA quand elle est installée.
+        const announceDisplayMode = () => {
+          const standalone =
+            !window.matchMedia('(display-mode: browser)').matches ||
+            (navigator as unknown as { standalone?: boolean }).standalone === true;
+          navigator.serviceWorker.ready
+            .then((ready) => ready.active?.postMessage({ type: 'CLIENT_DISPLAY_MODE', standalone }))
+            .catch(() => {});
+        };
+        announceDisplayMode();
+
         // Check for service worker updates periodically (updateCheckIntervalSeconds, réglable dans katika)
         setInterval(() => {
           reg.update().catch(() => {});
@@ -81,6 +93,7 @@ if ('serviceWorker' in navigator) {
         document.addEventListener('visibilitychange', () => {
           if (document.visibilityState === 'visible') {
             reg.update().catch(() => {});
+            announceDisplayMode();
           }
         });
       })

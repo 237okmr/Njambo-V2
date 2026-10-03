@@ -4,6 +4,7 @@ import { X, Copy, Check, QrCode, Share2, MessageCircle } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { FriendService } from '../../services/friendService';
 import { triggerHaptic } from '../../utils/sound';
+import { getPwaShareBase } from '../../utils/pwaLinks';
 
 interface FriendQrModalProps {
   isOpen: boolean;
@@ -28,7 +29,7 @@ export const FriendQrModal: React.FC<FriendQrModalProps> = ({
   const friendCode = FriendService.getFriendCode(playerId, storedFriendCode);
   const qrValue = activeRoomCode
     ? FriendService.getShareInviteUrl(activeRoomCode, playerId)
-    : `${window.location.origin}${window.location.pathname}?friendCode=${encodeURIComponent(friendCode)}&friendName=${encodeURIComponent(playerName)}`;
+    : `${getPwaShareBase()}?friendCode=${encodeURIComponent(friendCode)}&friendName=${encodeURIComponent(playerName)}`;
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(friendCode);

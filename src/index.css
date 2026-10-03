@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Écrans courts (téléphones) : variante « short: » pour compacter les modales. */
+@custom-variant short (@media (max-height: 700px));
+
 @layer utilities {
   /* Golden glowing pulsing border for playable cards on human turn */
   @keyframes goldGlowPulse {

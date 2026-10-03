@@ -168,7 +168,7 @@ export const KoraVictoryOverlay: React.FC<KoraVictoryOverlayProps> = ({
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.8, opacity: 0, y: 30 }}
           transition={{ type: 'spring', stiffness: 280, damping: 22 }}
-          className={`relative w-full max-w-lg rounded-3xl p-4 sm:p-7 shadow-2xl border-2 text-center text-slate-100 flex flex-col items-center gap-3 sm:gap-4 overflow-hidden max-h-[92vh] overflow-y-auto ${config.cardBg}`}
+          className={`relative w-full max-w-lg rounded-3xl p-4 sm:p-7 shadow-2xl border-2 text-center text-slate-100 flex flex-col items-center gap-3 sm:gap-4 overflow-hidden max-h-[calc(100dvh-1.5rem)] overflow-y-auto ${config.cardBg}`}
         >
           {/* Header Badge */}
           <motion.div

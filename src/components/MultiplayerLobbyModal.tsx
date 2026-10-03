@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { triggerHaptic } from '../utils/sound';
 import { isTestEnvironment } from '../utils/envUtils';
+import { getPwaShareBase } from '../utils/pwaLinks';
 
 interface MultiplayerLobbyModalProps {
   room: MultiplayerRoom;
@@ -132,7 +133,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
   };
 
   const handleCopyLink = async () => {
-    const shareUrl = `${window.location.origin}${window.location.pathname}?room=${room.id}`;
+    const shareUrl = `${getPwaShareBase()}?room=${room.id}`;
     const shareText = `🃏 Viens jouer au Njambo Kora avec moi ! Table #${room.id} (${maxSeats} joueurs · Mise: ${room.baseBet} jetons). Clique ici pour rejoindre directement :`;
     const shareData = {
       title: 'Njambo Kora - Table Multijoueur',

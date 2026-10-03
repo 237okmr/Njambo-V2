@@ -35,6 +35,7 @@ import { usePlayerProfile } from '../../context/PlayerProfileContext';
 import { GoogleIcon } from '../common/GoogleIcon';
 import { NativeScreenHeader } from '../common/NativeScreenHeader';
 import { NativeSegmentedNav, SegmentTab } from '../common/NativeSegmentedNav';
+import { getPwaShareBase } from '../../utils/pwaLinks';
 
 export interface GlobalLeaderboardModalProps {
   isOpen: boolean;
@@ -258,7 +259,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
   };
 
   const handleSharePalmares = () => {
-    const text = `🏆 Consultez le Palmarès de Njambo Kora ! Défiez les meilleurs joueurs de cartes : ${window.location.origin}`;
+    const text = `🏆 Consultez le Palmarès de Njambo Kora ! Défiez les meilleurs joueurs de cartes : ${getPwaShareBase()}`;
     if (navigator.share) {
       navigator.share({ title: 'Palmarès Njambo Kora', text }).catch(() => {});
     } else {

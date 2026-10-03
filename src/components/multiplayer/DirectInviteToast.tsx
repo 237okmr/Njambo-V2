@@ -5,6 +5,7 @@ import { GameInvitation } from '../../types';
 import { PlayerAvatar } from '../profile/PlayerAvatar';
 import { triggerHaptic } from '../../utils/sound';
 import { wsService } from '../../services/websocketService';
+import { getPublicParamNumber } from '../../services/publicConfig';
 
 interface DirectInviteToastProps {
   invitations: GameInvitation[];
@@ -18,13 +19,15 @@ interface DirectInviteToastProps {
   willSaveSolo?: boolean;
 }
 
-/** Une invitation vit 120 s, comme côté serveur (expiresAt) : plus de décalage 20 s / 120 s / 1 h. */
-const INVITE_LIFETIME_MS = 120_000;
+/** Durée de vie d'une invitation : paramètre du registre (directInviteLifetimeSeconds), comme côté serveur (expiresAt). */
+function getInviteLifetimeMs(): number {
+  return getPublicParamNumber('directInviteLifetimeSeconds') * 1000;
+}
 
 function getExpiresAt(invitation: GameInvitation): number {
   const anyInvite = invitation as GameInvitation & { expiresAt?: number };
   if (typeof anyInvite.expiresAt === 'number') return anyInvite.expiresAt;
-  return (invitation.createdAt || Date.now()) + INVITE_LIFETIME_MS;
+  return (invitation.createdAt || Date.now()) + getInviteLifetimeMs();
 }
 
 function formatRemaining(seconds: number): string {
@@ -107,7 +110,7 @@ const InviteCard: React.FC<InviteCardProps> = ({
   }, [expiresAt, invitation.id, onDismiss]);
 
   const urgent = secondsLeft <= 15;
-  const progress = Math.max(0, Math.min(100, (secondsLeft * 1000 * 100) / INVITE_LIFETIME_MS));
+  const progress = Math.max(0, Math.min(100, (secondsLeft * 1000 * 100) / getInviteLifetimeMs()));
 
   const accept = () => {
     triggerHaptic('success');

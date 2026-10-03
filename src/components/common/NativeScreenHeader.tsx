@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowLeft, Volume2, VolumeX, Home } from 'lucide-react';
+import { NotificationBell } from '../notifications/NotificationBell';
 
 /**
  * ============================================================================
@@ -42,6 +43,8 @@ export interface NativeScreenHeaderProps {
   onHome?: () => void;
   /** Optional extra actions on the right (e.g. settings, share) */
   rightActions?: React.ReactNode;
+  /** Masque la cloche des notifications (ex. sur l'écran Notifications lui-même) */
+  hideNotificationBell?: boolean;
   /** Optional unique HTML ID */
   id?: string;
   /** Optional custom class name */
@@ -65,6 +68,7 @@ export const NativeScreenHeader: React.FC<NativeScreenHeaderProps> = ({
   soundEnabled = true,
   onHome,
   rightActions,
+  hideNotificationBell = false,
   id = 'native-screen-header',
   className = '',
 }) => {
@@ -138,6 +142,8 @@ export const NativeScreenHeader: React.FC<NativeScreenHeaderProps> = ({
             <Home className="w-4 h-4 text-emerald-400" />
           </button>
         )}
+
+        {!hideNotificationBell && <NotificationBell />}
 
         {rightActions}
       </div>

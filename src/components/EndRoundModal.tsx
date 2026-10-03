@@ -345,18 +345,18 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
   return (
     <div
       id="end-round-modal"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md"
     >
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className={`w-full max-w-md bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-2xl text-slate-100 flex flex-col gap-3.5 my-auto max-h-[96vh] overflow-y-auto transition-all ${victoryTheme.modalBorder}`}
+        className={`w-full max-w-md bg-slate-900 rounded-2xl p-3 sm:p-5 shadow-2xl text-slate-100 flex flex-col gap-2 sm:gap-3.5 my-auto max-h-[calc(100dvh-1rem)] overflow-y-auto transition-all ${victoryTheme.modalBorder}`}
       >
         {/* Header: Streamlined Victory or Elimination Banner */}
         <div
           id="victory-banner"
-          className={`relative bg-gradient-to-br ${victoryTheme.bannerGradient} rounded-xl p-3.5 text-center flex flex-col items-center gap-2 shadow-lg`}
+          className={`relative bg-gradient-to-br ${victoryTheme.bannerGradient} rounded-xl p-2.5 sm:p-3.5 text-center flex flex-col items-center gap-1.5 sm:gap-2 shadow-lg`}
         >
           {/* Top Level / Mode Badge + Special Victory Pills */}
           <div className="flex items-center justify-center gap-1.5 flex-wrap">
@@ -373,7 +373,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
           {/* Winner Identity & Points */}
           <div className="flex items-center justify-center gap-3">
             <div
-              className={`w-11 h-11 rounded-full flex items-center justify-center shadow-md shrink-0 font-bold ${
+              className={`w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shadow-md shrink-0 font-bold ${
                 isHumanEliminated && !isSpectator
                   ? 'bg-rose-500 text-slate-950 ring-4 ring-rose-500/40'
                   : isMancheOver
@@ -511,7 +511,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
           if (winningHand.length === 0) return null;
 
           return (
-            <div className="bg-slate-950/85 border border-emerald-500/40 rounded-xl p-3 text-center shadow-lg">
+            <div className="bg-slate-950/85 border border-emerald-500/40 rounded-xl p-2 sm:p-3 text-center shadow-lg">
               <div className="text-[11px] font-bold text-emerald-300 mb-2 uppercase tracking-wider flex items-center justify-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
                 <span>Main Victorieuse</span>
@@ -527,7 +527,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
                       initial={{ scale: 0.8, opacity: 0, y: 8 }}
                       animate={{ scale: 1, opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.06, type: 'spring', damping: 15 }}
-                      className={`relative w-12 sm:w-14 h-18 sm:h-20 rounded-lg bg-white text-slate-950 p-1 flex flex-col justify-between shadow-md select-none border-2 transition-all ${
+                      className={`relative w-10 sm:w-14 h-14 sm:h-20 rounded-lg bg-white text-slate-950 p-1 flex flex-col justify-between shadow-md select-none border-2 transition-all ${
                         isHighlightedSeven
                           ? 'border-amber-400 ring-2 ring-amber-400/80 shadow-amber-400/30'
                           : 'border-slate-300 shadow-slate-950/50'
@@ -544,7 +544,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
                       <div className={`self-center text-base leading-none pointer-events-none select-none ${suitInfo?.color || 'text-slate-900'}`}>
                         {suitInfo?.symbol || ''}
                       </div>
-                      <div className="flex flex-col items-end leading-none rotate-180 pointer-events-none">
+                      <div className="flex flex-col items-end leading-none rotate-180 pointer-events-none max-sm:hidden">
                         <span className={`text-xs font-black ${suitInfo?.color || 'text-slate-900'}`}>
                           {card.value}
                         </span>
@@ -579,7 +579,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
                 <div
                   key={p.id}
                   id={`player-capital-card-${p.id}`}
-                  className={`p-2 rounded-xl border flex flex-col items-center text-center transition-all ${
+                  className={`p-1.5 sm:p-2 rounded-xl border flex flex-col items-center text-center transition-all ${
                     isForfeit
                       ? 'bg-rose-950/30 border-rose-800/60 text-slate-400 grayscale opacity-80'
                       : isEliminated
@@ -671,7 +671,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
 
         {/* Collapsible Accordion for Tricks History */}
         {!isMancheOver && tricksHistory.length > 0 && (
-          <div className="pt-0.5" id="tricks-details-accordion">
+          <div className="pt-0.5 short:hidden" id="tricks-details-accordion">
             <button
               id="btn-toggle-tricks-details"
               type="button"
@@ -765,10 +765,10 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
         )}
 
         {/* Action Buttons: Clear Hierarchy */}
-        <div id="modal-actions" className="pt-2 border-t border-slate-800 flex flex-col gap-2">
+        <div id="modal-actions" className="pt-1.5 sm:pt-2 border-t border-slate-800 flex flex-col gap-1.5 sm:gap-2">
           {/* Multiplayer Ready Status & Auto-advance Bar */}
           {isOnlineMultiplayer && !isMancheOver && (
-            <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-2.5 flex flex-col gap-2">
+            <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-2 sm:p-2.5 flex flex-col gap-1.5 sm:gap-2">
               {/* Barre de compte à rebours sur la durée réglée dans katika (transitionDelayMs) */}
               {roundEndRemainingSeconds !== null && roundEndRemainingSeconds !== undefined && roundEndRemainingSeconds > 0 && (
                 <div className="w-full bg-slate-900/90 h-1.5 rounded-full overflow-hidden border border-slate-800/80">
@@ -802,7 +802,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
               </div>
 
               {/* Player pills */}
-              <div className="flex flex-wrap items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5 short:hidden">
                 {(multiplayerPlayers || [])
                   .filter((p) => !(p as RoomPlayer).isSpectator)
                   .map((p) => {
@@ -842,7 +842,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
 
           {/* Bet Increase Proposal Widget in EndRoundModal */}
           {!isMancheOver && onProposeBetIncrease && onRespondBetIncrease && onCancelBetIncrease && (
-            <div className="w-full">
+            <div className={`w-full ${betIncreaseProposal ? '' : 'short:hidden'}`}>
               <BetIncreaseProposalWidget
                 currentBaseBet={baseBet}
                 proposal={betIncreaseProposal}

@@ -10,6 +10,8 @@ import React, {
 import { GameInvitation } from '../types';
 import { wsService } from '../services/websocketService';
 import { FriendService } from '../services/friendService';
+import { notificationHistory } from '../services/notificationHistoryService';
+import { getPublicParamNumber } from '../services/publicConfig';
 import { triggerHaptic, sounds } from '../utils/sound';
 
 export interface InviteFeedbackData {
@@ -57,6 +59,20 @@ export const InvitationsProvider: React.FC<InvitationsProviderProps> = ({ childr
       if (FriendService.isPlayerBlocked(invitation.fromUserId)) {
         return; // Silently ignore invitations from blocked players
       }
+      // Historique de la cloche : l'invitation reste consultable même après fermeture ou expiration.
+      const receivedAt = invitation.createdAt || Date.now();
+      notificationHistory.record({
+        id: `invite:${invitation.id}`,
+        kind: 'DIRECT_INVITE',
+        title: `${invitation.fromUserName} te lance un défi`,
+        body: `Table #${invitation.roomCode} · Mise ${invitation.baseBet} jetons`,
+        createdAt: receivedAt,
+        expiresAt: invitation.expiresAt || receivedAt + getPublicParamNumber('directInviteLifetimeSeconds') * 1000,
+        actorId: invitation.fromUserId,
+        actorName: invitation.fromUserName,
+        actorAvatar: invitation.fromUserAvatar,
+        roomCode: invitation.roomCode,
+      });
       setIncomingInvitations((prev) => {
         if (prev.some((inv) => inv.id === invitation.id)) return prev;
         return [invitation, ...prev];
@@ -85,11 +101,13 @@ export const InvitationsProvider: React.FC<InvitationsProviderProps> = ({ childr
   }, []);
 
   const acceptInvitation = useCallback((invitation: GameInvitation, confirmLeaveCurrent?: boolean) => {
+    notificationHistory.resolve(`invite:${invitation.id}`, 'ACCEPTED');
     setIncomingInvitations((prev) => prev.filter((i) => i.id !== invitation.id));
     wsService.respondDirectInvite(invitation.id, true, confirmLeaveCurrent);
   }, []);
 
   const declineInvitation = useCallback((invitation: GameInvitation) => {
+    notificationHistory.resolve(`invite:${invitation.id}`, 'DECLINED');
     setIncomingInvitations((prev) => prev.filter((i) => i.id !== invitation.id));
     wsService.respondDirectInvite(invitation.id, false);
   }, []);
@@ -101,6 +119,7 @@ export const InvitationsProvider: React.FC<InvitationsProviderProps> = ({ childr
   const declineAllInvitations = useCallback(() => {
     setIncomingInvitations((prev) => {
       prev.forEach((inv) => {
+        notificationHistory.resolve(`invite:${inv.id}`, 'DECLINED');
         wsService.respondDirectInvite(inv.id, false);
       });
       return [];
@@ -116,7 +135,10 @@ export const InvitationsProvider: React.FC<InvitationsProviderProps> = ({ childr
       await FriendService.blockPlayer(targetUserId, displayName, friendCode);
       setIncomingInvitations((prev) => {
         const toDecline = prev.filter((i) => i.fromUserId === targetUserId);
-        toDecline.forEach((inv) => wsService.respondDirectInvite(inv.id, false));
+        toDecline.forEach((inv) => {
+          notificationHistory.resolve(`invite:${inv.id}`, 'DECLINED');
+          wsService.respondDirectInvite(inv.id, false);
+        });
         return prev.filter((i) => i.fromUserId !== targetUserId);
       });
     },

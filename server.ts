@@ -250,6 +250,7 @@ async function startServer() {
     res.json({
       status: 'ok',
       publicKey: pushService.getPublicKey(),
+      vapidPersistent: pushService.isVapidPersistent(),
       subscribersCount: pushService.getSubscribersCount(),
     });
   });

@@ -202,6 +202,11 @@ export const ENGINE_PARAMS: ParamDef[] = [
     min: 10, max: 300, default: 30, group: 'notifications', scope: 'server', effect: 'immediate',
     help: 'Empêche de spammer d\'invitations un même joueur.',
   },
+  {
+    key: 'notificationHistoryMaxItems', label: 'Plafond de l\'historique de notifications (par joueur)', unit: '',
+    min: 20, max: 500, default: 100, group: 'notifications', scope: 'client', effect: 'immediate',
+    help: 'Nombre maximal de notifications conservées dans la cloche d\'un joueur. Au-delà, les plus anciennes sont supprimées.',
+  },
 
   {
     key: 'authRetryMaxAttempts', label: 'Tentatives de vérification Google', unit: '',

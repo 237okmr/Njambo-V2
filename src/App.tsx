@@ -5,6 +5,7 @@ import confetti from 'canvas-confetti';
 import { Card, GameState, Player, SavedManche, AIDifficulty, GamePhase, GameInvitation, SoloBetIncreaseMode } from './types';
 import { DEFAULT_BASE_BET, DEFAULT_INITIAL_CAPITAL } from './utils/deck';
 import { sounds, triggerHaptic } from './utils/sound';
+import { getPwaShareBase } from './utils/pwaLinks';
 
 // Custom Hooks
 import { usePwaInstall } from './hooks/usePwaInstall';
@@ -41,6 +42,10 @@ import { EarlyCloseProposalWidget } from './components/EarlyCloseProposalWidget'
 import { UpdateNotificationBanner } from './components/UpdateNotificationBanner';
 import { PlayerProfileProvider, usePlayerProfile } from './context/PlayerProfileContext';
 import { InvitationsProvider, useInvitations } from './context/InvitationsContext';
+import { useNotificationHistoryBridge } from './hooks/useNotificationHistoryBridge';
+import { notificationNavigation } from './services/notificationNavigation';
+import { notificationScreen, useNotificationScreenOpen } from './hooks/useNotificationHistory';
+import { NotificationHistoryScreen } from './components/notifications/NotificationHistoryScreen';
 import { PlayerProfileScreen } from './components/profile/PlayerProfileScreen';
 import { GlobalLeaderboardModal } from './components/leaderboard/GlobalLeaderboardModal';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
@@ -160,6 +165,10 @@ function GameApp() {
     chips,
     activeSanction,
   } = usePlayerProfile();
+
+  // Historique de notifications (cloche) : rattachement au compte et écoute des demandes d'amis
+  useNotificationHistoryBridge();
+  const isNotificationScreenOpen = useNotificationScreenOpen();
 
   // Screen Routing
   const [currentScreen, setCurrentScreen] = useState<'HOME' | 'GAME'>('HOME');
@@ -419,6 +428,13 @@ function GameApp() {
     handleRespondEarlyClose,
   } = useMultiplayerGame();
 
+  // Cloche des notifications : un toucher sur une notification demande l'ouverture du hub multijoueur
+  useEffect(() => {
+    return notificationNavigation.subscribe(() => {
+      if (notificationNavigation.peek()) setShowMultiplayerHub(true);
+    });
+  }, [setShowMultiplayerHub]);
+
   const [dismissedVersionBanner, setDismissedVersionBanner] = useState<boolean>(false);
   const [hasDeclaredKoraInPartie, setHasDeclaredKoraInPartie] = useState<boolean>(false);
   const [showSidebarFoldConfirm, setShowSidebarFoldConfirm] = useState<boolean>(false);
@@ -507,6 +523,11 @@ function GameApp() {
         window.history.pushState({ screen: currentScreen, active: true }, '');
         return;
       }
+      if (isNotificationScreenOpen) {
+        notificationScreen.close();
+        window.history.pushState({ screen: currentScreen, active: true }, '');
+        return;
+      }
       if (isProfileModalOpen) {
         setIsProfileModalOpen(false);
         window.history.pushState({ screen: currentScreen, active: true }, '');
@@ -568,6 +589,7 @@ function GameApp() {
     showSetupModal,
     showTestModeModal,
     showInstallModal,
+    isNotificationScreenOpen,
     isProfileModalOpen,
     isLeaderboardOpen,
     showMultiplayerHub,
@@ -626,6 +648,10 @@ function GameApp() {
           setShowTestModeModal(false);
           return;
         }
+        if (isNotificationScreenOpen) {
+          notificationScreen.close();
+          return;
+        }
         if (isProfileModalOpen) {
           setIsProfileModalOpen(false);
           return;
@@ -652,6 +678,7 @@ function GameApp() {
     showSavedSessionsModal,
     showSetupModal,
     showTestModeModal,
+    isNotificationScreenOpen,
     isProfileModalOpen,
     showMultiplayerHub,
     showMultiplayerLobby,
@@ -1026,7 +1053,7 @@ function GameApp() {
     const winType = activeGameState.partieWinType || 'KORA';
     const pot = activeGameState.pot || 0;
     const roomCode = multiplayerRoom?.id;
-    const shareUrl = `${window.location.origin}${window.location.pathname}${roomCode ? `?join=${roomCode}` : ''}`;
+    const shareUrl = `${getPwaShareBase()}${roomCode ? `?join=${roomCode}` : ''}`;
 
     const diff = (activeGameState.aiDifficulty || gameState.aiDifficulty || 'NORMAL') as string;
     const modeLabel = isOnlineActive
@@ -2128,7 +2155,7 @@ function GameApp() {
   }, [saveCurrentSession, triggerToast]);
 
   return (
-    <div className="flex flex-col h-screen w-full bg-slate-950 text-slate-100 font-sans select-none overflow-hidden">
+    <div className="flex flex-col h-dvh w-full bg-slate-950 text-slate-100 font-sans select-none overflow-hidden">
       {/* Top Header / Status Bar (Game Mode) */}
       {currentScreen === 'GAME' && (
         <GameHeader
@@ -3030,6 +3057,11 @@ function GameApp() {
             onClose={() => setIsLeaderboardOpen(false)}
           />
         )}
+      </AnimatePresence>
+
+      {/* Écran plein « Notifications » (ouvert par la cloche) */}
+      <AnimatePresence>
+        {isNotificationScreenOpen && <NotificationHistoryScreen onClose={() => notificationScreen.close()} />}
       </AnimatePresence>
 
       {/* Pile de notifications unique : invitation, alerte Kora, toasts, mise à jour, version */}

@@ -1,4 +1,5 @@
 import { LocalContact, FriendDocument, FriendStatus, GameInvitation, UserPresence, PublicRoomSummary } from '../types';
+import { getPwaShareBase } from '../utils/pwaLinks';
 import { db, auth } from '../lib/firebase';
 import { getPlayerId } from './identity';
 import {
@@ -445,7 +446,7 @@ export class FriendService {
   // ==========================================
 
   public static getShareInviteUrl(roomCode: string, fromPlayerId?: string): string {
-    const base = `${window.location.origin}${window.location.pathname}`;
+    const base = getPwaShareBase();
     const params = new URLSearchParams();
     if (roomCode) {
       params.set('join', roomCode.trim().toUpperCase());

@@ -63,6 +63,7 @@ import {
 import { triggerHaptic, sounds } from '../../utils/sound';
 import { getLocalPlayerName, setLocalPlayerName } from '../../services/identity';
 import { FriendService } from '../../services/friendService';
+import { notificationNavigation } from '../../services/notificationNavigation';
 import { webSocketService } from '../../services/websocketService';
 import { isTestEnvironment } from '../../utils/envUtils';
 import { PlayerAvatar } from '../profile/PlayerAvatar';
@@ -272,6 +273,20 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
   const [recentPlayers, setRecentPlayers] = useState<LocalContact[]>(() => FriendService.getRecentPlayers());
   const [cloudFriends, setCloudFriends] = useState<FriendDocument[]>([]);
   const [friendSubTab, setFriendSubTab] = useState<'FRIENDS' | 'RECEIVED' | 'SENT'>('FRIENDS');
+
+  // Navigation depuis la cloche des notifications : ouvre directement le bon onglet (sans action automatique)
+  useEffect(() => {
+    const applyNotificationTarget = () => {
+      const target = notificationNavigation.consume();
+      if (!target) return;
+      setActiveTab(target.tab);
+      if (target.friendSubTab) setFriendSubTab(target.friendSubTab);
+    };
+    if (isOpen) applyNotificationTarget();
+    return notificationNavigation.subscribe(() => {
+      if (isOpen) applyNotificationTarget();
+    });
+  }, [isOpen]);
   const [isGuestBannerDismissed, setIsGuestBannerDismissed] = useState<boolean>(false);
   const [friendsPresenceMap, setFriendsPresenceMap] = useState<Record<string, UserPresence>>({});
   const { incomingInvitations, acceptInvitation, declineInvitation } = useInvitations();
