@@ -63,9 +63,9 @@ Plateforme d'Analytics : Katika Network Engine
 
 1. TRACTION & VOLUME
 • Total Manches Jouées : ${kpis.totalGamesPlayed}
-• Parties / Donnes disputées : ${kpis.totalPartiesDisputed || kpis.totalGamesPlayed * 3}
+• Parties / Donnes disputées : ${kpis.totalPartiesDisputed ? kpis.totalPartiesDisputed : '—'}
 • Temps de jeu cumulé : ${kpis.playerBehavior?.gamePacing?.totalPlaytimeHours || 0} heures
-• Durée moyenne par manche : ${Math.floor((kpis.playerBehavior?.gamePacing?.avgMancheDurationSec || 0) / 60)}m ${((kpis.playerBehavior?.gamePacing?.avgMancheDurationSec || 0) % 60).toString().padStart(2, '0')}s
+• Durée moyenne par manche : ${(kpis.playerBehavior?.gamePacing?.avgMancheDurationSec ?? 0) > 0 ? `${Math.floor((kpis.playerBehavior?.gamePacing?.avgMancheDurationSec ?? 0) / 60)}m ${((kpis.playerBehavior?.gamePacing?.avgMancheDurationSec ?? 0) % 60).toString().padStart(2, '0')}s` : '—'}
 
 2. RETENTION & ENGAGEMENT (INVESTOR BENCHMARK)
 • Joueurs Actifs Quotidiens (DAU) : ${kpis.retentionEngagement?.dau || 0}
@@ -74,18 +74,18 @@ Plateforme d'Analytics : Katika Network Engine
 • Rétention D1 (J+1) : ${kpis.retentionEngagement?.d1Retention || 0}%
 • Rétention D7 (J+7) : ${kpis.retentionEngagement?.d7Retention || 0}%
 • Rétention D30 (J+30) : ${kpis.retentionEngagement?.d30Retention || 0}%
-• Pic d'affluence réseau : ${kpis.retentionEngagement?.peakHourLabel || '20:00 - 21:00'}
+• Pic d'affluence réseau : ${kpis.retentionEngagement?.peakHourLabel && (kpis.totalGamesPlayed ?? 0) > 0 ? kpis.retentionEngagement.peakHourLabel : '—'}
 
 3. ADOPTION & PRÉFÉRENCES JOUEURS
-• Format Dominant : ${kpis.playerBehavior?.tablePreference?.dominantFormat || '4 Joueurs'}
+• Format Dominant : ${(kpis.totalGamesPlayed ?? 0) > 0 ? (kpis.playerBehavior?.tablePreference?.dominantFormat || '—') : '—'}
 • Répartition : 2J (${kpis.twoPlayersCount}), 3J (${kpis.threePlayersCount}), 4J (${kpis.fourPlayersCount})
-• Style de Jeu : ${kpis.playerBehavior?.audacityBarometer?.styleLabel || 'ÉQUILIBRÉ & TACTIQUE'}
+• Style de Jeu : ${(kpis.totalGamesPlayed ?? 0) > 0 ? (kpis.playerBehavior?.audacityBarometer?.styleLabel || '—') : '—'}
 • Taux d'attaques Kora (x2 & x4) : ${(kpis.playerBehavior?.audacityBarometer?.koraRate || 0) + (kpis.playerBehavior?.audacityBarometer?.doubleKoraRate || 0)}%
 
 4. FLUIDITÉ & QUALITÉ DE SESSION
-• Taux d'achèvement des manches : ${kpis.abandonmentFrustrations?.completionRate || 96}%
-• Santé du Gameplay : ${kpis.abandonmentFrustrations?.healthStatus || 'FLUIDE & SAIN'} (${kpis.abandonmentFrustrations?.healthScore || 96}/100)
-• Résilience Post-Kora (Revanche) : ${100 - (kpis.abandonmentFrustrations?.postKoraAbandonRate || 12)}%
+• Taux d'achèvement des manches : ${(kpis.totalManchesStarted ?? 0) > 0 ? `${kpis.abandonmentFrustrations?.completionRate ?? 0}%` : '—'}
+• Santé du Gameplay : ${kpis.abandonmentFrustrations?.healthStatus || 'Données insuffisantes'} (${(kpis.totalManchesStarted ?? 0) > 0 ? `${kpis.abandonmentFrustrations?.healthScore ?? 0}/100` : '—'})
+• Résilience Post-Kora (Revanche) : — (mesure en cours de mise en place)
 
 5. ÉCONOMIE VIRTUELLE & VALEUR
 • Total Jetons Circulés / Gagnés : ${kpis.totalChipsWon.toLocaleString()} jetons
@@ -165,7 +165,7 @@ Plateforme d'Analytics : Katika Network Engine
               onClick={handleDownloadJSON}
               type="button"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-medium transition cursor-pointer"
-              title="Télécharger les données brutes certifiées au format JSON"
+              title="Télécharger les données brutes au format JSON"
             >
               <Download className="w-3.5 h-3.5 text-cyan-400" />
               <span>JSON</span>
@@ -235,7 +235,7 @@ Plateforme d'Analytics : Katika Network Engine
                 {kpis.totalGamesPlayed}
               </div>
               <span className="text-[10px] text-slate-500 print:text-slate-600">
-                {kpis.totalPartiesDisputed || kpis.totalGamesPlayed * 3} donnes jouées
+                {kpis.totalPartiesDisputed ? kpis.totalPartiesDisputed : '—'} donnes jouées
               </span>
             </div>
 
@@ -256,10 +256,10 @@ Plateforme d'Analytics : Katika Network Engine
                 Taux d'Achèvement
               </span>
               <div className="text-2xl font-black text-emerald-400 print:text-emerald-700 font-mono mt-1">
-                {kpis.abandonmentFrustrations?.completionRate || 96}%
+                {(kpis.totalManchesStarted ?? 0) > 0 ? `${kpis.abandonmentFrustrations?.completionRate ?? 0}%` : '—'}
               </div>
               <span className="text-[10px] text-slate-500 print:text-slate-600">
-                Score santé : {kpis.abandonmentFrustrations?.healthScore || 96}/100
+                Score santé : {(kpis.totalManchesStarted ?? 0) > 0 ? `${kpis.abandonmentFrustrations?.healthScore ?? 0}/100` : '—'}
               </span>
             </div>
 
@@ -294,7 +294,7 @@ Plateforme d'Analytics : Katika Network Engine
                 <div className="flex justify-between">
                   <span className="text-slate-400 print:text-slate-600">Format dominant :</span>
                   <b className="text-amber-300 print:text-black">
-                    {kpis.playerBehavior?.tablePreference?.dominantFormat || '4J (Classique)'}
+                    {(kpis.totalGamesPlayed ?? 0) > 0 ? (kpis.playerBehavior?.tablePreference?.dominantFormat || '—') : '—'}
                   </b>
                 </div>
                 <div className="flex justify-between">
@@ -312,7 +312,7 @@ Plateforme d'Analytics : Katika Network Engine
                 <div className="flex justify-between">
                   <span className="text-slate-400 print:text-slate-600">Moy. par donne :</span>
                   <span className="text-emerald-400 print:text-emerald-700 font-bold">
-                    {kpis.playerBehavior?.gamePacing?.avgPartieDurationSec || 48}s
+                    {(kpis.playerBehavior?.gamePacing?.avgPartieDurationSec ?? 0) > 0 ? `${kpis.playerBehavior?.gamePacing?.avgPartieDurationSec}s` : '—'}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -361,13 +361,13 @@ Plateforme d'Analytics : Katika Network Engine
                 <div className="flex justify-between">
                   <span className="text-slate-400 print:text-slate-600">Fréquence sessions :</span>
                   <span className="text-slate-200 print:text-black font-bold">
-                    {kpis.retentionEngagement?.avgSessionsPerUser || 1.8} / joueur
+                    {kpis.retentionEngagement?.avgSessionsPerUser ? `${kpis.retentionEngagement.avgSessionsPerUser} / joueur` : '—'}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400 print:text-slate-600">Heure de pointe :</span>
                   <span className="text-amber-400 print:text-amber-800 font-bold">
-                    {kpis.retentionEngagement?.peakHourLabel || '20h - 21h'}
+                    {kpis.retentionEngagement?.peakHourLabel && (kpis.totalGamesPlayed ?? 0) > 0 ? kpis.retentionEngagement.peakHourLabel : '—'}
                   </span>
                 </div>
               </div>
@@ -403,7 +403,7 @@ Plateforme d'Analytics : Katika Network Engine
                 <div className="flex justify-between">
                   <span className="text-slate-400 print:text-slate-600">Revanche Post-Kora :</span>
                   <span className="text-cyan-400 print:text-cyan-700 font-bold">
-                    {100 - (kpis.abandonmentFrustrations?.postKoraAbandonRate || 12)}%
+                    —
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -420,20 +420,20 @@ Plateforme d'Analytics : Katika Network Engine
           <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 print:bg-slate-50 print:border-slate-300 space-y-2">
             <h4 className="text-xs font-bold text-white print:text-black uppercase tracking-wider flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-amber-400 print:text-amber-700" />
-              Synthèse Stratégique & Opportunité de Marché
+              Synthèse des données observées
             </h4>
             <p className="text-xs text-slate-300 print:text-slate-700 leading-relaxed">
-              Njambo Kora démontre une vélocité de session élevée (<b>{kpis.playerBehavior?.gamePacing?.avgPartieDurationSec || 48}s par donne</b>) 
-              et un fort engagement naturel (Stickiness DAU/MAU à <b>{kpis.retentionEngagement?.stickinessRatio || 0}%</b>). 
-              Le mécanisme punitif et gratifiant du <i>Kora</i> stimule l'esprit de revanche sans créer de friction de rétention (<b>{100 - (kpis.abandonmentFrustrations?.postKoraAbandonRate || 12)}%</b> des joueurs continuent le combat).
-              Ces indicateurs valident la faisabilité d'un modèle économique combinant <b>tournois sponsorisés, recharges de jetons et battle pass compétitifs</b> en Afrique subsaharienne et diaspora.
+              Durée moyenne mesurée par donne : <b>{(kpis.playerBehavior?.gamePacing?.avgPartieDurationSec ?? 0) > 0 ? `${kpis.playerBehavior?.gamePacing?.avgPartieDurationSec}s` : '—'}</b>. 
+              Stickiness DAU/MAU : <b>{(kpis.retentionEngagement?.mau ?? 0) > 0 ? `${kpis.retentionEngagement?.stickinessRatio ?? 0}%` : '—'}</b>. 
+              Revanche après un Kora : <b>—</b> (mesure en cours de mise en place).
+              Ces chiffres proviennent de la bêta fermée de Njambo Kora et portent sur un nombre limité de joueurs : ils décrivent l'activité observée, sans prévision ni projection de revenus.
             </p>
           </div>
 
           {/* Footer Signature */}
           <div className="pt-4 border-t border-slate-800 print:border-slate-300 flex flex-col sm:flex-row items-center justify-between text-[11px] font-mono text-slate-500 print:text-slate-600 gap-2">
             <div>Katika Network Analytics • ID: KATIKA-{Date.now().toString().slice(-8)}</div>
-            <div>Certifié authentique • Données Firestore temps réel</div>
+            <div>Données de la bêta fermée • Source : Katika</div>
           </div>
         </div>
       </div>

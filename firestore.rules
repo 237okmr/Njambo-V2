@@ -429,6 +429,18 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Journal de parties (écrit uniquement par le serveur) : lecture réservée à l'admin de katika.
+    match /njambo_partie_journal/{partieId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Présence quotidienne et mesures du serveur (écrites par le SDK admin) : lecture réservée à l'admin de katika.
+    match /server_metrics/{metricId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
     // Abonnements Web Push (lecture/écriture par le serveur avec le SDK client : à migrer au lot 4)
     match /push_subscriptions/{subscriptionId} {
       allow read, write: if true;

@@ -341,4 +341,22 @@ html[data-perf='light'] .home-glow {
   transform: translate(-50%, -50%) scale(1);
 }
 
+/*
+ * Filet de sécurité des fonds (navigateurs mobiles anciens ou moteurs limités) : valeurs hexadécimales
+ * unies, sans dépendre des variables de couleur Tailwind. Évite qu'un écran plein écran (Profil, Règles,
+ * Palmarès, Multijoueur, Notifications, Réglages de partie) devienne transparent et laisse voir l'accueil.
+ * Mêmes teintes que bg-slate-950 / text-slate-100 : aucun changement visuel sur les navigateurs récents.
+ */
+html,
+body,
+#root,
+.h-dvh.bg-slate-950,
+.fixed.inset-0.bg-slate-950 {
+  background-color: #020617;
+}
+
+.fixed.inset-0.bg-slate-950 {
+  color: #f1f5f9;
+}
+
 

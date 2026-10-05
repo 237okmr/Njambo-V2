@@ -1,5 +1,6 @@
 import { getFirebaseAdminAppDb } from '../firebaseAdmin';
 import { getEngineConfig } from '../engine/engineConfig';
+import { flushPresenceDaily } from './presenceDaily';
 
 /**
  * Mesures de santé des connexions, agrégées par jour, pour diagnostiquer la qualité des connexions des
@@ -146,6 +147,7 @@ export function getTodaySnapshot(): MetricsSnapshot {
 /** Écrit le compteur du jour dans Firestore. N'écrase jamais un jour différent de celui en mémoire. */
 export async function flushMetricsToStore(): Promise<boolean> {
   rollIfNewDay();
+  void flushPresenceDaily(); // présence quotidienne : même cadence (metricsFlushSeconds)
   try {
     const db = getFirebaseAdminAppDb();
     await db.collection(COLLECTION).doc(`connection_${current.dateKey}`).set(

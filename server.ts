@@ -18,6 +18,8 @@ import { getPublicParams, PARAM_BY_KEY } from './server/engine/engineParams';
 import { handleAdminChatMessage, streamAdminChatMessage } from './server/aiAdminChat';
 import { generateVisualVariants } from './server/aiVisual';
 import { listKoraMoments } from './server/rooms/koraMomentStore';
+import { saveSoloPartieBatch } from './server/rooms/gameRecordStore';
+import { runLegacyAction, createFirestoreLegacyStore } from './server/rooms/legacyRecords';
 import { isKoraMoment } from './src/katika/visual/situation';
 import { pushService, buildGameUrl } from './server/pushService';
 import { verifyFirebaseIdToken, listAdminUsers, setAdminUserClaim, getFirebaseAdminDb } from './server/firebaseAdmin';
@@ -336,6 +338,25 @@ async function startServer() {
       { onlyEndpoint: endpoint }
     );
     res.json({ success: result.success > 0, ...result });
+  });
+
+  // Télémétrie : réception des parties SOLO (jouées sur l'appareil, parfois hors ligne).
+  // Le serveur valide, déduplique et écrit la fiche de manche + le journal de partie.
+  app.post('/api/telemetry/solo-batch', express.json(), async (req, res) => {
+    try {
+      const authHeader = String(req.headers.authorization || '');
+      const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+      const verified = token ? await verifyFirebaseIdToken(token) : null;
+      const result = await saveSoloPartieBatch({
+        tokenProvided: Boolean(token),
+        verified: verified ? { uid: verified.uid, email: verified.email } : null,
+        body: req.body,
+      });
+      res.status(result.status).json(result.body);
+    } catch (err: unknown) {
+      console.warn('[Telemetry API] solo-batch error:', err instanceof Error ? err.message : err);
+      res.status(500).json({ success: false, error: 'Erreur interne' });
+    }
   });
 
   app.get('/api/health', (req, res) => {
@@ -1632,6 +1653,35 @@ async function startServer() {
   });
 
   // Moments Kora enregistrés (fiches anonymes de plis) : réservé à l'admin Katika (garde /api/katika ci-dessus)
+  // Anciennes fiches de manche écrites par les téléphones : rapport, migration, suppression vérifiée.
+  // Route protégée par le contrôle administrateur de /api/katika. Lecture seule par défaut (dryRun).
+  app.post('/api/katika/legacy-records', express.json(), async (req, res) => {
+    try {
+      const body = (req.body || {}) as { action?: string; dryRun?: boolean; confirm?: string };
+      const action = body.action === 'migrate' || body.action === 'purge' ? body.action : 'report';
+      const dryRun = body.dryRun !== false;
+      const result = await runLegacyAction(createFirestoreLegacyStore(), { action, dryRun, confirm: body.confirm });
+      if (action !== 'report' && !dryRun && result.success) {
+        const user = (req as any).katikaUser;
+        RoomManager.addAuditLog({
+          id: 'legacy_' + action + '_' + Date.now().toString(36),
+          timestamp: Date.now(),
+          type: 'KATIKA_ACTION',
+          severity: 'WARNING',
+          actor: user?.email || 'Admin Katika',
+          summary: action === 'migrate'
+            ? `Migration des anciennes fiches de manche : ${result.migration.created} fiche(s) créée(s)`
+            : `Suppression vérifiée des anciennes fiches de manche : ${result.purge.deleted} supprimée(s)`,
+          details: { action, migration: result.migration, purge: result.purge },
+        });
+      }
+      res.status(result.success ? 200 : 400).json(result);
+    } catch (err: unknown) {
+      console.error('[Katika Legacy Records] Erreur :', err instanceof Error ? err.message : err);
+      res.status(500).json({ success: false, error: 'Erreur interne pendant le traitement des anciennes fiches.' });
+    }
+  });
+
   app.get('/api/katika/moments', async (_req, res) => {
     try {
       const moments = await listKoraMoments();

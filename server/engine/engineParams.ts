@@ -114,6 +114,11 @@ export const ENGINE_PARAMS: ParamDef[] = [
     min: 3, max: 90, default: 14, group: 'caches-et-mises-a-jour', scope: 'server', effect: 'immediate', advanced: true,
     help: 'Durée de conservation des mesures quotidiennes de connexion dans Firestore (nettoyage manuel, non automatisé).',
   },
+  {
+    key: 'recordInactivityAbandonMinutes', label: 'Abandon d\'une manche sans activité (statistiques katika)', unit: 'min',
+    min: 5, max: 240, default: 30, group: 'caches-et-mises-a-jour', scope: 'client', effect: 'immediate', advanced: true,
+    help: 'Une manche enregistrée « en cours » sans aucune activité depuis cette durée est comptée comme abandonnée dans les statistiques de katika. Ne modifie ni la durée de vie des tables ni le déroulement du jeu.',
+  },
 
   {
     key: 'googleVerifyTimeoutSeconds', label: 'Délai de vérification d\'un compte Google', unit: 's',

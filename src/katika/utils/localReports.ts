@@ -39,8 +39,8 @@ export function buildLocalHealthReport(snapshot: KatikaMetricsSnapshot | null): 
 
 #### 3. ⏱️ Cadence & Configuration Moteur
 - **Timer de tour configuré** : \`${config?.turnTimerSeconds ?? baseline?.currentTimer ?? 15}s\`
-- **Durée moyenne par donne** : \`${baseline?.avgPartieSec ?? 25}s\`
-- **Durée moyenne par manche** : \`${baseline?.avgMancheSec ?? 180}s\`
+- **Durée moyenne par donne** : \`${baseline?.avgPartieSec ? baseline.avgPartieSec + 's' : '—'}\`
+- **Durée moyenne par manche** : \`${baseline?.avgMancheSec ? baseline.avgMancheSec + 's' : '—'}\`
 - **Multiplicateurs Kora / Double Kora** : \`x${config?.koraMultiplier ?? baseline?.currentKoraMultiplier ?? 2}\` / \`x${config?.doubleKoraMultiplier ?? baseline?.currentDoubleKoraMultiplier ?? 4}\`
 - **Mise minimale par table** : \`${config?.minTableBet ?? baseline?.currentMinBet ?? 100} jetons\`
 

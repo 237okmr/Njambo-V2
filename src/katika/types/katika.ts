@@ -71,7 +71,7 @@ export interface KatikaAbandonmentMetrics {
     afterDefeatQuitPct: number; // Quits right after losing a round
   };
   healthScore: number; // Score 0-100 of game flow stability
-  healthStatus: 'FLUIDE & SAIN (Très peu d’abandons)' | 'MODÉRÉ' | 'ATTENTION (Frustrations détectées)';
+  healthStatus: 'FLUIDE & SAIN (Très peu d’abandons)' | 'MODÉRÉ' | 'ATTENTION (Frustrations détectées)' | 'Données insuffisantes';
 }
 
 export interface KatikaKPIs {

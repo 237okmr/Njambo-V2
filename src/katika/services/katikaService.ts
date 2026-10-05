@@ -538,16 +538,16 @@ export const KatikaService = {
     const durations = records.map(r => r.durationSeconds).filter((d): d is number => typeof d === 'number' && d > 5);
     const avgMancheDurationSec = durations.length > 0 
       ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) 
-      : 180; // Baseline réaliste de manche (3 min)
-    const avgPartieDurationSec = avgPartiesPerManche > 0 
+      : 0; // Aucune durée enregistrée : 0 (jamais une durée inventée)
+    const avgPartieDurationSec = (avgPartiesPerManche > 0 && avgMancheDurationSec > 0) 
       ? Math.max(10, Math.round(avgMancheDurationSec / avgPartiesPerManche)) 
-      : Math.min(avgMancheDurationSec, 45); // Baseline unitaire d'une donne de 5 tours
-    const avgTrickDurationSec = Math.max(3, Math.round(avgPartieDurationSec / 5)); // Cadence par tour
-    const fastestPartieDurationSec = durations.length > 0 ? Math.min(...durations) : 24;
-    const longestPartieDurationSec = durations.length > 0 ? Math.max(...durations) : 115;
+      : 0; // Sans durée mesurée : 0 (jamais une durée inventée)
+    const avgTrickDurationSec = avgPartieDurationSec > 0 ? Math.max(3, Math.round(avgPartieDurationSec / 5)) : 0; // Cadence par tour
+    const fastestPartieDurationSec = durations.length > 0 ? Math.min(...durations) : 0;
+    const longestPartieDurationSec = durations.length > 0 ? Math.max(...durations) : 0;
     const totalPlaytimeHours = durations.length > 0
       ? Number((durations.reduce((a, b) => a + b, 0) / 3600).toFixed(1))
-      : Number(((totalPartiesDisputed * avgPartieDurationSec) / 3600).toFixed(1));
+      : 0;
 
     const playerBehavior: KatikaKPIs['playerBehavior'] = {
       tablePreference: {
@@ -611,9 +611,9 @@ export const KatikaService = {
     });
 
     const uniqueUsersList = Object.values(userActivityMap);
-    const dau = uniqueUsersList.filter(u => u.lastSeen >= now - day1Ms).length || Math.max(1, liveSockets);
-    const wau = uniqueUsersList.filter(u => u.lastSeen >= now - day7Ms).length || Math.max(dau, 2);
-    const mau = uniqueUsersList.filter(u => u.lastSeen >= now - day30Ms).length || Math.max(wau, 3);
+    const dau = uniqueUsersList.filter(u => u.lastSeen >= now - day1Ms).length;
+    const wau = uniqueUsersList.filter(u => u.lastSeen >= now - day7Ms).length;
+    const mau = uniqueUsersList.filter(u => u.lastSeen >= now - day30Ms).length;
     const stickinessRatio = mau > 0 ? Math.round((dau / mau) * 100) : 0;
 
     // D1 / D7 / D30 Cohorts calculation without hardcoded mock fallbacks
@@ -716,7 +716,7 @@ export const KatikaService = {
 
     const mancheCompletionRate = totalManchesStarted > 0
       ? Math.round((totalManchesCompleted / totalManchesStarted) * 100)
-      : 100;
+      : 0;
 
     const abandonedRecords = records.filter(r => r.status === 'abandoned' || r.isAbandoned === true);
     const abandonedCount = totalManchesAbandoned;
@@ -740,7 +740,9 @@ export const KatikaService = {
     const midGameQuitPct = abandonedCount > 0 ? Math.round((midGameAbandons / abandonedCount) * 100) : 0;
     const afterDefeatQuitPct = abandonedCount > 0 ? Math.max(0, 100 - (earlyTrickQuitPct + midGameQuitPct)) : 0;
 
-    const healthScore = Math.max(0, Math.min(100, Math.round(completionRate * 0.8 + (100 - postKoraAbandonRate) * 0.2)));
+    const healthScore = totalManchesStarted > 0
+      ? Math.max(0, Math.min(100, Math.round(completionRate * 0.8 + (100 - postKoraAbandonRate) * 0.2)))
+      : 0;
     const healthStatus = healthScore >= 85 
       ? 'FLUIDE & SAIN (Très peu d’abandons)' 
       : healthScore >= 65 
@@ -757,7 +759,7 @@ export const KatikaService = {
         afterDefeatQuitPct,
       },
       healthScore,
-      healthStatus,
+      healthStatus: totalManchesStarted > 0 ? healthStatus : 'Données insuffisantes',
     };
 
     // Build Activity Timeline based on timeRange

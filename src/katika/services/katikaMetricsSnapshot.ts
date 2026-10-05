@@ -224,7 +224,7 @@ export const KatikaMetricsSnapshotProvider = {
     // 2. Gameplay & Cadence
     const pacing = allKpis.playerBehavior?.gamePacing;
     if (pacing && (allKpis.totalGamesPlayed || 0) >= 5) {
-      if (pacing.avgPartieDurationSec < 15) {
+      if (pacing.avgPartieDurationSec > 0 && pacing.avgPartieDurationSec < 15) {
         anomalies.push({
           category: 'GAMEPLAY',
           severity: 'WARNING',
@@ -542,9 +542,9 @@ export const KatikaMetricsSnapshotProvider = {
         currentKoraMultiplier: config.koraMultiplier || 2,
         currentDoubleKoraMultiplier: config.doubleKoraMultiplier || 4,
         currentMinBet: config.minTableBet || 100,
-        avgPartieSec: allKpis.playerBehavior?.gamePacing?.avgPartieDurationSec || 25,
-        avgMancheSec: allKpis.playerBehavior?.gamePacing?.avgMancheDurationSec || 180,
-        avgPot: allKpis.avgPotPerGame || 800,
+        avgPartieSec: allKpis.playerBehavior?.gamePacing?.avgPartieDurationSec ?? 0,
+        avgMancheSec: allKpis.playerBehavior?.gamePacing?.avgMancheDurationSec ?? 0,
+        avgPot: allKpis.avgPotPerGame ?? 0,
       },
       adminNotes,
       customDynamicFields,

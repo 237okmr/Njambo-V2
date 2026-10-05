@@ -41,6 +41,10 @@ import {
 } from 'recharts';
 import { KatikaKPIs, KatikaTab, KatikaDashboardSubTab } from '../../types/katika';
 import { KatikaService } from '../../services/katikaService';
+import { fetchActivitySummary } from '../../services/activityService';
+import type { ActivitySummary } from '../../services/activityService';
+import { KatikaActivityCards } from '../KatikaActivityCards';
+import { KatikaActivityPlayers } from '../KatikaActivityPlayers';
 import { KatikaInvestorReportModal } from '../modals/KatikaInvestorReportModal';
 import { navigateToKatikaTab } from '../../utils/katikaNavigation';
 
@@ -85,6 +89,28 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
     fetchKpis(timeRange);
   }, [timeRange]);
 
+  // Activité réelle (parties, manches, joueurs, présence) : relue à chaque mise à jour des KPIs (période, « Actualiser »).
+  const [activity, setActivity] = useState<ActivitySummary | null>(null);
+  const [activityLoading, setActivityLoading] = useState<boolean>(false);
+  useEffect(() => {
+    if (!kpis) return;
+    let cancelled = false;
+    setActivityLoading(true);
+    fetchActivitySummary(timeRange)
+      .then((summary) => {
+        if (!cancelled) setActivity(summary);
+      })
+      .catch((err) => {
+        console.error('Failed to load activity summary:', err);
+      })
+      .finally(() => {
+        if (!cancelled) setActivityLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [kpis]);
+
   if (!kpis && loading) {
     return (
       <div className="flex items-center justify-center py-20 text-slate-400">
@@ -104,6 +130,15 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
   const simplePct = actualVictoriesCount > 0 ? Math.round((kpis.simpleVictoryCount / totalVictories) * 100) : 0;
   const threeSevensPct = actualVictoriesCount > 0 ? Math.round((kpis.threeSevensCount / totalVictories) * 100) : 0;
   const under21Pct = actualVictoriesCount > 0 ? Math.round((kpis.under21Count / totalVictories) * 100) : 0;
+
+  // Données réelles disponibles ? Sinon les indicateurs affichent « — » (jamais une valeur inventée).
+  const hasMancheData = (kpis.totalManchesStarted ?? 0) > 0;
+  const hasAbandonData = (kpis.totalManchesAbandoned ?? 0) > 0;
+  // Moments de sortie : n'ont de sens que si le tour d'abandon est connu (début ou milieu de partie identifié).
+  const hasQuitMomentData = hasAbandonData && (
+    (kpis.abandonmentFrustrations?.chokePoints?.earlyTrickQuitPct ?? 0) +
+    (kpis.abandonmentFrustrations?.chokePoints?.midGameQuitPct ?? 0)
+  ) > 0;
 
   // Calculations for Multi distribution
   const actualMultiDist = (kpis.twoPlayersCount + kpis.threePlayersCount + kpis.fourPlayersCount);
@@ -309,6 +344,13 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
         </div>
       </div>
 
+      {/* Activité réelle du jeu : visible dans les trois vues (Live, Business, Gameplay) */}
+      <KatikaActivityCards
+        activity={activity}
+        loading={activityLoading}
+        rangeLabel={timeRange === 'TODAY' ? "Aujourd'hui" : timeRange === '24H' ? '24 heures' : timeRange === '7D' ? '7 jours' : 'Tout'}
+      />
+
       {/* ========================================================================= */}
       {/* SOUS-ONGLET 1 : 🟢 LIVE & SUPERVISION (COCKPIT OPÉRATIONNEL RESTRUCTURÉ)   */}
       {/* ========================================================================= */}
@@ -336,7 +378,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
             {/* Cell 2: Joueurs connectés */}
             <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 shadow-sm flex items-center justify-between">
               <div className="space-y-0.5">
-                <span className="text-[11px] font-medium text-slate-400">Joueurs Connectés</span>
+                <span className="text-[11px] font-medium text-slate-400">En direct (serveur)</span>
                 <div className="flex items-baseline gap-2">
                   <span className="text-xl font-bold text-white font-mono">{kpis.connectedPlayersCount}</span>
                   <span className="text-[11px] text-slate-500 font-sans">
@@ -371,7 +413,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
                 <span className="text-[11px] font-medium text-slate-400">Complétion des Manches</span>
                 <div className="flex items-baseline gap-2">
                   <span className="text-xl font-bold text-emerald-400 font-mono">
-                    {kpis.mancheCompletionRate ?? 100}%
+                    {(kpis.totalManchesStarted ?? 0) > 0 ? `${kpis.mancheCompletionRate ?? 0}%` : '—'}
                   </span>
                   <span className="text-[11px] text-slate-500 font-mono">
                     {kpis.totalManchesCompleted ?? 0}/{kpis.totalManchesStarted ?? 0}
@@ -440,7 +482,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
                   <div className="space-y-2 p-3.5 rounded-xl bg-slate-950/40 border border-slate-800/60">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-400 font-medium">Répartition des statuts de jeu</span>
-                      <span className="font-bold text-emerald-400 font-mono">Taux de complétion : {kpis.mancheCompletionRate ?? 100}%</span>
+                      <span className="font-bold text-emerald-400 font-mono">Taux de complétion : {(kpis.totalManchesStarted ?? 0) > 0 ? `${kpis.mancheCompletionRate ?? 0}%` : '—'}</span>
                     </div>
 
                     <div className="w-full h-2.5 rounded-full bg-slate-800 overflow-hidden flex">
@@ -1088,7 +1130,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
                     Moy. Partie (5 tours)
                   </div>
                   <div className="text-xl font-bold text-amber-300 font-mono">
-                    {kpis.playerBehavior?.gamePacing?.avgPartieDurationSec || 48}s
+                    {(kpis.playerBehavior?.gamePacing?.avgPartieDurationSec ?? 0) > 0 ? `${kpis.playerBehavior?.gamePacing?.avgPartieDurationSec}s` : '—'}
                   </div>
                   <div className="text-[10px] text-slate-500 font-mono">Par donne unitaire</div>
                 </div>
@@ -1096,11 +1138,11 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
 
               <div className="p-3 rounded-lg bg-slate-800/60 border border-slate-750 flex items-center justify-between text-xs font-mono">
                 <span className="text-slate-400">
-                  Donne la plus rapide : <b className="text-emerald-400">{kpis.playerBehavior?.gamePacing?.fastestPartieDurationSec || 24}s</b>
+                  Manche la plus rapide : <b className="text-emerald-400">{(kpis.playerBehavior?.gamePacing?.fastestPartieDurationSec ?? 0) > 0 ? `${kpis.playerBehavior?.gamePacing?.fastestPartieDurationSec}s` : '—'}</b>
                 </span>
                 <span className="text-slate-600">•</span>
                 <span className="text-slate-400">
-                  Donne la plus longue : <b className="text-orange-400">{kpis.playerBehavior?.gamePacing?.longestPartieDurationSec || 115}s</b>
+                  Manche la plus longue : <b className="text-orange-400">{(kpis.playerBehavior?.gamePacing?.longestPartieDurationSec ?? 0) > 0 ? `${kpis.playerBehavior?.gamePacing?.longestPartieDurationSec}s` : '—'}</b>
                 </span>
               </div>
             </div>
@@ -1186,7 +1228,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
                     : 'bg-amber-500/10 text-amber-300 border-amber-500/20'
                 }`}>
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  {kpis.abandonmentFrustrations?.healthStatus || 'FLUIDE & SAIN (Très peu d’abandons)'}
+                  {kpis.abandonmentFrustrations?.healthStatus || 'Données insuffisantes'}
                 </span>
               </div>
             </div>
@@ -1200,7 +1242,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
                     <span className="text-xs font-semibold text-slate-200">Taux d'Achèvement des Manches</span>
                   </div>
                   <span className="text-[10px] px-2 py-0.5 rounded font-mono font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                    Score : {kpis.abandonmentFrustrations?.healthScore || 96}/100
+                    Score : {hasMancheData ? `${kpis.abandonmentFrustrations?.healthScore ?? 0}/100` : '—'}
                   </span>
                 </div>
 
@@ -1208,7 +1250,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
                   <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 space-y-0.5">
                     <div className="text-[10px] text-slate-400 font-mono">Manches Complètes</div>
                     <div className="text-base font-bold text-emerald-300 font-mono">
-                      {kpis.abandonmentFrustrations?.completionRate || 96}%
+                      {hasMancheData ? `${kpis.abandonmentFrustrations?.completionRate ?? 0}%` : '—'}
                     </div>
                     <div className="text-[10px] text-slate-500 font-mono">Jusqu'au sacre final</div>
                   </div>
@@ -1216,7 +1258,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
                   <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 space-y-0.5">
                     <div className="text-[10px] text-slate-400 font-mono">Abandons Prématurés</div>
                     <div className="text-base font-bold text-rose-400 font-mono">
-                      {kpis.abandonmentFrustrations?.abandonmentRate || 4}%
+                      {hasMancheData ? `${kpis.abandonmentFrustrations?.abandonmentRate ?? 0}%` : '—'}
                     </div>
                     <div className="text-[10px] text-slate-500 font-mono">Quitter sans sauver</div>
                   </div>
@@ -1226,11 +1268,11 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
                   <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden flex">
                     <div 
                       className="h-full bg-emerald-500" 
-                      style={{ width: `${kpis.abandonmentFrustrations?.completionRate || 96}%` }} 
+                      style={{ width: `${hasMancheData ? (kpis.abandonmentFrustrations?.completionRate ?? 0) : 0}%` }} 
                     />
                     <div 
                       className="h-full bg-rose-500" 
-                      style={{ width: `${kpis.abandonmentFrustrations?.abandonmentRate || 4}%` }} 
+                      style={{ width: `${hasMancheData ? (kpis.abandonmentFrustrations?.abandonmentRate ?? 0) : 0}%` }} 
                     />
                   </div>
                   <p className="text-[10px] text-slate-400 leading-tight">
@@ -1254,12 +1296,12 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs font-mono">
                     <span className="text-slate-300">Abandons subis après un Kora :</span>
-                    <span className="font-bold text-amber-300">{kpis.abandonmentFrustrations?.postKoraAbandonRate || 12}%</span>
+                    <span className="font-bold text-amber-300">{hasMancheData ? `${kpis.abandonmentFrustrations?.postKoraAbandonRate ?? 0}%` : '—'}</span>
                   </div>
                   <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-gradient-to-r from-amber-500 to-rose-500 rounded-full" 
-                      style={{ width: `${Math.max(6, kpis.abandonmentFrustrations?.postKoraAbandonRate || 12)}%` }} 
+                      style={{ width: `${hasMancheData ? (kpis.abandonmentFrustrations?.postKoraAbandonRate ?? 0) : 0}%` }} 
                     />
                   </div>
                 </div>
@@ -1267,7 +1309,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
                 <div className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-xs font-mono flex items-center justify-between">
                   <span className="text-slate-400">Joueurs qui continuent le combat :</span>
                   <span className="text-emerald-300 font-bold">
-                    {100 - (kpis.abandonmentFrustrations?.postKoraAbandonRate || 12)}%
+                    {hasMancheData ? `${100 - (kpis.abandonmentFrustrations?.postKoraAbandonRate ?? 0)}%` : '—'}
                   </span>
                 </div>
 
@@ -1291,15 +1333,15 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
                 <div className="space-y-2 text-xs font-mono">
                   <div className="flex items-center justify-between">
                     <span className="text-slate-400">Début de partie (Tours 1–2) :</span>
-                    <span className="text-cyan-300 font-bold">{kpis.abandonmentFrustrations?.chokePoints?.earlyTrickQuitPct || 25}%</span>
+                    <span className="text-cyan-300 font-bold">{hasQuitMomentData ? `${kpis.abandonmentFrustrations?.chokePoints?.earlyTrickQuitPct ?? 0}%` : '—'}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-slate-400">Milieu de manche (Tours 3–4) :</span>
-                    <span className="text-amber-300 font-bold">{kpis.abandonmentFrustrations?.chokePoints?.midGameQuitPct || 35}%</span>
+                    <span className="text-amber-300 font-bold">{hasQuitMomentData ? `${kpis.abandonmentFrustrations?.chokePoints?.midGameQuitPct ?? 0}%` : '—'}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-slate-400">Après défaite de manche :</span>
-                    <span className="text-rose-300 font-bold">{kpis.abandonmentFrustrations?.chokePoints?.afterDefeatQuitPct || 40}%</span>
+                    <span className="text-rose-300 font-bold">{hasQuitMomentData ? `${kpis.abandonmentFrustrations?.chokePoints?.afterDefeatQuitPct ?? 0}%` : '—'}</span>
                   </div>
                 </div>
 
@@ -1450,6 +1492,13 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
           </div>
         </div>
       )}
+
+      {/* Activité des joueurs : sous le tableau de bord (toutes vues) */}
+      <KatikaActivityPlayers
+        activity={activity}
+        loading={activityLoading}
+        rangeLabel={timeRange === 'TODAY' ? "Aujourd'hui" : timeRange === '24H' ? '24 heures' : timeRange === '7D' ? '7 jours' : 'Tout'}
+      />
 
       {/* Investor One-Pager Pitch Modal */}
       {isInvestorModalOpen && (

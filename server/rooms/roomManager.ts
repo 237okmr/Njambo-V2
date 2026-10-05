@@ -8,6 +8,8 @@ import { pushService, buildGameUrl } from '../pushService';
 import { APP_VERSION } from '../../src/version';
 import { verifyFirebaseIdToken } from '../firebaseAdmin';
 import { saveKoraMoment } from './koraMomentStore';
+import { recordMultiplayerPartie } from './gameRecordStore';
+import { recordPresenceSeen } from './presenceDaily';
 import { shouldBotAcceptBetIncrease, BOT_BET_INCREASE_AGREE_EMOTES, BOT_BET_INCREASE_DECLINE_EMOTES } from '../../src/utils/ai';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../src/lib/firebase';
@@ -598,6 +600,7 @@ export class RoomManager {
         },
         onPartieResult: (result: PartieResult, r: MultiplayerRoom) => {
           this.handleNewPartieResult(result, r);
+          void recordMultiplayerPartie(result, r);
         },
         onKoraMoment: (moment) => {
           void saveKoraMoment(moment);
@@ -5026,6 +5029,16 @@ export class RoomManager {
   public static handleHeartbeatPresence(client: ConnectedClient, msg: ClientMessage): void {
     const now = Date.now();
     client.lastPing = now;
+
+    // Présence quotidienne (joueurs « app ouverte » dans katika) : ignorée tant que l'identité est provisoire.
+    if (!client.isProvisional) {
+      recordPresenceSeen({
+        playerId: client.playerId,
+        playerName: msg.playerName,
+        isAway: (msg as any).isAway === true,
+        nowMs: now,
+      });
+    }
 
     // Update room lastSeenAt if in a room
     if (client.roomCode && this.rooms.has(client.roomCode)) {

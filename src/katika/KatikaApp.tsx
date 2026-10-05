@@ -14,6 +14,7 @@ import { KatikaRoomsTab } from './components/tabs/KatikaRoomsTab';
 import { KatikaMatchesTab } from './components/tabs/KatikaMatchesTab';
 import { KatikaPlayersTab } from './components/tabs/KatikaPlayersTab';
 import { KatikaSettingsTab } from './components/tabs/KatikaSettingsTab';
+import { KatikaLegacyRecordsPanel } from './components/KatikaLegacyRecordsPanel';
 import { KatikaLogsTab } from './components/tabs/KatikaLogsTab';
 import { KatikaAiAssistantTab } from './components/tabs/KatikaAiAssistantTab';
 import { KatikaAiChatProvider } from './context/KatikaAiChatContext';
@@ -100,7 +101,12 @@ const KatikaWorkspace: React.FC = () => {
               {currentTab === 'ROOMS' && <KatikaRoomsTab />}
               {currentTab === 'MATCHES' && <KatikaMatchesTab />}
               {currentTab === 'PLAYERS' && <KatikaPlayersTab />}
-              {currentTab === 'SETTINGS' && <KatikaSettingsTab onConfigUpdated={setConfig} />}
+              {currentTab === 'SETTINGS' && (
+                <div className="space-y-6">
+                  <KatikaSettingsTab onConfigUpdated={setConfig} />
+                  <KatikaLegacyRecordsPanel />
+                </div>
+              )}
               {currentTab === 'LOGS' && <KatikaLogsTab />}
               {currentTab === 'AI_ASSISTANT' && <KatikaAiAssistantTab />}
 

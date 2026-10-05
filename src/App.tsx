@@ -1320,6 +1320,15 @@ function GameApp() {
             isMancheFinalWin: isCompleted,
             potWon: effectivePot,
             potGross: effectivePot,
+            partieEvent: mode === 'SOLO'
+              ? {
+                  partieNumber: partieCount,
+                  partieCompleted: true,
+                  winnerIsHuman: Boolean(
+                    winnerIdx !== null && winnerIdx !== undefined && activeGameState.players?.[winnerIdx]?.isHuman === true
+                  ),
+                }
+              : undefined,
             baseBet: baseBetValue,
             currency: 'CHIPS',
             aiDifficulty: mode === 'SOLO' ? (activeGameState.aiDifficulty || gameState.aiDifficulty) : undefined,

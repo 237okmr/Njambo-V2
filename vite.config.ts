@@ -2,11 +2,21 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig } from 'vite';
+import browserslist from 'browserslist';
+import { oldBrowserCssFallback } from './scripts/oldBrowserCssFallback';
+import { browserslistToTargets } from 'lightningcss';
 
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), oldBrowserCssFallback()],
+    css: {
+      transformer: 'lightningcss' as const,
+      lightningcss: {
+        targets: browserslistToTargets(browserslist('chrome >= 99, android >= 99, safari >= 15.4, firefox >= 97')),
+      },
+    },
     build: {
+      cssMinify: 'lightningcss' as const,
       rollupOptions: {
         output: {
           // Sépare les grosses bibliothèques dans leur propre fichier : elles changent rarement, donc le
