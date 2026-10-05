@@ -18,7 +18,7 @@ import { getPublicParams, PARAM_BY_KEY } from './server/engine/engineParams';
 import { handleAdminChatMessage, streamAdminChatMessage } from './server/aiAdminChat';
 import { generateVisualVariants } from './server/aiVisual';
 import { listKoraMoments } from './server/rooms/koraMomentStore';
-import { saveSoloPartieBatch } from './server/rooms/gameRecordStore';
+import { saveSoloPartieBatch, enableGameRecording } from './server/rooms/gameRecordStore';
 import { runLegacyAction, createFirestoreLegacyStore } from './server/rooms/legacyRecords';
 import { isKoraMoment } from './src/katika/visual/situation';
 import { pushService, buildGameUrl } from './server/pushService';
@@ -52,6 +52,7 @@ async function startServer() {
   // Tables en cours sauvegardées (Firestore) : restaurées avant d'accepter la moindre connexion.
   await RoomManager.restoreRoomsAtBoot();
   RoomManager.enableRoomSnapshots();
+  enableGameRecording();
   startMetricsFlushLoop();
 
   const app = express();

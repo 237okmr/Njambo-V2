@@ -582,6 +582,13 @@ export function buildMultiDocs(params: {
   return { mancheDocId, partieDocId, fiche, journal };
 }
 
+let recordingEnabled = false;
+
+/** Activé une seule fois au démarrage du vrai serveur (comme les sauvegardes de tables) : jamais pendant les tests. */
+export function enableGameRecording(): void {
+  recordingEnabled = true;
+}
+
 /**
  * Appelé par le serveur à la fin de chaque partie multijoueur (une seule fois par partie).
  * Idempotent : si le journal de cette partie existe déjà, rien n'est réécrit.
@@ -591,6 +598,7 @@ export async function recordMultiplayerPartie(
   result: PartieResult,
   room: Pick<MultiplayerRoom, 'players' | 'gameState'>
 ): Promise<void> {
+  if (!recordingEnabled) return;
   try {
     const probe = buildMultiDocs({ result, room, nowMs: Date.now() });
     if (!probe) return;
