@@ -92,6 +92,18 @@ export const GRAND_MASTER_CONFIG = {
   DOUBLE_KORA_PAYOFF_MULTIPLIER: 4.0,
 } as const;
 
+// ============================================================================
+// 5. BOSS HOKUTO (Robam Hokuto) : bluff et pression à l'entame
+//    Probabilités (0 à 1) appliquées PAR-DESSUS le moteur Monte Carlo Expert.
+//    Aucun délai ici : uniquement des probabilités de style de jeu.
+// ============================================================================
+export const HOKUTO_BOSS_CONFIG = {
+  /** Probabilité de bluffer (jouer un coup quasi-optimal mais inattendu) */
+  BLUFF_WEIGHT: 0.15,
+  /** Probabilité de mettre la pression en entame (plis 1 à 3 : carte la plus forte) */
+  PRESSURE_WEIGHT: 0.5,
+} as const;
+
 /** Rétro-compatibilité pour les imports existants de seuils Kora */
 export const KORA_CHANCE_THRESHOLD = EXPERT_CONFIG.KORA_CHANCE_THRESHOLD;
 export const DOUBLE_KORA_CHANCE_THRESHOLD = EXPERT_CONFIG.DOUBLE_KORA_CHANCE_THRESHOLD;

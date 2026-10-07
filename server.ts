@@ -34,7 +34,9 @@ import {
   LEADERBOARD_POLICY,
 } from './src/services/masteryConfig';
 
-const PORT = 3000;
+const PORT = process.env.NODE_ENV === 'production'
+  ? Number(process.env.PORT || 8080)
+  : 3000;
 const instanceId = 'inst_' + Math.random().toString(36).substring(2, 10) + '_' + Date.now().toString(36);
 const bootedAt = new Date().toISOString();
 
@@ -358,6 +360,10 @@ async function startServer() {
       console.warn('[Telemetry API] solo-batch error:', err instanceof Error ? err.message : err);
       res.status(500).json({ success: false, error: 'Erreur interne' });
     }
+  });
+
+  app.get(['/health', '/healthz'], (_req, res) => {
+    res.status(200).send('OK');
   });
 
   app.get('/api/health', (req, res) => {

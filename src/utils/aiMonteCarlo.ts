@@ -2,6 +2,54 @@ import { Card, PlayedCard, Player, Suit, Trick } from '../types';
 import { build31Deck, determineTrickWinner } from './deck';
 import { EXPERT_CONFIG, GRAND_MASTER_CONFIG } from './aiLevelConfig';
 import { isDynamicBossCard } from './ai';
+import type { HokutoTendencies } from './hokutoPlayerModel';
+
+/**
+ * Options réservées au moteur de Robam Hokuto (Boss). Sans ces options, le moteur
+ * se comporte exactement comme avant (Expert et Grand Katika inchangés).
+ */
+export interface HokutoMcOptions {
+  /** Tendances du joueur humain par index de joueur (informations publiques uniquement). */
+  tendencies?: Map<number, HokutoTendencies>;
+  /** Probabilité (0 à 1) de bluffer quand plusieurs cartes ont des chances de gain quasi égales. */
+  bluffWeight?: number;
+  /** Probabilité (0 à 1) de mettre la pression en entame (plis 1 à 3) à chances de gain quasi égales. */
+  pressureWeight?: number;
+}
+
+/** Écart de score en dessous duquel deux cartes sont jugées « à égalité » pour le bluff et la pression. */
+export const HOKUTO_NEAR_BEST_TOLERANCE = 0.05;
+
+function clampHokutoWeight(w: number): number {
+  return Math.min(2.5, Math.max(0.4, w));
+}
+
+/**
+ * Poids d'une carte inconnue dans la main d'un joueur humain, selon ses habitudes observées.
+ * 1 = neutre. Ne lit jamais les mains cachées : uniquement les tendances publiques.
+ */
+export function getHokutoCardWeight(card: Card, t: HokutoTendencies): number {
+  const conf = t.confidence;
+  let weight = 1;
+
+  // Garde-t-il ses cartes fortes pour la fin (positif) ou les dépense-t-il tôt (négatif) ?
+  if (card.value >= 8) {
+    const hoard = t.lateStrongRate - t.earlyStrongRate;
+    weight *= clampHokutoWeight(1 + conf * hoard * 1.2);
+  }
+
+  // Garde-t-il un 3 pour le dernier pli ?
+  if (card.value === 3) {
+    weight *= clampHokutoWeight(1 + conf * (t.threeAtFifthRate - 0.5) * 2);
+  }
+
+  // Couleur qu'il entame le plus souvent : plus probable dans sa main.
+  if (t.favoriteLeadSuit === card.suit) weight *= 1 + 0.4 * conf;
+  // Couleur qu'il jette le plus souvent : plus probable qu'il en ait peu.
+  if (t.favoriteDiscardSuit === card.suit) weight *= 1 - 0.3 * conf;
+
+  return weight;
+}
 
 /**
  * Normal Policy Card Selector for Rollouts:
@@ -123,7 +171,8 @@ export function chooseMonteCarloAICard(
   players: Player[],
   myPlayerIndex: number,
   knownVoids: Map<number, Set<Suit>>,
-  level: 'EXPERT' | 'GRAND_MASTER' = 'GRAND_MASTER'
+  level: 'EXPERT' | 'GRAND_MASTER' = 'GRAND_MASTER',
+  hokuto?: HokutoMcOptions
 ): Card {
   if (validCards.length === 1) return validCards[0];
 
@@ -221,6 +270,33 @@ export function chooseMonteCarloAICard(
       for (const opp of activeOpponents) {
         const needed = opp.cardsNeeded;
         const handForOpp: Card[] = [];
+
+        // Hokuto only: draw this human's cards weighted by their observed habits (public info only)
+        const oppTendencies = hokuto?.tendencies?.get(opp.playerIndex);
+        if (oppTendencies && oppTendencies.confidence > 0) {
+          while (handForOpp.length < needed && remainingPool.length > 0) {
+            const weights: number[] = new Array(remainingPool.length);
+            let totalWeight = 0;
+            for (let i = 0; i < remainingPool.length; i++) {
+              const card = remainingPool[i];
+              const w = opp.forbiddenSuits.has(card.suit) ? 0 : getHokutoCardWeight(card, oppTendencies);
+              weights[i] = w;
+              totalWeight += w;
+            }
+            if (totalWeight <= 0) break;
+            let r = Math.random() * totalWeight;
+            let pickIdx = weights.length - 1;
+            for (let i = 0; i < weights.length; i++) {
+              r -= weights[i];
+              if (r <= 0) {
+                pickIdx = i;
+                break;
+              }
+            }
+            handForOpp.push(remainingPool[pickIdx]);
+            remainingPool.splice(pickIdx, 1);
+          }
+        }
 
         // Pick eligible cards from pool respecting known voids
         for (let i = remainingPool.length - 1; i >= 0 && handForOpp.length < needed; i--) {
@@ -436,6 +512,31 @@ export function chooseMonteCarloAICard(
     ) {
       bestScore = score;
       bestCard = candidate;
+    }
+  }
+
+  // Hokuto only: when several cards have almost equal win chances, bluff or put pressure
+  // (never gives up real winning chances: only cards within HOKUTO_NEAR_BEST_TOLERANCE of the best).
+  if (hokuto && (hokuto.bluffWeight || hokuto.pressureWeight)) {
+    const scored = validCards.map((candidate) => {
+      const winRate = wins[candidate.id] / Math.max(1, samplesDone);
+      const koraRate = koraWins[candidate.id] / Math.max(1, samplesDone);
+      return { card: candidate, score: winRate * STANDARD_PAYOFF_MULTIPLIER + koraRate * koraWeight };
+    });
+    // A 3 is never wasted by the bluff or the pressure before the last trick (Kora potential).
+    const nearBest = scored.filter(
+      (s) =>
+        bestScore - s.score <= HOKUTO_NEAR_BEST_TOLERANCE &&
+        (trickNumber === 5 || s.card.value !== 3)
+    );
+    if (nearBest.length > 1) {
+      const isLeading = !leadSuit;
+      if (isLeading && trickNumber <= 3 && Math.random() < (hokuto.pressureWeight || 0)) {
+        return [...nearBest].sort((a, b) => b.card.value - a.card.value)[0].card;
+      }
+      if (Math.random() < (hokuto.bluffWeight || 0)) {
+        return nearBest[Math.floor(Math.random() * nearBest.length)].card;
+      }
     }
   }
 

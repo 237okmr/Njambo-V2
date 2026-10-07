@@ -78,6 +78,7 @@ export interface KatikaEngineConfig {
   minTableBet?: number;
   defaultInitialCapital?: number;
   hokutoSpawnRatePct: number;
+  koubiDouxSpawnRatePct: number;
   globalRakePct: number;
   allowAutoAdvance: boolean;
   emptyRoomTimeoutMinutes?: number;
@@ -86,6 +87,13 @@ export interface KatikaEngineConfig {
   autoBetEscalationInterval?: number;
   autoBetEscalationRatePct?: number;
   maxAutoBetMultiplier?: number;
+  /** Répliques des bots (le délai botEmoteCooldownSeconds est déclaré dans le registre engineParams.ts) */
+  botEmoteCooldownSeconds?: number;
+  botMaxEmotesPerRound?: number;
+  botEmoteHokutoRatePct?: number;
+  botEmoteMbapRatePct?: number;
+  botEmoteLeadDiscardRatePct?: number;
+  botEmoteCriticalBypassLimit?: boolean;
 }
 
 const LEGACY_ENGINE_DEFAULTS = {
@@ -104,7 +112,8 @@ const LEGACY_ENGINE_DEFAULTS = {
   allowNewRooms: true,
   minTableBet: 10,
   defaultInitialCapital: 100,
-  hokutoSpawnRatePct: 75,
+  hokutoSpawnRatePct: 50,
+  koubiDouxSpawnRatePct: 75,
   globalRakePct: 0,
   allowAutoAdvance: false,
   enableAutoBetEscalation: true,
@@ -112,6 +121,11 @@ const LEGACY_ENGINE_DEFAULTS = {
   autoBetEscalationInterval: 5,
   autoBetEscalationRatePct: 50,
   maxAutoBetMultiplier: 4,
+  botMaxEmotesPerRound: 2,
+  botEmoteHokutoRatePct: 28,
+  botEmoteMbapRatePct: 25,
+  botEmoteLeadDiscardRatePct: 10,
+  botEmoteCriticalBypassLimit: true,
 };
 
 // Les paramètres du registre (engineParams.ts) font foi pour tous les délais.

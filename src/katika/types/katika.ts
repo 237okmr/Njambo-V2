@@ -314,14 +314,15 @@ export interface KatikaGameConfig {
   guestLobbyGraceSeconds?: number; // Délai de grâce pour invité déconnecté dans le lobby (défaut: 60 s)
   joinPushEnabled?: boolean; // Activer la notification push à l'hôte quand un joueur rejoint sa table (défaut: true)
   defaultAiDifficulty?: AIDifficulty;
-  hokutoSpawnRatePct?: number;
+  hokutoSpawnRatePct?: number; // Taux d'apparition de Robam Hokuto (défaut: 50 %)
+  koubiDouxSpawnRatePct?: number; // Taux d'apparition de Koubi Doux (défaut: 75 %)
   globalRakePct?: number;
   allowAutoAdvance?: boolean;
 
   // Bot Dialogue & Commentary Pacing (Répliques & Provocations des Robots IA)
   botEmoteCooldownSeconds?: number; // Délai de silence minimal entre deux répliques bots (défaut: 7s)
   botMaxEmotesPerRound?: number; // Nombre max d'interventions par manche pour la table (défaut: 2, 0 = muet)
-  botEmoteHokutoRatePct?: number; // Taux de bavardage / provocations Robam Hokuto (défaut: 28%)
+  botEmoteHokutoRatePct?: number; // Taux de bavardage / provocations de Robam Hokuto, Koubi Doux et Grand Katika (défaut: 28%)
   botEmoteMbapRatePct?: number; // Taux de commentaires prises de contrôle & coupes (« Couper la carte ») (défaut: 25%)
   botEmoteLeadDiscardRatePct?: number; // Taux de commentaires entames et cartes sans couleur (défaut: 10%)
   botEmoteCriticalBypassLimit?: boolean; // Autorise Kora-break et pli 5 décisif à dépasser le plafond de manche (défaut: true)

@@ -46,6 +46,7 @@ export const KNOWN_BOT_NAMES = new Set([
   "vie2poulet",
   "kora malox",
   "robam hokuto",
+  "koubi doux",
 ]);
 
 export type LeaderboardIneligibilityReason =

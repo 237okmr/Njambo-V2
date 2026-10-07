@@ -1,18 +1,19 @@
 {
   "name": "react-example",
   "private": true,
-  "version": "2.5.362",
+  "version": "2.5.369",
   "type": "module",
   "scripts": {
     "version:sync": "node scripts/sync-version.js",
+    "version:bump": "node scripts/bump-version.js && npm run version:sync",
     "dev": "npm run version:sync && tsx server.ts",
-    "build": "node scripts/bump-version.js && npm run version:sync && vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
+    "build": "npm run version:sync && vite build --logLevel error && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
     "start": "node dist/server.cjs",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
     "check:delays": "node scripts/check-delays.mjs",
-    "test": "node --import tsx --test src/services/leaderboardEligibility.test.ts src/services/sessionSelfRepair.test.ts src/services/authGuestGuard.test.ts src/services/reconnectBackoff.test.ts src/services/perfMode.test.ts src/services/notificationHistoryService.test.ts src/utils/gameRules.test.ts src/utils/settlement.test.ts server/engine/serverGameEngine.settlement.test.ts server/engine/relayRule.test.ts server/engine/relayGrace.test.ts server/engine/seatRelease.test.ts server/engine/autoStart.test.ts server/engine/autoBetEscalation.test.ts server/rooms/botBetIncrease.test.ts server/pushService.policy.test.ts server/rooms/roomManagement.test.ts server/rooms/roundEndWatchdog.test.ts server/rooms/roomRestore.test.ts server/rooms/engineConfigMoreParams.test.ts server/rooms/connectionMetrics.test.ts server/rooms/requireGoogleAuthPolicy.test.ts server/rooms/quickMatchAndReminder.test.ts server/aiAdminChat.test.ts src/katika/visual/layoutEngine.test.ts src/katika/visual/captionEngine.test.ts src/katika/visual/validateSpec.test.ts src/katika/data/memeBank.test.ts src/katika/visual/variantCheck.test.ts server/engine/koraMoment.test.ts src/katika/visual/situation.test.ts src/katika/visual/localRemix.test.ts src/katika/visual/hokutoBank.test.ts src/katika/visual/variantsPayload.test.ts src/katika/visual/moneyPolicy.test.ts && node --test scripts/sw-push.test.cjs"
+    "test": "node --import tsx --test src/services/leaderboardEligibility.test.ts src/services/sessionSelfRepair.test.ts src/services/authGuestGuard.test.ts src/services/reconnectBackoff.test.ts src/services/perfMode.test.ts src/services/notificationHistoryService.test.ts src/utils/gameRules.test.ts src/utils/settlement.test.ts src/utils/hokutoPlayerModel.test.ts src/utils/hokutoMonteCarlo.test.ts src/utils/hokutoRouting.test.ts src/utils/hokutoCollect.test.ts src/utils/hokutoReplies.test.ts server/engine/botSpeechConfig.test.ts server/engine/serverGameEngine.settlement.test.ts server/engine/relayRule.test.ts server/engine/relayGrace.test.ts server/engine/seatRelease.test.ts server/engine/autoStart.test.ts server/engine/autoBetEscalation.test.ts server/rooms/botBetIncrease.test.ts server/pushService.policy.test.ts server/rooms/roomManagement.test.ts server/rooms/roundEndWatchdog.test.ts server/rooms/roomRestore.test.ts server/rooms/engineConfigMoreParams.test.ts server/rooms/connectionMetrics.test.ts server/rooms/requireGoogleAuthPolicy.test.ts server/rooms/quickMatchAndReminder.test.ts server/aiAdminChat.test.ts src/katika/visual/layoutEngine.test.ts src/katika/visual/captionEngine.test.ts src/katika/visual/validateSpec.test.ts src/katika/data/memeBank.test.ts src/katika/visual/variantCheck.test.ts server/engine/koraMoment.test.ts src/katika/visual/situation.test.ts src/katika/visual/localRemix.test.ts src/katika/visual/hokutoBank.test.ts src/katika/visual/variantsPayload.test.ts src/katika/visual/moneyPolicy.test.ts && node --test scripts/sw-push.test.cjs"
   },
   "dependencies": {
     "@fontsource/anton": "^5.3.0",

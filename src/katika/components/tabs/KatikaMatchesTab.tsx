@@ -88,7 +88,8 @@ export const KatikaMatchesTab: React.FC<KatikaMatchesTabProps> = ({ initialRange
                         nameLower.includes('robam') || 
                         nameLower.includes('hokito') || 
                         nameLower.includes('kora') ||
-                        idLower.includes('bot');
+                        idLower.includes('bot') ||
+                        nameLower.includes('koubi doux');
                         
     if (isBotWinner) {
       return 'HUMANS_VS_BOTS';
@@ -113,6 +114,7 @@ export const KatikaMatchesTab: React.FC<KatikaMatchesTabProps> = ({ initialRange
                   nameLower.includes('hokito') || 
                   nameLower.includes('kora') || 
                   idLower.includes('bot') ||
+                  nameLower.includes('koubi doux') ||
                   nameLower === 'abandon';
     return !isBot;
   };

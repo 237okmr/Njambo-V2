@@ -7,6 +7,8 @@ import {
   GRAND_MASTER_CONFIG,
 } from './aiLevelConfig';
 import { chooseMonteCarloAICard, chooseGrandMasterMonteCarlo } from './aiMonteCarlo';
+import { HOKUTO_BOSS_CONFIG } from './aiLevelConfig';
+import type { HokutoTendencies } from './hokutoPlayerModel';
 
 export {
   EASY_CONFIG,
@@ -31,11 +33,13 @@ export const ALL_BOT_PROFILES: BotProfile[] = [
   { name: 'Vie2Poulet', avatarSeed: 'vie2poulet' },
   { name: 'Kora Malox', avatarSeed: 'kora_malox' },
   { name: 'Robam Hokuto', avatarSeed: 'robam_hokuto' },
+  { name: 'Koubi Doux', avatarSeed: 'koubi_doux' },
 ];
 
 export interface BotTimingConfig {
   botThinkTimeMs: number;
   hokutoSpawnRatePct: number;
+  koubiDouxSpawnRatePct: number;
 }
 
 export interface BotDialogueConfig {
@@ -49,7 +53,8 @@ export interface BotDialogueConfig {
 
 let activeBotConfig: BotTimingConfig = {
   botThinkTimeMs: 800,
-  hokutoSpawnRatePct: 75,
+  hokutoSpawnRatePct: 50,
+  koubiDouxSpawnRatePct: 75,
 };
 
 let activeBotDialogueConfig: BotDialogueConfig = {
@@ -83,30 +88,42 @@ export function getBotThinkDelay(customSpeedMultiplier: number = 1): number {
 
 /**
  * Returns a random sample of `count` distinct bot profiles from the available pool.
- * "Robam Hokuto" priority appearance is governed dynamically by `hokutoSpawnRatePct` (default from Katika config).
+ * "Robam Hokuto" and "Koubi Doux" are drawn independently, each with its own rate
+ * (`hokutoSpawnRatePct` and `koubiDouxSpawnRatePct`, defaults from Katika config).
+ * Both can sit at the same table. If both are drawn but there are fewer seats, chance decides.
  */
-export function getRandomBotProfiles(count: number = 3, hokutoSpawnRatePct?: number): BotProfile[] {
+export function getRandomBotProfiles(
+  count: number = 3,
+  hokutoSpawnRatePct?: number,
+  koubiDouxSpawnRatePct?: number
+): BotProfile[] {
   const effectiveHokutoRate = typeof hokutoSpawnRatePct === 'number' ? hokutoSpawnRatePct : activeBotConfig.hokutoSpawnRatePct;
+  const effectiveKoubiRate = typeof koubiDouxSpawnRatePct === 'number' ? koubiDouxSpawnRatePct : activeBotConfig.koubiDouxSpawnRatePct;
   const safeCount = Math.max(1, Math.min(count, ALL_BOT_PROFILES.length));
   const robamProfile = ALL_BOT_PROFILES.find((p) => p.name === 'Robam Hokuto');
-  const otherProfiles = ALL_BOT_PROFILES.filter((p) => p.name !== 'Robam Hokuto');
+  const koubiProfile = ALL_BOT_PROFILES.find((p) => p.name === 'Koubi Doux');
+  const standardProfiles = ALL_BOT_PROFILES.filter(
+    (p) => p.name !== 'Robam Hokuto' && p.name !== 'Koubi Doux'
+  );
 
-  // Use dynamic probability to force-include Robam Hokuto (0 to 1)
-  const spawnProbability = Math.max(0, Math.min(100, effectiveHokutoRate)) / 100;
-  const includeRobam = robamProfile && Math.random() < spawnProbability;
-
-  let selected: BotProfile[] = [];
-
-  if (includeRobam && robamProfile) {
-    selected.push(robamProfile);
-    const shuffledOthers = fisherYatesShuffle(otherProfiles);
-    selected.push(...shuffledOthers.slice(0, safeCount - 1));
-  } else {
-    const shuffledAll = fisherYatesShuffle(ALL_BOT_PROFILES);
-    selected = shuffledAll.slice(0, safeCount);
+  // Independent draws: each boss has its own probability (0 to 100 %)
+  const bossesDrawn: BotProfile[] = [];
+  if (robamProfile && Math.random() < Math.max(0, Math.min(100, effectiveHokutoRate)) / 100) {
+    bossesDrawn.push(robamProfile);
+  }
+  if (koubiProfile && Math.random() < Math.max(0, Math.min(100, effectiveKoubiRate)) / 100) {
+    bossesDrawn.push(koubiProfile);
   }
 
-  // Shuffle selected array so Robam Hokuto isn't always in the first bot position
+  // If both are drawn but there are fewer seats than bosses, chance decides who stays
+  const selectedBosses = fisherYatesShuffle(bossesDrawn).slice(0, safeCount);
+  const shuffledStandards = fisherYatesShuffle(standardProfiles);
+  const selected: BotProfile[] = [
+    ...selectedBosses,
+    ...shuffledStandards.slice(0, safeCount - selectedBosses.length),
+  ];
+
+  // Shuffle so a boss isn't always in the first bot position
   return fisherYatesShuffle(selected);
 }
 
@@ -136,6 +153,7 @@ export const ALL_BOT_STRATEGIES: AIStrategy[] = [
   ...STANDARD_BOT_STRATEGIES,
   'KORA_HUNTER',
   'HOKUTO_ADAPTIVE',
+  'HOKUTO_BOSS',
 ];
 
 /**
@@ -1056,7 +1074,8 @@ export function chooseAICard(
   activePlayerCount: number = 4,
   difficulty: AIDifficulty = 'NORMAL',
   players: Player[] = [],
-  myPlayerIndex?: number
+  myPlayerIndex?: number,
+  hokutoTendencies?: Map<number, HokutoTendencies>
 ): Card {
   let validCards = getPlayableCards(hand, leadSuit);
 
@@ -1070,13 +1089,19 @@ export function chooseAICard(
 
   // Detect Robam Hokuto bot identity
   const currentBotPlayer = myPlayerIndex !== undefined && players[myPlayerIndex] ? players[myPlayerIndex] : null;
-  const isRobamHokuto = Boolean(
-    (currentBotPlayer && currentBotPlayer.name.includes('Robam Hokuto')) ||
-    strategy === 'HOKUTO_ADAPTIVE'
+  // Koubi Doux (copie stricte de l'ancien Hokuto) : stratégie HOKUTO_ADAPTIVE uniquement
+  const isRobamHokuto = strategy === 'HOKUTO_ADAPTIVE';
+
+  // Robam Hokuto (Boss) : stratégie HOKUTO_BOSS, ou nom en secours
+  const isHokutoBoss = Boolean(
+    strategy === 'HOKUTO_BOSS' ||
+    (currentBotPlayer && currentBotPlayer.name.includes('Robam Hokuto'))
   );
 
-  // Robam Hokuto plays at table difficulty level
-  const effectiveDifficulty: AIDifficulty = difficulty;
+  // Koubi Doux joue au niveau de la table ; le Boss a un plancher Expert
+  // (Grand Katika reste Grand Katika).
+  const effectiveDifficulty: AIDifficulty =
+    isHokutoBoss && (difficulty === 'EASY' || difficulty === 'NORMAL') ? 'EXPERT' : difficulty;
 
   // EASY DIFFICULTY: 22% random blunder rate (15-25% range)
   if (effectiveDifficulty === 'EASY' && Math.random() < EASY_CONFIG.RANDOM_MOVE_RATE) {
@@ -1235,7 +1260,14 @@ export function chooseAICard(
       players,
       botIndex !== -1 ? botIndex : 0,
       knownVoids,
-      'EXPERT'
+      'EXPERT',
+      isHokutoBoss
+        ? {
+            tendencies: hokutoTendencies,
+            bluffWeight: HOKUTO_BOSS_CONFIG.BLUFF_WEIGHT,
+            pressureWeight: HOKUTO_BOSS_CONFIG.PRESSURE_WEIGHT,
+          }
+        : undefined
     );
   }
 
@@ -1456,7 +1488,59 @@ export function getBotPlayReaction(params: {
   }
 
   // Robam Hokuto Special Adaptive Commentary (Le champion de quartier)
-  const isHokuto = Boolean((botName && botName.includes('Robam Hokuto')) || strategy === 'HOKUTO_ADAPTIVE');
+  // Boss Hokuto (Robam Hokuto) : blagueur urbain, bluffeur, taquin
+  const isHokutoBoss = strategy === 'HOKUTO_BOSS' || Boolean(botName && botName.includes('Robam Hokuto'));
+  if (isHokutoBoss && Math.random() < hokutoRate) {
+    let bossPool: BotCommentResult[] | null = null;
+
+    if (brokeKoraStreak && isWinningSoFar) {
+      bossPool = [
+        { text: 'Tu voulais enchaîner ? Le Boss a dit non, on se calme !', emoji: '🛑' },
+        { text: 'Ta série, c’est du réchauffé. Moi je sers du frais !', emoji: '🧊' },
+        { text: 'Doucement mon gars, ici c’est pas open bar de plis !', emoji: '😎' },
+      ];
+    } else if (trickNumber === 5 && isWinningSoFar) {
+      bossPool = [
+        { text: 'Le pot ? Il m’appelait déjà par mon prénom !', emoji: '💰' },
+        { text: 'Merci pour les jetons, on se refait ça quand tu veux !', emoji: '😏' },
+        { text: 'Le Boss ramasse, le Boss encaisse, le Boss dit merci !', emoji: '👑' },
+      ];
+    } else if (trickNumber === 5 && isLeadPlay) {
+      bossPool = [
+        { text: 'Dernier pli, dernière chance de me faire peur. Vas-y !', emoji: '🎤' },
+        { text: 'Tout se joue là. Respire, ça va aller... pour moi !', emoji: '😈' },
+      ];
+    } else if (trickNumber === 4) {
+      bossPool = [
+        { text: 'Pli quatre... tu sens ça ? C’est le piège qui se ferme !', emoji: '🪤' },
+        { text: 'Je sais ce que tu as, ou pas. Devine !', emoji: '🃏' },
+      ];
+    } else if (isLeadPlay && trickNumber <= 3 && (card.value >= 9 || isDynamicBoss)) {
+      bossPool = [
+        { text: 'J’ouvre avec du lourd. Qui ose suivre ?', emoji: '🔥' },
+        { text: 'Pression dès l’entame ! Les faibles, restez assis !', emoji: '💪' },
+        { text: 'Petit conseil : ne me regarde pas, regarde tes cartes qui tremblent !', emoji: '😤' },
+      ];
+    } else if (isCut) {
+      bossPool = [
+        { text: 'Pas la couleur ? Peut-être. Peut-être pas. Tu paries ?', emoji: '🃏' },
+        { text: 'Je me défausse, ou je prépare un coup. Mystère !', emoji: '🎭' },
+        { text: 'Cette carte-là ? C’était du bluff de luxe !', emoji: '😏' },
+      ];
+    } else if (isWinningSoFar && trickNumber <= 3) {
+      bossPool = [
+        { text: 'Pli pour le Boss. Le suivant aussi, probablement !', emoji: '😎' },
+        { text: 'Tu me suis ? Non ? Normal, personne ne suit !', emoji: '🏃' },
+      ];
+    }
+
+    if (bossPool) {
+      return bossPool[Math.floor(Math.random() * bossPool.length)];
+    }
+  }
+
+  // Koubi Doux (copie stricte de l'ancien Hokuto) : anciennes répliques, sans nom codé en dur
+  const isHokuto = strategy === 'HOKUTO_ADAPTIVE';
   if (isHokuto && Math.random() < hokutoRate) {
     const style = globalHumanProfile.style;
 
@@ -1480,7 +1564,7 @@ export function getBotPlayReaction(params: {
 
     if (brokeKoraStreak && isWinningSoFar) {
       const hokutoKoraEmotes = [
-        { text: 'Tu voulais enchaîner les plis devant Robam Hokuto ? Jamais !', emoji: '🔒' },
+        { text: `Tu voulais enchaîner les plis devant ${botName} ? Jamais !`, emoji: '🔒' },
         { text: 'Série de plis verrouillée ! Respecte un peu le maître du jeu !', emoji: '🛑' },
       ];
       return hokutoKoraEmotes[Math.floor(Math.random() * hokutoKoraEmotes.length)];
@@ -1488,9 +1572,9 @@ export function getBotPlayReaction(params: {
 
     if (trickNumber === 5 && isWinningSoFar) {
       const hokutoVictoryEmotes = [
-        { text: 'Le pot est pour Robam Hokuto ! C’est le quartier qui gagne !', emoji: '👑' },
+        { text: `Le pot est pour ${botName} ! C’est le quartier qui gagne !`, emoji: '👑' },
         { text: 'Maîtrise totale du tapis. Le patron, c’est moi !', emoji: '🥷' },
-        { text: 'Robam Hokuto ne partage pas le pot. Merci pour les jetons !', emoji: '💰' },
+        { text: `${botName} ne partage pas le pot. Merci pour les jetons !`, emoji: '💰' },
       ];
       return hokutoVictoryEmotes[Math.floor(Math.random() * hokutoVictoryEmotes.length)];
     }

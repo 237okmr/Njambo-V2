@@ -36,10 +36,16 @@ import { sounds, triggerHaptic } from '../utils/sound';
 import { getKatikaConfigSync, subscribeKatikaConfig } from '../katika/services/katikaService';
 import { KatikaGameConfig } from '../katika/types/katika';
 import { computePartieOutcome, applyPartiePayout, detectInstantWin } from '../utils/gameRules';
+import { clearAllHokutoModels, collectHokutoTendencies } from '../utils/hokutoPlayerModel';
 
 export const ALL_AI_POOL = ALL_BOT_PROFILES;
 
-export function buildPlayerList(opponentCount: number, initialCapital: number = 100, hokutoSpawnRatePct?: number): Player[] {
+export function buildPlayerList(
+  opponentCount: number,
+  initialCapital: number = 100,
+  hokutoSpawnRatePct?: number,
+  koubiDouxSpawnRatePct?: number
+): Player[] {
   const storedName = typeof window !== 'undefined' ? localStorage.getItem('njambo_player_name') : null;
   const humanPlayer: Player = {
     id: 'p1',
@@ -55,11 +61,12 @@ export function buildPlayerList(opponentCount: number, initialCapital: number = 
 
   const count = Math.min(3, Math.max(1, opponentCount));
   const effectiveSpawnRate = typeof hokutoSpawnRatePct === 'number' ? hokutoSpawnRatePct : getKatikaConfigSync().hokutoSpawnRatePct;
-  const selectedProfiles = getRandomBotProfiles(count, effectiveSpawnRate);
+  const selectedProfiles = getRandomBotProfiles(count, effectiveSpawnRate, koubiDouxSpawnRatePct);
 
   const selectedAIs = selectedProfiles.map((ai, index) => {
     const isRobam = ai.name === 'Robam Hokuto';
-    const personality = isRobam ? 'HOKUTO_ADAPTIVE' : getRandomBotStrategy();
+    const isKoubi = ai.name === 'Koubi Doux';
+    const personality = isRobam ? 'HOKUTO_BOSS' : isKoubi ? 'HOKUTO_ADAPTIVE' : getRandomBotStrategy();
     return {
       id: `p${index + 2}`,
       name: ai.name,
@@ -696,6 +703,8 @@ export function useSoloGameEngine({
       aiDifficultyVal: AIDifficulty = gameState.aiDifficulty || 'NORMAL',
       soloBetIncreaseModeVal?: SoloBetIncreaseMode
     ) => {
+      // Nouvelle manche : le Boss Hokuto repart de zéro (aucune mémoire des manches précédentes)
+      clearAllHokutoModels();
       const newPlayers = buildPlayerList(optCount, capVal);
       startNewPartie(
         0,
@@ -984,7 +993,10 @@ export function useSoloGameEngine({
           activeCount,
           current.aiDifficulty || 'NORMAL',
           current.players,
-          playerIndex
+          playerIndex,
+          activeStrategyForBot === 'HOKUTO_BOSS' || player.name.includes('Robam Hokuto')
+            ? collectHokutoTendencies('solo', current.players, current.tricksHistory, playerIndex)
+            : undefined
         );
       }
 
@@ -1663,7 +1675,10 @@ export function useSoloGameEngine({
               activeCount,
               state.aiDifficulty || 'NORMAL',
               state.players,
-              playerIdx
+              playerIdx,
+              activeStrategyForBot === 'HOKUTO_BOSS' || player.name.includes('Robam Hokuto')
+                ? collectHokutoTendencies('solo', state.players, state.tricksHistory, playerIdx)
+                : undefined
             );
           }
 

@@ -164,6 +164,11 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Temps pendant lequel une bulle d\'emote reste visible à la table.',
   },
   {
+    key: 'botEmoteCooldownSeconds', label: 'Délai minimal entre deux répliques de bots (table)', unit: 's',
+    min: 1, max: 60, default: 7, group: 'partie', scope: 'both', effect: 'immediate', advanced: true,
+    help: 'Pause obligatoire entre deux répliques de bots à une même table (solo et multijoueur).',
+  },
+  {
     key: 'roomTickIntervalMs', label: 'Cadence du battement de table', unit: 'ms',
     min: 500, max: 5000, default: 1000, group: 'partie', scope: 'server', effect: 'immediate', advanced: true,
     help: 'Fréquence à laquelle le serveur vérifie chaque table (filet de sécurité, grâces, emotes expirées).',

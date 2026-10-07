@@ -47,6 +47,7 @@ export const OFFICIAL_BOT_NAMES = [
   "Vie2Poulet",
   "Kora Malox",
   "Robam Hokuto",
+  "Koubi Doux",
 ];
 
 /**
@@ -74,6 +75,7 @@ export function isKnownBot(name: string = '', id: string = ''): boolean {
     'robam',
     'hokuto',
     'hokito',
+    'koubi doux',
     'wizeman',
     'thom',
     'malo',
@@ -113,7 +115,8 @@ export const DEFAULT_KATIKA_CONFIG = {
   allowJoinInProgress: true,
   joinPushEnabled: true,
   defaultAiDifficulty: 'NORMAL',
-  hokutoSpawnRatePct: 75,
+  hokutoSpawnRatePct: 50,
+  koubiDouxSpawnRatePct: 75,
   globalRakePct: 0,
   allowAutoAdvance: false,
   // Bot Dialogue & Commentary Pacing (Répliques & Provocations des Robots IA)
@@ -194,6 +197,7 @@ function notifyConfigListeners() {
   setBotTimingConfig({
     botThinkTimeMs: cfg.botThinkTimeMs,
     hokutoSpawnRatePct: cfg.hokutoSpawnRatePct,
+    koubiDouxSpawnRatePct: cfg.koubiDouxSpawnRatePct,
   });
   setBotDialogueConfig({
     botEmoteCooldownSeconds: cfg.botEmoteCooldownSeconds ?? 7,
@@ -219,6 +223,7 @@ subscribePublicConfig(() => notifyConfigListeners());
 setBotTimingConfig({
   botThinkTimeMs: withPublicOverrides({ ...mockConfig }).botThinkTimeMs,
   hokutoSpawnRatePct: mockConfig.hokutoSpawnRatePct,
+  koubiDouxSpawnRatePct: mockConfig.koubiDouxSpawnRatePct,
 });
 setBotDialogueConfig({
   botEmoteCooldownSeconds: mockConfig.botEmoteCooldownSeconds ?? 7,
@@ -1657,6 +1662,7 @@ export const KatikaService = {
           trickResolutionTimeMs: live.trickResolutionTimeMs ?? mockConfig.trickResolutionTimeMs,
           instantWinAnimationTimeMs: live.instantWinAnimationTimeMs ?? mockConfig.instantWinAnimationTimeMs,
           hokutoSpawnRatePct: live.hokutoSpawnRatePct ?? mockConfig.hokutoSpawnRatePct,
+          koubiDouxSpawnRatePct: live.koubiDouxSpawnRatePct ?? mockConfig.koubiDouxSpawnRatePct,
           globalRakePct: live.globalRakePct ?? mockConfig.globalRakePct,
           allowAutoAdvance: live.allowAutoAdvance ?? mockConfig.allowAutoAdvance,
           emptyRoomTimeoutMinutes: live.emptyRoomTimeoutMinutes ?? mockConfig.emptyRoomTimeoutMinutes ?? 5,

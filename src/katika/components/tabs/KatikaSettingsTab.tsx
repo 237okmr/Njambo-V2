@@ -417,9 +417,29 @@ export const KatikaSettingsTab: React.FC<KatikaSettingsTabProps> = ({ onConfigUp
               <KatikaNumberSliderField
                 id="hokuto-spawn-field"
                 label="Taux d'apparition Boss IA (Robam Hokuto)"
-                description="Probabilité (0 à 100%) d'apparition du bot adaptatif Robam Hokuto lors de la génération de robots."
-                value={config.hokutoSpawnRatePct || 75}
+                description="Probabilité (0 à 100 %) d'apparition de Robam Hokuto, le boss bluffeur, lors de la génération de robots."
+                value={config.hokutoSpawnRatePct ?? 50}
                 onChange={(val) => setConfig(prev => ({ ...prev, hokutoSpawnRatePct: val }))}
+                min={0}
+                max={100}
+                step={5}
+                unit="%"
+                accentColor="emerald"
+                presets={[
+                  { label: 'Désactivé', value: 0 },
+                  { label: 'Occasionnel', value: 25 },
+                  { label: 'Standard', value: 50 },
+                  { label: 'Systématique', value: 100 },
+                ]}
+              />
+
+              {/* Taux d'apparition Koubi Doux */}
+              <KatikaNumberSliderField
+                id="koubi-doux-spawn-field"
+                label="Taux d'apparition Koubi Doux"
+                description="Probabilité (0 à 100 %) d'apparition de Koubi Doux lors de la génération de robots. Il peut jouer à la même table que Robam Hokuto."
+                value={config.koubiDouxSpawnRatePct ?? 75}
+                onChange={(val) => setConfig(prev => ({ ...prev, koubiDouxSpawnRatePct: val }))}
                 min={0}
                 max={100}
                 step={5}
@@ -560,8 +580,8 @@ export const KatikaSettingsTab: React.FC<KatikaSettingsTabProps> = ({ onConfigUp
                 {/* 3. Taux répliques Robam Hokuto / Boss */}
                 <KatikaNumberSliderField
                   id="bot-hokuto-rate-field"
-                  label="Probabilité répliques Robam Hokuto / Grand Maître"
-                  description="Fréquence d'analyse tactique et de piques adaptatives par Robam Hokuto ou un Grand Maître."
+                  label="Probabilité répliques des Boss / Grand Maître"
+                  description="Fréquence d'analyse tactique et de piques par Robam Hokuto, Koubi Doux ou un Grand Maître."
                   value={config.botEmoteHokutoRatePct ?? 28}
                   onChange={(val) => setConfig(prev => ({ ...prev, botEmoteHokutoRatePct: val }))}
                   min={0}

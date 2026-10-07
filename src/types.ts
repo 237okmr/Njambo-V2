@@ -104,7 +104,8 @@ export type AIStrategy =
   | 'GATEKEEPER' // Gardien / Blocage du leader du tapis à la main 4
   | 'POSITIONAL_MASTER' // Maître de Position / Adaptation selon l'ordre de jeu
   | 'KORA_HUNTER' // Chasseur Kora / Tente de gagner le 5e pli avec un 3 pour réussir un Kora ou Double Kora
-  | 'HOKUTO_ADAPTIVE'; // Maître Hokuto / S'adapte au style de jeu de l'adversaire manche après manche
+  | 'HOKUTO_ADAPTIVE' // Maître Hokuto / S'adapte au style de jeu de l'adversaire manche après manche (utilisé par Koubi Doux)
+  | 'HOKUTO_BOSS'; // Boss Hokuto / Bluffeur, agressif et blagueur, lit le joueur humain pendant la manche (utilisé par Robam Hokuto)
 
 export interface AIStrategyInfo {
   id: AIStrategy;
@@ -191,6 +192,13 @@ export const AI_STRATEGIES_INFO: Record<AIStrategy, AIStrategyInfo> = {
     description: 'Analyse et s’adapte au style de jeu de l’adversaire humain manche après manche.',
     icon: '🥷',
     badgeBg: 'bg-red-950/80 text-red-300 border-red-600/80 ring-1 ring-red-500/50',
+  },
+  HOKUTO_BOSS: {
+    id: 'HOKUTO_BOSS',
+    name: 'Boss Hokuto',
+    description: 'Bluffe, met la pression dès l’entame et lit ton jeu pendant la manche pour mieux te piéger.',
+    icon: '🃏',
+    badgeBg: 'bg-fuchsia-950/80 text-fuchsia-300 border-fuchsia-600/80 ring-1 ring-fuchsia-500/50',
   },
 };
 

@@ -17,6 +17,8 @@ export default defineConfig(() => {
     },
     build: {
       cssMinify: 'lightningcss' as const,
+      reportCompressedSize: false,
+      chunkSizeWarningLimit: 3000,
       rollupOptions: {
         output: {
           // Sépare les grosses bibliothèques dans leur propre fichier : elles changent rarement, donc le

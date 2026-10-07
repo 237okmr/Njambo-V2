@@ -28,9 +28,14 @@ import {
   getBotFoldReaction,
   getRandomBotProfiles,
   getRandomBotStrategy,
+  getBotPlayReaction,
+  setBotDialogueConfig,
+  getPlayedCardsInRound,
+  isDynamicBossCard,
 } from '../../src/utils/ai';
 import { getEngineConfig, KatikaEngineConfig } from './engineConfig';
 import { computePartieOutcome, applyPartiePayout, detectInstantWin } from '../../src/utils/gameRules';
+import { collectHokutoTendencies, resetHokutoModelsWithPrefix } from '../../src/utils/hokutoPlayerModel';
 import { buildPartieResult, computeForfeitPenalty, FORFAIT_PENALITE_DES_PLI, FORFAIT_INACTIVITE_GELE_LE_SIEGE } from '../../src/utils/settlement';
 import { recordRelayTriggered, recordSeatReleased } from '../rooms/connectionMetrics';
 
@@ -256,10 +261,15 @@ export class ServerGameEngine {
     if (room.fillWithBots && currentPlayers.length < maxCapacity) {
       const botsToAdd = maxCapacity - currentPlayers.length;
       const engineCfg = this.getConfig(activeRoomState);
-      const botProfiles = getRandomBotProfiles(botsToAdd, engineCfg.hokutoSpawnRatePct);
+      const botProfiles = getRandomBotProfiles(
+        botsToAdd,
+        engineCfg.hokutoSpawnRatePct,
+        engineCfg.koubiDouxSpawnRatePct
+      );
       for (let i = 0; i < botsToAdd; i++) {
         const profile = botProfiles[i];
         const isRobam = profile.name === 'Robam Hokuto';
+        const isKoubi = profile.name === 'Koubi Doux';
         currentPlayers.push({
           id: `bot_${Math.random().toString(36).substring(2, 8)}`,
           name: profile.name,
@@ -273,7 +283,11 @@ export class ServerGameEngine {
           isPendingIntegration: false,
           hand: [],
           tricksWonInRound: 0,
-          aiStrategy: isRobam ? 'HOKUTO_ADAPTIVE' : getRandomBotStrategy(false),
+          aiStrategy: isRobam
+            ? 'HOKUTO_BOSS'
+            : isKoubi
+              ? 'HOKUTO_ADAPTIVE'
+              : getRandomBotStrategy(false),
           connected: true,
           isReady: true,
         });
@@ -369,6 +383,8 @@ export class ServerGameEngine {
 
     room.status = 'PLAYING';
     room.manchePartiesPlayed = 0;
+    // Nouvelle manche : le Boss Hokuto oublie les modèles de joueurs de cette table
+    resetHokutoModelsWithPrefix(`${room.id}:`);
     room.integrationProposal = null;
 
     const seatedPlayerIds = new Set(currentPlayers.map((p) => p.id));
@@ -2522,6 +2538,105 @@ export class ServerGameEngine {
     onStateChange(room);
   }
 
+  /** État de parole des bots par table : dernier message et nombre de répliques dans la partie en cours. */
+  private static botSpeechState = new Map<string, { lastAt: number; roundKey: string; count: number }>();
+
+  /**
+   * Parole des bots en multijoueur (mêmes réglages katika qu'en solo).
+   * Le délai entre deux répliques vient de la config (botEmoteCooldownSeconds) : aucun délai codé en dur,
+   * et la réplique est publiée immédiatement avec le coup.
+   */
+  private static maybeBotSpeak(
+    room: MultiplayerRoom,
+    player: Player,
+    card: Card,
+    activeRoomState: ActiveRoomState
+  ): void {
+    const gs = room.gameState;
+    if (!gs) return;
+
+    const cfg = this.getConfig(activeRoomState);
+    const maxPerRound = typeof cfg.botMaxEmotesPerRound === 'number' ? cfg.botMaxEmotesPerRound : 0;
+    if (maxPerRound <= 0) return;
+
+    const now = Date.now();
+    const roundKey = `${gs.partieCount}:${gs.roundCount}`;
+    let st = this.botSpeechState.get(room.id);
+    if (!st) {
+      st = { lastAt: 0, roundKey, count: 0 };
+      this.botSpeechState.set(room.id, st);
+      if (this.botSpeechState.size > 200) {
+        const oldest = this.botSpeechState.keys().next().value;
+        if (oldest !== undefined && oldest !== room.id) this.botSpeechState.delete(oldest);
+      }
+    } else if (st.roundKey !== roundKey) {
+      st.roundKey = roundKey;
+      st.count = 0;
+    }
+
+    const cooldownMs = Number(cfg.botEmoteCooldownSeconds) * 1000;
+    if (now - st.lastAt < cooldownMs) return;
+
+    const playerIndex = gs.currentTurnIndex;
+    const plays = gs.currentTrick.plays;
+    const leadSuit = gs.currentTrick.leadSuit;
+    const isLeadPlay = plays.length === 0;
+    const isCut = !isLeadPlay && leadSuit !== null && card.suit !== leadSuit;
+    const isWinningSoFar =
+      isLeadPlay || (!isCut && card.value > determineTrickWinner(plays, leadSuit).winningValue);
+
+    const isDynamicBoss = isDynamicBossCard(card, getPlayedCardsInRound(gs.tricksHistory, plays));
+
+    let brokeKoraStreak = false;
+    if (isWinningSoFar && gs.currentTrickNumber >= 2) {
+      const required = gs.currentTrickNumber - 1;
+      brokeKoraStreak = (gs.players || []).some(
+        (p, idx) => idx !== playerIndex && !p.isEliminated && p.tricksWonInRound === required
+      );
+    }
+
+    const isHighImpactMoment =
+      cfg.botEmoteCriticalBypassLimit !== false && (brokeKoraStreak || gs.currentTrickNumber === 5);
+    if (st.count >= maxPerRound && !isHighImpactMoment) return;
+
+    setBotDialogueConfig({
+      botEmoteCooldownSeconds: cfg.botEmoteCooldownSeconds,
+      botMaxEmotesPerRound: cfg.botMaxEmotesPerRound,
+      botEmoteHokutoRatePct: cfg.botEmoteHokutoRatePct,
+      botEmoteMbapRatePct: cfg.botEmoteMbapRatePct,
+      botEmoteLeadDiscardRatePct: cfg.botEmoteLeadDiscardRatePct,
+      botEmoteCriticalBypassLimit: cfg.botEmoteCriticalBypassLimit,
+    });
+
+    const reaction = getBotPlayReaction({
+      card,
+      isLeadPlay,
+      leadSuit,
+      isWinningSoFar,
+      isCut,
+      trickNumber: gs.currentTrickNumber,
+      isDynamicBoss,
+      brokeKoraStreak,
+      strategy: player.aiStrategy || 'CONSERVATIVE',
+      botName: player.name,
+      difficulty: gs.aiDifficulty || 'EXPERT',
+    });
+    if (!reaction) return;
+
+    st.lastAt = now;
+    st.count += 1;
+    const emote: EmoteMessage = {
+      id: `emote_botplay_${now}_${player.id}`,
+      playerId: player.id,
+      playerName: player.name,
+      text: reaction.text,
+      emoji: reaction.emoji,
+      timestamp: now,
+      isBot: true,
+    };
+    room.activeEmotes = [...(room.activeEmotes || []), emote].slice(-5);
+  }
+
   private static executeBotMove(
     room: MultiplayerRoom,
     player: Player,
@@ -2592,8 +2707,15 @@ export class ServerGameEngine {
         activeCount,
         'EXPERT',
         gs.players,
-        gs.currentTurnIndex
+        gs.currentTurnIndex,
+        player.aiStrategy === 'HOKUTO_BOSS' || player.name.includes('Robam Hokuto')
+          ? collectHokutoTendencies(room.id, gs.players || [], gs.tricksHistory, gs.currentTurnIndex)
+          : undefined
       );
+    }
+
+    if (!isRelayBot) {
+      this.maybeBotSpeak(room, player, cardToPlay, activeRoomState);
     }
 
     this.handlePlayCard(room, player.id, cardToPlay.id, onStateChange, activeRoomState, isRelayBot);

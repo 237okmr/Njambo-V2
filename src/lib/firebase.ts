@@ -1,5 +1,10 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import {
+  initializeAuth,
+  getAuth,
+  browserLocalPersistence,
+  inMemoryPersistence,
+} from 'firebase/auth';
 import {
   initializeFirestore,
   memoryLocalCache
@@ -8,7 +13,20 @@ import firebaseConfig from '../../firebase-applet-config.json';
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-export const auth = getAuth(app);
+// Use browserLocalPersistence instead of IndexedDB to prevent "Database is closing/hidden" errors in sandboxed iframes and background tabs
+function getOrInitAuth() {
+  try {
+    return initializeAuth(app, {
+      persistence: typeof window !== 'undefined'
+        ? [browserLocalPersistence, inMemoryPersistence]
+        : inMemoryPersistence,
+    });
+  } catch {
+    return getAuth(app);
+  }
+}
+
+export const auth = getOrInitAuth();
 
 // Use the designated Firestore Database ID if specified
 const databaseId = firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)'

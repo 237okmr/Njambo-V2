@@ -464,7 +464,7 @@ ANOMALIES_DÉTECTÉES:${anomalies.length}`;
       const i = String(id || '').toLowerCase();
       if (i.includes('bot') || i === 'p2' || i === 'p3' || i === 'p4' || i.startsWith('ai_')) return true;
       if (n.includes('bot') || n.includes('robot') || n.includes('abandon') || n.includes('interrompue') || n.includes('forfait')) return true;
-      const botKeywords = ['robam', 'hokuto', 'hokito', 'wizeman', 'thom', 'malo', 'efoulan', 'bozar', 'tchakap', 'mignon', 'vie2poulet', 'malox'];
+      const botKeywords = ['robam', 'hokuto', 'hokito', 'koubi doux', 'wizeman', 'thom', 'malo', 'efoulan', 'bozar', 'tchakap', 'mignon', 'vie2poulet', 'malox'];
       return botKeywords.some((kw) => n.includes(kw));
     };
 
