@@ -14,6 +14,8 @@ import {
   Radio
 } from 'lucide-react';
 import { tikaFetch } from '../services/tikaFetch';
+import { KatikaService } from '../services/katikaService';
+import { useKatikaAuth } from '../context/KatikaAuthContext';
 
 export type CashProvider = 'campay' | 'notchpay';
 export type CashEnvironment = 'demo' | 'live';
@@ -40,8 +42,11 @@ const NOTCHPAY_FIELDS: FieldConfig[] = [
 ];
 
 export const ProviderKeysPanel: React.FC = () => {
+  const { user } = useKatikaAuth();
   const [provider, setProvider] = useState<CashProvider>('campay');
   const [environment, setEnvironment] = useState<CashEnvironment>('demo');
+  const [activeProviderId, setActiveProviderId] = useState<string | null>(null);
+  const [settingActive, setSettingActive] = useState<boolean>(false);
 
   // Valeurs saisies temporairement par l'utilisateur (vidées immédiatement après sauvegarde)
   const [inputs, setInputs] = useState<Record<string, string>>({});
@@ -97,6 +102,26 @@ export const ProviderKeysPanel: React.FC = () => {
     setShowPlainInputs({});
     loadMaskedCredentials();
   }, [provider, environment, loadMaskedCredentials]);
+
+  // Charge le prestataire actif (config Kora Cash, onglet Général) une seule fois au montage
+  useEffect(() => {
+    KatikaService.getKoraCashConfig().then((cfg) => {
+      setActiveProviderId(cfg.activeProviderId);
+    });
+  }, []);
+
+  const handleSetActiveProvider = async () => {
+    setSettingActive(true);
+    try {
+      const updated = await KatikaService.updateKoraCashConfig(
+        { activeProviderId: provider },
+        user?.email || undefined
+      );
+      setActiveProviderId(updated.activeProviderId);
+    } finally {
+      setSettingActive(false);
+    }
+  };
 
   const handleInputChange = (fieldKey: string, val: string) => {
     setInputs(prev => ({ ...prev, [fieldKey]: val }));
@@ -315,6 +340,16 @@ export const ProviderKeysPanel: React.FC = () => {
               <span className="text-slate-500">Aucun identifiant enregistré pour cet environnement</span>
             )}
           </span>
+          <span className="text-slate-600">•</span>
+          <span>
+            {activeProviderId === provider ? (
+              <span className="text-amber-400 font-semibold">Prestataire actif</span>
+            ) : (
+              <span className="text-slate-500">
+                Prestataire actif : {activeProviderId ? activeProviderId.toUpperCase() : 'aucun'}
+              </span>
+            )}
+          </span>
         </div>
         {updatedAt && (
           <div className="text-slate-500 mt-1 sm:mt-0">
@@ -416,6 +451,30 @@ export const ProviderKeysPanel: React.FC = () => {
 
         {/* Actions */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-3 border-t border-slate-800">
+          <button
+            type="button"
+            onClick={handleSetActiveProvider}
+            disabled={settingActive || !hasConfiguredKeys || activeProviderId === provider}
+            className="flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {settingActive ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                Activation...
+              </>
+            ) : activeProviderId === provider ? (
+              <>
+                <ShieldCheck className="w-3.5 h-3.5" />
+                Prestataire actif
+              </>
+            ) : (
+              <>
+                <Radio className="w-3.5 h-3.5" />
+                Définir comme prestataire actif
+              </>
+            )}
+          </button>
+
           <button
             type="button"
             onClick={handleTestConnection}

@@ -15,6 +15,7 @@ import {
 import { KoraCashSubSection, KatikaKoraCashConfig } from '../../types/katika';
 import { KatikaService, DEFAULT_KORA_CASH_CONFIG } from '../../services/katikaService';
 import { useKatikaAuth } from '../../context/KatikaAuthContext';
+import { ProviderKeysPanel } from '../../cash/ProviderKeysPanel';
 
 const SUB_SECTIONS: { id: KoraCashSubSection; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: 'GENERAL', label: 'Général', icon: Power },
@@ -28,12 +29,7 @@ const SUB_SECTIONS: { id: KoraCashSubSection; label: string; icon: React.Compone
   { id: 'RESPONSIBLE_GAMING', label: 'Jeu responsable', icon: HeartPulse },
 ];
 
-const PLANNED_FIELDS: Record<Exclude<KoraCashSubSection, 'GENERAL'>, string[]> = {
-  PROVIDERS: [
-    'Clés de prestataires de paiement, masquées à l\'affichage',
-    'Test de connexion par prestataire',
-    'Choix du prestataire actif',
-  ],
+const PLANNED_FIELDS: Record<Exclude<KoraCashSubSection, 'GENERAL' | 'PROVIDERS'>, string[]> = {
   TABLES: [
     'Tailles de table autorisées en argent réel',
     'Mises par palier',
@@ -152,7 +148,7 @@ export const KatikaKoraCashTab: React.FC = () => {
       <div className="p-5 rounded-xl bg-slate-950/60 border border-slate-800">
         <h3 className="text-sm font-semibold text-slate-200">Prestataire actif</h3>
         <p className="text-xs text-slate-400 mt-1 mb-3 leading-relaxed">
-          Réglé depuis la sous-section Prestataires (à venir). Lecture seule ici.
+          Réglé depuis la sous-section Prestataires. Lecture seule ici.
         </p>
         <div className="px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-xs font-mono text-slate-400">
           {config.activeProviderId || 'Aucun prestataire configuré'}
@@ -194,7 +190,7 @@ export const KatikaKoraCashTab: React.FC = () => {
     </div>
   );
 
-  const renderPlaceholder = (section: Exclude<KoraCashSubSection, 'GENERAL'>) => {
+  const renderPlaceholder = (section: Exclude<KoraCashSubSection, 'GENERAL' | 'PROVIDERS'>) => {
     const sectionMeta = SUB_SECTIONS.find((s) => s.id === section);
     return (
       <div className="p-5 rounded-xl bg-slate-950/60 border border-slate-800">
@@ -248,7 +244,9 @@ export const KatikaKoraCashTab: React.FC = () => {
       </nav>
 
       <div className="flex-1 min-w-0">
-        {activeSection === 'GENERAL' ? renderGeneral() : renderPlaceholder(activeSection)}
+        {activeSection === 'GENERAL' && renderGeneral()}
+        {activeSection === 'PROVIDERS' && <ProviderKeysPanel />}
+        {activeSection !== 'GENERAL' && activeSection !== 'PROVIDERS' && renderPlaceholder(activeSection)}
       </div>
     </div>
   );
