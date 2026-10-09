@@ -1,7 +1,7 @@
 import { GameTelemetryRecord } from '../../services/telemetryService';
 import { AIDifficulty } from '../../types';
 
-export type KatikaTab = 'DASHBOARD' | 'ROOMS' | 'MATCHES' | 'PLAYERS' | 'SETTINGS' | 'LOGS' | 'AI_ASSISTANT';
+export type KatikaTab = 'DASHBOARD' | 'ROOMS' | 'MATCHES' | 'PLAYERS' | 'SETTINGS' | 'LOGS' | 'AI_ASSISTANT' | 'KORA_CASH';
 
 export type KatikaDashboardSubTab = 'LIVE' | 'BUSINESS' | 'GAMEPLAY';
 
@@ -349,4 +349,23 @@ export interface KatikaAuditLog {
   actor: string;
   summary: string;
   details?: Record<string, any>;
+}
+
+export type KoraCashSubSection =
+  | 'GENERAL'
+  | 'PROVIDERS'
+  | 'TABLES'
+  | 'RAKE'
+  | 'DEPOSITS_WITHDRAWALS'
+  | 'WALLETS_TRANSACTIONS'
+  | 'FINANCES'
+  | 'SECURITY_ALERTS'
+  | 'RESPONSIBLE_GAMING';
+
+export interface KatikaKoraCashConfig {
+  isEnabled: boolean;
+  activeProviderId: string | null;
+  environment: 'DEMO' | 'LIVE';
+  updatedAt: number;
+  updatedBy?: string;
 }

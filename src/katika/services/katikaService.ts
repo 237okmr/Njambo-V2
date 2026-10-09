@@ -1,7 +1,7 @@
-import { KatikaKPIs, KatikaLiveRoom, KatikaPlayer, KatikaGameConfig, KatikaAuditLog } from '../types/katika';
+import { KatikaKPIs, KatikaLiveRoom, KatikaPlayer, KatikaGameConfig, KatikaAuditLog, KatikaKoraCashConfig } from '../types/katika';
 import { tikaFetch } from './tikaFetch';
 import { telemetryService, GameTelemetryRecord, GlobalMancheCounts } from '../../services/telemetryService';
-import { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, deleteField, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, getDoc, doc, setDoc, updateDoc, deleteDoc, deleteField, query, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { playerProfileService, computeMasteryScore } from '../../services/playerProfileService';
 import { computeEventMasteryScore, getDoualaDateKey, MASTERY_CONFIG } from '../../services/masteryConfig';
@@ -137,6 +137,14 @@ export const DEFAULT_KATIKA_CONFIG = {
   maxAutoBetMultiplier: 4,
   ...getParamDefaults(),
 } as unknown as KatikaGameConfig;
+
+// Kora Cash (argent réel) : config minimale, stockée à part du registre des délais car ce n'est pas un paramètre de timing.
+export const DEFAULT_KORA_CASH_CONFIG: KatikaKoraCashConfig = {
+  isEnabled: false,
+  activeProviderId: null,
+  environment: 'DEMO',
+  updatedAt: 0,
+};
 
 // Version du cache local de config : à chaque changement, l'ancien cache (valeurs périmées) est supprimé une fois.
 const KATIKA_CONFIG_SCHEMA_VERSION = '2';
@@ -1741,6 +1749,53 @@ export const KatikaService = {
     });
 
     return { ...mockConfig };
+  },
+
+  // --- Kora Cash (Argent Réel) : lecture/écriture directe Firestore, hors registre de délais ---
+  getKoraCashConfig: async (): Promise<KatikaKoraCashConfig> => {
+    if (!db) return { ...DEFAULT_KORA_CASH_CONFIG };
+    try {
+      const snap = await getDoc(doc(db, 'katika_config', 'kora_cash'));
+      if (snap.exists()) {
+        return { ...DEFAULT_KORA_CASH_CONFIG, ...(snap.data() as Partial<KatikaKoraCashConfig>) };
+      }
+    } catch (e) {
+      console.warn('[KatikaService] Could not read Kora Cash config from Firestore:', e);
+    }
+    return { ...DEFAULT_KORA_CASH_CONFIG };
+  },
+
+  updateKoraCashConfig: async (
+    patch: Partial<KatikaKoraCashConfig>,
+    actorEmail?: string
+  ): Promise<KatikaKoraCashConfig> => {
+    const current = await KatikaService.getKoraCashConfig();
+    const next: KatikaKoraCashConfig = {
+      ...current,
+      ...patch,
+      updatedAt: Date.now(),
+      updatedBy: actorEmail || current.updatedBy,
+    };
+
+    if (db) {
+      try {
+        await setDoc(doc(db, 'katika_config', 'kora_cash'), next, { merge: true });
+      } catch (e) {
+        console.warn('[KatikaService] Could not persist Kora Cash config to Firestore:', e);
+      }
+    }
+
+    mockAuditLogs.unshift({
+      id: `log-${Date.now()}`,
+      timestamp: Date.now(),
+      type: 'CONFIG_CHANGE',
+      severity: 'WARNING',
+      actor: actorEmail || 'Katika Master',
+      summary: `Kora Cash : ${patch.isEnabled !== undefined ? (patch.isEnabled ? 'activation' : 'désactivation') : 'mise à jour de la configuration'}`,
+      details: { changed: patch },
+    });
+
+    return next;
   },
 
   getAuditLogs: async (): Promise<KatikaAuditLog[]> => {

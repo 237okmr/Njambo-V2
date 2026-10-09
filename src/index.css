@@ -273,7 +273,7 @@
   }
   
   /* Hide non-print elements */
-  nav, header, aside, .print\\:hidden {
+  nav, header, aside, .print\:hidden {
     display: none !important;
   }
 

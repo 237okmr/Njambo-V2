@@ -8,7 +8,8 @@ import {
   ScrollText, 
   ExternalLink,
   ShieldAlert,
-  Bot
+  Bot,
+  Wallet
 } from 'lucide-react';
 import { KatikaTab } from '../types/katika';
 
@@ -52,6 +53,12 @@ export const KatikaSidebar: React.FC<KatikaSidebarProps> = ({
       title: '⚙️ Configuration & Technique',
       items: [
         { id: 'SETTINGS', label: 'Moteur & Paramètres', icon: Sliders },
+      ],
+    },
+    {
+      title: '💰 Kora Cash (Argent Réel)',
+      items: [
+        { id: 'KORA_CASH', label: 'Kora Cash', icon: Wallet },
       ],
     },
   ];

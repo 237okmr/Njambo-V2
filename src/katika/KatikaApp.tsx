@@ -17,6 +17,7 @@ import { KatikaSettingsTab } from './components/tabs/KatikaSettingsTab';
 import { KatikaLegacyRecordsPanel } from './components/KatikaLegacyRecordsPanel';
 import { KatikaLogsTab } from './components/tabs/KatikaLogsTab';
 import { KatikaAiAssistantTab } from './components/tabs/KatikaAiAssistantTab';
+import { KatikaKoraCashTab } from './components/tabs/KatikaKoraCashTab';
 import { KatikaAiChatProvider } from './context/KatikaAiChatContext';
 import { KatikaAiFloatingBubble } from './components/KatikaAiFloatingBubble';
 import { Loader2, MonitorOff, Maximize2, ArrowLeft, Bot, Sparkles } from 'lucide-react';
@@ -81,13 +82,15 @@ const KatikaWorkspace: React.FC = () => {
                     {currentTab === 'SETTINGS' && 'Paramètres, Économie & Règles de Jeu'}
                     {currentTab === 'LOGS' && "Journal d'Audit & Traçabilité des Actions"}
                     {currentTab === 'AI_ASSISTANT' && 'Assistant IA Katika (Conseil & Analyse)'}
+                    {currentTab === 'KORA_CASH' && 'Kora Cash — Argent Réel'}
                   </h1>
                   <p className="text-xs text-slate-400 mt-0.5">
                     {currentTab === 'MATCHES' && 'Registre officiel des manches disputées, scores, donnes et redistribution des pots'}
                     {currentTab === 'SETTINGS' && 'Règles authentiques, seuils de mises, forfaits et annonces globales'}
                     {currentTab === 'LOGS' && 'Historique complet des décisions de modération et export Excel / CSV'}
                     {currentTab === 'AI_ASSISTANT' && 'Assistant conversationnel multimodal Gemini 3.8 Flash • Mode lecture seule strict'}
-                    {currentTab !== 'MATCHES' && currentTab !== 'SETTINGS' && currentTab !== 'LOGS' && currentTab !== 'AI_ASSISTANT' && 'Supervision opérationnelle • Station Katika Master'}
+                    {currentTab === 'KORA_CASH' && 'Activation, prestataires, mises, rake, dépôts/retraits et sécurité du mode argent réel'}
+                    {currentTab !== 'MATCHES' && currentTab !== 'SETTINGS' && currentTab !== 'LOGS' && currentTab !== 'AI_ASSISTANT' && currentTab !== 'KORA_CASH' && 'Supervision opérationnelle • Station Katika Master'}
                   </p>
                 </div>
 
@@ -109,6 +112,7 @@ const KatikaWorkspace: React.FC = () => {
               )}
               {currentTab === 'LOGS' && <KatikaLogsTab />}
               {currentTab === 'AI_ASSISTANT' && <KatikaAiAssistantTab />}
+              {currentTab === 'KORA_CASH' && <KatikaKoraCashTab />}
 
             </div>
           </main>

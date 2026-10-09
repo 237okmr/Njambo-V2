@@ -22,6 +22,8 @@ import { saveSoloPartieBatch, enableGameRecording } from './server/rooms/gameRec
 import { runLegacyAction, createFirestoreLegacyStore } from './server/rooms/legacyRecords';
 import { isKoraMoment } from './src/katika/visual/situation';
 import { pushService, buildGameUrl } from './server/pushService';
+import { saveProviderCredentials, getProviderCredentialsMasked } from './server/cash/cashSecrets';
+import { testCampayConnection } from './server/cash/campayClient';
 import { verifyFirebaseIdToken, listAdminUsers, setAdminUserClaim, getFirebaseAdminDb } from './server/firebaseAdmin';
 import { collection, getDocs, query, limit, orderBy, startAfter } from 'firebase/firestore';
 import { db } from './src/lib/firebase';
@@ -1227,6 +1229,42 @@ async function startServer() {
     const updated = RoomManager.updateEngineConfig(req.body || {});
     const persisted = await persistEngineConfigToStore();
     res.json({ ...updated, configVersion: getEngineConfigVersion(), persisted });
+  });
+
+  // Kora Cash — identifiants prestataire (jamais exposés en clair)
+  app.get('/api/katika/cash/providers/:provider/:environment', async (req, res) => {
+    const { provider, environment } = req.params;
+    if (!['campay', 'notchpay'].includes(provider) || !['demo', 'live'].includes(environment)) {
+      return res.status(400).json({ success: false, error: 'Paramètres invalides.' });
+    }
+    const masked = await getProviderCredentialsMasked(provider as any, environment as any);
+    res.json({ success: true, credentials: masked });
+  });
+
+  app.post('/api/katika/cash/providers/:provider/:environment', express.json(), async (req, res) => {
+    const { provider, environment } = req.params;
+    if (!['campay', 'notchpay'].includes(provider) || !['demo', 'live'].includes(environment)) {
+      return res.status(400).json({ success: false, error: 'Paramètres invalides.' });
+    }
+    const fields = req.body?.fields;
+    if (!fields || typeof fields !== 'object') {
+      return res.status(400).json({ success: false, error: 'Champs manquants.' });
+    }
+    // Si le nom de la variable identifiant l'admin authentifié diffère de
+    // req.katikaAdminUid ailleurs dans ce fichier, utilise la variable
+    // réellement posée par le middleware d'auth Katika existant.
+    const adminUid = (req as any).katikaUser?.uid || (req as any).katikaAdminUid || 'unknown';
+    await saveProviderCredentials(provider as any, environment as any, fields, adminUid);
+    res.json({ success: true });
+  });
+
+  app.post('/api/katika/cash/providers/:provider/:environment/test', async (req, res) => {
+    const { provider, environment } = req.params;
+    if (provider !== 'campay') {
+      return res.status(400).json({ success: false, error: 'Seul Campay est testable dans ce lot.' });
+    }
+    const result = await testCampayConnection(environment as any);
+    res.json({ success: result.ok, message: result.message });
   });
 
   function buildServerMetricsSnapshot(): any {
