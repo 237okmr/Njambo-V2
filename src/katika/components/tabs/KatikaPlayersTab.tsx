@@ -38,6 +38,8 @@ import { KATIKA_NAVIGATE_EVENT, KatikaNavigationEventDetail, navigateToKatikaTab
 import { AVATAR_OPTIONS, HONORIFIC_TITLES, AvatarOptionId } from '../../../types/playerProfile';
 import { PlayerAvatar } from '../../../components/profile/PlayerAvatar';
 import { isEligibleLeaderboardUser, getLeaderboardIneligibilityReasons, LeaderboardIneligibilityReason, MASTERY_CONFIG } from '../../../services/masteryConfig';
+import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { db } from '../../../lib/firebase';
 
 export const KatikaPlayersTab: React.FC = () => {
   const [players, setPlayers] = useState<KatikaPlayer[]>([]);
@@ -81,6 +83,65 @@ export const KatikaPlayersTab: React.FC = () => {
 
   // Selected Player Dossier Modal
   const [dossierPlayer, setDossierPlayer] = useState<KatikaPlayer | null>(null);
+
+  // Diagnostic historique cloud (lecture seule) : analyse users/{uid}/history pour le joueur du dossier.
+  const [histDiag, setHistDiag] = useState<{
+    playerId: string;
+    loading: boolean;
+    error: string | null;
+    result: null | {
+      total: number;
+      lastEntryMs: number | null;
+      soloWinsAfter: number;
+      soloWinsWithPoints: number;
+      pointsSum: number;
+      afterDayLabel: string;
+    };
+  } | null>(null);
+
+  const runHistoryDiag = async (player: KatikaPlayer) => {
+    setHistDiag({ playerId: player.id, loading: true, error: null, result: null });
+    try {
+      const snap = await getDocs(
+        query(collection(db, 'users', player.id, 'history'), orderBy('createdAt', 'desc'), limit(300))
+      );
+      const items: any[] = snap.docs.map((d) => d.data() as any);
+      const raw: any = (player as any).rawUserData || {};
+      const sdDay: number | null = raw.soloDaily && typeof raw.soloDaily.day === 'number' ? raw.soloDaily.day : null;
+      const dayOf = (ms: number) => Math.floor((ms + 3600000) / 86400000);
+      const soloWins = items.filter((h) => h.mode === 'SOLO' && h.recordType === 'PARTIE' && h.isWinner === true);
+      const after = sdDay === null
+        ? soloWins
+        : soloWins.filter((h) => typeof h.createdAt === 'number' && dayOf(h.createdAt) > sdDay);
+      const withPts = after.filter((h) => typeof h.masteryPointsAwarded === 'number' && h.masteryPointsAwarded > 0);
+      const pointsSum = Math.round(
+        after.reduce((s, h) => s + (typeof h.masteryPointsAwarded === 'number' ? h.masteryPointsAwarded : 0), 0) * 100
+      ) / 100;
+      const lastEntryMs = items.length > 0 && typeof items[0].createdAt === 'number' ? items[0].createdAt : null;
+      setHistDiag({
+        playerId: player.id,
+        loading: false,
+        error: null,
+        result: {
+          total: items.length,
+          lastEntryMs,
+          soloWinsAfter: after.length,
+          soloWinsWithPoints: withPts.length,
+          pointsSum,
+          afterDayLabel: sdDay === null
+            ? 'aucun jour solo enregistré'
+            : new Date(sdDay * 86400000 - 3600000).toLocaleDateString('fr-FR', { timeZone: 'Africa/Douala' }),
+        },
+      });
+    } catch (err: any) {
+      setHistDiag({
+        playerId: player.id,
+        loading: false,
+        error: err && err.message ? String(err.message) : 'Lecture impossible.',
+        result: null,
+      });
+    }
+  };
 
   // Track open row dropdown
   const [openPlayerDropdownId, setOpenPlayerDropdownId] = useState<string | null>(null);
@@ -1564,6 +1625,43 @@ export const KatikaPlayersTab: React.FC = () => {
                       </div>
                     </div>
                     <div className={`text-[11px] font-mono font-semibold ${verdictClass}`}>{verdict}</div>
+                    <div className="pt-2 border-t border-slate-800 space-y-2">
+                      <button
+                        type="button"
+                        onClick={() => void runHistoryDiag(dossierPlayer)}
+                        disabled={histDiag?.loading === true && histDiag.playerId === dossierPlayer.id}
+                        className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-[11px] font-mono font-bold text-white cursor-pointer disabled:opacity-50"
+                      >
+                        {histDiag?.loading === true && histDiag.playerId === dossierPlayer.id ? 'Analyse en cours…' : 'Analyser l\'historique cloud'}
+                      </button>
+                      {histDiag && histDiag.playerId === dossierPlayer.id && histDiag.error && (
+                        <div className="text-[11px] font-mono font-semibold text-red-400">Lecture impossible : {histDiag.error}</div>
+                      )}
+                      {histDiag && histDiag.playerId === dossierPlayer.id && histDiag.result && (() => {
+                        const r = histDiag.result;
+                        let hv = '';
+                        let hvClass = 'text-slate-300';
+                        if (r.soloWinsAfter === 0) {
+                          hv = 'Aucune victoire solo dans le journal cloud après le dernier jour solo du profil : les parties n\'arrivent pas non plus dans le journal (problème en amont, ou joueur hors ligne).';
+                          hvClass = 'text-amber-400';
+                        } else if (r.soloWinsWithPoints === 0) {
+                          hv = 'Des victoires solo sont dans le journal mais aucune n\'a de point attribué : le calcul des points côté jeu donne zéro.';
+                          hvClass = 'text-red-400';
+                        } else {
+                          hv = `${r.soloWinsWithPoints} victoire(s) solo avec ${r.pointsSum} point(s) attribué(s) dans le journal, mais le profil n'a pas avancé : l'écriture du profil est rejetée (règles Firestore) ou bloquée dans la file hors ligne du joueur.`;
+                          hvClass = 'text-red-400';
+                        }
+                        return (
+                          <div className="space-y-1 text-[11px] font-mono text-slate-300">
+                            <div>Entrées du journal lues : {r.total} (300 maximum)</div>
+                            <div>Dernière entrée du journal : {r.lastEntryMs ? new Date(r.lastEntryMs).toLocaleString('fr-FR', { timeZone: 'Africa/Douala' }) : '—'}</div>
+                            <div>Victoires solo après le {r.afterDayLabel} : {r.soloWinsAfter}</div>
+                            <div>Dont avec points attribués : {r.soloWinsWithPoints} (total {r.pointsSum} pts)</div>
+                            <div className={`font-semibold ${hvClass}`}>{hv}</div>
+                          </div>
+                        );
+                      })()}
+                    </div>
                   </div>
                 );
               })()}
