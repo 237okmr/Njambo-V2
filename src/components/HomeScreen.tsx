@@ -1,11 +1,14 @@
 import React from 'react';
-import { Play, Globe, BookOpen, FolderOpen, Zap, Sparkles, Volume2, VolumeX, Smartphone, HelpCircle, ChevronRight, Trophy } from 'lucide-react';
+import { Play, Globe, BookOpen, FolderOpen, Zap, Sparkles, Volume2, VolumeX, Smartphone, HelpCircle, ChevronRight, Trophy, Wallet } from 'lucide-react';
 import { motion } from 'motion/react';
 import { SavedManche } from '../types';
 import { APP_VERSION } from '../version';
 import { usePlayerProfile } from '../context/PlayerProfileContext';
 import { HeaderProfileButton } from './profile/HeaderProfileButton';
 import { NativeScreenHeader } from './common/NativeScreenHeader';
+import { KoraCashModal } from './KoraCashModal';
+import { fetchKoraCashStatus } from '../services/koraCashClient';
+import { KoraCashPublicStatus, resolveEntryState } from '../services/koraCashFormat';
 
 interface HomeScreenProps {
   savedSessions?: SavedManche[];
@@ -65,6 +68,23 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onLeaveMultiplayer,
 }) => {
   const { profile, currentTitle, isLoggedIn } = usePlayerProfile();
+
+  // Kora Cash : statut public lu une fois à l'ouverture du menu (activé ou non, démo ou réel).
+  const [koraCashStatus, setKoraCashStatus] = React.useState<KoraCashPublicStatus | null>(null);
+  const [koraCashLoaded, setKoraCashLoaded] = React.useState<boolean>(false);
+  const [isKoraCashOpen, setIsKoraCashOpen] = React.useState<boolean>(false);
+  React.useEffect(() => {
+    let cancelled = false;
+    fetchKoraCashStatus().then((status) => {
+      if (cancelled) return;
+      setKoraCashStatus(status);
+      setKoraCashLoaded(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const koraCashEntry = resolveEntryState(koraCashStatus, isLoggedIn);
   const sessionsList = Array.isArray(savedSessions) ? savedSessions : [];
   const activeSession =
     (activeSessionId ? sessionsList.find((s) => s.id === activeSessionId) : null) ||
@@ -472,8 +492,47 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               </span>
             </motion.button>
           )}
+
+          {/* Kora Cash : visible une fois le statut connu ; « bientôt » tant que katika ne l'a pas activé */}
+          {koraCashLoaded && (
+            <motion.button
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              whileTap={koraCashEntry === 'COMING_SOON' ? undefined : { scale: 0.98 }}
+              type="button"
+              id="btn-home-kora-cash"
+              disabled={koraCashEntry === 'COMING_SOON'}
+              aria-disabled={koraCashEntry === 'COMING_SOON'}
+              onClick={() => setIsKoraCashOpen(true)}
+              className={`w-full py-2.5 px-3.5 rounded-xl bg-slate-900/90 text-slate-100 font-bold border border-slate-700/80 shadow-md flex items-center justify-between transition group ${
+                koraCashEntry === 'COMING_SOON'
+                  ? 'opacity-60 cursor-default'
+                  : 'hover:bg-slate-850 hover:border-amber-400/60 cursor-pointer'
+              }`}
+            >
+              <div className="flex items-center gap-3 text-left min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
+                  <Wallet className="w-4.5 h-4.5" />
+                </div>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="leading-tight text-xs sm:text-sm font-extrabold text-white truncate">Kora Cash</span>
+                  <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase tracking-wider shrink-0">
+                    {koraCashEntry === 'COMING_SOON' ? 'Bientôt' : koraCashStatus?.environment === 'LIVE' ? 'Argent réel' : 'Démo'}
+                  </span>
+                </div>
+              </div>
+              <span className="text-[11px] font-bold text-slate-400 group-hover:text-amber-400 transition shrink-0">
+                {koraCashEntry === 'COMING_SOON' ? 'Bientôt disponible' : koraCashEntry === 'LOGIN_REQUIRED' ? 'Se connecter →' : 'Ouvrir →'}
+              </span>
+            </motion.button>
+          )}
         </div>
       </main>
+
+      {isKoraCashOpen && koraCashStatus && koraCashEntry !== 'COMING_SOON' && (
+        <KoraCashModal environment={koraCashStatus.environment} onClose={() => setIsKoraCashOpen(false)} />
+      )}
 
       {/* Bottom Navigation Dock (Thumb-friendly & Streamlined) */}
       <footer className="relative z-10 max-w-md mx-auto w-full shrink-0 pt-2 pb-1 flex flex-col gap-2">
