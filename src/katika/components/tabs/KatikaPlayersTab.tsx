@@ -1625,6 +1625,34 @@ export const KatikaPlayersTab: React.FC = () => {
                       </div>
                     </div>
                     <div className={`text-[11px] font-mono font-semibold ${verdictClass}`}>{verdict}</div>
+                    {(() => {
+                      const pl: any = dossierPlayer;
+                      const rows = [
+                        { label: 'Manches gagnées', rec: pl.victories, prof: st.manchesWon, max: 20 },
+                        { label: 'Parties gagnées (estimé)', rec: pl.totalPartiesWon, prof: st.partiesWon, max: 20 },
+                        { label: 'Kora', rec: pl.koraCount, prof: st.koraCount, max: 10 },
+                      ].map((r) => {
+                        const hasBoth = typeof r.rec === 'number' && typeof r.prof === 'number';
+                        const gap = hasBoth ? r.rec - r.prof : null;
+                        return { ...r, gap, over: gap !== null && gap > r.max };
+                      });
+                      const blocked = rows.some((r) => r.over);
+                      return (
+                        <div className="pt-2 border-t border-slate-800 space-y-1 text-[11px] font-mono text-slate-300">
+                          <div className="text-slate-400">Écart entre les enregistrements de parties et le profil stocké</div>
+                          {rows.map((r) => (
+                            <div key={r.label} className={r.over ? 'text-red-400' : ''}>
+                              {r.label} : enregistrements {r.rec ?? '—'} · profil {r.prof ?? '—'} · écart {r.gap ?? '—'} (plafond d'écriture {r.max})
+                            </div>
+                          ))}
+                          <div className={`font-semibold ${blocked ? 'text-red-400' : 'text-emerald-400'}`}>
+                            {blocked
+                              ? 'Écart supérieur au plafond d\'écriture des règles : les mises à jour du profil sont probablement refusées (indicatif).'
+                              : 'Écarts sous les plafonds d\'écriture : un blocage par plafond est peu probable (indicatif).'}
+                          </div>
+                        </div>
+                      );
+                    })()}
                     <div className="pt-2 border-t border-slate-800 space-y-2">
                       <button
                         type="button"
