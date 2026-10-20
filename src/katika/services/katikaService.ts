@@ -1751,16 +1751,18 @@ export const KatikaService = {
     return { ...mockConfig };
   },
 
-  // --- Kora Cash (Argent Réel) : lecture/écriture directe Firestore, hors registre de délais ---
+  // --- Kora Cash (Argent Réel) : configuration lue et écrite par le serveur (routes /api/katika/cash/config), hors registre de délais ---
   getKoraCashConfig: async (): Promise<KatikaKoraCashConfig> => {
-    if (!db) return { ...DEFAULT_KORA_CASH_CONFIG };
     try {
-      const snap = await getDoc(doc(db, 'katika_config', 'kora_cash'));
-      if (snap.exists()) {
-        return { ...DEFAULT_KORA_CASH_CONFIG, ...(snap.data() as Partial<KatikaKoraCashConfig>) };
+      const response = await tikaFetch('/api/katika/cash/config');
+      if (response.ok) {
+        const data = await response.json();
+        if (data?.success && data.config) {
+          return { ...DEFAULT_KORA_CASH_CONFIG, ...(data.config as Partial<KatikaKoraCashConfig>) };
+        }
       }
     } catch (e) {
-      console.warn('[KatikaService] Could not read Kora Cash config from Firestore:', e);
+      console.warn('[KatikaService] Could not read Kora Cash config from server:', e);
     }
     return { ...DEFAULT_KORA_CASH_CONFIG };
   },
@@ -1769,21 +1771,18 @@ export const KatikaService = {
     patch: Partial<KatikaKoraCashConfig>,
     actorEmail?: string
   ): Promise<KatikaKoraCashConfig> => {
-    const current = await KatikaService.getKoraCashConfig();
-    const next: KatikaKoraCashConfig = {
-      ...current,
-      ...patch,
-      updatedAt: Date.now(),
-      updatedBy: actorEmail || current.updatedBy,
-    };
-
-    if (db) {
-      try {
-        await setDoc(doc(db, 'katika_config', 'kora_cash'), next, { merge: true });
-      } catch (e) {
-        console.warn('[KatikaService] Could not persist Kora Cash config to Firestore:', e);
-      }
+    // Le serveur valide la demande et écrit ; si l'enregistrement échoue, on lève une erreur au lieu d'afficher un faux succès.
+    const { updatedAt: _ignoredUpdatedAt, updatedBy: _ignoredUpdatedBy, ...allowedPatch } = patch;
+    const response = await tikaFetch('/api/katika/cash/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(allowedPatch),
+    });
+    const data = await response.json().catch(() => null);
+    if (!response.ok || !data?.success || !data.config) {
+      throw new Error(data?.error || 'Enregistrement de la configuration Kora Cash refusé par le serveur.');
     }
+    const next: KatikaKoraCashConfig = { ...DEFAULT_KORA_CASH_CONFIG, ...(data.config as Partial<KatikaKoraCashConfig>) };
 
     mockAuditLogs.unshift({
       id: `log-${Date.now()}`,

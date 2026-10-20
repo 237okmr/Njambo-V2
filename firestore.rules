@@ -464,5 +464,20 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isUser(userId) || isAdmin();
     }
+
+    // Kora Cash : configuration, portefeuilles et registre. Fermés à tous les clients.
+    // Seul le serveur (Admin SDK) les lit et les écrit, via des routes protégées.
+    match /katika_config/{docId} {
+      allow read, write: if false;
+    }
+    match /cash_wallets/{uid} {
+      allow read, write: if false;
+    }
+    match /cash_ledger/{ref} {
+      allow read, write: if false;
+    }
+    match /cash_deposits/{depositId} {
+      allow read, write: if false;
+    }
   }
 }

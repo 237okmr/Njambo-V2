@@ -11,6 +11,7 @@ import {
   HeartPulse,
   Loader2,
   CheckCircle2,
+  XCircle,
 } from 'lucide-react';
 import { KoraCashSubSection, KatikaKoraCashConfig } from '../../types/katika';
 import { KatikaService, DEFAULT_KORA_CASH_CONFIG } from '../../services/katikaService';
@@ -79,6 +80,7 @@ export const KatikaKoraCashTab: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -96,6 +98,7 @@ export const KatikaKoraCashTab: React.FC = () => {
   const handleToggleEnabled = async () => {
     setSaving(true);
     setFeedback(null);
+    setErrorMessage(null);
     try {
       const updated = await KatikaService.updateKoraCashConfig(
         { isEnabled: !config.isEnabled },
@@ -103,6 +106,8 @@ export const KatikaKoraCashTab: React.FC = () => {
       );
       setConfig(updated);
       setFeedback(updated.isEnabled ? 'Kora Cash activé.' : 'Kora Cash désactivé.');
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : 'Enregistrement impossible.');
     } finally {
       setSaving(false);
     }
@@ -112,10 +117,13 @@ export const KatikaKoraCashTab: React.FC = () => {
     if (environment === config.environment) return;
     setSaving(true);
     setFeedback(null);
+    setErrorMessage(null);
     try {
       const updated = await KatikaService.updateKoraCashConfig({ environment }, user?.email || undefined);
       setConfig(updated);
       setFeedback(`Environnement réglé sur ${environment === 'LIVE' ? 'LIVE' : 'Démo'}.`);
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : 'Enregistrement impossible.');
     } finally {
       setSaving(false);
     }
@@ -185,6 +193,13 @@ export const KatikaKoraCashTab: React.FC = () => {
         <div className="flex items-center gap-2 text-xs text-emerald-300">
           <CheckCircle2 className="w-4 h-4" />
           {feedback}
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="flex items-center gap-2 text-xs text-rose-300">
+          <XCircle className="w-4 h-4" />
+          {errorMessage}
         </div>
       )}
     </div>

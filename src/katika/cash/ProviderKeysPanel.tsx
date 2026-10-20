@@ -118,6 +118,12 @@ export const ProviderKeysPanel: React.FC = () => {
         user?.email || undefined
       );
       setActiveProviderId(updated.activeProviderId);
+      setFeedback({ type: 'success', message: 'Prestataire actif enregistré.' });
+    } catch (err) {
+      setFeedback({
+        type: 'error',
+        message: err instanceof Error ? err.message : "Échec de l'enregistrement du prestataire actif.",
+      });
     } finally {
       setSettingActive(false);
     }

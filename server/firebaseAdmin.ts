@@ -35,7 +35,7 @@ export function getFirebaseAdminAppDb(): Firestore {
   return databaseId ? getFirestore(adminApp!, databaseId) : getFirestore(adminApp!);
 }
 
-export async function verifyFirebaseIdToken(idToken: string): Promise<{ uid: string; email?: string; emailVerified?: boolean; admin?: boolean } | null> {
+export async function verifyFirebaseIdToken(idToken: string): Promise<{ uid: string; email?: string; emailVerified?: boolean; admin?: boolean; signInProvider?: string } | null> {
   if (!idToken || typeof idToken !== 'string') return null;
   try {
     const auth = getFirebaseAdminAuth();
@@ -46,6 +46,7 @@ export async function verifyFirebaseIdToken(idToken: string): Promise<{ uid: str
         email: decoded.email,
         emailVerified: decoded.email_verified,
         admin: decoded.admin === true,
+        signInProvider: decoded.firebase?.sign_in_provider,
       };
     }
     return null;

@@ -24,6 +24,12 @@ import { isKoraMoment } from './src/katika/visual/situation';
 import { pushService, buildGameUrl } from './server/pushService';
 import { saveProviderCredentials, getProviderCredentialsMasked } from './server/cash/cashSecrets';
 import { testCampayConnection } from './server/cash/campayClient';
+import { getKoraCashConfig, updateKoraCashConfig } from './server/cash/cashConfigStore';
+import { parseConfigPatch, toPublicStatus } from './server/cash/cashConfigRules';
+import { getWallet } from './server/cash/walletLedger';
+import { createDeposit, confirmDeposit } from './server/cash/depositStore';
+import { parseDepositAmount, DepositError } from './server/cash/depositRules';
+import { CashLedgerError } from './server/cash/cashTypes';
 import { verifyFirebaseIdToken, listAdminUsers, setAdminUserClaim, getFirebaseAdminDb } from './server/firebaseAdmin';
 import { collection, getDocs, query, limit, orderBy, startAfter } from 'firebase/firestore';
 import { db } from './src/lib/firebase';
@@ -888,6 +894,83 @@ async function startServer() {
     res.json({ configVersion: getEngineConfigVersion(), params: getPublicParams(cfg) });
   });
 
+  // Kora Cash — statut public lu par l'application des joueurs : « activé ou non » et l'environnement, rien d'autre.
+  // En cas de doute (erreur de lecture), le statut renvoyé est « désactivé ».
+  app.get('/api/cash/status', async (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const cfg = await getKoraCashConfig();
+      res.json({ success: true, ...toPublicStatus(cfg) });
+    } catch (err) {
+      console.warn('[KoraCash] Lecture du statut public impossible, statut « désactivé » renvoyé.', err);
+      res.json({ success: true, enabled: false, environment: 'DEMO' });
+    }
+  });
+
+  // Kora Cash — accès joueur : jeton Firebase valide ET compte Google (jamais anonyme ni invité).
+  async function requireGooglePlayer(req: any, res: any): Promise<{ uid: string; email?: string } | null> {
+    const authHeader = String(req.headers.authorization || '');
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+    const verified = token ? await verifyFirebaseIdToken(token) : null;
+    if (!verified) {
+      res.status(401).json({ success: false, error: 'Connexion requise.' });
+      return null;
+    }
+    if (verified.signInProvider !== 'google.com') {
+      res.status(403).json({ success: false, error: 'Un compte Google est requis pour Kora Cash.' });
+      return null;
+    }
+    return { uid: verified.uid, email: verified.email };
+  }
+
+  // Kora Cash — solde du joueur connecté (disponible et engagé en table, FCFA entiers).
+  app.get('/api/cash/wallet', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const player = await requireGooglePlayer(req, res);
+    if (!player) return;
+    try {
+      const wallet = await getWallet(player.uid);
+      res.json({ success: true, wallet: { available: wallet.available, locked: wallet.locked } });
+    } catch (err) {
+      console.error('[KoraCash] Lecture du portefeuille impossible.', err);
+      res.status(500).json({ success: false, error: 'Lecture du portefeuille impossible.' });
+    }
+  });
+
+  // Kora Cash — dépôt simulé (démo uniquement) : aucun appel à un prestataire, mais le même circuit que le vrai
+  // (création du dépôt en attente, puis confirmDeposit, qui sera aussi appelé par le futur webhook).
+  app.post('/api/cash/deposit/simulate', express.json(), async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const player = await requireGooglePlayer(req, res);
+    if (!player) return;
+    try {
+      const cfg = await getKoraCashConfig();
+      if (!cfg.isEnabled) {
+        return res.status(403).json({ success: false, error: 'Kora Cash est désactivé.' });
+      }
+      if (cfg.environment !== 'DEMO') {
+        return res.status(403).json({ success: false, error: 'Le dépôt simulé n\'est disponible qu\'en démo.' });
+      }
+      const parsedAmount = parseDepositAmount(req.body?.amount);
+      if (!parsedAmount.ok || parsedAmount.amount === undefined) {
+        return res.status(400).json({ success: false, error: parsedAmount.error || 'Montant invalide.' });
+      }
+      const created = await createDeposit(player.uid, parsedAmount.amount, 'SIMULATED');
+      const confirmed = await confirmDeposit(created.id, 'SIMULATED');
+      res.json({
+        success: true,
+        deposit: { id: confirmed.deposit.id, amount: confirmed.deposit.amount, status: confirmed.deposit.status },
+        wallet: { available: confirmed.wallet.available, locked: confirmed.wallet.locked },
+      });
+    } catch (err) {
+      if (err instanceof DepositError || err instanceof CashLedgerError) {
+        return res.status(400).json({ success: false, error: err.message });
+      }
+      console.error('[KoraCash] Dépôt simulé impossible.', err);
+      res.status(500).json({ success: false, error: 'Dépôt impossible.' });
+    }
+  });
+
   // Katika Admin Auth Protection Middleware (Firebase ID Token verification)
   const KATIKA_ADMIN_EMAIL = (process.env.KATIKA_ADMIN_EMAIL || '237okmr@gmail.com').toLowerCase();
   app.use('/api/katika', async (req, res, next) => {
@@ -1265,6 +1348,32 @@ async function startServer() {
     }
     const result = await testCampayConnection(environment as any);
     res.json({ success: result.ok, message: result.message });
+  });
+
+  // Kora Cash — configuration générale (activation, prestataire actif, environnement), réservée à l'admin Katika.
+  app.get('/api/katika/cash/config', async (_req, res) => {
+    try {
+      const config = await getKoraCashConfig();
+      res.json({ success: true, config });
+    } catch (err) {
+      console.error('[KoraCash] Lecture de la configuration impossible.', err);
+      res.status(500).json({ success: false, error: 'Lecture de la configuration Kora Cash impossible.' });
+    }
+  });
+
+  app.post('/api/katika/cash/config', express.json(), async (req, res) => {
+    const parsed = parseConfigPatch(req.body);
+    if (!parsed.ok || !parsed.patch) {
+      return res.status(400).json({ success: false, error: parsed.error || 'Corps de requête invalide.' });
+    }
+    try {
+      const actorEmail = (req as any).katikaUser?.email as string | undefined;
+      const config = await updateKoraCashConfig(parsed.patch, actorEmail);
+      res.json({ success: true, config });
+    } catch (err) {
+      console.error('[KoraCash] Enregistrement de la configuration impossible.', err);
+      res.status(500).json({ success: false, error: 'Enregistrement de la configuration Kora Cash impossible.' });
+    }
   });
 
   function buildServerMetricsSnapshot(): any {
