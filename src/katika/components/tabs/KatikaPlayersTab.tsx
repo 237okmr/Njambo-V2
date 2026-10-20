@@ -37,7 +37,7 @@ import { KatikaService, OFFICIAL_BOT_NAMES } from '../../services/katikaService'
 import { KATIKA_NAVIGATE_EVENT, KatikaNavigationEventDetail, navigateToKatikaTab } from '../../utils/katikaNavigation';
 import { AVATAR_OPTIONS, HONORIFIC_TITLES, AvatarOptionId } from '../../../types/playerProfile';
 import { PlayerAvatar } from '../../../components/profile/PlayerAvatar';
-import { isEligibleLeaderboardUser, getLeaderboardIneligibilityReasons, LeaderboardIneligibilityReason } from '../../../services/masteryConfig';
+import { isEligibleLeaderboardUser, getLeaderboardIneligibilityReasons, LeaderboardIneligibilityReason, MASTERY_CONFIG } from '../../../services/masteryConfig';
 
 export const KatikaPlayersTab: React.FC = () => {
   const [players, setPlayers] = useState<KatikaPlayer[]>([]);
@@ -1499,6 +1499,74 @@ export const KatikaPlayersTab: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Diagnostic score de maîtrise (lecture seule) */}
+              {(() => {
+                const raw: any = (dossierPlayer as any).rawUserData || {};
+                const st: any = raw.stats || {};
+                const sd: any = raw.soloDaily || null;
+                const cap = MASTERY_CONFIG.rules.dailySoloPointsCap;
+                const todayIdx = Math.floor((Date.now() + 3600000) / 86400000);
+                const fmtDate = (ms: any) =>
+                  typeof ms === 'number' && ms > 0
+                    ? new Date(ms).toLocaleString('fr-FR', { timeZone: 'Africa/Douala' })
+                    : '—';
+                const sdDay: number | null = sd && typeof sd.day === 'number' ? sd.day : null;
+                const sdPts: number | null = sd && typeof sd.points === 'number' ? sd.points : null;
+                let verdict = 'Aucun jour solo enregistré dans le profil.';
+                let verdictClass = 'text-slate-400';
+                if (sdDay !== null && sdPts !== null) {
+                  if (sdDay > todayIdx) {
+                    verdict = `Jour solo en avance de ${sdDay - todayIdx} jour(s) sur la date réelle : plafond bloqué à tort.`;
+                    verdictClass = 'text-red-400';
+                  } else if (sdDay === todayIdx && sdPts >= cap - 0.01) {
+                    verdict = `Plafond solo atteint aujourd'hui (${sdPts}/${cap}).`;
+                    verdictClass = 'text-amber-400';
+                  } else if (sdDay === todayIdx) {
+                    verdict = `Plafond solo non atteint aujourd'hui (${sdPts}/${cap}).`;
+                    verdictClass = 'text-emerald-400';
+                  } else {
+                    verdict = `Dernier jour solo enregistré : ${new Date(sdDay * 86400000 - 3600000).toLocaleDateString('fr-FR', { timeZone: 'Africa/Douala' })} (${sdPts}/${cap}). Aucun point solo aujourd'hui.`;
+                    verdictClass = 'text-slate-300';
+                  }
+                }
+                return (
+                  <div className="p-4 rounded-xl bg-slate-850/90 border border-slate-700/80 space-y-3">
+                    <h3 className="text-xs font-bold text-white uppercase tracking-wider font-mono">
+                      Diagnostic du Score de Maîtrise (profil stocké)
+                    </h3>
+                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                      <div className="p-3 rounded-lg bg-slate-900 border border-slate-800">
+                        <div className="text-[11px] text-slate-400 font-mono">Score du profil</div>
+                        <div className="text-lg font-black font-mono text-white">{typeof st.masteryScore === 'number' ? st.masteryScore : '—'}</div>
+                      </div>
+                      <div className="p-3 rounded-lg bg-slate-900 border border-slate-800">
+                        <div className="text-[11px] text-slate-400 font-mono">Version du score</div>
+                        <div className="text-lg font-black font-mono text-white">{raw.scoreVersion ?? '—'}</div>
+                      </div>
+                      <div className="p-3 rounded-lg bg-slate-900 border border-slate-800">
+                        <div className="text-[11px] text-slate-400 font-mono">Dernière écriture du profil</div>
+                        <div className="text-sm font-bold font-mono text-white">{fmtDate(raw.updatedAt)}</div>
+                      </div>
+                      <div className="p-3 rounded-lg bg-slate-900 border border-slate-800">
+                        <div className="text-[11px] text-slate-400 font-mono">Jour solo / points du jour</div>
+                        <div className="text-sm font-bold font-mono text-white">
+                          {sdDay !== null ? `jour ${sdDay} (aujourd'hui : ${todayIdx})` : '—'} · {sdPts !== null ? `${sdPts}/${cap}` : '—'}
+                        </div>
+                      </div>
+                      <div className="p-3 rounded-lg bg-slate-900 border border-slate-800">
+                        <div className="text-[11px] text-slate-400 font-mono">Manches gagnées (profil)</div>
+                        <div className="text-lg font-black font-mono text-white">{st.manchesWon ?? '—'}</div>
+                      </div>
+                      <div className="p-3 rounded-lg bg-slate-900 border border-slate-800">
+                        <div className="text-[11px] text-slate-400 font-mono">Parties gagnées (profil)</div>
+                        <div className="text-lg font-black font-mono text-white">{st.partiesWon ?? '—'}</div>
+                      </div>
+                    </div>
+                    <div className={`text-[11px] font-mono font-semibold ${verdictClass}`}>{verdict}</div>
+                  </div>
+                );
+              })()}
 
               {/* Section 1: Formats & Winrates */}
               <div>
