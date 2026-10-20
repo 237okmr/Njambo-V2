@@ -68,6 +68,7 @@ import {
   getMasteryMultiplier,
   computeRawBasePoints,
   computeEventMasteryScore,
+  computeDegressiveSoloAward,
   computeMasteryScoreFromStats,
   getDoualaDateKey,
   getDoualaDayIndex,
@@ -105,16 +106,9 @@ function computeAwardedSoloMastery(
       .reduce((sum, h) => sum + (h.masteryPointsAwarded || 0), 0);
   }
 
-  const cap = MASTERY_CONFIG.rules.dailySoloPointsCap; // 30
-  let awarded = 0;
-  if (potentialMastery > 0 && alreadyAwarded < cap) {
-    awarded = Math.min(potentialMastery, Math.max(0, cap - alreadyAwarded));
-  }
-  awarded = Math.round(awarded * 100) / 100;
-
-  const rawPoints = alreadyAwarded + awarded;
-  const roundedPoints = Math.round(rawPoints * 100) / 100;
-  const points = Math.min(cap, roundedPoints);
+  // Points dégressifs : 100 % jusqu'à 10 points attribués dans la journée, 50 % de 10 à 20, 25 % de 20 à 30.
+  // Le total journalier reste borné à dailySoloPointsCap (30), comme dans les règles Firestore.
+  const { awarded, points } = computeDegressiveSoloAward(alreadyAwarded, potentialMastery);
 
   return {
     awarded,

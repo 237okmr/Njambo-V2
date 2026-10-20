@@ -34,6 +34,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { usePlayerProfile } from '../context/PlayerProfileContext';
 import { GoogleIcon } from './common/GoogleIcon';
 import { computeEarnedPoints } from '../services/playerProfileService';
+import { SoloDailyGauge } from './common/SoloDailyGauge';
 
 interface EndRoundModalProps {
   gameState?: GameState;
@@ -315,7 +316,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
     }
   }, [isReadyForNext]);
 
-  const { isLoggedIn, loginWithGoogle } = usePlayerProfile();
+  const { isLoggedIn, loginWithGoogle, profile } = usePlayerProfile();
 
   const handleGoogleSignIn = async () => {
     if (isAuthLoading) return;
@@ -488,7 +489,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
               <div className="text-left min-w-0">
                 <div className="font-black text-amber-200 text-xs flex items-center gap-1">
                   <span>+{Number(earnedPoints.total.toFixed(2))} {earnedPoints.total >= 1 ? 'points de Maîtrise' : 'point de Maîtrise'}</span>
-                  <span className="text-[10px] text-amber-400/80 font-normal">au Classement</span>
+                  <span className="text-[10px] text-amber-400/80 font-normal">{isOnlineMultiplayer ? 'au Classement' : 'au maximum, selon le plafond du jour'}</span>
                 </div>
                 <div className="text-[10px] text-amber-300/80 truncate">
                   {earnedPoints.breakdown.map((b) => `${b.label} (+${Number(b.points.toFixed(2))})`).join(' · ')}
@@ -500,6 +501,9 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
             </span>
           </motion.div>
         )}
+
+        {/* Jauge des points solo du jour (solo uniquement) */}
+        {!isOnlineMultiplayer && isHumanWinner && <SoloDailyGauge soloDaily={profile?.soloDaily} compact />}
 
         {/* Hand details for Instant Special Wins */}
         {(partieWinType === 'UNDER_21' || partieWinType === 'THREE_SEVENS') && (() => {

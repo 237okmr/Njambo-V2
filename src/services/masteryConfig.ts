@@ -207,6 +207,7 @@ export interface MasteryPointsConfig {
   };
   rules: {
     dailySoloPointsCap: number; // Max 30 points per calendar day
+    soloDegressiveTiers: Array<{ upTo: number; rate: number }>; // Paliers dégressifs sous le plafond (points attribués dans la journée)
     timezone: string; // 'Africa/Douala' (UTC+1)
     minQualifyingGamesForRatio: number; // Threshold for WinRate qualification (10)
     forfeitPenaltyMultiplayer: number; // -5 points
@@ -231,6 +232,11 @@ export const MASTERY_CONFIG: MasteryPointsConfig = {
   },
   rules: {
     dailySoloPointsCap: 30,
+    soloDegressiveTiers: [
+      { upTo: 10, rate: 1 },
+      { upTo: 20, rate: 0.5 },
+      { upTo: 30, rate: 0.25 },
+    ],
     timezone: 'Africa/Douala',
     minQualifyingGamesForRatio: 10,
     forfeitPenaltyMultiplayer: 5,
@@ -341,6 +347,57 @@ export function formatMasteryScore(score: number | undefined | null): string {
  */
 export function getDoualaDayIndex(timestamp = Date.now()): number {
   return Math.floor((timestamp + 3600000) / 86400000);
+}
+
+/**
+ * Points solo dégressifs : plus un joueur a déjà reçu de points solo dans la journée (Douala),
+ * moins chaque nouveau point potentiel rapporte (100 % jusqu'à 10 points attribués, 50 % de 10 à 20,
+ * 25 % de 20 à 30). Le total journalier reste borné par dailySoloPointsCap (30), comme dans les règles Firestore.
+ */
+export function computeDegressiveSoloAward(
+  alreadyAwarded: number,
+  potential: number
+): { awarded: number; points: number } {
+  const cap = MASTERY_CONFIG.rules.dailySoloPointsCap;
+  const tiers = MASTERY_CONFIG.rules.soloDegressiveTiers;
+  const start = Math.min(cap, Math.max(0, Number.isFinite(alreadyAwarded) ? alreadyAwarded : 0));
+  let a = start;
+  let remaining = Number.isFinite(potential) && potential > 0 ? potential : 0;
+  let lower = 0;
+  for (const tier of tiers) {
+    if (remaining <= 0) break;
+    if (a < tier.upTo && tier.rate > 0) {
+      const room = tier.upTo - Math.max(a, lower);
+      const potentialNeeded = room / tier.rate;
+      const used = Math.min(remaining, potentialNeeded);
+      a += used * tier.rate;
+      remaining -= used;
+    }
+    lower = tier.upTo;
+  }
+  const awarded = Math.round(Math.max(0, a - start) * 100) / 100;
+  const points = Math.min(cap, Math.round((start + awarded) * 100) / 100);
+  return { awarded, points };
+}
+
+/**
+ * État du plafond solo du jour pour l'affichage : points déjà reçus aujourd'hui, plafond,
+ * taux actuel (1, 0.5, 0.25 ou 0 une fois le plafond atteint).
+ */
+export function getSoloDailyStatus(
+  soloDaily: { day: number; points: number } | undefined | null,
+  nowMs = Date.now()
+): { points: number; cap: number; rate: number; reached: boolean } {
+  const cap = MASTERY_CONFIG.rules.dailySoloPointsCap;
+  const today = getDoualaDayIndex(nowMs);
+  const raw = soloDaily && soloDaily.day === today && Number.isFinite(soloDaily.points) ? soloDaily.points : 0;
+  const points = Math.min(cap, Math.max(0, raw));
+  let rate = 0;
+  if (points < cap - 0.005) {
+    const tier = MASTERY_CONFIG.rules.soloDegressiveTiers.find((t) => points < t.upTo);
+    rate = tier ? tier.rate : 0;
+  }
+  return { points: Math.round(points * 100) / 100, cap, rate, reached: points >= cap - 0.005 };
 }
 
 /**

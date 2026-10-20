@@ -28,6 +28,7 @@ import {
   PublicPlayerProfileData,
 } from '../../types/leaderboard';
 import { LeaderboardService } from '../../services/leaderboardService';
+import { SoloDailyGauge } from '../common/SoloDailyGauge';
 import { FriendService } from '../../services/friendService';
 import { PlayerAvatar } from '../profile/PlayerAvatar';
 import { HeadToHeadModal } from '../rivalry/HeadToHeadModal';
@@ -1059,6 +1060,11 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                       👑 Vous êtes au sommet du Palmarès !
                     </span>
                   )}
+                </div>
+
+                {/* Jauge des points solo du jour */}
+                <div className="mt-1.5 w-full sm:w-64">
+                  <SoloDailyGauge soloDaily={profile?.soloDaily} compact />
                 </div>
 
                 {/* Honorific Title progress bar (Highly Visible) */}

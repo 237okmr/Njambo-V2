@@ -54,6 +54,7 @@ export type ProfileTabType = 'identity' | 'google' | 'blocked' | 'stats' | 'prog
 export type HistoryFilter = 'ALL' | 'MANCHES' | 'DONNES' | 'SOLO' | 'MULTIPLAYER' | 'WINS' | 'KORAS';
 
 import { GoogleIcon } from '../common/GoogleIcon';
+import { SoloDailyGauge } from '../common/SoloDailyGauge';
 
 export interface PlayerProfileScreenProps {
   isOpen: boolean;
@@ -1166,6 +1167,8 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   </div>
                 </div>
 
+                <SoloDailyGauge soloDaily={profile?.soloDaily} />
+
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-amber-500/20 text-center">
                   <div className="p-2 bg-slate-950/60 rounded-xl border border-slate-800/80">
                     <span className="text-[10px] uppercase font-bold text-slate-400 block">Manches Multi</span>
@@ -1769,6 +1772,17 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                           <span className="text-[10px] text-slate-500">
                             {item.tricksWon !== undefined ? `${item.tricksWon} tour(s) remportés` : 'Pot réel validé'}
                           </span>
+                          {item.mode === 'SOLO' && item.isWinner && typeof item.masteryPointsAwarded === 'number' && (
+                            <span
+                              className={`text-[10px] font-mono font-bold ${
+                                item.masteryPointsAwarded > 0 ? 'text-amber-300' : 'text-slate-500'
+                              }`}
+                            >
+                              {item.masteryPointsAwarded > 0
+                                ? `+${Number(item.masteryPointsAwarded.toFixed(2))} pts de maîtrise`
+                                : 'Plafond solo atteint : 0 pt'}
+                            </span>
+                          )}
                         </div>
                       </div>
                     );
