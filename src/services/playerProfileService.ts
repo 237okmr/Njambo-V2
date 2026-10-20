@@ -18,6 +18,7 @@ import {
 } from 'firebase/firestore';
 import { estimateNetFromHistoryRecord } from '../utils/settlement';
 import { auth, db } from '../lib/firebase';
+import { computeCatchUpStep, CATCHUP_MAX_STEPS } from './profileCatchUp';
 
 /**
  * Attend que Firebase Auth ait fini de restaurer (ou non) une session existante avant de faire confiance
@@ -125,6 +126,7 @@ const PROFILE_KEY = 'njambo_player_profile_v1';
 const HISTORY_KEY = 'njambo_player_history_v1';
 const GUEST_BACKUP_KEY = 'njambo_guest_profile_backup';
 export const OFFLINE_QUEUE_KEY = 'njambo_offline_sync_queue_v1';
+const CATCHUP_BASE_KEY = 'njambo_profile_catchup_base_v1';
 
 export interface PendingOfflineSyncItem {
   id: string;
@@ -622,6 +624,58 @@ export const playerProfileService = {
   },
 
   /**
+   * Écrit le profil dans Firestore. Si les règles refusent l'écriture « état complet » (profil local trop en
+   * avance sur le profil cloud), rattrape par paliers qui respectent exactement les plafonds des règles.
+   */
+  async pushProfileWithCatchUp(uid: string, payload: any): Promise<void> {
+    const userRef = doc(db, 'users', uid);
+    const clearBase = () => {
+      try {
+        localStorage.removeItem(CATCHUP_BASE_KEY);
+      } catch {}
+    };
+    let base: any = null;
+    try {
+      const raw = localStorage.getItem(CATCHUP_BASE_KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (parsed && parsed.uid === uid && parsed.base) base = parsed.base;
+    } catch {}
+    if (!base) {
+      try {
+        await setDoc(userRef, payload, { merge: true });
+        return;
+      } catch (err: any) {
+        if (!err || err.code !== 'permission-denied') throw err;
+        console.warn('[PlayerProfileService] Profile write refused by rules, switching to progressive catch-up.');
+      }
+      const snap = await getDoc(userRef);
+      if (!snap.exists()) throw new Error('Catch-up impossible: cloud profile not found');
+      base = snap.data();
+    }
+    for (let i = 0; i < CATCHUP_MAX_STEPS; i++) {
+      const step = computeCatchUpStep(payload, base, Date.now());
+      if (!step.changed) {
+        if (step.complete) clearBase();
+        return;
+      }
+      try {
+        await setDoc(userRef, step.payload, { merge: true });
+      } catch (err) {
+        clearBase();
+        throw err;
+      }
+      base = { ...base, ...step.payload, stats: step.payload.stats };
+      try {
+        localStorage.setItem(CATCHUP_BASE_KEY, JSON.stringify({ uid, base }));
+      } catch {}
+      if (step.complete) {
+        clearBase();
+        return;
+      }
+    }
+  },
+
+  /**
    * Flushes all pending offline sync items to Firestore (Lot 3 - B).
    */
   async flushOfflineSyncQueue(): Promise<{ syncedCount: number; remainingCount: number }> {
@@ -658,8 +712,12 @@ export const playerProfileService = {
           };
         }
 
-        const docRef = doc(db, item.docPath);
-        await setDoc(docRef, payload, { merge: true });
+        if (item.type === 'PROFILE' && item.docPath === `users/${item.userId}`) {
+          await this.pushProfileWithCatchUp(item.userId, payload);
+        } else {
+          const docRef = doc(db, item.docPath);
+          await setDoc(docRef, payload, { merge: true });
+        }
         syncedCount++;
       } catch (err) {
         console.warn(`[PlayerProfileService] Retry failed for offline item ${item.id}:`, err);
@@ -979,7 +1037,7 @@ export const playerProfileService = {
       profilePayloadWithoutEmail.authProvider = 'google.com';
       try {
         const userRef = doc(db, 'users', uid);
-        await setDoc(userRef, profilePayloadWithoutEmail, { merge: true });
+        await this.pushProfileWithCatchUp(uid, profilePayloadWithoutEmail);
       } catch (err) {
         console.warn('[PlayerProfileService] Firestore user profile sync failed, enqueuing to offline sync queue:', err);
         this.enqueueOfflineSync({
@@ -1185,7 +1243,7 @@ export const playerProfileService = {
       profilePayloadWithoutEmail.authProvider = 'google.com';
       try {
         const userRef = doc(db, 'users', uid);
-        await setDoc(userRef, profilePayloadWithoutEmail, { merge: true });
+        await this.pushProfileWithCatchUp(uid, profilePayloadWithoutEmail);
       } catch (err) {
         console.warn('[PlayerProfileService] Firestore game user profile sync failed, enqueuing to offline sync queue:', err);
         this.enqueueOfflineSync({

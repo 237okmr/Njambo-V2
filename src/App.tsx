@@ -1399,7 +1399,7 @@ function GameApp() {
         betAtDealStartRef.current = null;
 
         const opponentsList = (activeGameState.players || [])
-          .filter((p: any) => p.id !== localPlayerId && p.name !== 'Vous')
+          .filter((p: any) => p.id !== localPlayerId && p.id !== 'p1' && p.id !== 'human' && p.name !== 'Vous')
           .map((p: any) => ({
             id: p.id,
             name: p.name,

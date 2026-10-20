@@ -406,7 +406,10 @@ async function startServer() {
       const force = req.query.force === 'true';
       const timeframe = (req.query.timeframe as string) || 'ALL'; // 'ALL' | 'WEEK' | 'MONTH'
 
-      if (force || Date.now() - leaderboardCacheTimestamp > Number(getEngineConfig().leaderboardServerCacheSeconds ?? 60) * 1000 || cachedLeaderboardUsers.length === 0) {
+      const leaderboardCacheAgeMs = Date.now() - leaderboardCacheTimestamp;
+      const leaderboardTtlMs = Number(getEngineConfig().leaderboardServerCacheSeconds ?? 300) * 1000;
+      const leaderboardForceMinMs = Number(getEngineConfig().leaderboardForceMinSeconds ?? 60) * 1000;
+      if ((force && leaderboardCacheAgeMs > leaderboardForceMinMs) || leaderboardCacheAgeMs > leaderboardTtlMs || cachedLeaderboardUsers.length === 0) {
         if (db) {
           try {
             // 1. Requêtes Firestore paginées (avec secours sans orderBy pour capter tous les profils réels)

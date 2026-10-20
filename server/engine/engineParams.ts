@@ -275,8 +275,13 @@ export const ENGINE_PARAMS: ParamDef[] = [
   },
   {
     key: 'leaderboardServerCacheSeconds', label: 'Cache serveur du Palmarès', unit: 's',
-    min: 10, max: 600, default: 60, group: 'caches-et-mises-a-jour', scope: 'server', effect: 'immediate',
+    min: 10, max: 600, default: 300, group: 'caches-et-mises-a-jour', scope: 'server', effect: 'immediate',
     help: 'Durée pendant laquelle le serveur réutilise le Palmarès calculé avant de le recalculer (économie des quotas Firestore).',
+  },
+  {
+    key: 'leaderboardForceMinSeconds', label: 'Âge minimal du cache avant un rafraîchissement forcé du Palmarès', unit: 's',
+    min: 5, max: 300, default: 60, group: 'caches-et-mises-a-jour', scope: 'server', effect: 'immediate',
+    help: 'Un joueur qui tire pour rafraîchir ne force le recalcul du Palmarès que si le cache a au moins cet âge. Évite qu\'un seul joueur épuise le quota de lectures Firestore.',
   },
   {
     key: 'clientTableActionTimeoutSeconds', label: 'Attente maximale d\'une création, d\'un accès ou d\'une Partie Rapide', unit: 's',
