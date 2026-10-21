@@ -40,6 +40,7 @@ import { PlayerAvatar } from '../../../components/profile/PlayerAvatar';
 import { isEligibleLeaderboardUser, getLeaderboardIneligibilityReasons, LeaderboardIneligibilityReason, MASTERY_CONFIG } from '../../../services/masteryConfig';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
+import { tikaFetch } from '../../services/tikaFetch';
 
 export const KatikaPlayersTab: React.FC = () => {
   const [players, setPlayers] = useState<KatikaPlayer[]>([]);
@@ -102,10 +103,13 @@ export const KatikaPlayersTab: React.FC = () => {
   const runHistoryDiag = async (player: KatikaPlayer) => {
     setHistDiag({ playerId: player.id, loading: true, error: null, result: null });
     try {
-      const snap = await getDocs(
-        query(collection(db, 'users', player.id, 'history'), orderBy('createdAt', 'desc'), limit(300))
-      );
-      const items: any[] = snap.docs.map((d) => d.data() as any);
+      // Lecture côté serveur (droits admin), indépendante des règles Firestore côté client.
+      const histRes = await tikaFetch(`/api/katika/player-history/${encodeURIComponent(player.id)}`);
+      const histJson: any = await histRes.json().catch(() => null);
+      if (!histRes.ok || !histJson || histJson.success !== true || !Array.isArray(histJson.items)) {
+        throw new Error((histJson && histJson.error) || `Réponse serveur ${histRes.status}`);
+      }
+      const items: any[] = histJson.items;
       const raw: any = (player as any).rawUserData || {};
       const sdDay: number | null = raw.soloDaily && typeof raw.soloDaily.day === 'number' ? raw.soloDaily.day : null;
       const dayOf = (ms: number) => Math.floor((ms + 3600000) / 86400000);

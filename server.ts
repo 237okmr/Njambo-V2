@@ -30,7 +30,7 @@ import { getWallet } from './server/cash/walletLedger';
 import { createDeposit, confirmDeposit } from './server/cash/depositStore';
 import { parseDepositAmount, DepositError } from './server/cash/depositRules';
 import { CashLedgerError } from './server/cash/cashTypes';
-import { verifyFirebaseIdToken, listAdminUsers, setAdminUserClaim, getFirebaseAdminDb } from './server/firebaseAdmin';
+import { verifyFirebaseIdToken, listAdminUsers, setAdminUserClaim, getFirebaseAdminDb, getFirebaseAdminAppDb } from './server/firebaseAdmin';
 import { collection, getDocs, query, limit, orderBy, startAfter } from 'firebase/firestore';
 import { db } from './src/lib/firebase';
 import {
@@ -1195,6 +1195,39 @@ async function startServer() {
     } catch (err: any) {
       console.error('[Katika Admins] Erreur lors de la révocation du rôle admin:', err);
       return res.status(500).json({ success: false, error: err?.message || 'Erreur lors de la révocation du rôle administrateur.' });
+    }
+  });
+
+  // Historique cloud d'un joueur (lecture seule, droits serveur) : alimente le diagnostic du dossier joueur de katika.
+  // Protégé par le middleware admin ci-dessus ; ne renvoie que les champs utiles au diagnostic.
+  app.get('/api/katika/player-history/:uid', async (req, res) => {
+    try {
+      const uid = String(req.params.uid || '').trim();
+      if (!uid || uid.length > 128 || uid.includes('/')) {
+        return res.status(400).json({ success: false, error: 'Identifiant joueur invalide.' });
+      }
+      const adminDb = getFirebaseAdminAppDb();
+      const snap = await adminDb
+        .collection('users')
+        .doc(uid)
+        .collection('history')
+        .orderBy('createdAt', 'desc')
+        .limit(300)
+        .get();
+      const items = snap.docs.map((d) => {
+        const x = d.data() as any;
+        return {
+          mode: typeof x.mode === 'string' ? x.mode : null,
+          recordType: typeof x.recordType === 'string' ? x.recordType : null,
+          isWinner: x.isWinner === true,
+          createdAt: typeof x.createdAt === 'number' ? x.createdAt : null,
+          masteryPointsAwarded: typeof x.masteryPointsAwarded === 'number' ? x.masteryPointsAwarded : null,
+        };
+      });
+      return res.json({ success: true, items });
+    } catch (err: any) {
+      console.error('[Katika] Lecture historique joueur impossible:', err);
+      return res.status(500).json({ success: false, error: err?.message || 'Lecture de l\'historique impossible.' });
     }
   });
 
