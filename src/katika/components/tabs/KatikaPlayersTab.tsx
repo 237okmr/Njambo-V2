@@ -113,7 +113,8 @@ export const KatikaPlayersTab: React.FC = () => {
       const raw: any = (player as any).rawUserData || {};
       const sdDay: number | null = raw.soloDaily && typeof raw.soloDaily.day === 'number' ? raw.soloDaily.day : null;
       const dayOf = (ms: number) => Math.floor((ms + 3600000) / 86400000);
-      const soloWins = items.filter((h) => h.mode === 'SOLO' && h.recordType === 'PARTIE' && h.isWinner === true);
+      // Les points solo sont attribués par manche gagnée (recordType 'MANCHE'), pas par partie.
+      const soloWins = items.filter((h) => h.mode === 'SOLO' && h.recordType === 'MANCHE' && h.isWinner === true);
       const after = sdDay === null
         ? soloWins
         : soloWins.filter((h) => typeof h.createdAt === 'number' && dayOf(h.createdAt) > sdDay);
@@ -1674,20 +1675,20 @@ export const KatikaPlayersTab: React.FC = () => {
                         let hv = '';
                         let hvClass = 'text-slate-300';
                         if (r.soloWinsAfter === 0) {
-                          hv = 'Aucune victoire solo dans le journal cloud après le dernier jour solo du profil : les parties n\'arrivent pas non plus dans le journal (problème en amont, ou joueur hors ligne).';
+                          hv = 'Aucune manche solo gagnée dans le journal cloud après le dernier jour solo du profil : les manches n\'arrivent pas non plus dans le journal (problème en amont, ou joueur hors ligne).';
                           hvClass = 'text-amber-400';
                         } else if (r.soloWinsWithPoints === 0) {
-                          hv = 'Des victoires solo sont dans le journal mais aucune n\'a de point attribué : le calcul des points côté jeu donne zéro.';
+                          hv = 'Des manches solo gagnées sont dans le journal mais aucune n\'a de point attribué : le calcul des points côté jeu donne zéro.';
                           hvClass = 'text-red-400';
                         } else {
-                          hv = `${r.soloWinsWithPoints} victoire(s) solo avec ${r.pointsSum} point(s) attribué(s) dans le journal, mais le profil n'a pas avancé : l'écriture du profil est rejetée (règles Firestore) ou bloquée dans la file hors ligne du joueur.`;
+                          hv = `${r.soloWinsWithPoints} manche(s) solo gagnée(s) avec ${r.pointsSum} point(s) attribué(s) dans le journal, mais le profil n'a pas avancé : l'écriture du profil est rejetée (règles Firestore) ou bloquée dans la file hors ligne du joueur. Le rattrapage progressif devrait la débloquer à la prochaine partie en ligne avec un compte Google.`;
                           hvClass = 'text-red-400';
                         }
                         return (
                           <div className="space-y-1 text-[11px] font-mono text-slate-300">
                             <div>Entrées du journal lues : {r.total} (300 maximum)</div>
                             <div>Dernière entrée du journal : {r.lastEntryMs ? new Date(r.lastEntryMs).toLocaleString('fr-FR', { timeZone: 'Africa/Douala' }) : '—'}</div>
-                            <div>Victoires solo après le {r.afterDayLabel} : {r.soloWinsAfter}</div>
+                            <div>Manches solo gagnées après le {r.afterDayLabel} : {r.soloWinsAfter}</div>
                             <div>Dont avec points attribués : {r.soloWinsWithPoints} (total {r.pointsSum} pts)</div>
                             <div className={`font-semibold ${hvClass}`}>{hv}</div>
                           </div>
