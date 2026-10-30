@@ -25,7 +25,7 @@ export async function getKoraCashConfig(): Promise<KoraCashConfigData> {
     const snap = await getFirebaseAdminAppDb().collection(KORA_CASH_CONFIG_COLLECTION).doc(KORA_CASH_CONFIG_DOC).get();
     return normalizeStoredConfig(snap.exists ? snap.data() : undefined);
   } catch (err) {
-    console.warn('[KoraCash] Lecture de la configuration impossible : configuration par défaut (désactivé, démo) utilisée.', err);
+    console.warn('[KoraCash] Lecture de la configuration impossible : configuration par défaut (désactivé, démo) utilisée.', err instanceof Error ? err.message : String(err));
     return { ...DEFAULT_KORA_CASH_CONFIG_DATA };
   }
 }
