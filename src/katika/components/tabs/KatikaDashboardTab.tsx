@@ -89,27 +89,30 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
     fetchKpis(timeRange);
   }, [timeRange]);
 
-  // Activité réelle (parties, manches, joueurs, présence) : relue à chaque mise à jour des KPIs (période, « Actualiser »).
+  // Activité réelle (parties, manches, joueurs, présence) : lue seulement à la demande (bouton « Charger l'activité »).
+  // Le serveur garde le résultat en mémoire (durée réglable dans katika) : cela ménage le quota gratuit de lectures Firestore.
   const [activity, setActivity] = useState<ActivitySummary | null>(null);
   const [activityLoading, setActivityLoading] = useState<boolean>(false);
-  useEffect(() => {
-    if (!kpis) return;
-    let cancelled = false;
+  const loadActivity = async () => {
     setActivityLoading(true);
-    fetchActivitySummary(timeRange)
-      .then((summary) => {
-        if (!cancelled) setActivity(summary);
-      })
-      .catch((err) => {
-        console.error('Failed to load activity summary:', err);
-      })
-      .finally(() => {
-        if (!cancelled) setActivityLoading(false);
+    try {
+      const summary = await fetchActivitySummary(timeRange);
+      setActivity((previous) => {
+        // Lecture impossible alors qu'on a déjà des chiffres : on les garde, marqués comme anciens, avec la raison.
+        if (summary.loadErrors.length > 0 && previous && previous.loadErrors.length === 0 && previous.dataInfo) {
+          return {
+            ...previous,
+            dataInfo: { ...previous.dataInfo, stale: true, staleMessage: summary.loadErrors[0].replace(/^[^:]*:\s*/, '') },
+          };
+        }
+        return summary;
       });
-    return () => {
-      cancelled = true;
-    };
-  }, [kpis]);
+    } catch (err) {
+      console.error('Failed to load activity summary:', err);
+    } finally {
+      setActivityLoading(false);
+    }
+  };
 
   if (!kpis && loading) {
     return (
@@ -348,6 +351,8 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
       <KatikaActivityCards
         activity={activity}
         loading={activityLoading}
+        onLoad={() => void loadActivity()}
+        range={timeRange}
         rangeLabel={timeRange === 'TODAY' ? "Aujourd'hui" : timeRange === '24H' ? '24 heures' : timeRange === '7D' ? '7 jours' : 'Tout'}
       />
 

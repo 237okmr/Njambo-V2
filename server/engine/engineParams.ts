@@ -473,6 +473,11 @@ export const ENGINE_PARAMS: ParamDef[] = [
     min: 5, max: 60, default: 20, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
     help: 'Temps maximal accordé à une réponse de Campay (création d\'un dépôt, relecture d\'un paiement) avant d\'abandonner l\'appel. Un dépôt dont l\'appel échoue ainsi reste en attente : il n\'est jamais perdu.',
   },
+  {
+    key: 'katikaActivityCacheSeconds', label: 'Durée de conservation de l\'activité du tableau de bord', unit: 's',
+    min: 0, max: 3600, default: 300, group: 'katika', scope: 'server', effect: 'immediate', advanced: true, allowZero: true,
+    help: 'Durée pendant laquelle le serveur réutilise le dernier résumé d\'activité (parties, manches, présence) au lieu de relire Firestore. Plus la durée est longue, moins le quota gratuit de lectures est consommé. 0 = pas de cache.',
+  },
 ];
 
 /** Choix de chrono proposés à la création d'une table (une seule liste pour tous les écrans). */

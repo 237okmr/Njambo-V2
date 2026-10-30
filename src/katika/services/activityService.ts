@@ -1,7 +1,5 @@
-import { collection, documentId, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
-import { getDoualaDateKey } from '../../services/masteryConfig';
 import { getPublicParamNumber } from '../../services/publicConfig';
+import { tikaFetch } from './tikaFetch';
 
 /**
  * Activité réelle du jeu pour katika : parties, manches, joueurs (qui a lancé / terminé) et présence
@@ -13,9 +11,8 @@ import { getPublicParamNumber } from '../../services/publicConfig';
  */
 export type ActivityRange = 'TODAY' | '24H' | '7D' | 'ALL';
 
+/** Même plafond que la lecture serveur (server/katika/activityData.ts) : au plafond, les chiffres sont signalés partiels. */
 const MAX_JOURNAL_DOCS = 3000;
-const MAX_FICHE_DOCS = 1000;
-const MAX_PRESENCE_DOCS = 400;
 const SERVER_SCHEMA_VERSION = 2;
 const KORA_WIN_TYPES = ['KORA', 'DOUBLE_KORA'];
 
@@ -60,6 +57,16 @@ export interface ActivitySummary {
   players: ActivityPlayerRow[];
   truncated: boolean;
   loadErrors: string[];
+  /** D'où viennent les chiffres : heure de la lecture, copie gardée par le serveur, ancien résultat (quota atteint). Absent d'un calcul pur. */
+  dataInfo?: ActivityDataInfo;
+}
+
+export interface ActivityDataInfo {
+  range: ActivityRange;
+  fetchedAt: number;
+  fromCache: boolean;
+  stale: boolean;
+  staleMessage: string;
 }
 
 export interface ActivityInput {
@@ -248,53 +255,47 @@ function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
-/** Lit les trois sources puis calcule le résumé. Chaque lecture qui échoue est signalée dans loadErrors. */
+/** Libellés des trois sources : l'écran reconnaît une source indisponible à ces débuts de message. */
+const SOURCE_LABELS = ['journal des parties', 'fiches de manche', 'présence quotidienne'];
+
+/**
+ * Demande les données brutes au serveur (route /api/katika/activity-data, lecture gardée en mémoire côté serveur),
+ * puis calcule le résumé. Si la lecture échoue, les trois sources sont signalées indisponibles avec le message du serveur.
+ */
 export async function fetchActivitySummary(range: ActivityRange): Promise<ActivitySummary> {
   const nowMs = Date.now();
   const cutoffMs = getActivityCutoff(range, nowMs);
   const abandonAfterMs = getPublicParamNumber('recordInactivityAbandonMinutes') * 60 * 1000;
-  const loadErrors: string[] = [];
 
-  let journal: AnyDoc[] = [];
+  const failure = (message: string): ActivitySummary => {
+    const summary = computeActivitySummary({ journal: [], fiches: [], presenceDays: [], cutoffMs, nowMs, abandonAfterMs });
+    summary.loadErrors = SOURCE_LABELS.map((label) => `${label} : ${message}`);
+    return summary;
+  };
+
   try {
-    const constraints = cutoffMs > 0
-      ? [where('createdAt', '>=', cutoffMs), orderBy('createdAt', 'desc'), limit(MAX_JOURNAL_DOCS)]
-      : [orderBy('createdAt', 'desc'), limit(MAX_JOURNAL_DOCS)];
-    const snap = await getDocs(query(collection(db, 'njambo_partie_journal'), ...constraints));
-    journal = snap.docs.map((d) => d.data() as AnyDoc);
+    const res = await tikaFetch(`/api/katika/activity-data?range=${range}`);
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data || data.success !== true) {
+      return failure(String(data?.error || `lecture impossible (code ${res.status})`));
+    }
+    const summary = computeActivitySummary({
+      journal: Array.isArray(data.journal) ? (data.journal as AnyDoc[]) : [],
+      fiches: Array.isArray(data.fiches) ? (data.fiches as AnyDoc[]) : [],
+      presenceDays: Array.isArray(data.presenceDays) ? (data.presenceDays as AnyDoc[]) : [],
+      cutoffMs,
+      nowMs,
+      abandonAfterMs,
+    });
+    summary.dataInfo = {
+      range,
+      fetchedAt: Number(data.fetchedAt) || nowMs,
+      fromCache: data.fromCache === true,
+      stale: data.stale === true,
+      staleMessage: typeof data.staleMessage === 'string' ? data.staleMessage : '',
+    };
+    return summary;
   } catch (err) {
-    loadErrors.push(`journal des parties : ${errorMessage(err)}`);
+    return failure(errorMessage(err));
   }
-
-  let fiches: AnyDoc[] = [];
-  try {
-    const constraints = cutoffMs > 0
-      ? [where('createdAt', '>=', cutoffMs), orderBy('createdAt', 'desc'), limit(MAX_FICHE_DOCS)]
-      : [orderBy('createdAt', 'desc'), limit(MAX_FICHE_DOCS)];
-    const snap = await getDocs(query(collection(db, 'njambo_game_records'), ...constraints));
-    fiches = snap.docs.map((d) => d.data() as AnyDoc);
-  } catch (err) {
-    loadErrors.push(`fiches de manche : ${errorMessage(err)}`);
-  }
-
-  let presenceDays: AnyDoc[] = [];
-  try {
-    const startKey = cutoffMs > 0 ? getDoualaDateKey(cutoffMs) : '0000-00-00';
-    const endKey = getDoualaDateKey(nowMs);
-    const snap = await getDocs(
-      query(
-        collection(db, 'server_metrics'),
-        where(documentId(), '>=', `active_${startKey}`),
-        where(documentId(), '<=', `active_${endKey}`),
-        limit(MAX_PRESENCE_DOCS)
-      )
-    );
-    presenceDays = snap.docs.map((d) => d.data() as AnyDoc);
-  } catch (err) {
-    loadErrors.push(`présence quotidienne : ${errorMessage(err)}`);
-  }
-
-  const summary = computeActivitySummary({ journal, fiches, presenceDays, cutoffMs, nowMs, abandonAfterMs });
-  summary.loadErrors = loadErrors;
-  return summary;
 }

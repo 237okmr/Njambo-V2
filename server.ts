@@ -32,6 +32,7 @@ import { createDeposit, confirmDeposit } from './server/cash/depositStore';
 import { parseDepositAmount, DepositError } from './server/cash/depositRules';
 import { CashLedgerError } from './server/cash/cashTypes';
 import { verifyFirebaseIdToken, listAdminUsers, setAdminUserClaim, getFirebaseAdminDb, getFirebaseAdminAppDb } from './server/firebaseAdmin';
+import { isActivityFailure, katikaActivityData, toActivityBucket } from './server/katika/activityData';
 import { computeRepairPlan } from './server/profileRepair';
 import { collection, getDocs, query, limit, orderBy, startAfter } from 'firebase/firestore';
 import { db } from './src/lib/firebase';
@@ -1475,6 +1476,29 @@ async function startServer() {
     const updated = RoomManager.updateEngineConfig(req.body || {});
     const persisted = await persistEngineConfigToStore();
     res.json({ ...updated, configVersion: getEngineConfigVersion(), persisted });
+  });
+
+  // Activité réelle du jeu pour le tableau de bord : lecture faite par le serveur et gardée en mémoire (durée réglable dans katika)
+  app.get('/api/katika/activity-data', async (req, res) => {
+    const bucket = toActivityBucket(req.query.range);
+    if (!bucket) {
+      return res.status(400).json({ success: false, error: 'Période inconnue.' });
+    }
+    const result = await katikaActivityData.get(bucket);
+    res.set('Cache-Control', 'no-store');
+    if (isActivityFailure(result)) {
+      return res.status(503).json({ success: false, code: result.code, error: result.message });
+    }
+    return res.json({
+      success: true,
+      journal: result.data.journal,
+      fiches: result.data.fiches,
+      presenceDays: result.data.presenceDays,
+      fetchedAt: result.fetchedAt,
+      fromCache: result.fromCache,
+      stale: result.stale,
+      staleMessage: result.staleMessage,
+    });
   });
 
   // Kora Cash — identifiants prestataire (jamais exposés en clair)

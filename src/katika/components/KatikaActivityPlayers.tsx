@@ -87,7 +87,9 @@ export const KatikaActivityPlayers: React.FC<KatikaActivityPlayersProps> = ({ ac
       )}
 
       {activity === null ? (
-        <div className="py-6 text-center text-xs text-slate-400 font-mono">Chargement de l'activité des joueurs…</div>
+        <div className="py-6 text-center text-xs text-slate-400 font-mono">
+          {loading ? "Chargement de l'activité des joueurs…" : "Activité non chargée : utilisez « Charger l'activité » en haut du tableau de bord."}
+        </div>
       ) : filtered.length === 0 ? (
         <div className="py-6 text-center text-xs text-slate-400">Aucun joueur correspondant sur cette période.</div>
       ) : (
