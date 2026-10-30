@@ -906,7 +906,8 @@ async function startServer() {
     try {
       const cfg = await getKoraCashConfig();
       res.json({ success: true, ...toPublicStatus(cfg) });
-    } catch (_err) {
+    } catch (err) {
+      console.warn('[KoraCash] Lecture du statut public impossible, statut « désactivé » renvoyé.', err);
       res.json({ success: true, enabled: false, environment: 'DEMO', depositMode: 'SIMULATED' });
     }
   });
