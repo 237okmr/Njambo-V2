@@ -31,6 +31,7 @@ import { createDeposit, confirmDeposit } from './server/cash/depositStore';
 import { parseDepositAmount, DepositError } from './server/cash/depositRules';
 import { CashLedgerError } from './server/cash/cashTypes';
 import { verifyFirebaseIdToken, listAdminUsers, setAdminUserClaim, getFirebaseAdminDb, getFirebaseAdminAppDb } from './server/firebaseAdmin';
+import { computeRepairPlan } from './server/profileRepair';
 import { collection, getDocs, query, limit, orderBy, startAfter } from 'firebase/firestore';
 import { db } from './src/lib/firebase';
 import {
@@ -1228,6 +1229,64 @@ async function startServer() {
     } catch (err: any) {
       console.error('[Katika] Lecture historique joueur impossible:', err);
       return res.status(500).json({ success: false, error: err?.message || 'Lecture de l\'historique impossible.' });
+    }
+  });
+
+  // Réparation d'un profil joueur en retard sur son journal (droits serveur, réservée à katika par le middleware admin ci-dessus).
+  // Corps : { apply?: boolean, alreadyCredited?: number, targets?: { manchesWon, partiesWon, koraCount } }.
+  // Sans apply=true, renvoie seulement l'aperçu avant/après (aucune écriture).
+  app.post('/api/katika/repair-profile/:uid', async (req, res) => {
+    try {
+      const uid = String(req.params.uid || '').trim();
+      if (!uid || uid.length > 128 || uid.includes('/')) {
+        return res.status(400).json({ success: false, error: 'Identifiant joueur invalide.' });
+      }
+      const body: any = req.body || {};
+      const t: any = body.targets || {};
+      const targets = {
+        manchesWon: typeof t.manchesWon === 'number' ? t.manchesWon : undefined,
+        partiesWon: typeof t.partiesWon === 'number' ? t.partiesWon : undefined,
+        koraCount: typeof t.koraCount === 'number' ? t.koraCount : undefined,
+      };
+      const alreadyCredited = typeof body.alreadyCredited === 'number' && isFinite(body.alreadyCredited) ? body.alreadyCredited : 0;
+      const adminDb = getFirebaseAdminAppDb();
+      const userRef = adminDb.collection('users').doc(uid);
+      const userSnap = await userRef.get();
+      if (!userSnap.exists) {
+        return res.status(404).json({ success: false, error: 'Profil cloud introuvable.' });
+      }
+      const histSnap = await userRef.collection('history').orderBy('createdAt', 'desc').limit(300).get();
+      const journal = histSnap.docs.map((d) => {
+        const x = d.data() as any;
+        return {
+          mode: typeof x.mode === 'string' ? x.mode : null,
+          recordType: typeof x.recordType === 'string' ? x.recordType : null,
+          isWinner: x.isWinner === true,
+          createdAt: typeof x.createdAt === 'number' ? x.createdAt : null,
+          masteryPointsAwarded: typeof x.masteryPointsAwarded === 'number' ? x.masteryPointsAwarded : null,
+        };
+      });
+      const plan = computeRepairPlan(userSnap.data(), journal, targets, alreadyCredited, Date.now());
+      if (body.apply !== true) {
+        return res.json({ success: true, applied: false, plan });
+      }
+      if (plan.nothingToDo) {
+        return res.json({ success: true, applied: false, plan });
+      }
+      const patch: Record<string, any> = {
+        'stats.masteryScore': plan.scoreAfter,
+        soloDaily: plan.soloDailyAfter,
+        updatedAt: Date.now(),
+      };
+      plan.counters.forEach((c) => {
+        patch[`stats.${c.key}`] = c.after;
+      });
+      await userRef.update(patch);
+      console.log('[Katika] Profil joueur réparé', { uid, scoreBefore: plan.scoreBefore, scoreAfter: plan.scoreAfter, counters: plan.counters.length });
+      return res.json({ success: true, applied: true, plan });
+    } catch (err: any) {
+      console.error('[Katika] Réparation du profil impossible:', err);
+      return res.status(500).json({ success: false, error: err?.message || 'Réparation impossible.' });
     }
   });
 

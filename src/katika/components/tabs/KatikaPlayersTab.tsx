@@ -148,6 +148,47 @@ export const KatikaPlayersTab: React.FC = () => {
     }
   };
 
+  // Réparation du profil cloud (aperçu puis application), via la route serveur réservée à katika.
+  const [repairAlready, setRepairAlready] = useState<number>(0);
+  const [repairState, setRepairState] = useState<{
+    playerId: string;
+    loading: boolean;
+    error: string | null;
+    plan: any | null;
+    applied: boolean;
+    alreadyCredited: number;
+  } | null>(null);
+
+  const runRepair = async (player: KatikaPlayer, apply: boolean, alreadyCredited: number) => {
+    setRepairState({ playerId: player.id, loading: true, error: null, plan: null, applied: false, alreadyCredited });
+    try {
+      const pl: any = player;
+      const res = await tikaFetch(`/api/katika/repair-profile/${encodeURIComponent(player.id)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          apply,
+          alreadyCredited,
+          targets: { manchesWon: pl.victories, partiesWon: pl.totalPartiesWon, koraCount: pl.koraCount },
+        }),
+      });
+      const json: any = await res.json().catch(() => null);
+      if (!res.ok || !json || json.success !== true) {
+        throw new Error((json && json.error) || `Réponse serveur ${res.status}`);
+      }
+      setRepairState({ playerId: player.id, loading: false, error: null, plan: json.plan, applied: json.applied === true, alreadyCredited });
+    } catch (err: any) {
+      setRepairState({
+        playerId: player.id,
+        loading: false,
+        error: err && err.message ? String(err.message) : 'Réparation impossible.',
+        plan: null,
+        applied: false,
+        alreadyCredited,
+      });
+    }
+  };
+
   // Track open row dropdown
   const [openPlayerDropdownId, setOpenPlayerDropdownId] = useState<string | null>(null);
 
@@ -1667,6 +1708,67 @@ export const KatikaPlayersTab: React.FC = () => {
                       >
                         {histDiag?.loading === true && histDiag.playerId === dossierPlayer.id ? 'Analyse en cours…' : 'Analyser l\'historique cloud'}
                       </button>
+                      <div className="pt-2 space-y-2">
+                        <div className="text-[11px] font-mono text-slate-400">
+                          Réparer le profil cloud : aligne les compteurs sur les enregistrements et crédite les points solo du journal non encore comptés.
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <label className="text-[11px] font-mono text-slate-300" htmlFor="repair-already">Points déjà crédités depuis le gel</label>
+                          <input
+                            id="repair-already"
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            defaultValue={0}
+                            className="w-24 px-2 py-1 rounded bg-slate-900 border border-slate-700 text-[11px] font-mono text-white"
+                            onChange={(e) => {
+                              const v = parseFloat(e.target.value);
+                              setRepairAlready(isFinite(v) && v > 0 ? v : 0);
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => void runRepair(dossierPlayer, false, repairAlready)}
+                            disabled={repairState?.loading === true}
+                            className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-[11px] font-mono font-bold text-white cursor-pointer disabled:opacity-50"
+                          >
+                            Aperçu de la réparation
+                          </button>
+                        </div>
+                        {repairState && repairState.playerId === dossierPlayer.id && repairState.error && (
+                          <div className="text-[11px] font-mono font-semibold text-red-400">Réparation impossible : {repairState.error}</div>
+                        )}
+                        {repairState && repairState.playerId === dossierPlayer.id && repairState.plan && (() => {
+                          const p = repairState.plan;
+                          return (
+                            <div className="space-y-1 text-[11px] font-mono text-slate-300">
+                              <div>Score de maîtrise : {p.scoreBefore} → {p.scoreAfter} (+{p.scoreCredit} ; journal {p.journalPoints} pts, déjà crédités {p.alreadyCredited})</div>
+                              <div>Jour solo : {p.soloDailyBefore ? `${p.soloDailyBefore.day} (${p.soloDailyBefore.points}/30)` : 'aucun'} → {p.soloDailyAfter.day} ({p.soloDailyAfter.points}/30)</div>
+                              {p.counters.map((c: any) => (
+                                <div key={c.key}>{c.key} : {c.before} → {c.after}</div>
+                              ))}
+                              {repairState.applied ? (
+                                <div className="font-semibold text-emerald-400">Réparation appliquée au profil cloud.</div>
+                              ) : p.nothingToDo ? (
+                                <div className="font-semibold text-emerald-400">Rien à réparer : le profil cloud est déjà à jour.</div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (window.confirm('Appliquer cette réparation au profil cloud du joueur ?')) {
+                                      void runRepair(dossierPlayer, true, repairState.alreadyCredited);
+                                    }
+                                  }}
+                                  disabled={repairState.loading}
+                                  className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-[11px] font-mono font-bold text-white cursor-pointer disabled:opacity-50"
+                                >
+                                  Appliquer la réparation
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </div>
                       {histDiag && histDiag.playerId === dossierPlayer.id && histDiag.error && (
                         <div className="text-[11px] font-mono font-semibold text-red-400">Lecture impossible : {histDiag.error}</div>
                       )}
