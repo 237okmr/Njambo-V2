@@ -23,7 +23,8 @@ import { runLegacyAction, createFirestoreLegacyStore } from './server/rooms/lega
 import { isKoraMoment } from './src/katika/visual/situation';
 import { pushService, buildGameUrl } from './server/pushService';
 import { saveProviderCredentials, getProviderCredentialsMasked } from './server/cash/cashSecrets';
-import { testCampayConnection } from './server/cash/campayClient';
+import { testCampayConnection, createLiveCampayDeps } from './server/cash/campayClient';
+import { startCampayDeposit, verifyMyDeposit, handleCampayWebhook } from './server/cash/campayDeposits';
 import { getKoraCashConfig, updateKoraCashConfig } from './server/cash/cashConfigStore';
 import { parseConfigPatch, toPublicStatus } from './server/cash/cashConfigRules';
 import { getWallet } from './server/cash/walletLedger';
@@ -974,6 +975,73 @@ async function startServer() {
       res.status(500).json({ success: false, error: 'Dépôt impossible.' });
     }
   });
+
+  // Kora Cash — dépôt Mobile Money par Campay (bac à sable uniquement tant que le retrait n'est pas livré).
+  // Ni le joueur ni la notification seule ne décident du crédit : voir server/cash/campayDeposits.ts.
+  app.post('/api/cash/deposit/campay', express.json(), async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const player = await requireGooglePlayer(req, res);
+    if (!player) return;
+    try {
+      const cfg = await getKoraCashConfig();
+      if (!cfg.isEnabled) {
+        return res.status(403).json({ success: false, error: 'Kora Cash est désactivé.' });
+      }
+      if (cfg.environment !== 'DEMO') {
+        return res.status(403).json({ success: false, error: 'Le dépôt Mobile Money réel n\'est pas encore ouvert.' });
+      }
+      if (cfg.activeProviderId !== 'campay') {
+        return res.status(403).json({ success: false, error: 'Le dépôt Mobile Money n\'est pas activé.' });
+      }
+      const result = await startCampayDeposit(createLiveCampayDeps(), {
+        uid: player.uid,
+        amount: req.body?.amount,
+        phone: req.body?.phone,
+      });
+      const { httpStatus, message, ...rest } = result;
+      res.status(httpStatus).json(result.success ? { ...rest, message } : { ...rest, error: message });
+    } catch (err) {
+      if (err instanceof DepositError || err instanceof CashLedgerError) {
+        return res.status(400).json({ success: false, error: err.message });
+      }
+      console.error('[KoraCash] Dépôt Campay impossible.', err);
+      res.status(500).json({ success: false, error: 'Dépôt impossible.' });
+    }
+  });
+
+  // Kora Cash — « Vérifier mon paiement » : relit le paiement chez Campay et crédite seulement s'il est confirmé.
+  // Pas de contrôle d'activation : un paiement déjà fait doit pouvoir être retrouvé même si Kora Cash est coupé depuis.
+  app.post('/api/cash/deposit/:id/verify', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const player = await requireGooglePlayer(req, res);
+    if (!player) return;
+    try {
+      const result = await verifyMyDeposit(createLiveCampayDeps(), { uid: player.uid, depositId: req.params.id });
+      const { httpStatus, message, ...rest } = result;
+      res.status(httpStatus).json(result.success ? { ...rest, message } : { ...rest, error: message });
+    } catch (err) {
+      if (err instanceof DepositError || err instanceof CashLedgerError) {
+        return res.status(400).json({ success: false, error: err.message });
+      }
+      console.error('[KoraCash] Vérification du dépôt impossible.', err);
+      res.status(500).json({ success: false, error: 'Vérification impossible.' });
+    }
+  });
+
+  // Kora Cash — notification de Campay (GET avec paramètres d'URL ou POST JSON). Publique par nature : la signature
+  // est vérifiée puis le paiement relu chez Campay avant tout crédit. La réponse ne contient aucune donnée sensible.
+  const campayWebhookHandler = async (req: any, res: any) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const result = await handleCampayWebhook(createLiveCampayDeps(), { query: req.query, body: req.body });
+      res.status(result.httpStatus).json({ success: result.success });
+    } catch (err) {
+      console.error('[KoraCash] Notification Campay : traitement impossible.', err);
+      res.status(500).json({ success: false });
+    }
+  };
+  app.get('/api/cash/campay/webhook', campayWebhookHandler);
+  app.post('/api/cash/campay/webhook', campayWebhookHandler);
 
   // Katika Admin Auth Protection Middleware (Firebase ID Token verification)
   const KATIKA_ADMIN_EMAIL = (process.env.KATIKA_ADMIN_EMAIL || '237okmr@gmail.com').toLowerCase();

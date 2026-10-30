@@ -51,8 +51,16 @@ describe('Kora Cash — configuration : règles pures', () => {
     assert.deepEqual(cfg, { isEnabled: true, activeProviderId: 'notchpay', environment: 'LIVE', updatedAt: 1234, updatedBy: 'admin@x.com' });
   });
 
-  it('le statut public ne révèle ni prestataire ni auteur de modification', () => {
+  it('le statut public ne révèle ni le nom du prestataire ni l\'auteur de modification', () => {
     const pub = toPublicStatus({ isEnabled: true, activeProviderId: 'campay', environment: 'LIVE', updatedAt: 9, updatedBy: 'admin@x.com' });
-    assert.deepEqual(pub, { enabled: true, environment: 'LIVE' });
+    assert.deepEqual(pub, { enabled: true, environment: 'LIVE', depositMode: 'CAMPAY' });
+    assert.equal(JSON.stringify(pub).includes('admin@x.com'), false);
+  });
+
+  it('la méthode de dépôt suit le prestataire actif : Campay donne Mobile Money, tout le reste le dépôt fictif', () => {
+    const base = { isEnabled: true, environment: 'DEMO' as const, updatedAt: 0 };
+    assert.equal(toPublicStatus({ ...base, activeProviderId: 'campay' }).depositMode, 'CAMPAY');
+    assert.equal(toPublicStatus({ ...base, activeProviderId: 'notchpay' }).depositMode, 'SIMULATED');
+    assert.equal(toPublicStatus({ ...base, activeProviderId: null }).depositMode, 'SIMULATED');
   });
 });

@@ -468,6 +468,11 @@ export const ENGINE_PARAMS: ParamDef[] = [
     min: 1, max: 200, default: 20, group: 'katika', scope: 'server', effect: 'immediate',
     help: 'Plafond de requêtes IA du copilote Katika sur une heure glissante (protège le quota Gemini gratuit). Un visuel compte pour 1 à 3 requêtes selon les relances.',
   },
+  {
+    key: 'cashProviderTimeoutSeconds', label: 'Délai maximal d\'un appel au prestataire de paiement', unit: 's',
+    min: 5, max: 60, default: 20, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Temps maximal accordé à une réponse de Campay (création d\'un dépôt, relecture d\'un paiement) avant d\'abandonner l\'appel. Un dépôt dont l\'appel échoue ainsi reste en attente : il n\'est jamais perdu.',
+  },
 ];
 
 /** Choix de chrono proposés à la création d'une table (une seule liste pour tous les écrans). */

@@ -93,7 +93,17 @@ export function normalizeStoredConfig(data: unknown): KoraCashConfigData {
   };
 }
 
-/** Ce que l'application des joueurs a le droit de savoir : rien d'autre que « activé ou non » et l'environnement. */
-export function toPublicStatus(cfg: KoraCashConfigData): { enabled: boolean; environment: KoraCashEnvironment } {
-  return { enabled: cfg.isEnabled === true, environment: cfg.environment };
+/** Méthode de dépôt proposée au joueur : Mobile Money si Campay est le prestataire actif, sinon dépôt fictif. */
+export type KoraCashDepositMode = 'SIMULATED' | 'CAMPAY';
+
+/**
+ * Ce que l'application des joueurs a le droit de savoir : « activé ou non », l'environnement et la méthode de dépôt.
+ * Jamais le nom du prestataire, ni l'auteur d'une modification, ni aucune clé. Le choix du prestataire reste à katika.
+ */
+export function toPublicStatus(cfg: KoraCashConfigData): { enabled: boolean; environment: KoraCashEnvironment; depositMode: KoraCashDepositMode } {
+  return {
+    enabled: cfg.isEnabled === true,
+    environment: cfg.environment,
+    depositMode: cfg.activeProviderId === 'campay' ? 'CAMPAY' : 'SIMULATED',
+  };
 }

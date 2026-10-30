@@ -21,6 +21,10 @@ export interface DepositDoc {
   createdAt: number;
   updatedAt: number;
   providerRef?: string;
+  /** Référence de la collecte chez Campay, enregistrée dès que Campay accepte la demande de paiement. */
+  campayReference?: string;
+  /** Motif d'un échec explicite du prestataire (texte court, jamais de secret). */
+  failReason?: string;
 }
 
 export type DepositErrorCode = 'INVALID_AMOUNT' | 'DEPOSIT_NOT_FOUND' | 'DEPOSIT_OWNER_MISMATCH' | 'DEPOSIT_FAILED' | 'INVALID_DEPOSIT_ID';

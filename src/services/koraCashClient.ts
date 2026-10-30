@@ -45,6 +45,7 @@ export async function fetchKoraCashStatus(): Promise<KoraCashPublicStatus | null
     return {
       enabled: data.enabled === true,
       environment: data.environment === 'LIVE' ? 'LIVE' : 'DEMO',
+      depositMode: data.depositMode === 'CAMPAY' ? 'CAMPAY' : 'SIMULATED',
     };
   } catch {
     return null;
@@ -76,4 +77,51 @@ export async function simulateDeposit(amount: number): Promise<SimulatedDepositR
     amount: Number(data.deposit?.amount) || amount,
     wallet: toWallet(data.wallet),
   };
+}
+
+export type CampayDepositState = 'PENDING' | 'SUCCESS' | 'FAILED';
+
+export interface CampayDepositStatus {
+  depositId: string;
+  state: CampayDepositState;
+  message: string;
+  /** Présent seulement quand le paiement vient d'être crédité : le nouveau solde. */
+  wallet: KoraCashWallet | null;
+}
+
+function toCampayStatus(data: any): CampayDepositStatus {
+  const state: CampayDepositState = data?.state === 'SUCCESS' ? 'SUCCESS' : data?.state === 'FAILED' ? 'FAILED' : 'PENDING';
+  return {
+    depositId: String(data?.depositId || ''),
+    state,
+    message: String(data?.message || data?.error || ''),
+    wallet: data?.wallet ? toWallet(data.wallet) : null,
+  };
+}
+
+/** Lance un dépôt Mobile Money (bac à sable). Le serveur valide le montant et le numéro, et décide seul du crédit. */
+export async function startCampayDeposit(amount: number, phone: string): Promise<CampayDepositStatus> {
+  const res = await fetch('/api/cash/deposit/campay', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+    body: JSON.stringify({ amount, phone }),
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data?.success) {
+    throw new Error(data?.error || 'Le dépôt a échoué.');
+  }
+  return toCampayStatus(data);
+}
+
+/** « Vérifier mon paiement » : le serveur relit le paiement chez Campay et crédite seulement s'il est confirmé. */
+export async function verifyCampayDeposit(depositId: string): Promise<CampayDepositStatus> {
+  const res = await fetch(`/api/cash/deposit/${encodeURIComponent(depositId)}/verify`, {
+    method: 'POST',
+    headers: await authHeaders(),
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data?.success) {
+    throw new Error(data?.error || 'Vérification impossible pour le moment.');
+  }
+  return toCampayStatus(data);
 }

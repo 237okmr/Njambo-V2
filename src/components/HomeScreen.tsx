@@ -531,7 +531,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       </main>
 
       {isKoraCashOpen && koraCashStatus && koraCashEntry !== 'COMING_SOON' && (
-        <KoraCashModal environment={koraCashStatus.environment} onClose={() => setIsKoraCashOpen(false)} />
+        <KoraCashModal environment={koraCashStatus.environment} depositMode={koraCashStatus.depositMode} onClose={() => setIsKoraCashOpen(false)} />
       )}
 
       {/* Bottom Navigation Dock (Thumb-friendly & Streamlined) */}

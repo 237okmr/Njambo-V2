@@ -4,8 +4,9 @@ import { motion } from 'motion/react';
 import { Wallet, X, Loader2, Lock, Coins, ShieldAlert, CheckCircle2 } from 'lucide-react';
 import { usePlayerProfile } from '../context/PlayerProfileContext';
 import { GoogleIcon } from './common/GoogleIcon';
-import { fetchWallet, simulateDeposit, KoraCashWallet } from '../services/koraCashClient';
+import { fetchWallet, simulateDeposit, startCampayDeposit, verifyCampayDeposit, KoraCashWallet } from '../services/koraCashClient';
 import {
+  KoraCashDepositMode,
   KoraCashEnvironment,
   QUICK_DEPOSIT_AMOUNTS,
   formatFcfa,
@@ -15,12 +16,13 @@ import {
 
 interface KoraCashModalProps {
   environment: KoraCashEnvironment;
+  depositMode?: KoraCashDepositMode;
   onClose: () => void;
 }
 
-export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, onClose }) => {
+export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depositMode = 'SIMULATED', onClose }) => {
   const { isLoggedIn, loginWithGoogle } = usePlayerProfile();
-  const ui = getDepositUi(environment);
+  const ui = getDepositUi(environment, depositMode);
 
   const [wallet, setWallet] = useState<KoraCashWallet | null>(null);
   const [loadingWallet, setLoadingWallet] = useState<boolean>(false);
@@ -29,6 +31,9 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, onClo
   const [typed, setTyped] = useState<string>('');
   const [depositing, setDepositing] = useState<boolean>(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [phone, setPhone] = useState<string>('');
+  const [pendingDeposit, setPendingDeposit] = useState<{ id: string; text: string } | null>(null);
+  const [verifying, setVerifying] = useState<boolean>(false);
 
   const loadWallet = useCallback(async () => {
     setLoadingWallet(true);
@@ -77,15 +82,49 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, onClo
 
     setDepositing(true);
     try {
-      const result = await simulateDeposit(amount);
-      setWallet(result.wallet);
-      setSelectedQuick(null);
-      setTyped('');
-      setMessage({ type: 'success', text: `${formatFcfa(result.amount)} fictifs ajoutés à ton solde.` });
+      if (ui.needsPhone) {
+        const started = await startCampayDeposit(amount, phone);
+        setPendingDeposit({ id: started.depositId, text: started.message });
+        setMessage(null);
+      } else {
+        const result = await simulateDeposit(amount);
+        setWallet(result.wallet);
+        setSelectedQuick(null);
+        setTyped('');
+        setMessage({ type: 'success', text: `${formatFcfa(result.amount)} fictifs ajoutés à ton solde.` });
+      }
     } catch (err) {
       setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Le dépôt a échoué.' });
     } finally {
       setDepositing(false);
+    }
+  };
+
+  const handleVerify = async () => {
+    if (!pendingDeposit) return;
+    setVerifying(true);
+    try {
+      const status = await verifyCampayDeposit(pendingDeposit.id);
+      if (status.state === 'SUCCESS') {
+        if (status.wallet) {
+          setWallet(status.wallet);
+        } else {
+          await loadWallet();
+        }
+        setPendingDeposit(null);
+        setSelectedQuick(null);
+        setTyped('');
+        setMessage({ type: 'success', text: 'Paiement confirmé : ton solde de test est crédité.' });
+      } else if (status.state === 'FAILED') {
+        setPendingDeposit(null);
+        setMessage({ type: 'error', text: status.message || 'Le paiement a échoué.' });
+      } else {
+        setPendingDeposit({ id: pendingDeposit.id, text: status.message || 'Paiement toujours en attente.' });
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Vérification impossible.' });
+    } finally {
+      setVerifying(false);
     }
   };
 
@@ -220,15 +259,45 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, onClo
                     aria-label="Autre montant en FCFA"
                     className="w-full h-10 px-3 rounded-xl bg-slate-900 border border-slate-700 focus:border-amber-400 outline-none text-xs text-white placeholder:text-slate-500"
                   />
+                  {ui.needsPhone && (
+                    <input
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      value={phone}
+                      disabled={depositing || pendingDeposit !== null}
+                      onChange={(e) => {
+                        setPhone(e.target.value);
+                        setMessage(null);
+                      }}
+                      placeholder="Ton numéro Mobile Money (ex. 677 12 34 56)"
+                      aria-label="Numéro Mobile Money"
+                      className="w-full h-10 px-3 rounded-xl bg-slate-900 border border-slate-700 focus:border-amber-400 outline-none text-xs text-white placeholder:text-slate-500"
+                    />
+                  )}
                   <button
                     type="button"
-                    disabled={depositing}
+                    disabled={depositing || pendingDeposit !== null}
                     onClick={() => void handleDeposit()}
                     className="w-full h-10 rounded-xl bg-gradient-to-r from-amber-400 to-amber-600 text-slate-950 font-black text-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
                   >
                     {depositing ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                     <span>{ui.buttonLabel}</span>
                   </button>
+                  {pendingDeposit && (
+                    <div className="flex flex-col gap-2 px-3 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-100">
+                      <span className="font-bold">{pendingDeposit.text}</span>
+                      <button
+                        type="button"
+                        disabled={verifying}
+                        onClick={() => void handleVerify()}
+                        className="w-full h-9 rounded-xl bg-slate-800 hover:bg-slate-700 border border-amber-500/40 text-amber-200 font-black text-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                      >
+                        {verifying ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                        <span>Vérifier mon paiement</span>
+                      </button>
+                    </div>
+                  )}
                   {message && (
                     <div
                       className={`flex items-start gap-2 text-[11px] font-bold ${

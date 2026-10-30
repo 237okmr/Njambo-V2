@@ -70,4 +70,15 @@ describe('Kora Cash joueur — format et saisie', () => {
     assert.equal(live.canDeposit, false);
     assert.doesNotMatch(live.banner, /fictif/);
   });
+
+  it('en démo avec Campay : paiement de test, numéro demandé, aucun argent réel débité', () => {
+    const ui = getDepositUi('DEMO', 'CAMPAY');
+    assert.equal(ui.canDeposit, true);
+    assert.equal(ui.needsPhone, true);
+    assert.match(ui.banner, /test/);
+    assert.match(ui.banner, /Aucun argent réel/);
+    assert.match(ui.buttonLabel, /Mobile Money/);
+    assert.equal(getDepositUi('DEMO').needsPhone, false);
+    assert.equal(getDepositUi('LIVE', 'CAMPAY').canDeposit, false);
+  });
 });

@@ -42,6 +42,38 @@ export async function getDeposit(id: string): Promise<DepositDoc | null> {
   return snap.exists ? (snap.data() as DepositDoc) : null;
 }
 
+/** Enregistre la référence Campay d'une collecte lancée. Sans effet si le dépôt a déjà une référence ou n'est plus en attente. */
+export async function attachCampayReference(id: string, campayReference: string): Promise<DepositDoc> {
+  if (!isValidDepositId(id)) throw new DepositError('INVALID_DEPOSIT_ID', 'Identifiant de dépôt invalide.');
+  const db = getFirebaseAdminAppDb();
+  const ref = db.collection(CASH_DEPOSITS_COLLECTION).doc(id);
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) throw new DepositError('DEPOSIT_NOT_FOUND', 'Dépôt introuvable.');
+    const current = snap.data() as DepositDoc;
+    if (current.status !== 'PENDING' || current.campayReference) return current;
+    const next: DepositDoc = { ...current, campayReference, updatedAt: Date.now() };
+    tx.set(ref, next);
+    return next;
+  });
+}
+
+/** Marque un dépôt en attente comme échoué (réponse explicite du prestataire). Un dépôt déjà confirmé ou échoué n'est pas modifié. */
+export async function markDepositFailed(id: string, reason: string): Promise<DepositDoc> {
+  if (!isValidDepositId(id)) throw new DepositError('INVALID_DEPOSIT_ID', 'Identifiant de dépôt invalide.');
+  const db = getFirebaseAdminAppDb();
+  const ref = db.collection(CASH_DEPOSITS_COLLECTION).doc(id);
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) throw new DepositError('DEPOSIT_NOT_FOUND', 'Dépôt introuvable.');
+    const current = snap.data() as DepositDoc;
+    if (!canTransition(current.status, 'FAILED')) return current;
+    const next: DepositDoc = { ...current, status: 'FAILED', failReason: String(reason || '').slice(0, 200), updatedAt: Date.now() };
+    tx.set(ref, next);
+    return next;
+  });
+}
+
 export interface ConfirmDepositResult {
   deposit: DepositDoc;
   /** false si ce dépôt avait déjà été crédité : rien n'a été ajouté une seconde fois. */

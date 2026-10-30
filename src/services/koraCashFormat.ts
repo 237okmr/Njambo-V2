@@ -5,9 +5,14 @@
 
 export type KoraCashEnvironment = 'DEMO' | 'LIVE';
 
+/** SIMULATED : dépôt fictif interne (démo). CAMPAY : dépôt Mobile Money par Campay (bac à sable tant que le retrait n’est pas livré). */
+export type KoraCashDepositMode = 'SIMULATED' | 'CAMPAY';
+
 export interface KoraCashPublicStatus {
   enabled: boolean;
   environment: KoraCashEnvironment;
+  /** Absent chez un serveur plus ancien : traité comme dépôt fictif. */
+  depositMode?: KoraCashDepositMode;
 }
 
 /** Même minimum que le serveur (server/cash/depositRules.ts). Le serveur reste seul juge : ce chiffre ne sert qu'à guider la saisie. */
@@ -64,20 +69,32 @@ export interface DepositUi {
   buttonLabel: string;
   /** false : aucun bouton de dépôt n'est proposé (le dépôt réel n'est pas encore ouvert). */
   canDeposit: boolean;
+  /** true : le joueur saisit son numéro Mobile Money avant de payer. */
+  needsPhone: boolean;
 }
 
-/** Libellés selon l'environnement : en démo, tout est annoncé comme fictif. */
-export function getDepositUi(environment: KoraCashEnvironment): DepositUi {
+/** Libellés selon l'environnement et la méthode : en démo, tout est annoncé comme fictif ou comme paiement de test. */
+export function getDepositUi(environment: KoraCashEnvironment, depositMode: KoraCashDepositMode = 'SIMULATED'): DepositUi {
   if (environment === 'DEMO') {
+    if (depositMode === 'CAMPAY') {
+      return {
+        banner: 'Mode démo : paiement de test avec Campay. Aucun argent réel n’est débité et ce solde ne peut pas être retiré.',
+        buttonLabel: 'Payer par Mobile Money (test)',
+        canDeposit: true,
+        needsPhone: true,
+      };
+    }
     return {
       banner: 'Mode démo : l’argent ci-dessous est fictif et ne peut pas être retiré.',
       buttonLabel: 'Recharger (fictif)',
       canDeposit: true,
+      needsPhone: false,
     };
   }
   return {
     banner: 'Argent réel : le dépôt par Mobile Money ouvre bientôt.',
     buttonLabel: 'Déposer',
     canDeposit: false,
+    needsPhone: false,
   };
 }
