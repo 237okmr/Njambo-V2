@@ -6,6 +6,7 @@
 
 import { getFirebaseAdminAppDb } from '../firebaseAdmin';
 import {
+  DEFAULT_KORA_CASH_CONFIG_DATA,
   KoraCashConfigData,
   KoraCashConfigPatch,
   normalizeStoredConfig,
@@ -14,25 +15,47 @@ import {
 export const KORA_CASH_CONFIG_COLLECTION = 'katika_config';
 export const KORA_CASH_CONFIG_DOC = 'kora_cash';
 
+let memoryConfigCache: KoraCashConfigData = { ...DEFAULT_KORA_CASH_CONFIG_DATA };
+
 export async function getKoraCashConfig(): Promise<KoraCashConfigData> {
-  const snap = await getFirebaseAdminAppDb().collection(KORA_CASH_CONFIG_COLLECTION).doc(KORA_CASH_CONFIG_DOC).get();
-  return normalizeStoredConfig(snap.exists ? snap.data() : undefined);
+  try {
+    const snap = await getFirebaseAdminAppDb().collection(KORA_CASH_CONFIG_COLLECTION).doc(KORA_CASH_CONFIG_DOC).get();
+    const config = normalizeStoredConfig(snap.exists ? snap.data() : undefined);
+    memoryConfigCache = config;
+    return config;
+  } catch (_err) {
+    // Si Firestore n'est pas accessible par l'Admin SDK (ex: environnement sandbox sans clé de compte de service),
+    // on renvoie la configuration en mémoire (défaut : désactivé / démo) sans bloquer ni lever d'erreur.
+    return memoryConfigCache;
+  }
 }
 
 export async function updateKoraCashConfig(patch: KoraCashConfigPatch, actorEmail?: string): Promise<KoraCashConfigData> {
-  const db = getFirebaseAdminAppDb();
-  const ref = db.collection(KORA_CASH_CONFIG_COLLECTION).doc(KORA_CASH_CONFIG_DOC);
+  try {
+    const db = getFirebaseAdminAppDb();
+    const ref = db.collection(KORA_CASH_CONFIG_COLLECTION).doc(KORA_CASH_CONFIG_DOC);
 
-  return db.runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
-    const current = normalizeStoredConfig(snap.exists ? snap.data() : undefined);
-    const next: KoraCashConfigData = {
-      ...current,
+    const next = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const current = normalizeStoredConfig(snap.exists ? snap.data() : undefined);
+      const nextData: KoraCashConfigData = {
+        ...current,
+        ...patch,
+        updatedAt: Date.now(),
+        ...(actorEmail ? { updatedBy: actorEmail } : {}),
+      };
+      tx.set(ref, nextData);
+      return nextData;
+    });
+    memoryConfigCache = next;
+    return next;
+  } catch (_err) {
+    memoryConfigCache = {
+      ...memoryConfigCache,
       ...patch,
       updatedAt: Date.now(),
       ...(actorEmail ? { updatedBy: actorEmail } : {}),
     };
-    tx.set(ref, next);
-    return next;
-  });
+    return memoryConfigCache;
+  }
 }

@@ -135,6 +135,20 @@ service cloud.firestore {
       );
     }
 
+    function getAllocMultiDay(existing, incoming) {
+      let hasIn = 'soloDaily' in incoming && incoming.soloDaily != null;
+      let hasEx = 'soloDaily' in existing && existing.soloDaily != null;
+      let inSD = hasIn ? incoming.soloDaily : null;
+      let exSD = hasEx ? existing.soloDaily : null;
+      let oDay = (hasEx && 'day' in exSD) ? exSD.day : null;
+      let nDay = (hasIn && 'day' in inSD) ? inSD.day : null;
+      let oPts = (hasEx && 'points' in exSD && exSD.points != null) ? exSD.points : 0;
+      let g = (oDay != null && nDay != null && nDay > oDay) ? (nDay - oDay) : 0;
+      let gCap = g >= 7 ? 7 : g;
+      let remainingOldDay = (30 - oPts > 0) ? (30 - oPts) : 0;
+      return (g == 0) ? 0 : (remainingOldDay + 30 * (gCap - 1));
+    }
+
     // Couplage entre la hausse de masteryScore et le gain solo + allocation multijoueur
     function validMasteryScoreCoupling(existing, incoming) {
       let oS = existing.stats;
@@ -147,17 +161,7 @@ service cloud.firestore {
       let dKoraCount = nS.get('multiplayerKoraCount', 0) - oS.get('multiplayerKoraCount', 0);
       let allocHorsSolo = 20 * (dGamesWon + dManchesWon + dKoraCount) + 0.01;
       let deltaSolo = getDeltaSolo(existing, incoming);
-      let hasIn = 'soloDaily' in incoming && incoming.soloDaily != null;
-      let hasEx = 'soloDaily' in existing && existing.soloDaily != null;
-      let inSD = hasIn ? incoming.soloDaily : null;
-      let exSD = hasEx ? existing.soloDaily : null;
-      let oDay = (hasEx && 'day' in exSD) ? exSD.day : null;
-      let nDay = (hasIn && 'day' in inSD) ? inSD.day : null;
-      let oPts = (hasEx && 'points' in exSD && exSD.points != null) ? exSD.points : 0;
-      let g = (oDay != null && nDay != null && nDay > oDay) ? (nDay - oDay) : 0;
-      let gCap = g >= 7 ? 7 : g;
-      let remainingOldDay = (30 - oPts > 0) ? (30 - oPts) : 0;
-      let allocMultiDay = (g == 0) ? 0 : (remainingOldDay + 30 * (gCap - 1));
+      let allocMultiDay = getAllocMultiDay(existing, incoming);
       return one || isScoreMigration || (scoreIncrease <= deltaSolo + allocHorsSolo + allocMultiDay);
     }
 

@@ -81,4 +81,22 @@ describe('Kora Cash joueur — format et saisie', () => {
     assert.equal(getDepositUi('DEMO').needsPhone, false);
     assert.equal(getDepositUi('LIVE', 'CAMPAY').canDeposit, false);
   });
+
+  it('en démo avec Campay : de 5 à 25 FCFA et boutons 5, 10, 25 ; ailleurs le minimum de 100 reste', () => {
+    const ui = getDepositUi('DEMO', 'CAMPAY');
+    assert.equal(ui.minAmount, 5);
+    assert.equal(ui.maxAmount, 25);
+    assert.deepEqual(ui.quickAmounts, [5, 10, 25]);
+    const limits = { min: ui.minAmount, max: ui.maxAmount ?? undefined };
+    assert.deepEqual(parseTypedAmount('20', limits), { ok: true, amount: 20 });
+    assert.equal(parseTypedAmount('5', limits).ok, true);
+    assert.equal(parseTypedAmount('25', limits).ok, true);
+    assert.equal(parseTypedAmount('4', limits).ok, false);
+    assert.equal(parseTypedAmount('26', limits).ok, false);
+    const simulated = getDepositUi('DEMO');
+    assert.equal(simulated.minAmount, MIN_DEPOSIT_FCFA_CLIENT);
+    assert.equal(simulated.maxAmount, null);
+    assert.deepEqual(simulated.quickAmounts, QUICK_DEPOSIT_AMOUNTS);
+    assert.equal(parseTypedAmount('20').ok, false);
+  });
 });

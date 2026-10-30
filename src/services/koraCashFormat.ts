@@ -20,6 +20,11 @@ export const MIN_DEPOSIT_FCFA_CLIENT = 100;
 
 export const QUICK_DEPOSIT_AMOUNTS: number[] = [500, 1000, 5000, 10000];
 
+/** Limites du paiement de test Campay en démo (le bac à sable Campay refuse plus de 25 FCFA). Mêmes valeurs que server/cash/campayRules.ts ; le serveur reste seul juge. */
+export const CAMPAY_DEMO_MIN_FCFA_CLIENT = 5;
+export const CAMPAY_DEMO_MAX_FCFA_CLIENT = 25;
+export const CAMPAY_DEMO_QUICK_AMOUNTS: number[] = [5, 10, 25];
+
 /** Espace fine insécable (U+202F), écrite par son code : aucun caractère invisible dans le fichier. */
 export const NARROW_NBSP = String.fromCharCode(0x202f);
 
@@ -38,7 +43,7 @@ export interface TypedAmountResult {
 }
 
 /** Lit un montant saisi au clavier : chiffres uniquement (tous les espaces, y compris insécables, sont tolérés), au moins le minimum. */
-export function parseTypedAmount(raw: string): TypedAmountResult {
+export function parseTypedAmount(raw: string, limits?: { min: number; max?: number }): TypedAmountResult {
   const cleaned = String(raw ?? '').replace(/\s/g, '');
   if (cleaned === '') {
     return { ok: false, error: 'Choisis ou saisis un montant.' };
@@ -50,8 +55,12 @@ export function parseTypedAmount(raw: string): TypedAmountResult {
   if (!Number.isSafeInteger(amount)) {
     return { ok: false, error: 'Montant trop grand.' };
   }
-  if (amount < MIN_DEPOSIT_FCFA_CLIENT) {
-    return { ok: false, error: `Le dépôt minimum est de ${formatFcfa(MIN_DEPOSIT_FCFA_CLIENT)}.` };
+  const min = limits?.min ?? MIN_DEPOSIT_FCFA_CLIENT;
+  if (amount < min) {
+    return { ok: false, error: `Le dépôt minimum est de ${formatFcfa(min)}.` };
+  }
+  if (limits?.max !== undefined && amount > limits.max) {
+    return { ok: false, error: `Le dépôt maximum est de ${formatFcfa(limits.max)}.` };
   }
   return { ok: true, amount };
 }
@@ -71,6 +80,12 @@ export interface DepositUi {
   canDeposit: boolean;
   /** true : le joueur saisit son numéro Mobile Money avant de payer. */
   needsPhone: boolean;
+  /** Boutons de montant rapide proposés. */
+  quickAmounts: number[];
+  /** Plus petit montant accepté à la saisie. */
+  minAmount: number;
+  /** Plus grand montant accepté à la saisie ; null : aucun plafond. */
+  maxAmount: number | null;
 }
 
 /** Libellés selon l'environnement et la méthode : en démo, tout est annoncé comme fictif ou comme paiement de test. */
@@ -82,6 +97,9 @@ export function getDepositUi(environment: KoraCashEnvironment, depositMode: Kora
         buttonLabel: 'Payer par Mobile Money (test)',
         canDeposit: true,
         needsPhone: true,
+        quickAmounts: CAMPAY_DEMO_QUICK_AMOUNTS,
+        minAmount: CAMPAY_DEMO_MIN_FCFA_CLIENT,
+        maxAmount: CAMPAY_DEMO_MAX_FCFA_CLIENT,
       };
     }
     return {
@@ -89,6 +107,9 @@ export function getDepositUi(environment: KoraCashEnvironment, depositMode: Kora
       buttonLabel: 'Recharger (fictif)',
       canDeposit: true,
       needsPhone: false,
+      quickAmounts: QUICK_DEPOSIT_AMOUNTS,
+      minAmount: MIN_DEPOSIT_FCFA_CLIENT,
+      maxAmount: null,
     };
   }
   return {
@@ -96,5 +117,8 @@ export function getDepositUi(environment: KoraCashEnvironment, depositMode: Kora
     buttonLabel: 'Déposer',
     canDeposit: false,
     needsPhone: false,
+    quickAmounts: QUICK_DEPOSIT_AMOUNTS,
+    minAmount: MIN_DEPOSIT_FCFA_CLIENT,
+    maxAmount: null,
   };
 }

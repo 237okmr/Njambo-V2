@@ -14,6 +14,7 @@ import {
   startCampayDeposit,
   verifyMyDeposit,
 } from './campayDeposits';
+import { CAMPAY_DEMO_MAX_FCFA, CAMPAY_DEMO_MIN_FCFA, parseCampayDemoAmount } from './campayRules';
 import { DepositDoc, newDepositId } from './depositRules';
 
 const KEY = 'cle-de-webhook-de-test';
@@ -104,12 +105,35 @@ const successReading = (id: string, extra: Record<string, unknown> = {}): Transa
   reading: { status: 'SUCCESSFUL', amount: '1000.00', reference: REF, externalReference: id, ...extra },
 });
 
+describe('Campay — limites du paiement de test', () => {
+  it('accepte de 5 à 25 FCFA entiers et refuse le reste', () => {
+    assert.equal(CAMPAY_DEMO_MIN_FCFA, 5);
+    assert.equal(CAMPAY_DEMO_MAX_FCFA, 25);
+    assert.deepEqual(parseCampayDemoAmount(5), { ok: true, amount: 5 });
+    assert.deepEqual(parseCampayDemoAmount(25), { ok: true, amount: 25 });
+    for (const bad of [4, 0, -5, 26, 100, 1000, 12.5, '20', null, undefined, Number.NaN]) {
+      assert.equal(parseCampayDemoAmount(bad).ok, false, String(bad));
+    }
+  });
+
+  it('refuse un montant hors limites sans créer de dépôt ni appeler Campay', async () => {
+    const h = harness();
+    for (const amount of [4, 26, 100]) {
+      const r = await startCampayDeposit(h.deps, { uid: 'joueur-1', amount, phone: '677123456' });
+      assert.equal(r.httpStatus, 400);
+      assert.equal(r.success, false);
+    }
+    assert.equal(h.deposits.size, 0);
+    assert.equal(h.calls.collect, 0);
+  });
+});
+
 describe('Campay — démarrer un dépôt', () => {
   it('refuse un montant ou un numéro invalide sans créer de dépôt', async () => {
     const h = harness();
     const a = await startCampayDeposit(h.deps, { uid: 'joueur-1', amount: 50, phone: '677123456' });
     assert.equal(a.httpStatus, 400);
-    const b = await startCampayDeposit(h.deps, { uid: 'joueur-1', amount: 1000, phone: '12345' });
+    const b = await startCampayDeposit(h.deps, { uid: 'joueur-1', amount: 20, phone: '12345' });
     assert.equal(b.httpStatus, 400);
     assert.equal(h.deposits.size, 0);
     assert.equal(h.calls.collect, 0);
@@ -117,7 +141,7 @@ describe('Campay — démarrer un dépôt', () => {
 
   it('crée un dépôt en attente et enregistre la référence Campay', async () => {
     const h = harness();
-    const r = await startCampayDeposit(h.deps, { uid: 'joueur-1', amount: 1000, phone: '+237 677 12 34 56' });
+    const r = await startCampayDeposit(h.deps, { uid: 'joueur-1', amount: 20, phone: '+237 677 12 34 56' });
     assert.equal(r.httpStatus, 200);
     assert.equal(r.state, 'PENDING');
     const d = h.deposits.get(r.depositId!)!;
@@ -129,7 +153,7 @@ describe('Campay — démarrer un dépôt', () => {
 
   it('marque le dépôt en échec si Campay refuse nettement la demande', async () => {
     const h = harness({ collect: { kind: 'REJECTED', message: 'Numéro refusé par l\'opérateur.' } });
-    const r = await startCampayDeposit(h.deps, { uid: 'joueur-1', amount: 1000, phone: '677123456' });
+    const r = await startCampayDeposit(h.deps, { uid: 'joueur-1', amount: 20, phone: '677123456' });
     assert.equal(r.success, false);
     assert.equal(r.state, 'FAILED');
     assert.equal(h.deposits.get(r.depositId!)!.status, 'FAILED');
@@ -137,7 +161,7 @@ describe('Campay — démarrer un dépôt', () => {
 
   it('laisse le dépôt en attente si l\'issue est incertaine (jamais d\'échec dans le doute)', async () => {
     const h = harness({ collect: { kind: 'UNKNOWN', message: 'délai dépassé' } });
-    const r = await startCampayDeposit(h.deps, { uid: 'joueur-1', amount: 1000, phone: '677123456' });
+    const r = await startCampayDeposit(h.deps, { uid: 'joueur-1', amount: 20, phone: '677123456' });
     assert.equal(r.success, true);
     assert.equal(r.state, 'PENDING');
     assert.equal(h.deposits.get(r.depositId!)!.status, 'PENDING');

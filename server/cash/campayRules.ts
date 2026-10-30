@@ -38,6 +38,34 @@ export function normalizeCameroonPhone(raw: unknown): PhoneResult {
 }
 
 // ---------------------------------------------------------------------------
+// Montant d'un paiement de test (le bac à sable Campay refuse plus de 25 FCFA)
+// ---------------------------------------------------------------------------
+
+/** Limites du paiement de test Campay en démo, en FCFA entiers. Elles ne concernent ni le dépôt fictif ni le futur argent réel (minimum général : depositRules.ts). */
+export const CAMPAY_DEMO_MIN_FCFA = 5;
+export const CAMPAY_DEMO_MAX_FCFA = 25;
+
+export interface CampayDemoAmountResult {
+  ok: boolean;
+  amount?: number;
+  error?: string;
+}
+
+/** Valide le montant d'un paiement de test Campay : entier de CAMPAY_DEMO_MIN_FCFA à CAMPAY_DEMO_MAX_FCFA inclus, jamais décimal ni texte. */
+export function parseCampayDemoAmount(raw: unknown): CampayDemoAmountResult {
+  if (typeof raw !== 'number' || !Number.isSafeInteger(raw)) {
+    return { ok: false, error: 'Le montant doit être un nombre entier de FCFA.' };
+  }
+  if (raw < CAMPAY_DEMO_MIN_FCFA) {
+    return { ok: false, error: `Le paiement de test minimum est de ${CAMPAY_DEMO_MIN_FCFA} FCFA.` };
+  }
+  if (raw > CAMPAY_DEMO_MAX_FCFA) {
+    return { ok: false, error: `Le paiement de test est limité à ${CAMPAY_DEMO_MAX_FCFA} FCFA par la démo Campay.` };
+  }
+  return { ok: true, amount: raw };
+}
+
+// ---------------------------------------------------------------------------
 // Statuts et montants renvoyés par Campay
 // ---------------------------------------------------------------------------
 

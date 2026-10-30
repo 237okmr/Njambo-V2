@@ -13,9 +13,10 @@ import {
   extractWebhookEvent,
   isValidCampayReference,
   normalizeCameroonPhone,
+  parseCampayDemoAmount,
   verifyWebhookEvent,
 } from './campayRules';
-import { DepositDoc, DepositMode, isValidDepositId, parseDepositAmount } from './depositRules';
+import { DepositDoc, DepositMode, isValidDepositId } from './depositRules';
 import type { ConfirmDepositResult } from './depositStore';
 
 export type CollectResult =
@@ -125,7 +126,7 @@ export async function startCampayDeposit(
   deps: CampayDeps,
   input: { uid: string; amount: unknown; phone: unknown },
 ): Promise<PublicDepositResult> {
-  const amount = parseDepositAmount(input.amount);
+  const amount = parseCampayDemoAmount(input.amount);
   if (!amount.ok || amount.amount === undefined) {
     return { httpStatus: 400, success: false, message: amount.error || 'Montant invalide.' };
   }

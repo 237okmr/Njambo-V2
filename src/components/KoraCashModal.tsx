@@ -8,7 +8,6 @@ import { fetchWallet, simulateDeposit, startCampayDeposit, verifyCampayDeposit, 
 import {
   KoraCashDepositMode,
   KoraCashEnvironment,
-  QUICK_DEPOSIT_AMOUNTS,
   formatFcfa,
   getDepositUi,
   parseTypedAmount,
@@ -67,7 +66,7 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
     setMessage(null);
     let amount: number;
     if (typed.trim() !== '') {
-      const parsed = parseTypedAmount(typed);
+      const parsed = parseTypedAmount(typed, { min: ui.minAmount, max: ui.maxAmount ?? undefined });
       if (!parsed.ok || parsed.amount === undefined) {
         setMessage({ type: 'error', text: parsed.error || 'Montant invalide.' });
         return;
@@ -224,7 +223,7 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
                 <div className="flex flex-col gap-2.5 p-3 rounded-2xl bg-slate-950/60 border border-slate-800">
                   <span className="text-[11px] font-black text-slate-200">Montant à recharger</span>
                   <div className="grid grid-cols-4 gap-2">
-                    {QUICK_DEPOSIT_AMOUNTS.map((amount) => (
+                    {ui.quickAmounts.map((amount) => (
                       <button
                         key={amount}
                         type="button"
@@ -255,7 +254,7 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
                       setSelectedQuick(null);
                       setMessage(null);
                     }}
-                    placeholder="Autre montant en FCFA"
+                    placeholder={ui.maxAmount !== null ? `Autre montant (${ui.minAmount} à ${ui.maxAmount} FCFA)` : 'Autre montant en FCFA'}
                     aria-label="Autre montant en FCFA"
                     className="w-full h-10 px-3 rounded-xl bg-slate-900 border border-slate-700 focus:border-amber-400 outline-none text-xs text-white placeholder:text-slate-500"
                   />

@@ -39,6 +39,106 @@ interface HomeScreenProps {
   onLeaveMultiplayer?: () => void;
 }
 
+// --- Bespoke Animated Contextual Flat Icons ---
+const AnimatedResumeCardsIcon: React.FC = () => (
+  <div className="w-5 h-5 relative flex items-center justify-center select-none">
+    {/* Back card */}
+    <div className="w-3.5 h-4 rounded-[3px] bg-emerald-500/30 border border-emerald-400/50 -rotate-12 absolute -translate-x-1" />
+    {/* Front card with continuous idle shuffle oscillation */}
+    <motion.div
+      animate={{ rotate: [-4, 8, -4] }}
+      transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
+      className="w-3.5 h-4.5 rounded-[3px] bg-emerald-500/60 border border-emerald-300 absolute flex items-center justify-center shadow-sm"
+    >
+      <span className="text-[7px] text-emerald-100 font-black">♠</span>
+    </motion.div>
+    {/* Small resume play indicator */}
+    <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 text-slate-950 flex items-center justify-center text-[6px] font-black shadow-sm">
+      ▶
+    </div>
+  </div>
+);
+
+const AnimatedDealingDeckIcon: React.FC = () => (
+  <div className="w-5 h-5 relative flex items-center justify-center select-none">
+    {/* Deck stack base */}
+    <div className="w-3.5 h-4.5 rounded-[3px] bg-rose-600/30 border border-rose-500/40 absolute translate-y-0.5" />
+    <div className="w-3.5 h-4.5 rounded-[3px] bg-rose-500/40 border border-rose-400/50 absolute" />
+    {/* Top card dealing sliding out */}
+    <motion.div
+      animate={{ x: [0, 3, 0], y: [0, -3, 0], rotate: [0, 6, 0] }}
+      transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+      className="w-3.5 h-4.5 rounded-[3px] bg-rose-400 border border-rose-200 absolute flex items-center justify-center shadow-sm text-slate-950"
+    >
+      <span className="text-[7px] font-black">★</span>
+    </motion.div>
+  </div>
+);
+
+const AnimatedConnectedTableIcon: React.FC = () => (
+  <div className="w-5 h-5 relative flex items-center justify-center select-none">
+    {/* Concentric radar pulse wave */}
+    <motion.div
+      animate={{ scale: [0.9, 1.55, 0.9], opacity: [0.85, 0.15, 0.85] }}
+      transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+      className="absolute w-3.5 h-3.5 rounded-full border border-cyan-400/80 pointer-events-none"
+    />
+    {/* Round table center */}
+    <div className="w-3.5 h-3.5 rounded-full bg-cyan-500/30 border border-cyan-400 flex items-center justify-center relative z-10">
+      <div className="w-1 h-1 rounded-full bg-cyan-200" />
+    </div>
+    {/* 4 Player seats */}
+    <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_4px_rgba(6,182,212,0.8)]" />
+    <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_4px_rgba(6,182,212,0.8)]" />
+    <span className="absolute -left-0.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_4px_rgba(6,182,212,0.8)]" />
+    <span className="absolute -right-0.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_4px_rgba(6,182,212,0.8)]" />
+  </div>
+);
+
+const AnimatedBanknotesIcon: React.FC = () => (
+  <div className="w-5 h-5 relative flex items-center justify-center select-none">
+    {/* Back banknote */}
+    <div className="w-5 h-3 rounded-[2px] bg-amber-600/30 border border-amber-500/40 -rotate-12 absolute -translate-x-0.5 translate-y-0.5" />
+    {/* Middle banknote */}
+    <div className="w-5 h-3 rounded-[2px] bg-amber-500/40 border border-amber-400/50 rotate-[-4deg] absolute translate-y-0" />
+    {/* Front banknote with money-counting fan flutter animation */}
+    <motion.div
+      animate={{ y: [0, -2.5, 0], rotate: [0, 8, 0], scale: [1, 1.04, 1] }}
+      transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+      className="w-5 h-3.2 rounded-[2px] bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 border border-amber-200 absolute -top-0.5 flex items-center justify-between px-0.5 shadow-sm"
+    >
+      <span className="text-[5px] font-black text-amber-950 leading-none">₣</span>
+      <div className="w-1.5 h-1.5 rounded-full border border-amber-900/50 bg-amber-400/50 flex items-center justify-center">
+        <span className="text-[5px] font-black text-amber-950 leading-none">★</span>
+      </div>
+      <span className="text-[5px] font-black text-amber-950 leading-none">₣</span>
+    </motion.div>
+  </div>
+);
+
+const AnimatedCrownPalmaresIcon: React.FC = () => (
+  <div className="w-5 h-5 relative flex items-center justify-center select-none">
+    {/* Crown body breathing */}
+    <motion.div
+      animate={{ scale: [1, 1.1, 1] }}
+      transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+      className="relative flex items-center justify-center"
+    >
+      <svg className="w-4 h-4 text-purple-400 fill-purple-400" viewBox="0 0 24 24">
+        <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
+      </svg>
+    </motion.div>
+    {/* Sparkling star on crown peak */}
+    <motion.span
+      animate={{ opacity: [0.2, 1, 0.2], rotate: [0, 90, 180], scale: [0.8, 1.25, 0.8] }}
+      transition={{ duration: 2.0, repeat: Infinity, ease: 'easeInOut' }}
+      className="absolute -top-1 -right-0.5 text-[8px] text-purple-200 pointer-events-none select-none font-bold"
+    >
+      ✦
+    </motion.span>
+  </div>
+);
+
 export const HomeScreen: React.FC<HomeScreenProps> = ({
   savedSessions = [],
   activeSessionId = null,
@@ -124,18 +224,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         />
       )}
 
-      {/* Palmarès Quick Button */}
-      {onOpenLeaderboard && (
+      {/* Académie & Règles Quick Button */}
+      {onOpenRules && (
         <button
           type="button"
-          id="btn-header-leaderboard"
-          onClick={onOpenLeaderboard}
-          className="h-9 px-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 active:scale-95 border border-slate-700/80 hover:border-amber-400/40 text-amber-400 text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer shadow-sm shrink-0"
-          title="Consulter le Palmarès"
-          aria-label="Consulter le Palmarès"
+          id="btn-header-rules"
+          onClick={onOpenRules}
+          className="h-9 px-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 active:scale-95 border border-slate-700/80 hover:border-amber-400/40 text-amber-300 text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer shadow-sm shrink-0"
+          title="Consulter l'Académie & Règles du jeu"
+          aria-label="Consulter l'Académie & Règles du jeu"
         >
-          <Trophy className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />
-          <span className="hidden xs:inline">Palmarès</span>
+          <BookOpen className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+          <span className="hidden xs:inline">Règles</span>
         </button>
       )}
 
@@ -363,7 +463,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </motion.div>
           )}
 
-          {/* Resume Active Session (Conditionnel) */}
+          {/* 1. Resume Active Session (Conditionnel) - Couleur signature : Émeraude */}
           {activeSession && activeSession.gameState && (
             <motion.button
               initial={{ opacity: 0, y: 8 }}
@@ -372,31 +472,43 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               type="button"
               id="btn-home-resume"
               onClick={handleResume}
-              className="w-full py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-slate-950 font-black shadow-lg shadow-emerald-500/20 border border-emerald-400/60 flex items-center justify-between transition cursor-pointer"
+              className="relative overflow-hidden w-full py-2.5 px-3.5 rounded-xl bg-slate-900/95 backdrop-blur-md hover:bg-slate-850 text-slate-100 font-black border border-emerald-500/60 hover:border-emerald-400 shadow-lg shadow-emerald-950/50 flex items-center justify-between transition-all duration-200 cursor-pointer group"
             >
-              <div className="flex items-center gap-2.5 text-left min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-slate-950/25 border border-slate-950/20 flex items-center justify-center text-slate-950 font-black text-sm shrink-0">
-                  ▶
+              {/* Luminous Shimmer beam (Émeraude) */}
+              <motion.div
+                animate={{ x: ['-120%', '240%'] }}
+                transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut', repeatDelay: 2 }}
+                className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-emerald-400/20 to-transparent skew-x-12 pointer-events-none"
+              />
+
+              <div className="flex items-center gap-2.5 text-left min-w-0 relative z-10">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center text-emerald-400 shrink-0 shadow-[0_0_12px_rgba(16,185,129,0.35)] group-hover:scale-105 transition">
+                  <AnimatedResumeCardsIcon />
                 </div>
                 <div className="flex flex-col min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="leading-tight text-xs sm:text-sm font-black truncate">Reprendre la Partie</span>
-                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-slate-950/30 text-emerald-950 shrink-0">
-                      En pause
-                    </span>
-                  </div>
-                  <span className="text-[10px] font-semibold text-emerald-950/90 truncate">
+                  <span className="leading-tight text-xs sm:text-sm font-black truncate text-white">
+                    Reprendre la Partie
+                  </span>
+                  <span className="text-[10px] font-semibold text-emerald-300/80 truncate">
                     Partie {activeSession.gameState.partieCount || 1} · Main {activeSession.gameState.currentTrickNumber || 1}/5 · Pot: {activeSession.gameState.pot || 0} pts
                   </span>
                 </div>
               </div>
-              <span className="text-[11px] font-black bg-slate-950/25 px-2.5 py-1 rounded-lg border border-slate-950/20 shrink-0 ml-2">
-                Reprendre →
-              </span>
+
+              <div className="flex items-center gap-1 bg-emerald-500/20 text-emerald-200 border border-emerald-400/40 px-2.5 py-1 rounded-lg shrink-0 ml-2 group-hover:bg-emerald-500/30 group-hover:text-emerald-100 transition relative z-10">
+                <span className="text-[11px] font-black">Reprendre</span>
+                <motion.span
+                  animate={{ x: [0, 3, 0] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                  className="text-[11px] font-black"
+                >
+                  →
+                </motion.span>
+              </div>
             </motion.button>
           )}
 
-          {/* Primary Action: Mode Solo */}
+          {/* 2. Primary Action: Mode Solo - Couleur signature : Rubis / Rose Ardent */}
           <motion.button
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -405,22 +517,37 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             type="button"
             id="btn-home-new-game"
             onClick={handleStartGame}
-            className="w-full py-3 px-3.5 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-slate-950 font-black shadow-lg shadow-amber-500/20 border border-amber-300/60 flex items-center justify-between transition cursor-pointer"
+            className="relative overflow-hidden w-full py-3 px-3.5 rounded-xl bg-slate-900/95 backdrop-blur-md hover:bg-slate-850 text-slate-100 font-black border border-rose-500/60 hover:border-rose-400 shadow-lg shadow-rose-950/40 flex items-center justify-between transition-all duration-200 cursor-pointer group"
           >
-            <div className="flex items-center gap-3 text-left">
-              <div className="w-8 h-8 rounded-lg bg-slate-950/20 flex items-center justify-center text-slate-950 font-extrabold shrink-0">
-                <Play className="w-4.5 h-4.5 fill-slate-950" />
+            {/* Luminous Shimmer beam (Rubis / Rose) */}
+            <motion.div
+              animate={{ x: ['-120%', '240%'] }}
+              transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut', repeatDelay: 2.5 }}
+              className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-rose-400/20 to-transparent skew-x-12 pointer-events-none"
+            />
+
+            <div className="flex items-center gap-3 text-left relative z-10">
+              <div className="w-8 h-8 rounded-lg bg-rose-500/20 border border-rose-400/50 flex items-center justify-center text-rose-400 shrink-0 shadow-[0_0_12px_rgba(244,63,94,0.35)] group-hover:scale-105 transition">
+                <AnimatedDealingDeckIcon />
               </div>
-              <span className="leading-tight text-xs sm:text-sm font-black">
+              <span className="leading-tight text-xs sm:text-sm font-black text-white group-hover:text-rose-200 transition">
                 Nouvelle Partie (Mode Solo)
               </span>
             </div>
-            <span className="text-[11px] font-black bg-slate-950/20 px-2.5 py-1 rounded-lg shrink-0">
-              Jouer →
-            </span>
+
+            <div className="flex items-center gap-1 bg-rose-500/20 text-rose-300 border border-rose-400/40 px-2.5 py-1 rounded-lg shrink-0 group-hover:bg-rose-500/30 group-hover:text-rose-200 transition relative z-10">
+              <span className="text-[11px] font-black">Jouer</span>
+              <motion.span
+                animate={{ x: [0, 3, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut', delay: 0.2 }}
+                className="text-[11px] font-black"
+              >
+                →
+              </motion.span>
+            </div>
           </motion.button>
 
-          {/* Multiplayer Action */}
+          {/* 3. Multiplayer Action - Couleur signature : Cyan / Bleu Électrique */}
           <motion.button
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -429,12 +556,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             type="button"
             id="btn-home-multiplayer"
             onClick={handleMultiplayer}
-            className="w-full py-3 px-3.5 rounded-xl bg-slate-900/90 hover:bg-slate-850 text-slate-100 font-bold border border-slate-700/80 hover:border-emerald-500/60 shadow-md flex items-center justify-between transition cursor-pointer group relative overflow-hidden"
+            className="relative overflow-hidden w-full py-3 px-3.5 rounded-xl bg-slate-900/90 backdrop-blur-md hover:bg-slate-850 text-slate-100 font-bold border border-cyan-500/60 hover:border-cyan-400 shadow-lg shadow-black/40 flex items-center justify-between transition-all duration-200 cursor-pointer group"
           >
-            <div className="flex items-center gap-3 text-left min-w-0">
+            {/* Luminous Shimmer beam (Cyan) */}
+            <motion.div
+              animate={{ x: ['-120%', '240%'] }}
+              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', repeatDelay: 3 }}
+              className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent skew-x-12 pointer-events-none"
+            />
+
+            <div className="flex items-center gap-3 text-left min-w-0 relative z-10">
               <div className="relative shrink-0">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold group-hover:scale-105 transition shrink-0">
-                  <Globe className="w-4.5 h-4.5 text-emerald-400" />
+                <div className="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center text-cyan-400 shrink-0 shadow-[0_0_12px_rgba(6,182,212,0.35)] group-hover:scale-105 transition">
+                  <AnimatedConnectedTableIcon />
                 </div>
                 {pendingInvitesCount > 0 && (
                   <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white font-black text-[9px] flex items-center justify-center animate-bounce shadow-md">
@@ -443,7 +577,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 )}
               </div>
               <div className="flex items-center gap-1.5 min-w-0">
-                <span className="leading-tight text-xs sm:text-sm font-extrabold text-white truncate">
+                <span className="leading-tight text-xs sm:text-sm font-extrabold text-white truncate group-hover:text-cyan-200 transition">
                   Multijoueur en Ligne
                 </span>
                 {pendingInvitesCount > 0 ? (
@@ -451,80 +585,111 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                     {pendingInvitesCount} Invité !
                   </span>
                 ) : (
-                  <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase tracking-wider shrink-0">
+                  <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 uppercase tracking-wider shrink-0 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
                     Direct
                   </span>
                 )}
               </div>
             </div>
-            <span className="text-[11px] font-bold text-slate-400 group-hover:text-emerald-400 transition shrink-0">
-              Entrer →
-            </span>
+
+            <div className="flex items-center gap-1 text-[11px] font-bold text-slate-400 group-hover:text-cyan-300 transition shrink-0 relative z-10">
+              <span>Entrer</span>
+              <motion.span
+                animate={{ x: [0, 3, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut', delay: 0.4 }}
+              >
+                →
+              </motion.span>
+            </div>
           </motion.button>
 
-          {/* Palmarès Action */}
-          {onOpenLeaderboard && (
-            <motion.button
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              whileTap={{ scale: 0.98 }}
-              type="button"
-              id="btn-home-leaderboard"
-              onClick={onOpenLeaderboard}
-              className="w-full py-2.5 px-3.5 rounded-xl bg-slate-900/90 hover:bg-slate-850 text-slate-100 font-bold border border-slate-700/80 hover:border-amber-400/60 shadow-md flex items-center justify-between transition cursor-pointer group"
-            >
-              <div className="flex items-center gap-3 text-left min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-bold group-hover:scale-105 transition shrink-0">
-                  <Trophy className="w-4.5 h-4.5 fill-amber-400 text-amber-400" />
-                </div>
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="leading-tight text-xs sm:text-sm font-extrabold text-white truncate">
-                    Palmarès des joueurs
-                  </span>
-                  <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase tracking-wider shrink-0">
-                    Classement
-                  </span>
-                </div>
-              </div>
-              <span className="text-[11px] font-bold text-slate-400 group-hover:text-amber-400 transition shrink-0">
-                Voir →
-              </span>
-            </motion.button>
-          )}
-
-          {/* Kora Cash : visible une fois le statut connu ; « bientôt » tant que katika ne l'a pas activé */}
+          {/* 4. Kora Cash : visible une fois le statut connu - Couleur signature : Or Solaire / Ambre */}
           {koraCashLoaded && (
             <motion.button
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
+              transition={{ delay: 0.2 }}
               whileTap={koraCashEntry === 'COMING_SOON' ? undefined : { scale: 0.98 }}
               type="button"
               id="btn-home-kora-cash"
               disabled={koraCashEntry === 'COMING_SOON'}
               aria-disabled={koraCashEntry === 'COMING_SOON'}
               onClick={() => setIsKoraCashOpen(true)}
-              className={`w-full py-2.5 px-3.5 rounded-xl bg-slate-900/90 text-slate-100 font-bold border border-slate-700/80 shadow-md flex items-center justify-between transition group ${
+              className={`relative overflow-hidden w-full py-2.5 px-3.5 rounded-xl bg-slate-900/90 backdrop-blur-md text-slate-100 font-bold border border-amber-500/60 shadow-md flex items-center justify-between transition-all duration-200 group ${
                 koraCashEntry === 'COMING_SOON'
                   ? 'opacity-60 cursor-default'
-                  : 'hover:bg-slate-850 hover:border-amber-400/60 cursor-pointer'
+                  : 'hover:bg-slate-850 hover:border-amber-400 cursor-pointer shadow-amber-950/30'
               }`}
             >
-              <div className="flex items-center gap-3 text-left min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
-                  <Wallet className="w-4.5 h-4.5" />
+              {koraCashEntry !== 'COMING_SOON' && (
+                <motion.div
+                  animate={{ x: ['-120%', '240%'] }}
+                  transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut', repeatDelay: 3.5 }}
+                  className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-amber-400/20 to-transparent skew-x-12 pointer-events-none"
+                />
+              )}
+
+              <div className="flex items-center gap-3 text-left min-w-0 relative z-10">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-400 shrink-0 shadow-[0_0_12px_rgba(245,158,11,0.35)] group-hover:scale-105 transition">
+                  <AnimatedBanknotesIcon />
                 </div>
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="leading-tight text-xs sm:text-sm font-extrabold text-white truncate">Kora Cash</span>
+                  <span className="leading-tight text-xs sm:text-sm font-extrabold text-white truncate group-hover:text-amber-200 transition">Kora Cash</span>
                   <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase tracking-wider shrink-0">
                     {koraCashEntry === 'COMING_SOON' ? 'Bientôt' : koraCashStatus?.environment === 'LIVE' ? 'Argent réel' : 'Démo'}
                   </span>
                 </div>
               </div>
-              <span className="text-[11px] font-bold text-slate-400 group-hover:text-amber-400 transition shrink-0">
-                {koraCashEntry === 'COMING_SOON' ? 'Bientôt disponible' : koraCashEntry === 'LOGIN_REQUIRED' ? 'Se connecter →' : 'Ouvrir →'}
-              </span>
+
+              <div className="flex items-center gap-1 text-[11px] font-bold text-slate-400 group-hover:text-amber-400 transition shrink-0 relative z-10">
+                <span>{koraCashEntry === 'COMING_SOON' ? 'Bientôt disponible' : koraCashEntry === 'LOGIN_REQUIRED' ? 'Se connecter →' : 'Ouvrir →'}</span>
+              </div>
+            </motion.button>
+          )}
+
+          {/* 5. Palmarès Action - Couleur signature : Violet Néon / Améthyste */}
+          {onOpenLeaderboard && (
+            <motion.button
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              whileTap={{ scale: 0.98 }}
+              type="button"
+              id="btn-home-leaderboard"
+              onClick={onOpenLeaderboard}
+              className="relative overflow-hidden w-full py-2.5 px-3.5 rounded-xl bg-slate-900/90 backdrop-blur-md hover:bg-slate-850 text-slate-100 font-bold border border-purple-500/60 hover:border-purple-400 shadow-md flex items-center justify-between transition-all duration-200 cursor-pointer group"
+            >
+              {/* Luminous Shimmer beam (Violet Néon) */}
+              <motion.div
+                animate={{ x: ['-120%', '240%'] }}
+                transition={{ duration: 4.2, repeat: Infinity, ease: 'easeInOut', repeatDelay: 3 }}
+                className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-purple-400/20 to-transparent skew-x-12 pointer-events-none"
+              />
+
+              <div className="flex items-center gap-3 text-left min-w-0 relative z-10">
+                <div className="w-8 h-8 rounded-lg bg-purple-500/20 border border-purple-400/50 flex items-center justify-center text-purple-400 shrink-0 shadow-[0_0_12px_rgba(168,85,247,0.35)] group-hover:scale-105 transition">
+                  <AnimatedCrownPalmaresIcon />
+                </div>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="leading-tight text-xs sm:text-sm font-extrabold text-white truncate group-hover:text-purple-200 transition">
+                    Palmarès des joueurs
+                  </span>
+                  <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 uppercase tracking-wider shrink-0">
+                    Classement
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1 text-[11px] font-bold text-slate-400 group-hover:text-purple-300 transition shrink-0 relative z-10">
+                <span>Voir</span>
+                <motion.span
+                  animate={{ x: [0, 3, 0] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }}
+                >
+                  →
+                </motion.span>
+              </div>
             </motion.button>
           )}
         </div>
@@ -536,35 +701,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
       {/* Bottom Navigation Dock (Thumb-friendly & Streamlined) */}
       <footer className="relative z-10 max-w-md mx-auto w-full shrink-0 pt-2 pb-1 flex flex-col gap-2">
-        <motion.button
-          whileTap={{ scale: 0.98 }}
-          type="button"
-          id="btn-home-rules-codex"
-          onClick={onOpenRules}
-          className="w-full max-w-sm mx-auto py-2.5 px-3.5 rounded-xl bg-slate-900/80 hover:bg-slate-850 text-slate-200 hover:text-white border border-slate-800 hover:border-amber-500/40 shadow-sm flex items-center justify-between transition cursor-pointer group"
-          title="Académie Njambo Kora : Guide, Stratégies & Règles du jeu"
-        >
-          <div className="flex items-center gap-2.5 text-left">
-            <div className="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 group-hover:scale-105 transition shrink-0">
-              <BookOpen className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs sm:text-sm font-black text-slate-100 group-hover:text-amber-300 transition-colors">
-                  Académie & Règles du Jeu
-                </span>
-                <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                  31 Cartes
-                </span>
-              </div>
-              <p className="text-[10px] text-slate-400">
-                Guide complet, Kora, combos & déroulement des tours
-              </p>
-            </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-amber-400 transition-transform group-hover:translate-x-0.5 shrink-0" />
-        </motion.button>
-
         {/* Subtle secondary link if there are saved sessions to resume */}
         {savedSessionsCount > 1 && onOpenSavedSessions && (
           <div className="text-center">
