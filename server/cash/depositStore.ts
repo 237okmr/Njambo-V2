@@ -10,6 +10,7 @@ import { applyMovement } from './walletLedger';
 import { CashWallet } from './cashTypes';
 import {
   DepositDoc,
+  DepositEnvironment,
   DepositError,
   DepositMode,
   canTransition,
@@ -21,11 +22,12 @@ import {
 export const CASH_DEPOSITS_COLLECTION = 'cash_deposits';
 
 /** Crée un dépôt en attente. Le montant doit avoir été validé par parseDepositAmount avant l'appel. */
-export async function createDeposit(uid: string, amount: number, mode: DepositMode): Promise<DepositDoc> {
+export async function createDeposit(uid: string, amount: number, mode: DepositMode, environment: DepositEnvironment = 'DEMO'): Promise<DepositDoc> {
   const now = Date.now();
   const deposit: DepositDoc = {
     id: newDepositId(),
     uid,
+    environment,
     amount,
     mode,
     status: 'PENDING',
@@ -120,6 +122,7 @@ export async function confirmDeposit(id: string, providerRef?: string): Promise<
     kind: 'DEPOSIT',
     availableDelta: existing.amount,
     lockedDelta: 0,
+    environment: existing.environment ?? 'DEMO',
     meta: { depositId: existing.id, mode: existing.mode },
   });
 

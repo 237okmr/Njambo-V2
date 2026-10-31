@@ -474,6 +474,21 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Temps maximal accordé à une réponse de Campay (création d\'un dépôt, relecture d\'un paiement) avant d\'abandonner l\'appel. Un dépôt dont l\'appel échoue ainsi reste en attente : il n\'est jamais perdu.',
   },
   {
+    key: 'cashAutoVerifySeconds', label: 'Intervalle de la vérification automatique d\'un paiement Mobile Money', unit: 's',
+    min: 3, max: 60, default: 8, group: 'connexion', scope: 'both', effect: 'immediate', advanced: true,
+    help: 'Pendant qu\'un paiement Mobile Money attend sa confirmation, la fenêtre Kora Cash relit le paiement à cet intervalle. Le crédit par notification de Campay, s\'il est déclaré, arrive en général avant.',
+  },
+  {
+    key: 'cashAutoVerifyMaxAttempts', label: 'Nombre maximal de vérifications automatiques d\'un paiement', unit: '',
+    min: 1, max: 60, default: 20, group: 'connexion', scope: 'both', effect: 'immediate', advanced: true,
+    help: 'Après ce nombre de relectures sans réponse définitive, la fenêtre cesse de relire seule : le joueur peut toujours relancer la vérification à la main.',
+  },
+  {
+    key: 'cashManualVerifyDelaySeconds', label: 'Délai avant d\'afficher « Vérifier maintenant »', unit: 's',
+    min: 5, max: 600, default: 45, group: 'connexion', scope: 'both', effect: 'immediate', advanced: true,
+    help: 'Le bouton de vérification manuelle d\'un paiement Mobile Money n\'apparaît qu\'après ce délai, pour laisser la confirmation automatique agir.',
+  },
+  {
     key: 'katikaActivityCacheSeconds', label: 'Durée de conservation de l\'activité du tableau de bord', unit: 's',
     min: 0, max: 3600, default: 300, group: 'katika', scope: 'server', effect: 'immediate', advanced: true, allowZero: true,
     help: 'Durée pendant laquelle le serveur réutilise le dernier résumé d\'activité (parties, manches, présence) au lieu de relire Firestore. Plus la durée est longue, moins le quota gratuit de lectures est consommé. 0 = pas de cache.',

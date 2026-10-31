@@ -61,11 +61,10 @@ describe('Kora Cash joueur — format et saisie', () => {
     assert.equal(resolveEntryState({ enabled: true, environment: 'LIVE' }, true), 'OPEN');
   });
 
-  it('en démo tout est annoncé fictif et le dépôt est proposé, en LIVE il ne l\'est pas encore', () => {
+  it('en démo sans paiement Campay actif aucun dépôt n\'est proposé, et en LIVE non plus', () => {
     const demo = getDepositUi('DEMO');
-    assert.equal(demo.canDeposit, true);
-    assert.match(demo.banner, /fictif/);
-    assert.match(demo.buttonLabel, /fictif/);
+    assert.equal(demo.canDeposit, false);
+    assert.match(demo.banner, /aucun moyen de paiement de test/);
     const live = getDepositUi('LIVE');
     assert.equal(live.canDeposit, false);
     assert.doesNotMatch(live.banner, /fictif/);
@@ -83,16 +82,16 @@ describe('Kora Cash joueur — format et saisie', () => {
     assert.equal(getDepositUi('LIVE', 'CAMPAY').canDeposit, false);
   });
 
-  it('en démo avec Campay : de 5 à 25 FCFA et boutons 5, 10, 25 ; ailleurs le minimum de 100 reste', () => {
+  it('en démo avec Campay : de 10 à 25 FCFA et boutons 10, 25 ; ailleurs le minimum de 100 reste', () => {
     const ui = getDepositUi('DEMO', 'CAMPAY');
-    assert.equal(ui.minAmount, 5);
+    assert.equal(ui.minAmount, 10);
     assert.equal(ui.maxAmount, 25);
-    assert.deepEqual(ui.quickAmounts, [5, 10, 25]);
+    assert.deepEqual(ui.quickAmounts, [10, 25]);
     const limits = { min: ui.minAmount, max: ui.maxAmount ?? undefined };
     assert.deepEqual(parseTypedAmount('20', limits), { ok: true, amount: 20 });
-    assert.equal(parseTypedAmount('5', limits).ok, true);
+    assert.equal(parseTypedAmount('10', limits).ok, true);
     assert.equal(parseTypedAmount('25', limits).ok, true);
-    assert.equal(parseTypedAmount('4', limits).ok, false);
+    assert.equal(parseTypedAmount('9', limits).ok, false);
     assert.equal(parseTypedAmount('26', limits).ok, false);
     const simulated = getDepositUi('DEMO');
     assert.equal(simulated.minAmount, MIN_DEPOSIT_FCFA_CLIENT);

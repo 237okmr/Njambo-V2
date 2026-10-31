@@ -65,6 +65,7 @@ class WebSocketService {
   private friendsPresenceListeners: Set<FriendsPresenceListener> = new Set();
   private quickMatchResultListeners: Set<QuickMatchResultListener> = new Set();
   private versionStatusListeners: Set<VersionStatusListener> = new Set();
+  private cashWalletListeners: Set<() => void> = new Set();
   private offlineQueueListeners: Set<OfflineQueueListener> = new Set();
   private partieResultsListeners: Set<PartieResultsListener> = new Set();
   private currentRoom: MultiplayerRoom | null = null;
@@ -995,6 +996,10 @@ class WebSocketService {
     }
 
     switch (msg.type) {
+      case 'CASH_WALLET_CHANGED': {
+        this.cashWalletListeners.forEach((l) => l());
+        break;
+      }
       case 'SESSION_READY': {
         noteServerConfigVersion(msg.configVersion);
         const inTable = Boolean(this.activeRoomCode || this.currentRoom);
@@ -2090,6 +2095,14 @@ class WebSocketService {
     this.adminMessageListeners.add(listener);
     return () => {
       this.adminMessageListeners.delete(listener);
+    };
+  }
+
+  /** Kora Cash : le serveur signale (sans montant) que le solde du joueur a changé ; le listener relit le solde par l'API sécurisée. */
+  public onCashWalletChanged(listener: () => void): () => void {
+    this.cashWalletListeners.add(listener);
+    return () => {
+      this.cashWalletListeners.delete(listener);
     };
   }
 

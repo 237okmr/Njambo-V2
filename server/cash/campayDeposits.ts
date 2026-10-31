@@ -54,7 +54,7 @@ export interface PublicDepositResult {
   wallet?: { available: number; locked: number };
 }
 
-const MSG_PENDING = 'Paiement en attente. Valide la demande sur ton téléphone, puis touche « Vérifier mon paiement ».';
+const MSG_PENDING = 'Paiement en attente. Valide la demande sur ton téléphone : la confirmation est automatique.';
 const MSG_UNREACHABLE = 'Campay ne répond pas pour le moment. Réessaie dans un instant.';
 const MSG_REVIEW = 'Ce paiement demande une vérification. Ton solde sera crédité dès qu\'elle est faite.';
 const MSG_FAILED = 'Le paiement a échoué ou a été annulé. Aucun montant n\'a été crédité.';

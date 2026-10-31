@@ -8,7 +8,8 @@ import { HeaderProfileButton } from './profile/HeaderProfileButton';
 import { NativeScreenHeader } from './common/NativeScreenHeader';
 import { KoraCashModal } from './KoraCashModal';
 import { fetchKoraCashStatus } from '../services/koraCashClient';
-import { KoraCashPublicStatus, resolveEntryState } from '../services/koraCashFormat';
+import { KoraCashPublicStatus, resolveEntryState, formatFcfa } from '../services/koraCashFormat';
+import { useKoraCashWallet } from '../services/koraCashWalletStore';
 
 interface HomeScreenProps {
   savedSessions?: SavedManche[];
@@ -185,6 +186,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     };
   }, []);
   const koraCashEntry = resolveEntryState(koraCashStatus, isLoggedIn);
+  // Solde Kora Cash affiché sur l'accueil et mis à jour en direct (connexion temps réel) quand le joueur est connecté.
+  const koraCashWallet = useKoraCashWallet(koraCashLoaded && koraCashEntry !== 'COMING_SOON' && koraCashEntry !== 'LOGIN_REQUIRED');
   const sessionsList = Array.isArray(savedSessions) ? savedSessions : [];
   const activeSession =
     (activeSessionId ? sessionsList.find((s) => s.id === activeSessionId) : null) ||
@@ -642,7 +645,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-center gap-1 text-[11px] font-bold text-slate-400 group-hover:text-amber-400 transition shrink-0 relative z-10">
+              <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 group-hover:text-amber-400 transition shrink-0 relative z-10">
+                {koraCashWallet.wallet && (
+                  <span className="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-200 border border-amber-500/30 font-black">
+                    {formatFcfa(koraCashWallet.wallet.available)}
+                  </span>
+                )}
                 <span>{koraCashEntry === 'COMING_SOON' ? 'Bientôt disponible' : koraCashEntry === 'LOGIN_REQUIRED' ? 'Se connecter →' : 'Ouvrir →'}</span>
               </div>
             </motion.button>

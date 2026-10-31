@@ -101,6 +101,7 @@ export type ServerErrorCode =
 export interface ServerMessage {
   type:
     | 'SESSION_READY'
+    | 'CASH_WALLET_CHANGED'
     | 'AUTH_CONFIRMED'
     | 'SYNC_STATE'
     | 'ROOM_JOINED'

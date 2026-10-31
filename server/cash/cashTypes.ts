@@ -8,6 +8,22 @@
 export const CASH_WALLETS_COLLECTION = 'cash_wallets';
 export const CASH_LEDGER_COLLECTION = 'cash_ledger';
 
+/**
+ * Séparation démo / réel : les portefeuilles et registres de démo gardent leurs collections d'origine (cash_wallets, cash_ledger) ;
+ * l'argent réel vit dans des collections distinctes, jamais mélangées à la démo.
+ */
+export type CashEnvironment = 'DEMO' | 'LIVE';
+export const CASH_WALLETS_LIVE_COLLECTION = 'cash_wallets_live';
+export const CASH_LEDGER_LIVE_COLLECTION = 'cash_ledger_live';
+
+export function walletCollectionFor(environment: CashEnvironment = 'DEMO'): string {
+  return environment === 'LIVE' ? CASH_WALLETS_LIVE_COLLECTION : CASH_WALLETS_COLLECTION;
+}
+
+export function ledgerCollectionFor(environment: CashEnvironment = 'DEMO'): string {
+  return environment === 'LIVE' ? CASH_LEDGER_LIVE_COLLECTION : CASH_LEDGER_COLLECTION;
+}
+
 export type CashMovementKind =
   | 'DEPOSIT' // dépôt confirmé par le prestataire : disponible +
   | 'TABLE_BUYIN' // entrée ou recave à une table : disponible -, engagé +
@@ -39,6 +55,8 @@ export interface CashMovementInput {
   meta?: CashMeta;
   actorUid?: string;
   note?: string;
+  /** Portefeuille concerné ; absent : démo. */
+  environment?: CashEnvironment;
 }
 
 export interface CashLedgerEntry {

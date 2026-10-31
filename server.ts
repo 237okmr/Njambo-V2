@@ -28,8 +28,11 @@ import { startCampayDeposit, verifyMyDeposit, handleCampayWebhook } from './serv
 import { getKoraCashConfig, updateKoraCashConfig } from './server/cash/cashConfigStore';
 import { parseConfigPatch, toPublicStatus } from './server/cash/cashConfigRules';
 import { getWallet } from './server/cash/walletLedger';
-import { createDeposit, confirmDeposit, listPendingDeposits } from './server/cash/depositStore';
-import { parseDepositAmount, DepositError } from './server/cash/depositRules';
+import { setWalletChangeListener } from './server/cash/walletEvents';
+import { listPendingDeposits } from './server/cash/depositStore';
+import { previewDemoCleanup, applyDemoCleanup } from './server/cash/demoCleanup';
+import { totalDeduction } from './server/cash/demoCleanupRules';
+import { DepositError } from './server/cash/depositRules';
 import { CashLedgerError } from './server/cash/cashTypes';
 import { verifyFirebaseIdToken, listAdminUsers, setAdminUserClaim, getFirebaseAdminDb, getFirebaseAdminAppDb } from './server/firebaseAdmin';
 import { isActivityFailure, katikaActivityData, toActivityBucket } from './server/katika/activityData';
@@ -111,6 +114,9 @@ async function startServer() {
       console.error('[WS] Upgrade error:', e);
     }
   });
+
+  // Kora Cash : chaque mouvement de solde appliqué prévient le téléphone du joueur connecté (sans montant)
+  setWalletChangeListener((uid) => RoomManager.notifyCashWalletChanged(uid));
 
   // Native Transport-Level Keep-Alive Heartbeat (RFC 6455 ws.ping/pong)
   // Keeps sockets active across Cloud Run ingress and 4G/5G mobile operators without killing sleeping clients
@@ -937,45 +943,13 @@ async function startServer() {
     const player = await requireGooglePlayer(req, res);
     if (!player) return;
     try {
-      const wallet = await getWallet(player.uid);
+      // Le portefeuille affiché suit l'environnement actif : la démo et l'argent réel ne se mélangent jamais.
+      const cfg = await getKoraCashConfig();
+      const wallet = await getWallet(player.uid, cfg.environment === 'LIVE' ? 'LIVE' : 'DEMO');
       res.json({ success: true, wallet: { available: wallet.available, locked: wallet.locked } });
     } catch (err) {
       console.error('[KoraCash] Lecture du portefeuille impossible.', err);
       res.status(500).json({ success: false, error: 'Lecture du portefeuille impossible.' });
-    }
-  });
-
-  // Kora Cash — dépôt simulé (démo uniquement) : aucun appel à un prestataire, mais le même circuit que le vrai
-  // (création du dépôt en attente, puis confirmDeposit, qui sera aussi appelé par le futur webhook).
-  app.post('/api/cash/deposit/simulate', express.json(), async (req, res) => {
-    res.setHeader('Cache-Control', 'no-store');
-    const player = await requireGooglePlayer(req, res);
-    if (!player) return;
-    try {
-      const cfg = await getKoraCashConfig();
-      if (!cfg.isEnabled) {
-        return res.status(403).json({ success: false, error: 'Kora Cash est désactivé.' });
-      }
-      if (cfg.environment !== 'DEMO') {
-        return res.status(403).json({ success: false, error: 'Le dépôt simulé n\'est disponible qu\'en démo.' });
-      }
-      const parsedAmount = parseDepositAmount(req.body?.amount);
-      if (!parsedAmount.ok || parsedAmount.amount === undefined) {
-        return res.status(400).json({ success: false, error: parsedAmount.error || 'Montant invalide.' });
-      }
-      const created = await createDeposit(player.uid, parsedAmount.amount, 'SIMULATED');
-      const confirmed = await confirmDeposit(created.id, 'SIMULATED');
-      res.json({
-        success: true,
-        deposit: { id: confirmed.deposit.id, amount: confirmed.deposit.amount, status: confirmed.deposit.status },
-        wallet: { available: confirmed.wallet.available, locked: confirmed.wallet.locked },
-      });
-    } catch (err) {
-      if (err instanceof DepositError || err instanceof CashLedgerError) {
-        return res.status(400).json({ success: false, error: err.message });
-      }
-      console.error('[KoraCash] Dépôt simulé impossible.', err);
-      res.status(500).json({ success: false, error: 'Dépôt impossible.' });
     }
   });
 
@@ -1578,6 +1552,33 @@ async function startServer() {
     }
     const result = await testCampayConnection(environment as any);
     res.json({ success: result.ok, message: result.message });
+  });
+
+  // Kora Cash — correction des soldes fictifs de démo : aperçu (ne modifie rien), puis application confirmée par l'admin.
+  app.get('/api/katika/cash/demo-cleanup', async (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const lines = await previewDemoCleanup();
+      res.json({ success: true, lines, totalDeduction: totalDeduction(lines) });
+    } catch (err) {
+      console.error('[KoraCash] Aperçu de la correction des soldes de démo impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Aperçu de la correction impossible.' });
+    }
+  });
+
+  app.post('/api/katika/cash/demo-cleanup', express.json(), async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    if (req.body?.confirm !== true) {
+      return res.status(400).json({ success: false, error: 'Confirmation explicite requise.' });
+    }
+    try {
+      const adminUid = (req as any).katikaUser?.uid || (req as any).katikaAdminUid || 'unknown';
+      const result = await applyDemoCleanup(String(adminUid));
+      res.json({ success: true, ...result });
+    } catch (err) {
+      console.error('[KoraCash] Correction des soldes de démo impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Correction impossible.' });
+    }
   });
 
   // Kora Cash — configuration générale (activation, prestataire actif, environnement), réservée à l'admin Katika.

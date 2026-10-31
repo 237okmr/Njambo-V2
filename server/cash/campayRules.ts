@@ -38,11 +38,11 @@ export function normalizeCameroonPhone(raw: unknown): PhoneResult {
 }
 
 // ---------------------------------------------------------------------------
-// Montant d'un paiement de test (le bac à sable Campay refuse plus de 25 FCFA)
+// Montant d'un paiement de test (le bac à sable Campay refuse plus de 25 FCFA, et Orange refuse moins de 10 FCFA)
 // ---------------------------------------------------------------------------
 
 /** Limites du paiement de test Campay en démo, en FCFA entiers. Elles ne concernent ni le dépôt fictif ni le futur argent réel (minimum général : depositRules.ts). */
-export const CAMPAY_DEMO_MIN_FCFA = 5;
+export const CAMPAY_DEMO_MIN_FCFA = 10;
 export const CAMPAY_DEMO_MAX_FCFA = 25;
 
 export interface CampayDemoAmountResult {

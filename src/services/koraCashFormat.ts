@@ -21,9 +21,9 @@ export const MIN_DEPOSIT_FCFA_CLIENT = 100;
 export const QUICK_DEPOSIT_AMOUNTS: number[] = [500, 1000, 5000, 10000];
 
 /** Limites du paiement de test Campay en démo (le bac à sable Campay refuse plus de 25 FCFA). Mêmes valeurs que server/cash/campayRules.ts ; le serveur reste seul juge. */
-export const CAMPAY_DEMO_MIN_FCFA_CLIENT = 5;
+export const CAMPAY_DEMO_MIN_FCFA_CLIENT = 10;
 export const CAMPAY_DEMO_MAX_FCFA_CLIENT = 25;
-export const CAMPAY_DEMO_QUICK_AMOUNTS: number[] = [5, 10, 25];
+export const CAMPAY_DEMO_QUICK_AMOUNTS: number[] = [10, 25];
 
 /** Espace fine insécable (U+202F), écrite par son code : aucun caractère invisible dans le fichier. */
 export const NARROW_NBSP = String.fromCharCode(0x202f);
@@ -88,7 +88,7 @@ export interface DepositUi {
   maxAmount: number | null;
 }
 
-/** Libellés selon l'environnement et la méthode : en démo, tout est annoncé comme fictif ou comme paiement de test. */
+/** Libellés selon l'environnement et la méthode : en démo, seul le paiement Campay de test est proposé. */
 export function getDepositUi(environment: KoraCashEnvironment, depositMode: KoraCashDepositMode = 'SIMULATED'): DepositUi {
   if (environment === 'DEMO') {
     if (depositMode === 'CAMPAY') {
@@ -102,10 +102,11 @@ export function getDepositUi(environment: KoraCashEnvironment, depositMode: Kora
         maxAmount: CAMPAY_DEMO_MAX_FCFA_CLIENT,
       };
     }
+    // Le dépôt fictif n'existe plus : sans paiement Campay de test actif, aucun dépôt n'est proposé en démo.
     return {
-      banner: 'Mode démo : l’argent ci-dessous est fictif et ne peut pas être retiré.',
-      buttonLabel: 'Recharger (fictif)',
-      canDeposit: true,
+      banner: 'Mode démo : aucun moyen de paiement de test n’est actif pour le moment.',
+      buttonLabel: 'Déposer',
+      canDeposit: false,
       needsPhone: false,
       quickAmounts: QUICK_DEPOSIT_AMOUNTS,
       minAmount: MIN_DEPOSIT_FCFA_CLIENT,

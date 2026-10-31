@@ -12,9 +12,14 @@ export type DepositStatus = 'PENDING' | 'SUCCESS' | 'FAILED';
 /** SIMULATED : faux paiement interne (démo). CAMPAY : paiement réel confirmé par le prestataire (lot ultérieur). */
 export type DepositMode = 'SIMULATED' | 'CAMPAY';
 
+/** Portefeuille concerné : DEMO (fictif et paiements de test) ou LIVE (argent réel, jamais mélangé à la démo). */
+export type DepositEnvironment = 'DEMO' | 'LIVE';
+
 export interface DepositDoc {
   id: string;
   uid: string;
+  /** Absent sur les anciens dépôts : ils appartiennent à la démo. */
+  environment?: DepositEnvironment;
   amount: number;
   mode: DepositMode;
   status: DepositStatus;

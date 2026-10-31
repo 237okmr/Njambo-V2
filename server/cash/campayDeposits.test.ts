@@ -106,19 +106,19 @@ const successReading = (id: string, extra: Record<string, unknown> = {}): Transa
 });
 
 describe('Campay — limites du paiement de test', () => {
-  it('accepte de 5 à 25 FCFA entiers et refuse le reste', () => {
-    assert.equal(CAMPAY_DEMO_MIN_FCFA, 5);
+  it('accepte de 10 à 25 FCFA entiers et refuse le reste', () => {
+    assert.equal(CAMPAY_DEMO_MIN_FCFA, 10);
     assert.equal(CAMPAY_DEMO_MAX_FCFA, 25);
-    assert.deepEqual(parseCampayDemoAmount(5), { ok: true, amount: 5 });
+    assert.deepEqual(parseCampayDemoAmount(10), { ok: true, amount: 10 });
     assert.deepEqual(parseCampayDemoAmount(25), { ok: true, amount: 25 });
-    for (const bad of [4, 0, -5, 26, 100, 1000, 12.5, '20', null, undefined, Number.NaN]) {
+    for (const bad of [5, 9, 0, -5, 26, 100, 1000, 12.5, '20', null, undefined, Number.NaN]) {
       assert.equal(parseCampayDemoAmount(bad).ok, false, String(bad));
     }
   });
 
   it('refuse un montant hors limites sans créer de dépôt ni appeler Campay', async () => {
     const h = harness();
-    for (const amount of [4, 26, 100]) {
+    for (const amount of [9, 26, 100]) {
       const r = await startCampayDeposit(h.deps, { uid: 'joueur-1', amount, phone: '677123456' });
       assert.equal(r.httpStatus, 400);
       assert.equal(r.success, false);

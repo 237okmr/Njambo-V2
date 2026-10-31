@@ -4536,6 +4536,16 @@ export class RoomManager {
     }
   }
 
+  /**
+   * Prévient un joueur connecté et authentifié que son solde Kora Cash a changé. Le message ne contient aucun montant :
+   * le téléphone relit son solde par l'API sécurisée (jeton Google). Sans connexion temps réel, rien n'est envoyé.
+   */
+  public static notifyCashWalletChanged(uid: string): void {
+    const client = this.clients.get(uid);
+    if (!client || !client.isAuthenticated || client.authUid !== uid) return;
+    this.sendMessage(client.socket, { type: 'CASH_WALLET_CHANGED', timestamp: Date.now() });
+  }
+
   public static getActiveRoomsCount(): number {
     return this.rooms.size;
   }

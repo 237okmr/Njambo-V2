@@ -1,10 +1,13 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
 import { Wallet, X, Loader2, Lock, Coins, ShieldAlert, CheckCircle2 } from 'lucide-react';
 import { usePlayerProfile } from '../context/PlayerProfileContext';
 import { GoogleIcon } from './common/GoogleIcon';
-import { fetchWallet, simulateDeposit, startCampayDeposit, verifyCampayDeposit, fetchPendingDeposits, KoraCashWallet, PendingDeposit } from '../services/koraCashClient';
+import { startCampayDeposit, verifyCampayDeposit, fetchPendingDeposits, KoraCashWallet, PendingDeposit } from '../services/koraCashClient';
+import { refreshKoraCashWallet, setKoraCashWallet, useKoraCashWallet } from '../services/koraCashWalletStore';
+import { wsService } from '../services/websocketService';
+import { getPublicParamNumber } from '../services/publicConfig';
 import {
   KoraCashDepositMode,
   KoraCashEnvironment,
@@ -23,19 +26,30 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
   const { isLoggedIn, loginWithGoogle } = usePlayerProfile();
   const ui = getDepositUi(environment, depositMode);
 
-  const [wallet, setWallet] = useState<KoraCashWallet | null>(null);
-  const [loadingWallet, setLoadingWallet] = useState<boolean>(false);
-  const [walletError, setWalletError] = useState<string | null>(null);
+  // Solde partagé avec l'accueil, mis à jour en direct quand le serveur signale un mouvement.
+  const walletState = useKoraCashWallet(isLoggedIn);
+  const wallet = walletState.wallet;
+  const loadingWallet = walletState.loading;
+  const walletError = walletState.error;
+  const loadWallet = useCallback(() => refreshKoraCashWallet(), []);
+  const setWallet = (next: KoraCashWallet) => setKoraCashWallet(next);
   const [selectedQuick, setSelectedQuick] = useState<number | null>(null);
   const [typed, setTyped] = useState<string>('');
   const [depositing, setDepositing] = useState<boolean>(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
   const [phone, setPhone] = useState<string>('');
   const [pendingDeposit, setPendingDeposit] = useState<{ id: string; text: string } | null>(null);
   const [verifying, setVerifying] = useState<boolean>(false);
   // Dépôts Mobile Money lancés mais pas encore confirmés, retrouvés côté serveur (même après fermeture de la fenêtre).
   const [listedPending, setListedPending] = useState<PendingDeposit[]>([]);
   const [verifyingListedId, setVerifyingListedId] = useState<string | null>(null);
+  // Le bouton « Vérifier maintenant » n'apparaît qu'après un délai réglable dans katika : la confirmation est d'abord automatique.
+  const [showManualVerify, setShowManualVerify] = useState<boolean>(false);
+  const hasPending = pendingDeposit !== null || listedPending.length > 0;
+  const pendingRef = useRef(pendingDeposit);
+  const listedRef = useRef(listedPending);
+  pendingRef.current = pendingDeposit;
+  listedRef.current = listedPending;
 
   const loadListedPending = useCallback(async () => {
     try {
@@ -44,26 +58,6 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
       setListedPending([]);
     }
   }, []);
-
-  const loadWallet = useCallback(async () => {
-    setLoadingWallet(true);
-    setWalletError(null);
-    try {
-      setWallet(await fetchWallet());
-    } catch (err) {
-      setWalletError(err instanceof Error ? err.message : 'Impossible de lire ton solde.');
-    } finally {
-      setLoadingWallet(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (isLoggedIn) {
-      void loadWallet();
-    } else {
-      setWallet(null);
-    }
-  }, [isLoggedIn, loadWallet]);
 
   useEffect(() => {
     if (isLoggedIn && ui.needsPhone) {
@@ -100,17 +94,13 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
 
     setDepositing(true);
     try {
-      if (ui.needsPhone) {
-        const started = await startCampayDeposit(amount, phone);
-        setPendingDeposit({ id: started.depositId, text: started.message });
-        setMessage(null);
-      } else {
-        const result = await simulateDeposit(amount);
-        setWallet(result.wallet);
-        setSelectedQuick(null);
-        setTyped('');
-        setMessage({ type: 'success', text: `${formatFcfa(result.amount)} fictifs ajoutés à ton solde.` });
+      if (!ui.needsPhone) {
+        setMessage({ type: 'error', text: 'Aucun moyen de paiement de test n’est actif pour le moment.' });
+        return;
       }
+      const started = await startCampayDeposit(amount, phone);
+      setPendingDeposit({ id: started.depositId, text: started.message });
+      setMessage(null);
     } catch (err) {
       setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Le dépôt a échoué.' });
     } finally {
@@ -138,6 +128,7 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
         setMessage({ type: 'error', text: status.message || 'Le paiement a échoué.' });
       } else {
         setPendingDeposit({ id: pendingDeposit.id, text: status.message || 'Paiement toujours en attente.' });
+        setMessage({ type: 'info', text: status.message || 'Paiement toujours en attente.' });
       }
     } catch (err) {
       setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Vérification impossible.' });
@@ -145,6 +136,82 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
       setVerifying(false);
     }
   };
+
+  // Relit en silence tous les paiements en attente (confirmation automatique). Les erreurs réseau sont ignorées : on réessaiera.
+  const checkAllPending = async () => {
+    const ids = new Set<string>();
+    if (pendingRef.current) ids.add(pendingRef.current.id);
+    listedRef.current.forEach((d) => ids.add(d.id));
+    let changed = false;
+    for (const id of ids) {
+      try {
+        const status = await verifyCampayDeposit(id);
+        if (status.state === 'SUCCESS') {
+          if (status.wallet) {
+            setWallet(status.wallet);
+          } else {
+            await loadWallet();
+          }
+          if (pendingRef.current?.id === id) {
+            setPendingDeposit(null);
+            setSelectedQuick(null);
+            setTyped('');
+          }
+          setMessage({ type: 'success', text: 'Paiement confirmé : ton solde de test est crédité.' });
+          changed = true;
+        } else if (status.state === 'FAILED') {
+          if (pendingRef.current?.id === id) setPendingDeposit(null);
+          setMessage({ type: 'error', text: status.message || 'Le paiement a échoué.' });
+          changed = true;
+        }
+      } catch {
+        // silencieux : prochaine relecture
+      }
+    }
+    if (changed) await loadListedPending();
+  };
+  const checkAllPendingRef = useRef(checkAllPending);
+  checkAllPendingRef.current = checkAllPending;
+
+  // Le serveur signale un mouvement de solde (webhook de Campay, par exemple) : on relit tout de suite l'état des paiements.
+  useEffect(() => {
+    return wsService.onCashWalletChanged(() => {
+      void checkAllPendingRef.current();
+    });
+  }, []);
+
+  // Confirmation automatique : intervalle et nombre d'essais réglés dans katika (registre).
+  useEffect(() => {
+    if (!hasPending) return;
+    let cancelled = false;
+    let attempts = 0;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const delayMs = getPublicParamNumber('cashAutoVerifySeconds') * 1000;
+    const maxAttempts = getPublicParamNumber('cashAutoVerifyMaxAttempts');
+    const tick = async () => {
+      if (cancelled) return;
+      attempts += 1;
+      await checkAllPendingRef.current();
+      if (cancelled || attempts >= maxAttempts) return;
+      timer = setTimeout(tick, delayMs);
+    };
+    timer = setTimeout(tick, delayMs);
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [hasPending, pendingDeposit?.id]);
+
+  // Délai avant d'afficher la vérification manuelle.
+  useEffect(() => {
+    if (!hasPending) {
+      setShowManualVerify(false);
+      return;
+    }
+    setShowManualVerify(false);
+    const timer = setTimeout(() => setShowManualVerify(true), getPublicParamNumber('cashManualVerifyDelaySeconds') * 1000);
+    return () => clearTimeout(timer);
+  }, [hasPending]);
 
   const handleVerifyListed = async (id: string) => {
     setVerifyingListedId(id);
@@ -161,7 +228,7 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
       } else if (status.state === 'FAILED') {
         setMessage({ type: 'error', text: status.message || 'Le paiement a échoué.' });
       } else {
-        setMessage({ type: 'error', text: status.message || 'Paiement toujours en attente.' });
+        setMessage({ type: 'info', text: status.message || 'Paiement toujours en attente.' });
       }
       await loadListedPending();
     } catch (err) {
@@ -328,36 +395,47 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
                     <span>{ui.buttonLabel}</span>
                   </button>
                   {pendingDeposit && (
-                    <div className="flex flex-col gap-2 px-3 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-100">
-                      <span className="font-bold">{pendingDeposit.text}</span>
-                      <button
-                        type="button"
-                        disabled={verifying}
-                        onClick={() => void handleVerify()}
-                        className="w-full h-9 rounded-xl bg-slate-800 hover:bg-slate-700 border border-amber-500/40 text-amber-200 font-black text-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
-                      >
-                        {verifying ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                        <span>Vérifier mon paiement</span>
-                      </button>
+                    <div className="flex flex-col gap-1.5 px-3 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-100">
+                      <span className="font-bold flex items-center gap-2">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
+                        <span>Confirmation en cours…</span>
+                      </span>
+                      <span className="text-amber-100/80">Valide la demande reçue sur ton téléphone : ton solde se mettra à jour tout seul.</span>
+                      {showManualVerify && (
+                        <button
+                          type="button"
+                          disabled={verifying}
+                          onClick={() => void handleVerify()}
+                          className="self-start text-[11px] text-amber-300/80 underline underline-offset-2 cursor-pointer disabled:opacity-60"
+                        >
+                          {verifying ? 'Vérification…' : 'Ça n’avance pas ? Vérifier maintenant'}
+                        </button>
+                      )}
                     </div>
                   )}
                   {listedPending.filter((d) => d.id !== pendingDeposit?.id).length > 0 && (
                     <div className="flex flex-col gap-2 px-3 py-2.5 rounded-xl bg-slate-800/60 border border-slate-700 text-[11px] text-slate-200">
-                      <span className="font-bold">Paiements lancés non confirmés</span>
+                      <span className="font-bold">Paiements en cours de confirmation</span>
                       {listedPending
                         .filter((d) => d.id !== pendingDeposit?.id)
                         .map((d) => (
                           <div key={d.id} className="flex items-center justify-between gap-2">
                             <span>{formatFcfa(d.amount)}</span>
-                            <button
-                              type="button"
-                              disabled={verifyingListedId !== null}
-                              onClick={() => void handleVerifyListed(d.id)}
-                              className="h-8 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-amber-500/40 text-amber-200 font-black text-xs flex items-center gap-2 cursor-pointer disabled:opacity-60"
-                            >
-                              {verifyingListedId === d.id ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                              <span>Vérifier ce paiement</span>
-                            </button>
+                            {showManualVerify ? (
+                              <button
+                                type="button"
+                                disabled={verifyingListedId !== null}
+                                onClick={() => void handleVerifyListed(d.id)}
+                                className="text-[11px] text-amber-300/80 underline underline-offset-2 cursor-pointer disabled:opacity-60"
+                              >
+                                {verifyingListedId === d.id ? 'Vérification…' : 'Vérifier maintenant'}
+                              </button>
+                            ) : (
+                              <span className="flex items-center gap-1.5 text-slate-400">
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                <span>Confirmation en cours…</span>
+                              </span>
+                            )}
                           </div>
                         ))}
                     </div>
@@ -365,7 +443,7 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
                   {message && (
                     <div
                       className={`flex items-start gap-2 text-[11px] font-bold ${
-                        message.type === 'success' ? 'text-emerald-300' : 'text-rose-300'
+                        message.type === 'success' ? 'text-emerald-300' : message.type === 'info' ? 'text-amber-200' : 'text-rose-300'
                       }`}
                     >
                       {message.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <ShieldAlert className="w-4 h-4 shrink-0" />}

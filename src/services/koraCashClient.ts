@@ -1,5 +1,5 @@
 /**
- * Kora Cash côté joueur — appels aux routes serveur (/api/cash/status, /api/cash/wallet, /api/cash/deposit/simulate).
+ * Kora Cash côté joueur — appels aux routes serveur (/api/cash/status, /api/cash/wallet, dépôts Mobile Money).
  * Aucun secret, aucun délai ni minuterie : le serveur décide de tout (activation, environnement, compte Google, montants).
  */
 
@@ -9,12 +9,6 @@ import { KoraCashPublicStatus } from './koraCashFormat';
 export interface KoraCashWallet {
   available: number;
   locked: number;
-}
-
-export interface SimulatedDepositResult {
-  depositId: string;
-  amount: number;
-  wallet: KoraCashWallet;
 }
 
 async function authHeaders(): Promise<Record<string, string>> {
@@ -59,24 +53,6 @@ export async function fetchWallet(): Promise<KoraCashWallet> {
     throw new Error(data?.error || 'Impossible de lire ton solde pour le moment.');
   }
   return toWallet(data.wallet);
-}
-
-/** Dépôt fictif (démo uniquement). Le serveur refuse si Kora Cash est désactivé, en LIVE ou si le compte n'est pas Google. */
-export async function simulateDeposit(amount: number): Promise<SimulatedDepositResult> {
-  const res = await fetch('/api/cash/deposit/simulate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
-    body: JSON.stringify({ amount }),
-  });
-  const data = await res.json().catch(() => null);
-  if (!res.ok || !data?.success) {
-    throw new Error(data?.error || 'Le dépôt a échoué.');
-  }
-  return {
-    depositId: String(data.deposit?.id || ''),
-    amount: Number(data.deposit?.amount) || amount,
-    wallet: toWallet(data.wallet),
-  };
 }
 
 export type CampayDepositState = 'PENDING' | 'SUCCESS' | 'FAILED';

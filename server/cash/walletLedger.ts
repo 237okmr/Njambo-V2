@@ -10,14 +10,16 @@
 
 import { getFirebaseAdminAppDb } from '../firebaseAdmin';
 import {
-  CASH_LEDGER_COLLECTION,
-  CASH_WALLETS_COLLECTION,
+  CashEnvironment,
   CashLedgerEntry,
   CashLedgerError,
   CashMovementInput,
   CashWallet,
+  ledgerCollectionFor,
+  walletCollectionFor,
 } from './cashTypes';
 import { computeMovement, isValidRef } from './cashLedgerRules';
+import { emitWalletChanged } from './walletEvents';
 
 function walletFromData(uid: string, data: Partial<CashWallet> | undefined): CashWallet {
   return {
@@ -36,9 +38,9 @@ function assertValidUid(uid: unknown): asserts uid is string {
 }
 
 /** Lit le portefeuille d'un joueur (zéro partout s'il n'existe pas encore). */
-export async function getWallet(uid: string): Promise<CashWallet> {
+export async function getWallet(uid: string, environment: CashEnvironment = 'DEMO'): Promise<CashWallet> {
   assertValidUid(uid);
-  const snap = await getFirebaseAdminAppDb().collection(CASH_WALLETS_COLLECTION).doc(uid).get();
+  const snap = await getFirebaseAdminAppDb().collection(walletCollectionFor(environment)).doc(uid).get();
   return walletFromData(uid, snap.exists ? (snap.data() as Partial<CashWallet>) : undefined);
 }
 
@@ -57,10 +59,10 @@ export async function applyMovement(input: CashMovementInput): Promise<ApplyMove
   }
 
   const db = getFirebaseAdminAppDb();
-  const walletRef = db.collection(CASH_WALLETS_COLLECTION).doc(input.uid);
-  const ledgerRef = db.collection(CASH_LEDGER_COLLECTION).doc(input.ref);
+  const walletRef = db.collection(walletCollectionFor(input.environment)).doc(input.uid);
+  const ledgerRef = db.collection(ledgerCollectionFor(input.environment)).doc(input.ref);
 
-  return db.runTransaction(async (tx) => {
+  const result = await db.runTransaction(async (tx) => {
     const ledgerSnap = await tx.get(ledgerRef);
     const walletSnap = await tx.get(walletRef);
     const current = walletFromData(input.uid, walletSnap.exists ? (walletSnap.data() as Partial<CashWallet>) : undefined);
@@ -112,4 +114,7 @@ export async function applyMovement(input: CashMovementInput): Promise<ApplyMove
 
     return { applied: true, entry, wallet };
   });
+  // Mouvement réellement appliqué : on prévient le joueur connecté (sans montant). Un mouvement rejoué ne prévient pas.
+  if (result.applied) emitWalletChanged(input.uid);
+  return result;
 }
