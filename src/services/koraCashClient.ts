@@ -113,6 +113,23 @@ export async function startCampayDeposit(amount: number, phone: string): Promise
   return toCampayStatus(data);
 }
 
+export interface PendingDeposit {
+  id: string;
+  amount: number;
+}
+
+/** Dépôts Mobile Money lancés mais pas encore confirmés : permet de les vérifier après avoir fermé la fenêtre. */
+export async function fetchPendingDeposits(): Promise<PendingDeposit[]> {
+  const res = await fetch('/api/cash/deposits/pending', { headers: await authHeaders() });
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data?.success || !Array.isArray(data.deposits)) {
+    throw new Error(data?.error || 'Lecture des dépôts en attente impossible.');
+  }
+  return data.deposits
+    .map((d: any) => ({ id: String(d?.id || ''), amount: Number(d?.amount) }))
+    .filter((d: PendingDeposit) => d.id !== '' && Number.isFinite(d.amount));
+}
+
 /** « Vérifier mon paiement » : le serveur relit le paiement chez Campay et crédite seulement s'il est confirmé. */
 export async function verifyCampayDeposit(depositId: string): Promise<CampayDepositStatus> {
   const res = await fetch(`/api/cash/deposit/${encodeURIComponent(depositId)}/verify`, {

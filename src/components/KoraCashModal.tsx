@@ -4,7 +4,7 @@ import { motion } from 'motion/react';
 import { Wallet, X, Loader2, Lock, Coins, ShieldAlert, CheckCircle2 } from 'lucide-react';
 import { usePlayerProfile } from '../context/PlayerProfileContext';
 import { GoogleIcon } from './common/GoogleIcon';
-import { fetchWallet, simulateDeposit, startCampayDeposit, verifyCampayDeposit, KoraCashWallet } from '../services/koraCashClient';
+import { fetchWallet, simulateDeposit, startCampayDeposit, verifyCampayDeposit, fetchPendingDeposits, KoraCashWallet, PendingDeposit } from '../services/koraCashClient';
 import {
   KoraCashDepositMode,
   KoraCashEnvironment,
@@ -33,6 +33,17 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
   const [phone, setPhone] = useState<string>('');
   const [pendingDeposit, setPendingDeposit] = useState<{ id: string; text: string } | null>(null);
   const [verifying, setVerifying] = useState<boolean>(false);
+  // Dépôts Mobile Money lancés mais pas encore confirmés, retrouvés côté serveur (même après fermeture de la fenêtre).
+  const [listedPending, setListedPending] = useState<PendingDeposit[]>([]);
+  const [verifyingListedId, setVerifyingListedId] = useState<string | null>(null);
+
+  const loadListedPending = useCallback(async () => {
+    try {
+      setListedPending(await fetchPendingDeposits());
+    } catch {
+      setListedPending([]);
+    }
+  }, []);
 
   const loadWallet = useCallback(async () => {
     setLoadingWallet(true);
@@ -53,6 +64,14 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
       setWallet(null);
     }
   }, [isLoggedIn, loadWallet]);
+
+  useEffect(() => {
+    if (isLoggedIn && ui.needsPhone) {
+      void loadListedPending();
+    } else {
+      setListedPending([]);
+    }
+  }, [isLoggedIn, ui.needsPhone, loadListedPending]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -124,6 +143,31 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
       setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Vérification impossible.' });
     } finally {
       setVerifying(false);
+    }
+  };
+
+  const handleVerifyListed = async (id: string) => {
+    setVerifyingListedId(id);
+    setMessage(null);
+    try {
+      const status = await verifyCampayDeposit(id);
+      if (status.state === 'SUCCESS') {
+        if (status.wallet) {
+          setWallet(status.wallet);
+        } else {
+          await loadWallet();
+        }
+        setMessage({ type: 'success', text: 'Paiement confirmé : ton solde de test est crédité.' });
+      } else if (status.state === 'FAILED') {
+        setMessage({ type: 'error', text: status.message || 'Le paiement a échoué.' });
+      } else {
+        setMessage({ type: 'error', text: status.message || 'Paiement toujours en attente.' });
+      }
+      await loadListedPending();
+    } catch (err) {
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Vérification impossible.' });
+    } finally {
+      setVerifyingListedId(null);
     }
   };
 
@@ -295,6 +339,27 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
                         {verifying ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                         <span>Vérifier mon paiement</span>
                       </button>
+                    </div>
+                  )}
+                  {listedPending.filter((d) => d.id !== pendingDeposit?.id).length > 0 && (
+                    <div className="flex flex-col gap-2 px-3 py-2.5 rounded-xl bg-slate-800/60 border border-slate-700 text-[11px] text-slate-200">
+                      <span className="font-bold">Paiements lancés non confirmés</span>
+                      {listedPending
+                        .filter((d) => d.id !== pendingDeposit?.id)
+                        .map((d) => (
+                          <div key={d.id} className="flex items-center justify-between gap-2">
+                            <span>{formatFcfa(d.amount)}</span>
+                            <button
+                              type="button"
+                              disabled={verifyingListedId !== null}
+                              onClick={() => void handleVerifyListed(d.id)}
+                              className="h-8 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-amber-500/40 text-amber-200 font-black text-xs flex items-center gap-2 cursor-pointer disabled:opacity-60"
+                            >
+                              {verifyingListedId === d.id ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                              <span>Vérifier ce paiement</span>
+                            </button>
+                          </div>
+                        ))}
                     </div>
                   )}
                   {message && (

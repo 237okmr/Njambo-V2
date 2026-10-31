@@ -93,7 +93,7 @@ export function getDepositUi(environment: KoraCashEnvironment, depositMode: Kora
   if (environment === 'DEMO') {
     if (depositMode === 'CAMPAY') {
       return {
-        banner: 'Mode démo : paiement de test avec Campay. Aucun argent réel n’est débité et ce solde ne peut pas être retiré.',
+        banner: 'Mode démo : paiement de test avec Campay. Attention : ton compte Mobile Money est réellement débité du montant choisi, mais ce solde de test ne peut pas être retiré.',
         buttonLabel: 'Payer par Mobile Money (test)',
         canDeposit: true,
         needsPhone: true,

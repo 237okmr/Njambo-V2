@@ -42,6 +42,30 @@ export async function getDeposit(id: string): Promise<DepositDoc | null> {
   return snap.exists ? (snap.data() as DepositDoc) : null;
 }
 
+export interface PendingDepositSummary {
+  id: string;
+  amount: number;
+  createdAt: number;
+}
+
+/**
+ * Dépôts Mobile Money d'un joueur dont la collecte a été lancée chez Campay mais qui ne sont pas encore confirmés (les plus récents d'abord).
+ * Permet de les retrouver et de les vérifier après fermeture de la fenêtre, sans refaire de paiement.
+ */
+export async function listPendingDeposits(uid: string, max: number = 5): Promise<PendingDepositSummary[]> {
+  const snap = await getFirebaseAdminAppDb()
+    .collection(CASH_DEPOSITS_COLLECTION)
+    .where('uid', '==', uid)
+    .where('status', '==', 'PENDING')
+    .get();
+  return snap.docs
+    .map((d) => d.data() as DepositDoc)
+    .filter((d) => d.mode === 'CAMPAY' && typeof d.campayReference === 'string' && d.campayReference.length > 0)
+    .sort((a, b) => b.createdAt - a.createdAt)
+    .slice(0, Math.max(1, Math.floor(max)))
+    .map((d) => ({ id: d.id, amount: d.amount, createdAt: d.createdAt }));
+}
+
 /** Enregistre la référence Campay d'une collecte lancée. Sans effet si le dépôt a déjà une référence ou n'est plus en attente. */
 export async function attachCampayReference(id: string, campayReference: string): Promise<DepositDoc> {
   if (!isValidDepositId(id)) throw new DepositError('INVALID_DEPOSIT_ID', 'Identifiant de dépôt invalide.');

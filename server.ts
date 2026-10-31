@@ -28,7 +28,7 @@ import { startCampayDeposit, verifyMyDeposit, handleCampayWebhook } from './serv
 import { getKoraCashConfig, updateKoraCashConfig } from './server/cash/cashConfigStore';
 import { parseConfigPatch, toPublicStatus } from './server/cash/cashConfigRules';
 import { getWallet } from './server/cash/walletLedger';
-import { createDeposit, confirmDeposit } from './server/cash/depositStore';
+import { createDeposit, confirmDeposit, listPendingDeposits } from './server/cash/depositStore';
 import { parseDepositAmount, DepositError } from './server/cash/depositRules';
 import { CashLedgerError } from './server/cash/cashTypes';
 import { verifyFirebaseIdToken, listAdminUsers, setAdminUserClaim, getFirebaseAdminDb, getFirebaseAdminAppDb } from './server/firebaseAdmin';
@@ -1009,6 +1009,20 @@ async function startServer() {
       }
       console.error('[KoraCash] Dépôt Campay impossible.', err);
       res.status(500).json({ success: false, error: 'Dépôt impossible.' });
+    }
+  });
+
+  // Kora Cash — dépôts Mobile Money du joueur encore en attente (pour les vérifier après avoir fermé la fenêtre)
+  app.get('/api/cash/deposits/pending', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const player = await requireGooglePlayer(req, res);
+    if (!player) return;
+    try {
+      const deposits = await listPendingDeposits(player.uid);
+      res.json({ success: true, deposits });
+    } catch (err) {
+      console.error('[KoraCash] Lecture des dépôts en attente impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Lecture des dépôts en attente impossible.' });
     }
   });
 
