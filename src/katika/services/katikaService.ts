@@ -298,20 +298,24 @@ async function getCachedUsers(): Promise<any[]> {
       /* ignore */
     }
   }
-  if (db) {
-    try {
-      const uSnap = await getDocs(collection(db, 'users'));
-      if (!uSnap.empty) {
-        usersList = uSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  try {
+    // Lecture faite par le serveur (gardée en mémoire, durée réglable dans katika) pour ménager le quota gratuit de Firestore.
+    const res = await tikaFetch('/api/katika/dashboard-data?part=users');
+    const body = res.ok ? await res.json() : null;
+    if (body && body.success && Array.isArray(body.docs)) {
+      if (body.docs.length > 0) {
+        usersList = body.docs;
         try {
           localStorage.setItem('katika_users_cache', JSON.stringify(usersList));
         } catch (e) {
           /* ignore */
         }
       }
-    } catch (e) {
-      console.warn('[KatikaService] Could not fetch users from Firestore:', e);
+    } else {
+      console.warn('[KatikaService] Lecture serveur des joueurs impossible :', body && body.error ? body.error : res.status);
     }
+  } catch (e) {
+    console.warn('[KatikaService] Could not fetch users from server:', e);
   }
 
   cachedUsersData = {

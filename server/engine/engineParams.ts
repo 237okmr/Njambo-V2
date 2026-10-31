@@ -478,6 +478,16 @@ export const ENGINE_PARAMS: ParamDef[] = [
     min: 0, max: 3600, default: 300, group: 'katika', scope: 'server', effect: 'immediate', advanced: true, allowZero: true,
     help: 'Durée pendant laquelle le serveur réutilise le dernier résumé d\'activité (parties, manches, présence) au lieu de relire Firestore. Plus la durée est longue, moins le quota gratuit de lectures est consommé. 0 = pas de cache.',
   },
+  {
+    key: 'katikaDashboardCacheSeconds', label: 'Durée de conservation des indicateurs de base du tableau de bord', unit: 's',
+    min: 0, max: 3600, default: 120, group: 'katika', scope: 'server', effect: 'immediate', advanced: true, allowZero: true,
+    help: 'Durée pendant laquelle le serveur réutilise le dossier des joueurs et les dernières fiches de manche au lieu de les relire dans Firestore à chaque actualisation du tableau de bord. 0 = pas de cache.',
+  },
+  {
+    key: 'katikaReadWarnCount', label: 'Seuil d\'alerte des lectures Firestore du jour', unit: '',
+    min: 1000, max: 50000, default: 40000, group: 'katika', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Nombre de lectures Firestore faites par le serveur pour katika, au-delà duquel le tableau de bord affiche une alerte. Le palier gratuit de Firestore est de 50 000 lectures par jour pour tout le projet (téléphones des joueurs compris).',
+  },
 ];
 
 /** Choix de chrono proposés à la création d'une table (une seule liste pour tous les écrans). */

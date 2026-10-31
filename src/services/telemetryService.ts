@@ -13,6 +13,7 @@ import { db, auth } from '../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { getPublicParamNumber } from './publicConfig';
 import { getGuestId, getLocalPlayerName } from './identity';
+import { tikaFetch } from '../katika/services/tikaFetch';
 
 export type GameRecordStatus = 'completed' | 'in_progress' | 'abandoned';
 
@@ -429,15 +430,16 @@ export const telemetryService = {
 
     // 1. Try Firestore
     try {
-      const q = query(
-        collection(db, 'njambo_game_records'),
-        orderBy('createdAt', 'desc'),
-        limit(maxCount)
-      );
-      const snapshot = await getDocs(q);
-      if (!snapshot.empty) {
-        snapshot.forEach((docSnap) => {
-          const rawData = docSnap.data() as Omit<GameTelemetryRecord, 'id'>;
+      // Lecture faite par le serveur (gardée en mémoire, durée réglable dans katika) pour ménager le quota gratuit de Firestore.
+      const res = await tikaFetch('/api/katika/dashboard-data?part=records');
+      const body = res.ok ? await res.json() : null;
+      if (!body || !body.success || !Array.isArray(body.docs)) {
+        throw new Error(body && body.error ? body.error : 'Lecture serveur des fiches de manche impossible.');
+      }
+      const serverDocs: Array<Omit<GameTelemetryRecord, 'id'> & { id: string }> = body.docs.slice(0, maxCount);
+      if (serverDocs.length > 0) {
+        serverDocs.forEach((docSnap) => {
+          const rawData = docSnap as Omit<GameTelemetryRecord, 'id'>;
           const normalizedStatus = qualifyRecordStatus(
             rawData.status,
             rawData.isAbandoned,

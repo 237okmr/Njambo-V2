@@ -44,6 +44,7 @@ import { KatikaService } from '../../services/katikaService';
 import { fetchActivitySummary } from '../../services/activityService';
 import type { ActivitySummary } from '../../services/activityService';
 import { KatikaActivityCards } from '../KatikaActivityCards';
+import { KatikaReadBudget } from '../KatikaReadBudget';
 import { KatikaActivityPlayers } from '../KatikaActivityPlayers';
 import { KatikaInvestorReportModal } from '../modals/KatikaInvestorReportModal';
 import { navigateToKatikaTab } from '../../utils/katikaNavigation';
@@ -346,6 +347,8 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
           </button>
         </div>
       </div>
+
+      <KatikaReadBudget />
 
       {/* Activité réelle du jeu : visible dans les trois vues (Live, Business, Gameplay) */}
       <KatikaActivityCards

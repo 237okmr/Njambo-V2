@@ -3,6 +3,7 @@ import { getFirebaseAdminAppDb } from '../firebaseAdmin';
 import { getEngineConfig } from '../engine/engineConfig';
 import { PARAM_BY_KEY } from '../engine/engineParams';
 import { getDoualaDateKey } from '../../src/services/masteryConfig';
+import { recordServerReads } from './readBudget';
 
 /**
  * Données brutes de l'activité du jeu pour le tableau de bord katika (journal des parties, fiches de manche, présence quotidienne).
@@ -67,7 +68,7 @@ export function isActivityFailure(result: ActivityDataResult): result is Activit
   return result.ok === false;
 }
 
-const QUOTA_MESSAGE =
+export const QUOTA_MESSAGE =
   "Le quota gratuit de lectures Firestore du jour est atteint. Il se renouvelle chaque nuit (minuit, heure du Pacifique : 8 h ou 9 h à Yaoundé selon la saison).";
 
 /** Reconnaît le refus de quota de Firestore (code gRPC 8 « RESOURCE_EXHAUSTED » ou message « Quota exceeded »). */
@@ -171,6 +172,7 @@ async function readAllFromFirestore(window: ActivityReadWindow): Promise<Activit
       .get(),
   ]);
 
+  recordServerReads(journalSnap.size + ficheSnap.size + presenceSnap.size);
   return {
     journal: journalSnap.docs.map((d) => d.data() as AnyDoc),
     fiches: ficheSnap.docs.map((d) => d.data() as AnyDoc),

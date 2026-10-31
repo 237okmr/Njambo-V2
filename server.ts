@@ -33,6 +33,8 @@ import { parseDepositAmount, DepositError } from './server/cash/depositRules';
 import { CashLedgerError } from './server/cash/cashTypes';
 import { verifyFirebaseIdToken, listAdminUsers, setAdminUserClaim, getFirebaseAdminDb, getFirebaseAdminAppDb } from './server/firebaseAdmin';
 import { isActivityFailure, katikaActivityData, toActivityBucket } from './server/katika/activityData';
+import { isDashboardFailure, katikaDashboardData, readWarnThreshold, toDashboardPart } from './server/katika/dashboardData';
+import { getReadBudget } from './server/katika/readBudget';
 import { computeRepairPlan } from './server/profileRepair';
 import { collection, getDocs, query, limit, orderBy, startAfter } from 'firebase/firestore';
 import { db } from './src/lib/firebase';
@@ -1499,6 +1501,33 @@ async function startServer() {
       stale: result.stale,
       staleMessage: result.staleMessage,
     });
+  });
+
+  // Indicateurs de base du tableau de bord (dossier des joueurs, dernières fiches de manche) : lus par le serveur et gardés en mémoire
+  app.get('/api/katika/dashboard-data', async (req, res) => {
+    const part = toDashboardPart(req.query.part);
+    if (!part) {
+      return res.status(400).json({ success: false, error: 'Ensemble de données inconnu.' });
+    }
+    const result = await katikaDashboardData.get(part);
+    res.set('Cache-Control', 'no-store');
+    if (isDashboardFailure(result)) {
+      return res.status(503).json({ success: false, code: result.code, error: result.message });
+    }
+    return res.json({
+      success: true,
+      docs: result.docs,
+      fetchedAt: result.fetchedAt,
+      fromCache: result.fromCache,
+      stale: result.stale,
+      staleMessage: result.staleMessage,
+    });
+  });
+
+  // Jauge des lectures Firestore faites par le serveur aujourd'hui
+  app.get('/api/katika/read-budget', (_req, res) => {
+    res.set('Cache-Control', 'no-store');
+    res.json({ success: true, budget: getReadBudget(readWarnThreshold()) });
   });
 
   // Kora Cash — identifiants prestataire (jamais exposés en clair)
