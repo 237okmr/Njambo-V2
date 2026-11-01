@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
-import { Wallet, X, Loader2, Lock, Coins, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { Wallet, X, Loader2, Lock, Coins, ShieldAlert, CheckCircle2, Clock } from 'lucide-react';
 import { usePlayerProfile } from '../context/PlayerProfileContext';
 import { GoogleIcon } from './common/GoogleIcon';
 import { startCampayDeposit, verifyCampayDeposit, fetchPendingDeposits, KoraCashWallet, PendingDeposit } from '../services/koraCashClient';
@@ -45,6 +45,8 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
   const [verifyingListedId, setVerifyingListedId] = useState<string | null>(null);
   // Le bouton « Vérifier maintenant » n'apparaît qu'après un délai réglable dans katika : la confirmation est d'abord automatique.
   const [showManualVerify, setShowManualVerify] = useState<boolean>(false);
+  // Vrai quand la relecture automatique a atteint son nombre d'essais sans réponse définitive : on le dit au joueur au lieu de tourner sans fin.
+  const [autoStopped, setAutoStopped] = useState<boolean>(false);
   const hasPending = pendingDeposit !== null || listedPending.length > 0;
   const pendingRef = useRef(pendingDeposit);
   const listedRef = useRef(listedPending);
@@ -182,6 +184,7 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
 
   // Confirmation automatique : intervalle et nombre d'essais réglés dans katika (registre).
   useEffect(() => {
+    setAutoStopped(false);
     if (!hasPending) return;
     let cancelled = false;
     let attempts = 0;
@@ -192,7 +195,11 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
       if (cancelled) return;
       attempts += 1;
       await checkAllPendingRef.current();
-      if (cancelled || attempts >= maxAttempts) return;
+      if (cancelled) return;
+      if (attempts >= maxAttempts) {
+        setAutoStopped(true);
+        return;
+      }
       timer = setTimeout(tick, delayMs);
     };
     timer = setTimeout(tick, delayMs);
@@ -397,11 +404,15 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
                   {pendingDeposit && (
                     <div className="flex flex-col gap-1.5 px-3 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-100">
                       <span className="font-bold flex items-center gap-2">
-                        <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
-                        <span>Confirmation en cours…</span>
+                        {autoStopped ? <Clock className="w-3.5 h-3.5 shrink-0" /> : <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />}
+                        <span>{autoStopped ? 'Toujours en attente chez Campay' : 'Confirmation en cours…'}</span>
                       </span>
-                      <span className="text-amber-100/80">Valide la demande reçue sur ton téléphone : ton solde se mettra à jour tout seul.</span>
-                      {showManualVerify && (
+                      <span className="text-amber-100/80">
+                        {autoStopped
+                          ? 'Si tu as refusé ou ignoré la demande, l’opérateur finira par l’abandonner : aucun montant ne sera crédité. Si tu l’as validée, ton solde se mettra à jour dès que Campay confirme.'
+                          : 'Valide la demande reçue sur ton téléphone : ton solde se mettra à jour tout seul.'}
+                      </span>
+                      {(showManualVerify || autoStopped) && (
                         <button
                           type="button"
                           disabled={verifying}
@@ -409,6 +420,19 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
                           className="self-start text-[11px] text-amber-300/80 underline underline-offset-2 cursor-pointer disabled:opacity-60"
                         >
                           {verifying ? 'Vérification…' : 'Ça n’avance pas ? Vérifier maintenant'}
+                        </button>
+                      )}
+                      {autoStopped && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPendingDeposit(null);
+                            setMessage(null);
+                            void loadListedPending();
+                          }}
+                          className="self-start text-[11px] text-amber-300/80 underline underline-offset-2 cursor-pointer"
+                        >
+                          Faire un autre dépôt (celui-ci reste à vérifier plus bas)
                         </button>
                       )}
                     </div>
@@ -421,7 +445,7 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
                         .map((d) => (
                           <div key={d.id} className="flex items-center justify-between gap-2">
                             <span>{formatFcfa(d.amount)}</span>
-                            {showManualVerify ? (
+                            {showManualVerify || autoStopped ? (
                               <button
                                 type="button"
                                 disabled={verifyingListedId !== null}
