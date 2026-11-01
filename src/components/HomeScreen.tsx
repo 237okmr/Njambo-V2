@@ -466,7 +466,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </motion.div>
           )}
 
-          {/* 1. Kora Cash (En premier) - Couleur signature : Or Solaire / Ambre */}
+          {/* 1. Kora Cash (En premier, visible une fois le statut connu) - Couleur signature : Or Solaire / Ambre */}
+          {koraCashLoaded && (
           <motion.button
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -512,6 +513,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <span>{koraCashEntry === 'COMING_SOON' ? 'Bientôt disponible' : koraCashEntry === 'LOGIN_REQUIRED' ? 'Se connecter →' : 'Ouvrir →'}</span>
             </div>
           </motion.button>
+          )}
 
           {/* 2. Resume Active Session (Conditionnel) - Couleur signature : Émeraude */}
           {activeSession && activeSession.gameState && (
@@ -533,7 +535,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               />
 
               <div className="flex items-center gap-2.5 text-left min-w-0 relative z-10">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center text-emerald-400 shrink-0 shadow-[0_0_12px_rgba(160,185,129,0.35)] group-hover:scale-105 transition">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center text-emerald-400 shrink-0 shadow-[0_0_12px_rgba(16,185,129,0.35)] group-hover:scale-105 transition">
                   <AnimatedResumeCardsIcon />
                 </div>
                 <div className="flex flex-col min-w-0">
