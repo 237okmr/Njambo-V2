@@ -242,18 +242,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </button>
       )}
 
-      {/* PWA Install Button */}
-      {onOpenInstallModal && (
+      {/* PWA Install Button (Options 1 & 2: masqué si déjà installée, icône compacte w-9 h-9 sur mobile) */}
+      {!isPwaInstalled && onOpenInstallModal && (
         <button
           type="button"
           id="btn-header-install"
           onClick={onOpenInstallModal}
-          className="h-9 px-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 active:scale-95 text-amber-300 border border-amber-500/40 text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer shadow-sm shrink-0"
-          title="Installer l'application sur Android"
+          className="h-9 w-9 sm:w-auto px-0 sm:px-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 active:scale-95 text-amber-300 border border-amber-500/40 text-xs font-bold transition-all duration-150 flex items-center justify-center sm:gap-1.5 cursor-pointer shadow-sm shrink-0"
+          title="Installer l'application sur votre appareil"
           aria-label="Installer l'application"
         >
           <Smartphone className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-          <span>{isPwaInstalled ? 'Installée ✓' : 'Installer'}</span>
+          <span className="hidden sm:inline">Installer</span>
         </button>
       )}
 
@@ -466,11 +466,59 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </motion.div>
           )}
 
-          {/* 1. Resume Active Session (Conditionnel) - Couleur signature : Émeraude */}
+          {/* 1. Kora Cash (En premier) - Couleur signature : Or Solaire / Ambre */}
+          <motion.button
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            whileTap={koraCashEntry === 'COMING_SOON' ? undefined : { scale: 0.98 }}
+            type="button"
+            id="btn-home-kora-cash"
+            disabled={koraCashEntry === 'COMING_SOON'}
+            aria-disabled={koraCashEntry === 'COMING_SOON'}
+            onClick={() => setIsKoraCashOpen(true)}
+            className={`relative overflow-hidden w-full py-2.5 px-3.5 rounded-xl bg-slate-900/90 backdrop-blur-md text-slate-100 font-bold border border-amber-500/60 shadow-md flex items-center justify-between transition-all duration-200 group ${
+              koraCashEntry === 'COMING_SOON'
+                ? 'opacity-60 cursor-default'
+                : 'hover:bg-slate-850 hover:border-amber-400 cursor-pointer shadow-amber-950/30'
+            }`}
+          >
+            {koraCashEntry !== 'COMING_SOON' && (
+              <motion.div
+                animate={{ x: ['-120%', '240%'] }}
+                transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut', repeatDelay: 3.5 }}
+                className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-amber-400/20 to-transparent skew-x-12 pointer-events-none"
+              />
+            )}
+
+            <div className="flex items-center gap-3 text-left min-w-0 relative z-10">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-400 shrink-0 shadow-[0_0_12px_rgba(245,158,11,0.35)] group-hover:scale-105 transition">
+                <AnimatedBanknotesIcon />
+              </div>
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="leading-tight text-xs sm:text-sm font-extrabold text-white truncate group-hover:text-amber-200 transition">Kora Cash</span>
+                <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase tracking-wider shrink-0">
+                  {koraCashEntry === 'COMING_SOON' ? 'Bientôt' : koraCashStatus?.environment === 'LIVE' ? 'Argent réel' : 'Démo'}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 group-hover:text-amber-400 transition shrink-0 relative z-10">
+              {koraCashWallet.wallet && (
+                <span className="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-200 border border-amber-500/30 font-black">
+                  {formatFcfa(koraCashWallet.wallet.available)}
+                </span>
+              )}
+              <span>{koraCashEntry === 'COMING_SOON' ? 'Bientôt disponible' : koraCashEntry === 'LOGIN_REQUIRED' ? 'Se connecter →' : 'Ouvrir →'}</span>
+            </div>
+          </motion.button>
+
+          {/* 2. Resume Active Session (Conditionnel) - Couleur signature : Émeraude */}
           {activeSession && activeSession.gameState && (
             <motion.button
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
               whileTap={{ scale: 0.98 }}
               type="button"
               id="btn-home-resume"
@@ -485,7 +533,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               />
 
               <div className="flex items-center gap-2.5 text-left min-w-0 relative z-10">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center text-emerald-400 shrink-0 shadow-[0_0_12px_rgba(16,185,129,0.35)] group-hover:scale-105 transition">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center text-emerald-400 shrink-0 shadow-[0_0_12px_rgba(160,185,129,0.35)] group-hover:scale-105 transition">
                   <AnimatedResumeCardsIcon />
                 </div>
                 <div className="flex flex-col min-w-0">
@@ -511,11 +559,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </motion.button>
           )}
 
-          {/* 2. Primary Action: Mode Solo - Couleur signature : Rubis / Rose Ardent */}
+          {/* 3. Primary Action: Mode Solo - Couleur signature : Rubis / Rose Ardent */}
           <motion.button
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
+            transition={{ delay: 0.15 }}
             whileTap={{ scale: 0.98 }}
             type="button"
             id="btn-home-new-game"
@@ -550,11 +598,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </div>
           </motion.button>
 
-          {/* 3. Multiplayer Action - Couleur signature : Cyan / Bleu Électrique */}
+          {/* 4. Multiplayer Action - Couleur signature : Cyan / Bleu Électrique */}
           <motion.button
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
+            transition={{ delay: 0.2 }}
             whileTap={{ scale: 0.98 }}
             type="button"
             id="btn-home-multiplayer"
@@ -606,55 +654,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               </motion.span>
             </div>
           </motion.button>
-
-          {/* 4. Kora Cash : visible une fois le statut connu - Couleur signature : Or Solaire / Ambre */}
-          {koraCashLoaded && (
-            <motion.button
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              whileTap={koraCashEntry === 'COMING_SOON' ? undefined : { scale: 0.98 }}
-              type="button"
-              id="btn-home-kora-cash"
-              disabled={koraCashEntry === 'COMING_SOON'}
-              aria-disabled={koraCashEntry === 'COMING_SOON'}
-              onClick={() => setIsKoraCashOpen(true)}
-              className={`relative overflow-hidden w-full py-2.5 px-3.5 rounded-xl bg-slate-900/90 backdrop-blur-md text-slate-100 font-bold border border-amber-500/60 shadow-md flex items-center justify-between transition-all duration-200 group ${
-                koraCashEntry === 'COMING_SOON'
-                  ? 'opacity-60 cursor-default'
-                  : 'hover:bg-slate-850 hover:border-amber-400 cursor-pointer shadow-amber-950/30'
-              }`}
-            >
-              {koraCashEntry !== 'COMING_SOON' && (
-                <motion.div
-                  animate={{ x: ['-120%', '240%'] }}
-                  transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut', repeatDelay: 3.5 }}
-                  className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-amber-400/20 to-transparent skew-x-12 pointer-events-none"
-                />
-              )}
-
-              <div className="flex items-center gap-3 text-left min-w-0 relative z-10">
-                <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-400 shrink-0 shadow-[0_0_12px_rgba(245,158,11,0.35)] group-hover:scale-105 transition">
-                  <AnimatedBanknotesIcon />
-                </div>
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="leading-tight text-xs sm:text-sm font-extrabold text-white truncate group-hover:text-amber-200 transition">Kora Cash</span>
-                  <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase tracking-wider shrink-0">
-                    {koraCashEntry === 'COMING_SOON' ? 'Bientôt' : koraCashStatus?.environment === 'LIVE' ? 'Argent réel' : 'Démo'}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 group-hover:text-amber-400 transition shrink-0 relative z-10">
-                {koraCashWallet.wallet && (
-                  <span className="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-200 border border-amber-500/30 font-black">
-                    {formatFcfa(koraCashWallet.wallet.available)}
-                  </span>
-                )}
-                <span>{koraCashEntry === 'COMING_SOON' ? 'Bientôt disponible' : koraCashEntry === 'LOGIN_REQUIRED' ? 'Se connecter →' : 'Ouvrir →'}</span>
-              </div>
-            </motion.button>
-          )}
 
           {/* 5. Palmarès Action - Couleur signature : Violet Néon / Améthyste */}
           {onOpenLeaderboard && (

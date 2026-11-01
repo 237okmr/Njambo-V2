@@ -75,7 +75,7 @@ export const NativeScreenHeader: React.FC<NativeScreenHeaderProps> = ({
   return (
     <header
       id={id}
-      className={`shrink-0 h-14 sm:h-16 px-2.5 sm:px-6 bg-slate-900/95 border-b border-slate-800/80 backdrop-blur-md flex items-center justify-between gap-2 shadow-lg z-30 select-none ${className}`}
+      className={`shrink-0 h-14 sm:h-16 px-2 sm:px-6 bg-slate-900/95 border-b border-slate-800/80 backdrop-blur-md flex items-center justify-between gap-1.5 sm:gap-2 shadow-lg z-30 select-none ${className}`}
     >
       {/* Left zone: Return button + optional context badge */}
       <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 shrink-0">

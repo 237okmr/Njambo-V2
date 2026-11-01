@@ -1,0 +1,6 @@
+{
+  "summary":  "Plan d'adaptation ergonomique de la barre supérieure d'accueil combinant les options 1 et 2 validées par l'utilisateur : masquage du bouton PWA lorsqu'elle est installée, et affichage en icône compacte w-9 h-9 sans texte tronqué sur mobile lorsqu'elle n'est pas encore installée, garantissant la visibilité parfaite du bouton de volume.",
+  "updatedAt":  "2026-10-31T23:58:21.321128545Z",
+  "requestFeedback":  true,
+  "userFacing":  true
+}

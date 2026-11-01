@@ -84,7 +84,7 @@ export const HeaderProfileButton: React.FC<HeaderProfileButtonProps> = ({
   };
 
   const baseClasses = isPill
-    ? 'h-9 pl-1.5 pr-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 active:scale-95 border border-slate-700/80 hover:border-amber-400/40 transition-all duration-150 cursor-pointer shadow-sm flex items-center gap-2 group text-left shrink-0'
+    ? 'h-9 pl-1.5 pr-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 active:scale-95 border border-slate-700/80 hover:border-amber-400/40 transition-all duration-150 cursor-pointer shadow-sm flex items-center gap-1.5 sm:gap-2 group text-left shrink-0'
     : 'w-9 h-9 rounded-full bg-slate-900/60 hover:bg-slate-800/80 backdrop-blur-md border border-white/10 hover:border-amber-400/40 transition active:scale-95 flex items-center justify-center cursor-pointer shrink-0';
 
   const buttonClasses = className ? `${baseClasses} ${className}` : baseClasses;
@@ -108,7 +108,7 @@ export const HeaderProfileButton: React.FC<HeaderProfileButtonProps> = ({
       />
 
       {shouldShowName && (
-        <span className="text-xs font-semibold text-slate-200 group-hover:text-white transition-colors truncate max-w-[80px] sm:max-w-[110px] tracking-tight">
+        <span className="text-xs font-semibold text-slate-200 group-hover:text-white transition-colors truncate max-w-[65px] xs:max-w-[85px] sm:max-w-[110px] tracking-tight">
           {safeProfile?.displayName || 'Joueur'}
         </span>
       )}
