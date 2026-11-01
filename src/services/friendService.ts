@@ -5,16 +5,14 @@ import { getPlayerId } from './identity';
 import {
   collection,
   doc,
-  getDocs,
-  getDoc,
   setDoc,
   deleteDoc,
   query,
   where,
-  onSnapshot,
   orderBy,
   limit,
 } from 'firebase/firestore';
+import { getDocs, getDoc, onSnapshot } from './firestoreMeter';
 
 const LOCAL_CONTACTS_KEY = 'njambo_local_contacts_v1';
 const RECENT_PLAYERS_KEY = 'njambo_recent_players_v1';

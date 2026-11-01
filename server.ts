@@ -38,6 +38,7 @@ import { verifyFirebaseIdToken, listAdminUsers, setAdminUserClaim, getFirebaseAd
 import { isActivityFailure, katikaActivityData, toActivityBucket } from './server/katika/activityData';
 import { isDashboardFailure, katikaDashboardData, readWarnThreshold, toDashboardPart } from './server/katika/dashboardData';
 import { getReadBudget } from './server/katika/readBudget';
+import { getClientReads, recordClientReads } from './server/katika/clientReads';
 import { computeRepairPlan } from './server/profileRepair';
 import { collection, getDocs, query, limit, orderBy, startAfter } from 'firebase/firestore';
 import { db } from './src/lib/firebase';
@@ -360,6 +361,12 @@ async function startServer() {
       { onlyEndpoint: endpoint }
     );
     res.json({ success: result.success > 0, ...result });
+  });
+
+  // Mesure des lectures Firestore faites par les téléphones : rapport anonyme (types de document et nombres), validé et borné.
+  app.post('/api/telemetry/client-reads', (req, res) => {
+    recordClientReads(req.body?.reads);
+    res.status(204).end();
   });
 
   // Télémétrie : réception des parties SOLO (jouées sur l'appareil, parfois hors ligne).
@@ -1516,6 +1523,12 @@ async function startServer() {
   app.get('/api/katika/read-budget', (_req, res) => {
     res.set('Cache-Control', 'no-store');
     res.json({ success: true, budget: getReadBudget(readWarnThreshold()) });
+  });
+
+  // Lectures Firestore déclarées par les téléphones aujourd'hui, par type de document
+  app.get('/api/katika/client-reads', (_req, res) => {
+    res.set('Cache-Control', 'no-store');
+    res.json({ success: true, clientReads: getClientReads() });
   });
 
   // Kora Cash — identifiants prestataire (jamais exposés en clair)

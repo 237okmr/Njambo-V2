@@ -12,6 +12,14 @@ interface ReadBudgetData {
   countingSince: number;
 }
 
+interface ClientReadsData {
+  day: string;
+  total: number;
+  reports: number;
+  labels: Array<{ label: string; reads: number }>;
+  countingSince: number;
+}
+
 const fmt = (n: number) => n.toLocaleString('fr-FR');
 
 /**
@@ -21,6 +29,7 @@ const fmt = (n: number) => n.toLocaleString('fr-FR');
  */
 export const KatikaReadBudget: React.FC = () => {
   const [data, setData] = useState<ReadBudgetData | null>(null);
+  const [clientData, setClientData] = useState<ClientReadsData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -32,6 +41,13 @@ export const KatikaReadBudget: React.FC = () => {
       const body = await res.json();
       if (!res.ok || !body.success) throw new Error(body.error || 'Compteur indisponible.');
       setData(body.budget as ReadBudgetData);
+      try {
+        const res2 = await tikaFetch('/api/katika/client-reads');
+        const body2 = await res2.json();
+        if (res2.ok && body2.success) setClientData(body2.clientReads as ClientReadsData);
+      } catch {
+        // la mesure des téléphones est facultative : la jauge du serveur reste affichée
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Compteur indisponible.');
     } finally {
@@ -85,6 +101,30 @@ export const KatikaReadBudget: React.FC = () => {
           {data.partialDay && (
             <div className="text-[11px] text-slate-500">
               Comptage démarré avec le serveur : les lectures faites avant ne sont pas incluses. Le jour de quota change à minuit, heure du Pacifique.
+            </div>
+          )}
+          {clientData && (
+            <div className="mt-1 pt-2 border-t border-slate-800 flex flex-col gap-1">
+              <div className="text-[11px] font-semibold text-slate-200">Lectures déclarées par les téléphones des joueurs</div>
+              <div className="text-[11px] text-slate-400 font-mono">
+                {fmt(clientData.total)} lectures dans {fmt(clientData.reports)} rapport(s) aujourd'hui.
+              </div>
+              {clientData.labels.length === 0 ? (
+                <div className="text-[11px] text-slate-500">Aucun rapport reçu pour le moment.</div>
+              ) : (
+                <ul className="flex flex-col gap-0.5 max-h-40 overflow-y-auto">
+                  {clientData.labels.slice(0, 12).map((l) => (
+                    <li key={l.label} className="flex justify-between gap-2 text-[11px] text-slate-400 font-mono">
+                      <span className="truncate">{l.label}</span>
+                      <span>{fmt(l.reads)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="text-[11px] text-slate-500">
+                Un téléphone déclare ses lectures quand l'application passe en arrière-plan ou se ferme : les joueurs encore dans l'application ne sont pas encore comptés.
+                « live: » désigne une écoute continue.
+              </div>
             </div>
           )}
         </>

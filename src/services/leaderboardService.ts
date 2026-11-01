@@ -4,7 +4,8 @@
  * Toute évolution future doit la respecter, sauf demande explicite du propriétaire.
  */
 
-import { collection, getDocs, query, limit, orderBy } from 'firebase/firestore';
+import { collection, query, limit, orderBy } from 'firebase/firestore';
+import { getDocs } from './firestoreMeter';
 import { db, auth } from '../lib/firebase';
 import {
   LeaderboardCategory,

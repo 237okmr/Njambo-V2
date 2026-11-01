@@ -7,15 +7,14 @@ import {
 } from 'firebase/auth';
 import {
   doc,
-  getDoc,
   setDoc,
   collection,
-  getDocs,
   query,
   orderBy,
   limit,
   startAfter,
 } from 'firebase/firestore';
+import { getDoc, getDocs } from './firestoreMeter';
 import { estimateNetFromHistoryRecord } from '../utils/settlement';
 import { auth, db } from '../lib/firebase';
 import { computeCatchUpStep, CATCHUP_MAX_STEPS } from './profileCatchUp';
