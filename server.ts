@@ -29,7 +29,7 @@ import { getKoraCashConfig, updateKoraCashConfig } from './server/cash/cashConfi
 import { parseConfigPatch, toPublicStatus } from './server/cash/cashConfigRules';
 import { getWallet } from './server/cash/walletLedger';
 import { setWalletChangeListener } from './server/cash/walletEvents';
-import { listPendingDeposits } from './server/cash/depositStore';
+import { listPendingDeposits, listRecentCampayDeposits } from './server/cash/depositStore';
 import { previewDemoCleanup, applyDemoCleanup } from './server/cash/demoCleanup';
 import { totalDeduction } from './server/cash/demoCleanupRules';
 import { DepositError } from './server/cash/depositRules';
@@ -1578,6 +1578,18 @@ async function startServer() {
     } catch (err) {
       console.error('[KoraCash] Correction des soldes de démo impossible.', err instanceof Error ? err.message : String(err));
       res.status(500).json({ success: false, error: 'Correction impossible.' });
+    }
+  });
+
+  // Kora Cash — derniers dépôts Mobile Money et dernière réponse de Campay pour chacun (statut, opérateur, motif). Lecture seule.
+  app.get('/api/katika/cash/campay-deposits', async (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const deposits = await listRecentCampayDeposits();
+      res.json({ success: true, deposits });
+    } catch (err) {
+      console.error('[KoraCash] Lecture des dépôts Campay impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Lecture des dépôts impossible.' });
     }
   });
 

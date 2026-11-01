@@ -30,6 +30,12 @@ export interface DepositDoc {
   campayReference?: string;
   /** Motif d'un échec explicite du prestataire (texte court, jamais de secret). */
   failReason?: string;
+  /** Dernière réponse de Campay à la relecture : statut (PENDING, FAILED, SUCCESSFUL…), opérateur et motif éventuels. Informatif : ne décide jamais d'un crédit. */
+  campayStatus?: string;
+  campayOperator?: string;
+  campayReason?: string;
+  /** Date de la dernière relecture dont la réponse a été enregistrée. */
+  campayCheckedAt?: number;
 }
 
 export type DepositErrorCode = 'INVALID_AMOUNT' | 'DEPOSIT_NOT_FOUND' | 'DEPOSIT_OWNER_MISMATCH' | 'DEPOSIT_FAILED' | 'INVALID_DEPOSIT_ID';

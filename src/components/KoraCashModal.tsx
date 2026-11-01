@@ -22,6 +22,29 @@ interface KoraCashModalProps {
   onClose: () => void;
 }
 
+// Paiements que le joueur a déclarés annulés : on arrête de les suivre sur cet appareil. Le serveur garde sa vérité :
+// si un tel paiement aboutissait malgré tout, Campay le signalerait et le solde serait crédité.
+const DISMISSED_KEY = 'koraCashDismissedDeposits';
+const DISMISSED_MAX = 30;
+
+function readDismissed(): string[] {
+  try {
+    const raw = localStorage.getItem(DISMISSED_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeDismissed(ids: string[]): void {
+  try {
+    localStorage.setItem(DISMISSED_KEY, JSON.stringify(ids.slice(-DISMISSED_MAX)));
+  } catch {
+    // stockage indisponible : le paiement réapparaîtra à la prochaine ouverture, sans conséquence
+  }
+}
+
 export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depositMode = 'SIMULATED', onClose }) => {
   const { isLoggedIn, loginWithGoogle } = usePlayerProfile();
   const ui = getDepositUi(environment, depositMode);
@@ -52,14 +75,25 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
   const listedRef = useRef(listedPending);
   pendingRef.current = pendingDeposit;
   listedRef.current = listedPending;
+  const dismissedRef = useRef<string[]>(readDismissed());
 
   const loadListedPending = useCallback(async () => {
     try {
-      setListedPending(await fetchPendingDeposits());
+      const all = await fetchPendingDeposits();
+      setListedPending(all.filter((d) => !dismissedRef.current.includes(d.id)));
     } catch {
       setListedPending([]);
     }
   }, []);
+
+  // Le joueur dit avoir annulé ce paiement : on ne l'affiche plus ni ne le relit ici.
+  const dismissPending = (id: string) => {
+    dismissedRef.current = [...dismissedRef.current.filter((x) => x !== id), id];
+    writeDismissed(dismissedRef.current);
+    if (pendingRef.current?.id === id) setPendingDeposit(null);
+    setListedPending((prev) => prev.filter((d) => d.id !== id));
+    setMessage({ type: 'info', text: 'Compris : ce paiement n’est plus suivi ici. S’il avait été validé malgré tout, ton solde serait crédité et tu en serais prévenu.' });
+  };
 
   useEffect(() => {
     if (isLoggedIn && ui.needsPhone) {
@@ -409,8 +443,8 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
                       </span>
                       <span className="text-amber-100/80">
                         {autoStopped
-                          ? 'Si tu as refusé ou ignoré la demande, l’opérateur finira par l’abandonner : aucun montant ne sera crédité. Si tu l’as validée, ton solde se mettra à jour dès que Campay confirme.'
-                          : 'Valide la demande reçue sur ton téléphone : ton solde se mettra à jour tout seul.'}
+                          ? 'Campay n’a toujours pas reçu de réponse de ton opérateur. Si tu as refusé ou ignoré la demande, rien ne sera crédité. Si tu l’as validée, ton solde se mettra à jour dès que Campay confirme.'
+                          : 'Campay attend la réponse de ton opérateur. Si tu as validé la demande sur ton téléphone, ton solde se mettra à jour tout seul.'}
                       </span>
                       {(showManualVerify || autoStopped) && (
                         <button
@@ -420,6 +454,15 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
                           className="self-start text-[11px] text-amber-300/80 underline underline-offset-2 cursor-pointer disabled:opacity-60"
                         >
                           {verifying ? 'Vérification…' : 'Ça n’avance pas ? Vérifier maintenant'}
+                        </button>
+                      )}
+                      {(showManualVerify || autoStopped) && (
+                        <button
+                          type="button"
+                          onClick={() => dismissPending(pendingDeposit.id)}
+                          className="self-start text-[11px] text-amber-300/80 underline underline-offset-2 cursor-pointer"
+                        >
+                          J’ai annulé ce paiement
                         </button>
                       )}
                       {autoStopped && (
@@ -446,14 +489,23 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
                           <div key={d.id} className="flex items-center justify-between gap-2">
                             <span>{formatFcfa(d.amount)}</span>
                             {showManualVerify || autoStopped ? (
-                              <button
-                                type="button"
-                                disabled={verifyingListedId !== null}
-                                onClick={() => void handleVerifyListed(d.id)}
-                                className="text-[11px] text-amber-300/80 underline underline-offset-2 cursor-pointer disabled:opacity-60"
-                              >
-                                {verifyingListedId === d.id ? 'Vérification…' : 'Vérifier maintenant'}
-                              </button>
+                              <span className="flex items-center gap-3">
+                                <button
+                                  type="button"
+                                  disabled={verifyingListedId !== null}
+                                  onClick={() => void handleVerifyListed(d.id)}
+                                  className="text-[11px] text-amber-300/80 underline underline-offset-2 cursor-pointer disabled:opacity-60"
+                                >
+                                  {verifyingListedId === d.id ? 'Vérification…' : 'Vérifier maintenant'}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => dismissPending(d.id)}
+                                  className="text-[11px] text-slate-400 underline underline-offset-2 cursor-pointer"
+                                >
+                                  J’ai annulé
+                                </button>
+                              </span>
                             ) : (
                               <span className="flex items-center gap-1.5 text-slate-400">
                                 <Loader2 className="w-3.5 h-3.5 animate-spin" />

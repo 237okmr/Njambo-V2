@@ -31,12 +31,12 @@ function sign(payload: Record<string, unknown>, key = KEY): string {
 interface Harness {
   deps: CampayDeps;
   deposits: Map<string, DepositDoc>;
-  calls: { collect: number; read: number; confirm: number; failed: number };
+  calls: { collect: number; read: number; confirm: number; failed: number; recorded: number };
 }
 
 function harness(opts: { collect?: CollectResult; read?: TransactionRead; webhookKey?: string | null } = {}): Harness {
   const deposits = new Map<string, DepositDoc>();
-  const calls = { collect: 0, read: 0, confirm: 0, failed: 0 };
+  const calls = { collect: 0, read: 0, confirm: 0, failed: 0, recorded: 0 };
   const deps: CampayDeps = {
     async createDeposit(uid, amount, mode) {
       const d: DepositDoc = { id: newDepositId(), uid, amount, mode, status: 'PENDING', createdAt: NOW, updatedAt: NOW };
@@ -75,6 +75,13 @@ function harness(opts: { collect?: CollectResult; read?: TransactionRead; webhoo
     async readTransaction() {
       calls.read++;
       return opts.read ?? { kind: 'OK', reading: { status: 'PENDING' } };
+    },
+    async recordReading(id, info) {
+      calls.recorded++;
+      const d = deposits.get(id)!;
+      d.campayStatus = info.status;
+      d.campayOperator = info.operator;
+      d.campayReason = info.reason;
     },
     async getWebhookKey() {
       return opts.webhookKey === undefined ? KEY : opts.webhookKey;
@@ -306,5 +313,43 @@ describe('Campay — « Vérifier mon paiement »', () => {
     assert.equal(r.state, 'SUCCESS');
     assert.equal(h.calls.read, 0);
     assert.equal(h.calls.confirm, 0);
+  });
+});
+
+describe('Campay — enregistrement de la dernière réponse', () => {
+  it('enregistre statut, opérateur et motif, une seule fois tant que la réponse ne change pas', async () => {
+    const h = harness({ read: { kind: 'OK', reading: { status: 'PENDING', operator: 'orange', reference: REF } } });
+    const d = pendingDeposit(h);
+    const a = await verifyMyDeposit(h.deps, { uid: d.uid, depositId: d.id });
+    const b = await verifyMyDeposit(h.deps, { uid: d.uid, depositId: d.id });
+    assert.equal(a.state, 'PENDING');
+    assert.equal(b.state, 'PENDING');
+    assert.equal(h.calls.recorded, 1);
+    assert.equal(h.deposits.get(d.id)?.campayStatus, 'PENDING');
+    assert.equal(h.deposits.get(d.id)?.campayOperator, 'ORANGE');
+    assert.equal(h.calls.confirm, 0);
+  });
+
+  it('enregistre le motif d\'un échec sans rien créditer', async () => {
+    const h = harness({
+      read: { kind: 'OK', reading: { status: 'FAILED', operator: 'MTN', reason: 'Refusé par le destinataire', reference: REF } },
+    });
+    const d = pendingDeposit(h);
+    const r = await verifyMyDeposit(h.deps, { uid: d.uid, depositId: d.id });
+    assert.equal(r.state, 'FAILED');
+    assert.equal(h.deposits.get(d.id)?.campayReason, 'Refusé par le destinataire');
+    assert.equal(h.calls.confirm, 0);
+  });
+
+  it('un enregistrement qui échoue ne bloque ni le crédit ni la réponse', async () => {
+    const h = harness();
+    const d = pendingDeposit(h);
+    h.deps.readTransaction = async () => successReading(d.id);
+    h.deps.recordReading = async () => {
+      throw new Error('base indisponible');
+    };
+    const r = await verifyMyDeposit(h.deps, { uid: d.uid, depositId: d.id });
+    assert.equal(r.state, 'SUCCESS');
+    assert.equal(h.calls.confirm, 1);
   });
 });

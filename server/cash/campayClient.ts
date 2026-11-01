@@ -15,6 +15,7 @@ import {
   createDeposit,
   getDeposit,
   markDepositFailed,
+  recordCampayReading,
 } from './depositStore';
 
 export async function testCampayConnection(
@@ -233,6 +234,8 @@ export async function readCampayTransaction(reference: string): Promise<Transact
         amount: data.amount,
         reference: data.reference,
         externalReference: data.external_reference,
+        operator: data.operator,
+        reason: data.reason,
       },
     };
   } catch {
@@ -257,6 +260,7 @@ export function createLiveCampayDeps(): CampayDeps {
     confirmDeposit,
     startCollect: startCampayCollect,
     readTransaction: readCampayTransaction,
+    recordReading: recordCampayReading,
     getWebhookKey: getCampayWebhookKey,
     nowMs: () => Date.now(),
   };

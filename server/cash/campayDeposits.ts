@@ -8,8 +8,10 @@
  */
 
 import {
+  CampayReadingInfo,
   CampayStatusReading,
   decideFromCampayReading,
+  describeCampayReading,
   extractWebhookEvent,
   isValidCampayReference,
   normalizeCameroonPhone,
@@ -39,6 +41,8 @@ export interface CampayDeps {
   confirmDeposit(id: string, providerRef?: string): Promise<ConfirmDepositResult>;
   startCollect(params: { amount: number; phone: string; depositId: string }): Promise<CollectResult>;
   readTransaction(reference: string): Promise<TransactionRead>;
+  /** Enregistre la dernière réponse de Campay sur le dépôt (informatif). Facultatif. */
+  recordReading?(id: string, info: CampayReadingInfo): Promise<void>;
   getWebhookKey(): Promise<string | null>;
   nowMs(): number;
 }
@@ -54,7 +58,7 @@ export interface PublicDepositResult {
   wallet?: { available: number; locked: number };
 }
 
-const MSG_PENDING = 'Paiement en attente. Valide la demande sur ton téléphone : la confirmation est automatique.';
+const MSG_PENDING = 'Campay attend encore la réponse de ton opérateur. Si tu as validé la demande, la confirmation arrive toute seule.';
 const MSG_UNREACHABLE = 'Campay ne répond pas pour le moment. Réessaie dans un instant.';
 const MSG_REVIEW = 'Ce paiement demande une vérification. Ton solde sera crédité dès qu\'elle est faite.';
 const MSG_FAILED = 'Le paiement a échoué ou a été annulé. Aucun montant n\'a été crédité.';
@@ -81,6 +85,20 @@ async function settleDeposit(deps: CampayDeps, deposit: DepositDoc, webhookRefer
   const read = await deps.readTransaction(reference);
   if (read.kind !== 'OK') {
     return pending(deposit.id, MSG_UNREACHABLE);
+  }
+
+  // On garde la dernière réponse de Campay (statut, opérateur, motif) seulement quand elle change : une écriture, pas une par relecture.
+  const info = describeCampayReading(read.reading);
+  if (
+    info &&
+    deps.recordReading &&
+    (info.status !== deposit.campayStatus || info.operator !== deposit.campayOperator || info.reason !== deposit.campayReason)
+  ) {
+    try {
+      await deps.recordReading(deposit.id, info);
+    } catch {
+      console.warn('[KoraCash][Campay] Réponse de Campay non enregistrée sur le dépôt.', { depositId: deposit.id });
+    }
   }
 
   const decision = decideFromCampayReading({ id: deposit.id, amount: deposit.amount, campayReference: reference }, read.reading);

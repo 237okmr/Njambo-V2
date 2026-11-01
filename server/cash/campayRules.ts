@@ -204,6 +204,40 @@ export interface CampayStatusReading {
   amount?: unknown;
   reference?: unknown;
   externalReference?: unknown;
+  /** Opérateur indiqué par Campay (MTN, ORANGE…), s'il est fourni. */
+  operator?: unknown;
+  /** Motif indiqué par Campay quand un paiement n'aboutit pas, s'il est fourni. */
+  reason?: unknown;
+}
+
+/** Ce que l'on retient d'une relecture Campay pour l'afficher à l'administrateur : textes courts, sans numéro de téléphone ni secret. */
+export interface CampayReadingInfo {
+  status: string;
+  operator?: string;
+  reason?: string;
+}
+
+function cleanShortText(value: unknown, max: number): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const cleaned = value
+    .replace(/[\u0000-\u001f\u007f]/g, ' ')
+    .replace(/\d{8,}/g, '***')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, max);
+  return cleaned === '' ? undefined : cleaned;
+}
+
+/** Extrait statut, opérateur et motif d'une relecture Campay. Renvoie null si Campay n'a donné aucun statut lisible. */
+export function describeCampayReading(reading: CampayStatusReading): CampayReadingInfo | null {
+  const status = cleanShortText(reading.status, 30);
+  if (status === undefined) return null;
+  const info: CampayReadingInfo = { status: status.toUpperCase() };
+  const operator = cleanShortText(reading.operator, 30);
+  if (operator !== undefined) info.operator = operator.toUpperCase();
+  const reason = cleanShortText(reading.reason, 160);
+  if (reason !== undefined) info.reason = reason;
+  return info;
 }
 
 export interface DepositForDecision {

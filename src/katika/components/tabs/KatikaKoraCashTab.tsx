@@ -18,6 +18,7 @@ import { KatikaService, DEFAULT_KORA_CASH_CONFIG } from '../../services/katikaSe
 import { useKatikaAuth } from '../../context/KatikaAuthContext';
 import { ProviderKeysPanel } from '../../cash/ProviderKeysPanel';
 import { KatikaDemoCleanupCard } from '../../cash/KatikaDemoCleanupCard';
+import { KatikaCampayDepositsCard } from '../../cash/KatikaCampayDepositsCard';
 
 const SUB_SECTIONS: { id: KoraCashSubSection; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: 'GENERAL', label: 'Général', icon: Power },
@@ -262,6 +263,7 @@ export const KatikaKoraCashTab: React.FC = () => {
       <div className="flex-1 min-w-0">
         {activeSection === 'GENERAL' && renderGeneral()}
         {activeSection === 'PROVIDERS' && <ProviderKeysPanel />}
+        {activeSection === 'WALLETS_TRANSACTIONS' && <KatikaCampayDepositsCard />}
         {activeSection === 'WALLETS_TRANSACTIONS' && <KatikaDemoCleanupCard />}
         {activeSection !== 'GENERAL' && activeSection !== 'PROVIDERS' && renderPlaceholder(activeSection)}
       </div>

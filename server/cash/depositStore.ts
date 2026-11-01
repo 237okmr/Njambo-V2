@@ -6,6 +6,8 @@
  */
 
 import { getFirebaseAdminAppDb } from '../firebaseAdmin';
+import { recordServerReads } from '../katika/readBudget';
+import type { CampayReadingInfo } from './campayRules';
 import { applyMovement } from './walletLedger';
 import { CashWallet } from './cashTypes';
 import {
@@ -66,6 +68,59 @@ export async function listPendingDeposits(uid: string, max: number = 5): Promise
     .sort((a, b) => b.createdAt - a.createdAt)
     .slice(0, Math.max(1, Math.floor(max)))
     .map((d) => ({ id: d.id, amount: d.amount, createdAt: d.createdAt }));
+}
+
+/** Enregistre la dernière réponse de Campay sur le dépôt (statut, opérateur, motif). Purement informatif : ne change ni l'état du dépôt ni aucun solde. */
+export async function recordCampayReading(id: string, info: CampayReadingInfo): Promise<void> {
+  if (!isValidDepositId(id)) throw new DepositError('INVALID_DEPOSIT_ID', 'Identifiant de dépôt invalide.');
+  const db = getFirebaseAdminAppDb();
+  const ref = db.collection(CASH_DEPOSITS_COLLECTION).doc(id);
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) return;
+    const current = snap.data() as DepositDoc;
+    const next: DepositDoc = { ...current, campayStatus: info.status, campayCheckedAt: Date.now() };
+    if (info.operator !== undefined) next.campayOperator = info.operator;
+    else delete next.campayOperator;
+    if (info.reason !== undefined) next.campayReason = info.reason;
+    else delete next.campayReason;
+    tx.set(ref, next);
+  });
+}
+
+export interface RecentCampayDeposit {
+  id: string;
+  uid: string;
+  amount: number;
+  status: string;
+  createdAt: number;
+  campayStatus?: string;
+  campayOperator?: string;
+  campayReason?: string;
+  campayCheckedAt?: number;
+  failReason?: string;
+}
+
+/** Derniers dépôts Mobile Money Campay (administration katika). Une seule lecture bornée, comptée dans la jauge de lectures. */
+export async function listRecentCampayDeposits(max: number = 30): Promise<RecentCampayDeposit[]> {
+  const limit = Math.min(100, Math.max(1, Math.floor(max)));
+  const snap = await getFirebaseAdminAppDb().collection(CASH_DEPOSITS_COLLECTION).orderBy('createdAt', 'desc').limit(limit).get();
+  recordServerReads(snap.size);
+  return snap.docs
+    .map((d) => d.data() as DepositDoc)
+    .filter((d) => d.mode === 'CAMPAY')
+    .map((d) => ({
+      id: d.id,
+      uid: d.uid,
+      amount: d.amount,
+      status: d.status,
+      createdAt: d.createdAt,
+      campayStatus: d.campayStatus,
+      campayOperator: d.campayOperator,
+      campayReason: d.campayReason,
+      campayCheckedAt: d.campayCheckedAt,
+      failReason: d.failReason,
+    }));
 }
 
 /** Enregistre la référence Campay d'une collecte lancée. Sans effet si le dépôt a déjà une référence ou n'est plus en attente. */

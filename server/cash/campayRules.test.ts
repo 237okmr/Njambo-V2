@@ -14,6 +14,7 @@ import {
   extractWebhookEvent,
   verifyWebhookEvent,
   decideFromCampayReading,
+  describeCampayReading,
 } from './campayRules';
 import { newDepositId } from './depositRules';
 
@@ -181,5 +182,29 @@ describe('Campay — décision après relecture du statut', () => {
       decideFromCampayReading(deposit, { status: 'SUCCESSFUL', amount: '1000', reference: 'une-autre-reference' }),
       { decision: 'REJECT', reason: 'REFERENCE_MISMATCH' },
     );
+  });
+});
+
+describe('Campay — ce que l\'on retient d\'une relecture', () => {
+  it('garde statut, opérateur et motif en texte court', () => {
+    assert.deepEqual(describeCampayReading({ status: 'failed', operator: 'orange', reason: 'Transaction refusée' }), {
+      status: 'FAILED',
+      operator: 'ORANGE',
+      reason: 'Transaction refusée',
+    });
+    assert.deepEqual(describeCampayReading({ status: 'PENDING' }), { status: 'PENDING' });
+  });
+
+  it('renvoie null sans statut lisible', () => {
+    assert.equal(describeCampayReading({}), null);
+    assert.equal(describeCampayReading({ status: 42 }), null);
+    assert.equal(describeCampayReading({ status: '   ' }), null);
+  });
+
+  it('masque les numéros longs, retire les retours à la ligne et coupe les textes trop longs', () => {
+    const info = describeCampayReading({ status: 'FAILED', reason: 'Transfert vers 237658606212\nrefusé' });
+    assert.equal(info?.reason, 'Transfert vers *** refusé');
+    const long = describeCampayReading({ status: 'FAILED', reason: 'a'.repeat(500) });
+    assert.equal(long?.reason?.length, 160);
   });
 });
