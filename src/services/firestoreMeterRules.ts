@@ -1,10 +1,10 @@
 /**
  * Mesure des lectures Firestore du téléphone : règles pures (aucun réseau, aucune minuterie).
  * Une lecture est rangée sous une étiquette qui décrit le TYPE de document, jamais l'identifiant d'un joueur :
- * « users/*/history » veut dire « l'historique d'un joueur ». Aucune donnée personnelle ne quitte le téléphone.
+ * « users/*\/history » veut dire « l'historique d'un joueur ». Aucune donnée personnelle ne quitte le téléphone.
  */
 
-/** Remplace chaque identifiant (segments de rang impair) par « * » : users/abc/history -> users/*/history. */
+/** Remplace chaque identifiant (segments de rang impair) par « * » : users/abc/history -> users/*\/history. */
 export function normalizeFirestorePath(path: string): string {
   const segments = String(path || '').split('/').filter((s) => s !== '');
   if (segments.length === 0) return 'inconnu';
