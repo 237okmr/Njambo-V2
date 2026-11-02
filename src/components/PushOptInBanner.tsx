@@ -93,7 +93,7 @@ export const PushOptInBanner: React.FC<PushOptInBannerProps> = ({ busy, onEnable
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-black text-white">Être prévenu quand la table t'attend ?</p>
-          <p className="mt-0.5 text-[11px] leading-snug text-slate-400">
+          <p className="mt-0.5 text-xs leading-snug text-slate-400">
             Invitations, début de partie et avertissements avant forfait, même si tu quittes l'app.
           </p>
         </div>

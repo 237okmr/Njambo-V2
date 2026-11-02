@@ -360,11 +360,11 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
         >
           {/* Top Level / Mode Badge + Special Victory Pills */}
           <div className="flex items-center justify-center gap-1.5 flex-wrap">
-            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-sm flex items-center gap-1 ${levelTheme.badgeClass}`}>
+            <span className={`px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider border shadow-sm flex items-center gap-1 ${levelTheme.badgeClass}`}>
               <span>{levelTheme.badgeText}</span>
             </span>
 
-            <span className={`px-2.5 py-0.5 rounded-full text-[11px] uppercase shadow flex items-center gap-1 ${victoryTheme.badgeClass}`}>
+            <span className={`px-2.5 py-0.5 rounded-full text-xs uppercase shadow flex items-center gap-1 ${victoryTheme.badgeClass}`}>
               {victoryTheme.icon}
               <span>{victoryTheme.badgeText}</span>
             </span>
@@ -392,7 +392,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
               )}
             </div>
             <div className="text-left">
-              <div className={`text-[10px] uppercase font-bold tracking-wider leading-none mb-1 ${
+              <div className={`text-xs uppercase font-bold tracking-wider leading-none mb-1 ${
                 isHumanEliminated && !isSpectator ? 'text-rose-400' : 'text-amber-400/90'
               }`}>
                 {isHumanEliminated && !isSpectator
@@ -488,9 +488,9 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
               <div className="text-left min-w-0">
                 <div className="font-black text-amber-200 text-xs flex items-center gap-1">
                   <span>+{Number(earnedPoints.total.toFixed(2))} {earnedPoints.total >= 1 ? 'points de Maîtrise' : 'point de Maîtrise'}</span>
-                  <span className="text-[10px] text-amber-400/80 font-normal">{isOnlineMultiplayer ? 'au Classement' : 'au maximum, selon le plafond du jour'}</span>
+                  <span className="text-xs text-amber-400/80 font-normal">{isOnlineMultiplayer ? 'au Classement' : 'au maximum, selon le plafond du jour'}</span>
                 </div>
-                <div className="text-[10px] text-amber-300/80 truncate">
+                <div className="text-xs text-amber-300/80 truncate">
                   {earnedPoints.breakdown.map((b) => `${b.label} (+${Number(b.points.toFixed(2))})`).join(' · ')}
                 </div>
               </div>
@@ -515,7 +515,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
 
           return (
             <div className="bg-slate-950/85 border border-emerald-500/40 rounded-xl p-2 sm:p-3 text-center shadow-lg">
-              <div className="text-[11px] font-bold text-emerald-300 mb-2 uppercase tracking-wider flex items-center justify-center gap-1.5">
+              <div className="text-xs font-bold text-emerald-300 mb-2 uppercase tracking-wider flex items-center justify-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
                 <span>Main Victorieuse</span>
               </div>
@@ -565,9 +565,9 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
 
         {/* Capital & Elimination Status */}
         <div id="players-capital-section">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 px-1 flex items-center justify-between">
-            <span>Capital des Joueurs (Mise : {baseBet} jetons)</span>
-            <span className="text-slate-400 text-[9px]">
+          <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5 px-1 flex flex-wrap items-center justify-between gap-x-2">
+            <span>Capital (mise : {baseBet} jetons)</span>
+            <span className="text-slate-400 text-xs">
               {activePlayers.length} actif{activePlayers.length > 1 ? 's' : ''} / {eliminatedPlayers.length} éliminé{eliminatedPlayers.length > 1 ? 's' : ''}
             </span>
           </div>
@@ -595,7 +595,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
                   }`}
                 >
                   <div className="flex items-center justify-center gap-1 w-full px-0.5">
-                    <span className="text-[11px] font-bold truncate max-w-[75px] sm:max-w-[90px]" title={p.name}>
+                    <span className="text-xs font-bold truncate max-w-[75px] sm:max-w-[90px]" title={p.name}>
                       {p.isHuman ? (p.name.includes('Vous') ? 'Toi' : p.name) : p.name.replace(/^Joueur\s+/i, '')}
                     </span>
                     {isForfeit ? (
@@ -612,7 +612,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
                     <Coins className="w-3 h-3 shrink-0" />
                     <span>{p.capital}</span>
                   </span>
-                  <span className="text-[9px] mt-0.5">
+                  <span className="text-xs mt-0.5">
                     {isForfeit ? (
                       <span className="text-rose-400 font-bold bg-rose-950/80 px-1.5 py-0.2 rounded border border-rose-800">
                         Forfait
@@ -679,7 +679,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
               id="btn-toggle-tricks-details"
               type="button"
               onClick={() => setShowTricksHistory((prev) => !prev)}
-              className="w-full flex items-center justify-between px-2.5 py-1.5 text-[11px] text-slate-400 hover:text-amber-300 bg-slate-950/50 hover:bg-slate-950/80 rounded-lg border border-slate-800/80 transition-colors cursor-pointer"
+              className="w-full flex items-center justify-between px-2.5 py-1.5 text-xs text-slate-400 hover:text-amber-300 bg-slate-950/50 hover:bg-slate-950/80 rounded-lg border border-slate-800/80 transition-colors cursor-pointer"
             >
               <span className="font-semibold">
                 {showTricksHistory ? 'Masquer le détail des tours' : 'Voir le détail des 5 tours de la partie'}
@@ -700,7 +700,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
                   transition={{ duration: 0.2 }}
                   className="overflow-hidden mt-1.5"
                 >
-                  <div className="bg-slate-950/80 border border-slate-800 rounded-xl divide-y divide-slate-800/80 overflow-hidden text-[11px]">
+                  <div className="bg-slate-950/80 border border-slate-800 rounded-xl divide-y divide-slate-800/80 overflow-hidden text-xs">
                     {tricksHistory.map((trick) => {
                       const leadSuitInfo = trick.leadSuit ? SUITS_INFO[trick.leadSuit] : null;
                       const isFinalTrick = trick.trickNumber === 5;
@@ -714,7 +714,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
                           {/* Left: Tour # + Couleur */}
                           <div className="flex items-center gap-1.5 shrink-0">
                             <span
-                              className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
+                              className={`text-xs font-bold px-1.5 py-0.2 rounded ${
                                 isFinalTrick
                                   ? 'text-amber-300 bg-amber-950 border border-amber-500/50'
                                   : 'text-slate-300 bg-slate-800'
@@ -723,16 +723,16 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
                               Tour {trick.trickNumber}
                             </span>
                             {leadSuitInfo && (
-                              <span className={`text-[11px] font-semibold ${leadSuitInfo.color} flex items-center gap-0.5`}>
+                              <span className={`text-xs font-semibold ${leadSuitInfo.color} flex items-center gap-0.5`}>
                                 <span>{leadSuitInfo.symbol}</span>
-                                <span className="hidden sm:inline text-[10px]">{leadSuitInfo.name}</span>
+                                <span className="hidden sm:inline text-xs">{leadSuitInfo.name}</span>
                               </span>
                             )}
                           </div>
 
                           {/* Right: Winner + Card */}
                           <div className="flex items-center gap-1.5">
-                            <span className="font-bold text-slate-200 flex items-center gap-1 text-[11px]">
+                            <span className="font-bold text-slate-200 flex items-center gap-1 text-xs">
                               {isFinalTrick && <Crown className="w-3 h-3 text-amber-400" />}
                               <span className="truncate max-w-[90px]">{trick.winnerName}</span>
                             </span>
@@ -745,7 +745,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
                                     isFinalTrick
                                       ? 'border-amber-400 ring-1 ring-amber-400/60'
                                       : 'border-slate-300'
-                                  } text-[11px] font-black leading-none select-none`}
+                                  } text-xs font-black leading-none select-none`}
                                 >
                                   <span className={`font-black ${cardSuit?.color || 'text-slate-900'}`}>
                                     {card.value}
@@ -768,7 +768,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
         )}
 
         {/* Action Buttons: Clear Hierarchy */}
-        <div id="modal-actions" className="pt-1.5 sm:pt-2 border-t border-slate-800 flex flex-col gap-1.5 sm:gap-2">
+        <div id="modal-actions" className="sticky -bottom-3 sm:-bottom-5 z-10 -mx-3 sm:-mx-5 -mb-3 sm:-mb-5 px-3 sm:px-5 pb-3 sm:pb-5 pt-1.5 sm:pt-2 bg-slate-900 border-t border-slate-800 flex flex-col gap-1.5 sm:gap-2">
           {/* Multiplayer Ready Status & Auto-advance Bar */}
           {isOnlineMultiplayer && !isMancheOver && (
             <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-2 sm:p-2.5 flex flex-col gap-1.5 sm:gap-2">
@@ -797,7 +797,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
                   </span>
                 </span>
                 {roundEndRemainingSeconds !== null && roundEndRemainingSeconds !== undefined && (
-                  <span className="text-amber-300 font-bold flex items-center gap-1 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30 text-[11px]">
+                  <span className="text-amber-300 font-bold flex items-center gap-1 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30 text-xs">
                     <Clock className="w-3 h-3 text-amber-400 animate-pulse" />
                     <span>Lancement auto : {roundEndRemainingSeconds}s</span>
                   </span>
@@ -814,7 +814,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
                     return (
                       <div
                         key={p.id}
-                        className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold border transition-colors ${
+                        className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold border transition-colors ${
                           isReady
                             ? 'bg-emerald-950/60 border-emerald-500/50 text-emerald-300'
                             : 'bg-slate-900 border-slate-800 text-slate-400'
@@ -832,7 +832,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
                     );
                   })}
                 {(multiplayerPlayers || []).some((p) => (p as RoomPlayer).isSpectator) && (
-                  <span className="text-[10px] text-slate-300 bg-slate-950/80 border border-slate-500/30 px-2 py-0.5 rounded-md flex items-center gap-1">
+                  <span className="text-xs text-slate-300 bg-slate-950/80 border border-slate-500/30 px-2 py-0.5 rounded-md flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
                     <span>
                       {(multiplayerPlayers || []).filter((p) => (p as RoomPlayer).isSpectator).length} observateur(s)
@@ -890,12 +890,12 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
                         <Eye className="w-4 h-4 shrink-0 text-slate-400" />
                         <span className="font-bold">Match en direct (Spectateur)</span>
                         {roundEndRemainingSeconds !== null && roundEndRemainingSeconds !== undefined && roundEndRemainingSeconds > 0 && (
-                          <span className="text-[11px] bg-slate-900/80 border border-slate-400/40 text-slate-200 px-1.5 py-0.5 rounded font-mono font-bold">
+                          <span className="text-xs bg-slate-900/80 border border-slate-400/40 text-slate-200 px-1.5 py-0.5 rounded font-mono font-bold">
                             {roundEndRemainingSeconds}s
                           </span>
                         )}
                       </div>
-                      <span className="text-[11px] text-slate-300/80">
+                      <span className="text-xs text-slate-300/80">
                         {(() => {
                           const seatedHumans = (multiplayerPlayers || []).filter(
                             (p) => !p.isAway && p.isHuman && !(p as RoomPlayer).isSpectator

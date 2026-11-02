@@ -148,7 +148,7 @@ export const RoomFilterBottomSheet: React.FC<RoomFilterBottomSheetProps> = ({
               <label className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer">
                 <div className="flex flex-col">
                   <span className="text-xs font-bold text-white">Double Kora (×4)</span>
-                  <span className="text-[10px] text-slate-400">Multiplier les gains lors d'un Kora</span>
+                  <span className="text-xs text-slate-400">Multiplier les gains lors d'un Kora</span>
                 </div>
                 <input
                   type="checkbox"
@@ -161,7 +161,7 @@ export const RoomFilterBottomSheet: React.FC<RoomFilterBottomSheetProps> = ({
               <label className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer">
                 <div className="flex flex-col">
                   <span className="text-xs font-bold text-white">Moins de 21</span>
-                  <span className="text-[10px] text-slate-400">Victoire si somme de la main ≤ 21</span>
+                  <span className="text-xs text-slate-400">Victoire si somme de la main ≤ 21</span>
                 </div>
                 <input
                   type="checkbox"

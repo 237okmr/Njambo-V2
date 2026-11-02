@@ -52,7 +52,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 'Impossible de charger ce composant. Tes données locales sont sécurisées.'}
             </p>
             {this.state.error && (
-              <div className="mt-2 p-2 bg-slate-950/80 rounded-lg border border-rose-900/50 text-left overflow-x-auto max-h-32 text-[10px] font-mono text-rose-300">
+              <div className="mt-2 p-2 bg-slate-950/80 rounded-lg border border-rose-900/50 text-left overflow-x-auto max-h-32 text-xs font-mono text-rose-300">
                 <p className="font-bold">{this.state.error.name}: {this.state.error.message}</p>
                 {this.state.error.stack && (
                   <p className="text-slate-500 mt-1 whitespace-pre-wrap">{this.state.error.stack.slice(0, 300)}</p>

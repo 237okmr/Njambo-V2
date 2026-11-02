@@ -2301,7 +2301,7 @@ function GameApp() {
                       <span className="w-2 h-2 rounded-full bg-rose-400 animate-ping shrink-0" />
                       <span className="font-semibold">Reconnexion en cours...</span>
                     </div>
-                    <span className="text-[11px] text-rose-300/80">Ta place et tes jetons sont préservés</span>
+                    <span className="text-xs text-rose-300/80">Ta place et tes jetons sont préservés</span>
                   </div>
                 )}
 
@@ -2317,7 +2317,7 @@ function GameApp() {
                         <p className="font-bold text-amber-300">
                           Tes adversaires humains ont quitté la table.
                         </p>
-                        <p className="text-slate-400 text-[11px] sm:text-xs">
+                        <p className="text-slate-400 text-xs">
                           Réclame ta part du pot ({humanPotShareEstimate} jetons) avec victoire par forfait, ou relève le défi contre l'IA.
                         </p>
                       </div>
@@ -2435,7 +2435,7 @@ function GameApp() {
                         <div className="flex items-center gap-2 text-slate-400 font-bold text-xs sm:text-sm tracking-wide">
                           <span className="w-2.5 h-2.5 rounded-full bg-slate-400 animate-pulse" />
                           <span>Mode Spectateur en direct</span>
-                          <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-950 text-slate-300 border border-slate-500/40">
+                          <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-slate-950 text-slate-300 border border-slate-500/40">
                             Table #{multiplayerRoom?.id}
                           </span>
                         </div>
@@ -2463,7 +2463,7 @@ function GameApp() {
                           </div>
                           <div className="flex flex-col">
                             <span className="text-xs font-bold text-white">Intégration validée !</span>
-                            <span className="text-[11px] text-emerald-300/90">
+                            <span className="text-xs text-emerald-300/90">
                               Tu entreras en jeu dès le début de la prochaine partie avec un capital de{' '}
                               <strong className="text-white font-mono">{prorataCapitalEstimate} 🪙</strong>.
                             </span>
@@ -2477,7 +2477,7 @@ function GameApp() {
                             </div>
                             <div className="flex flex-col min-w-0">
                               <span className="text-xs font-bold text-white">Une place avec bot est disponible !</span>
-                              <span className="text-[11px] text-slate-400">
+                              <span className="text-xs text-slate-400">
                                 Capital ajusté au prorata : <strong className="text-amber-300">{prorataCapitalEstimate} 🪙</strong>
                               </span>
                             </div>
@@ -2522,7 +2522,7 @@ function GameApp() {
                             className="h-8 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 border border-slate-700 text-xs text-slate-200 flex items-center gap-1 shrink-0 cursor-pointer transition"
                           >
                             <span>{em.emoji}</span>
-                            <span className="hidden xs:inline text-[11px] font-medium">{em.text.replace(em.emoji, '').trim()}</span>
+                            <span className="hidden xs:inline text-xs font-medium">{em.text.replace(em.emoji, '').trim()}</span>
                           </button>
                         ))}
                       </div>
@@ -3168,7 +3168,7 @@ function GameApp() {
             <p className="text-xs text-slate-300 leading-relaxed">
               Ta version de l'application (Protocole v1) n'est plus compatible avec le serveur officiel Katika (Protocole v2 - {versionStatus.serverVersion || '2.5.22'}).
             </p>
-            <p className="text-[11px] text-amber-400 font-bold bg-amber-500/10 border border-amber-500/20 px-3 py-2 rounded-xl">
+            <p className="text-xs text-amber-400 font-bold bg-amber-500/10 border border-amber-500/20 px-3 py-2 rounded-xl">
               Recharge la page pour synchroniser automatiquement les protocoles de jeu.
             </p>
             <button
@@ -3193,7 +3193,7 @@ function GameApp() {
             <p className="text-xs text-slate-300 leading-relaxed">
               Ton compte a été connecté sur un autre onglet ou un autre appareil. Par mesure de sécurité et pour éviter les conflits, cette session a été mise en pause.
             </p>
-            <p className="text-[11px] text-amber-400 font-bold bg-amber-500/10 border border-amber-500/20 px-3 py-2 rounded-xl">
+            <p className="text-xs text-amber-400 font-bold bg-amber-500/10 border border-amber-500/20 px-3 py-2 rounded-xl">
               Si tu souhaites reprendre la partie sur cet écran, clique sur le bouton ci-dessous pour forcer la reconnexion.
             </p>
             <button

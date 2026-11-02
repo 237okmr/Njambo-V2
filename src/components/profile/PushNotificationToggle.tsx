@@ -112,12 +112,12 @@ export const PushNotificationToggle: React.FC<PushNotificationToggleProps> = ({
             <div className="flex items-center gap-2">
               <span className="text-sm font-black text-white">Notifications Push Mobiles</span>
               {status.isSubscribed ? (
-                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
+                <span className="text-xs font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
                   <Check className="w-2.5 h-2.5" />
                   Actif
                 </span>
               ) : (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
                   Désactivé
                 </span>
               )}
@@ -217,7 +217,7 @@ export const PushNotificationToggle: React.FC<PushNotificationToggleProps> = ({
       {/* Advanced Fine-Grained Preferences */}
       {status.isSubscribed && showAdvanced && (
         <div className="pt-3 border-t border-slate-800/80 flex flex-col gap-2.5 animate-in fade-in slide-in-from-top-2 duration-150 text-xs">
-          <span className="font-bold text-slate-300 text-[11px] uppercase tracking-wider flex items-center gap-1.5">
+          <span className="font-bold text-slate-300 text-xs uppercase tracking-wider flex items-center gap-1.5">
             <Sliders className="w-3.5 h-3.5 text-amber-400" /> Filtres & Préférences d'Alertes
           </span>
 
@@ -256,7 +256,7 @@ export const PushNotificationToggle: React.FC<PushNotificationToggleProps> = ({
                 <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
                 <div className="min-w-0">
                   <span className="block text-slate-200 font-medium">Alertes de table (déconnexion, forfait)</span>
-                  <span className="block text-[10px] text-slate-500">Jamais coupées par le mode nuit pendant une partie.</span>
+                  <span className="block text-xs text-slate-500">Jamais coupées par le mode nuit pendant une partie.</span>
                 </div>
               </div>
               <input
@@ -274,7 +274,7 @@ export const PushNotificationToggle: React.FC<PushNotificationToggleProps> = ({
                 <BellRing className="w-4 h-4 text-emerald-400 shrink-0" />
                 <div className="min-w-0">
                   <span className="block text-slate-200 font-medium">Arrivée d'un joueur à ma table</span>
-                  <span className="block text-[10px] text-slate-500">Prévenir quand un joueur rejoint une table dont je suis l'hôte absent.</span>
+                  <span className="block text-xs text-slate-500">Prévenir quand un joueur rejoint une table dont je suis l'hôte absent.</span>
                 </div>
               </div>
               <input
@@ -316,7 +316,7 @@ export const PushNotificationToggle: React.FC<PushNotificationToggleProps> = ({
               />
             </div>
             {prefs.quietHoursEnabled && (
-              <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-400 pt-1 border-t border-slate-900">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400 pt-1 border-t border-slate-900">
                 <Clock className="w-3.5 h-3.5 text-slate-500" />
                 <span>Silencieux de</span>
                 <select aria-label="Début du mode nuit" value={prefs.quietHoursStart}

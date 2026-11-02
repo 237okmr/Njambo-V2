@@ -127,7 +127,7 @@ const InviteCard: React.FC<InviteCardProps> = ({
 
   const timerPill = (
     <span
-      className={`inline-flex shrink-0 items-center gap-1 rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-black ${
+      className={`inline-flex shrink-0 items-center gap-1 rounded-md border px-1.5 py-0.5 font-mono text-xs font-black ${
         urgent
           ? 'animate-pulse border-rose-500/40 bg-rose-500/20 text-rose-300'
           : 'border-slate-700 bg-slate-800 text-amber-300'
@@ -175,7 +175,7 @@ const InviteCard: React.FC<InviteCardProps> = ({
               <span className="truncate text-xs font-black text-white">{invitation.fromUserName} te lance un défi</span>
               {timerPill}
             </div>
-            <span className="block truncate text-[11px] text-slate-400">
+            <span className="block truncate text-xs text-slate-400">
               Table #{invitation.roomCode} · {invitation.baseBet} jetons
               {othersCount > 0 ? ` · +${othersCount} autre${othersCount > 1 ? 's' : ''}` : ''}
             </span>
@@ -209,7 +209,7 @@ const InviteCard: React.FC<InviteCardProps> = ({
           </button>
         </div>
         {willSaveSolo && (
-          <p className="mt-1 truncate pl-11 text-[10px] font-medium text-emerald-400">
+          <p className="mt-1 truncate pl-11 text-xs font-medium text-emerald-400">
             Ta partie solo sera sauvegardée automatiquement.
           </p>
         )}
@@ -238,13 +238,13 @@ const InviteCard: React.FC<InviteCardProps> = ({
             <span className="truncate text-sm font-black text-white">{invitation.fromUserName} te lance un défi</span>
             {timerPill}
           </div>
-          <span className="block truncate text-[11px] text-slate-400">
+          <span className="block truncate text-xs text-slate-400">
             Table <strong>#{invitation.roomCode}</strong> · Mise{' '}
             <strong className="text-amber-400">{invitation.baseBet} jetons</strong>
             {othersCount > 0 ? ` · +${othersCount} autre${othersCount > 1 ? 's' : ''} en attente` : ''}
           </span>
           {willSaveSolo && (
-            <span className="mt-0.5 block truncate text-[10px] font-medium text-emerald-400">
+            <span className="mt-0.5 block truncate text-xs font-medium text-emerald-400">
               Ta partie solo sera sauvegardée automatiquement.
             </span>
           )}

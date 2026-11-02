@@ -80,11 +80,11 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
               <span className="text-base sm:text-lg font-black tracking-tight text-white">
                 Académie Njambo Kora
               </span>
-              <span className="hidden sm:inline text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase tracking-wider">
+              <span className="hidden sm:inline text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase tracking-wider">
                 Guide Officiel
               </span>
             </div>
-            <span className="text-[11px] text-slate-400 font-medium hidden xs:block">
+            <span className="text-xs text-slate-400 font-medium hidden xs:block">
               Maîtrisez les 31 cartes, l'art du Kora et les stratégies de table
             </span>
           </div>
@@ -131,7 +131,7 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
                 title={tab.fullLabel}
               >
                 <Icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 ${isActive ? 'text-slate-950' : tab.color}`} />
-                <span className="truncate text-[10px] sm:text-xs">
+                <span className="truncate text-xs">
                   <span className="sm:hidden">{tab.label}</span>
                   <span className="hidden sm:inline">{tab.fullLabel}</span>
                 </span>
@@ -175,7 +175,7 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
 
                 {/* Timeline des 5 tours */}
                 <div className="mt-4 pt-3 border-t border-slate-800/80">
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">
                     Déroulement d'une partie (5 tours) :
                   </span>
                   <div className="grid grid-cols-5 gap-1.5 sm:gap-2 text-center font-mono">
@@ -184,16 +184,16 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
                         key={tour}
                         className="p-1 sm:p-2.5 rounded-xl bg-slate-900 border border-slate-800 flex flex-col items-center justify-center"
                       >
-                        <span className="text-[10px] text-slate-500 font-bold uppercase">Tour {tour}</span>
-                        <span className="text-[11px] sm:text-xs text-slate-300 font-medium">Pose</span>
+                        <span className="text-xs text-slate-500 font-bold uppercase">Tour {tour}</span>
+                        <span className="text-xs text-slate-300 font-medium">Pose</span>
                       </div>
                     ))}
                     <div className="p-1 sm:p-2.5 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 text-slate-950 font-black shadow-lg shadow-amber-500/20 border border-amber-300 flex flex-col items-center justify-center">
-                      <span className="text-[10px] uppercase opacity-80">Tour 5</span>
-                      <span className="text-[11px] sm:text-xs">🏆<span className="hidden sm:inline"> Victoire</span></span>
+                      <span className="text-xs uppercase opacity-80">Tour 5</span>
+                      <span className="text-xs">🏆<span className="hidden sm:inline"> Victoire</span></span>
                     </div>
                   </div>
-                  <p className="text-[11px] text-slate-400 mt-2 text-center italic">
+                  <p className="text-xs text-slate-400 mt-2 text-center italic">
                     Les tours 1 à 4 servent à forcer les adversaires à se défausser de leurs meilleures cartes !
                   </p>
                 </div>
@@ -358,35 +358,35 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
                   <div className="p-3 rounded-xl bg-slate-950 border border-rose-500/40 text-center">
                     <div className="text-2xl text-rose-500 font-black mb-1">♥</div>
                     <div className="text-xs font-black text-rose-400">Koubi</div>
-                    <div className="text-[10px] text-slate-400">Cœur · 8 cartes</div>
-                    <div className="text-[9px] text-slate-500 font-mono mt-1">10 à 3</div>
+                    <div className="text-xs text-slate-400">Cœur · 8 cartes</div>
+                    <div className="text-xs text-slate-500 font-mono mt-1">10 à 3</div>
                   </div>
 
                   <div className="p-3 rounded-xl bg-slate-950 border border-amber-500/40 text-center">
                     <div className="text-2xl text-amber-500 font-black mb-1">♦</div>
                     <div className="text-xs font-black text-amber-400">Zing</div>
-                    <div className="text-[10px] text-slate-400">Carreau · 8 cartes</div>
-                    <div className="text-[9px] text-slate-500 font-mono mt-1">10 à 3</div>
+                    <div className="text-xs text-slate-400">Carreau · 8 cartes</div>
+                    <div className="text-xs text-slate-500 font-mono mt-1">10 à 3</div>
                   </div>
 
                   <div className="p-3 rounded-xl bg-slate-950 border border-emerald-500/40 text-center">
                     <div className="text-2xl text-emerald-500 font-black mb-1">♣</div>
                     <div className="text-xs font-black text-emerald-400">Tchaka</div>
-                    <div className="text-[10px] text-slate-400">Trèfle · 8 cartes</div>
-                    <div className="text-[9px] text-slate-500 font-mono mt-1">10 à 3</div>
+                    <div className="text-xs text-slate-400">Trèfle · 8 cartes</div>
+                    <div className="text-xs text-slate-500 font-mono mt-1">10 à 3</div>
                   </div>
 
                   <div className="p-3 rounded-xl bg-slate-950 border border-slate-600 text-center">
                     <div className="text-2xl text-slate-300 font-black mb-1">♠</div>
                     <div className="text-xs font-black text-slate-200">Black</div>
-                    <div className="text-[10px] text-slate-400">Pique · 7 cartes</div>
-                    <div className="text-[9px] text-amber-400 font-mono mt-1">9 à 3 (Pas de 10)</div>
+                    <div className="text-xs text-slate-400">Pique · 7 cartes</div>
+                    <div className="text-xs text-amber-400 font-mono mt-1">9 à 3 (Pas de 10)</div>
                   </div>
                 </div>
 
                 {/* Échelle de puissance */}
                 <div className="mt-4 pt-4 border-t border-slate-800">
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">
                     Hiérarchie de force (du plus fort au plus faible) :
                   </span>
                   <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5 py-1">
@@ -405,7 +405,7 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
                         className={`py-2 px-1 rounded-xl border text-center font-mono ${card.color} flex flex-col items-center justify-center`}
                       >
                         <div className="text-sm sm:text-base font-black leading-none">{card.rank}</div>
-                        <div className="text-[9px] font-sans font-semibold mt-0.5 truncate w-full">{card.label}</div>
+                        <div className="text-xs font-sans font-semibold mt-0.5 truncate w-full">{card.label}</div>
                       </div>
                     ))}
                   </div>
@@ -543,7 +543,7 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
 
       {/* Bottom Floating Bar */}
       <footer className="p-3 sm:p-4 bg-slate-900/90 border-t border-slate-800 backdrop-blur-md shrink-0 flex items-center justify-between max-w-3xl mx-auto w-full">
-        <span className="text-[11px] text-slate-500 font-medium">
+        <span className="text-xs text-slate-500 font-medium">
           Njambo Kora · 31 Cartes Traditionnelles
         </span>
         <button

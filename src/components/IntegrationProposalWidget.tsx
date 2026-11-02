@@ -87,7 +87,7 @@ export const IntegrationProposalWidget: React.FC<IntegrationProposalWidgetProps>
                 <span>Vote d'intégration en cours ({agreedCount}/{totalEligible} votes)...</span>
               )}
             </span>
-            <span className="text-[10px] text-slate-300 truncate">
+            <span className="text-xs text-slate-300 truncate">
               {proposal.targetBotNameToReplace
                 ? `Remplacement prévu de ${proposal.targetBotNameToReplace}`
                 : `Capital proratisé : ${proposal.prorataCapital} 🪙`}
@@ -122,24 +122,24 @@ export const IntegrationProposalWidget: React.FC<IntegrationProposalWidgetProps>
                 <span className="text-xs font-bold leading-tight truncate">
                   Intégrer <strong className="text-amber-300">{proposal.applicantName}</strong> ?
                 </span>
-                <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-900 border border-slate-400/40 text-amber-300 shrink-0 flex items-center gap-1">
+                <span className="text-xs font-mono font-bold px-1.5 py-0.2 rounded bg-slate-900 border border-slate-400/40 text-amber-300 shrink-0 flex items-center gap-1">
                   <Clock className="w-2.5 h-2.5 animate-spin" />
                   <span>{remainingSec}s</span>
                 </span>
               </div>
-              <span className="text-[10px] text-slate-200/80 mt-0.5">
+              <span className="text-xs text-slate-200/80 mt-0.5">
                 Capital : {proposal.prorataCapital} 🪙 · {proposal.targetBotNameToReplace ? `Remplace ${proposal.targetBotNameToReplace}` : 'Place libre'} (Majorité : {agreedCount}/{totalEligible})
               </span>
             </div>
 
             <div className="flex items-center gap-1.5 ml-auto shrink-0">
               {hasAgreed ? (
-                <span className="px-2 py-1 rounded-lg bg-emerald-900/80 border border-emerald-600/60 text-emerald-300 text-[10px] font-bold flex items-center gap-1">
+                <span className="px-2 py-1 rounded-lg bg-emerald-900/80 border border-emerald-600/60 text-emerald-300 text-xs font-bold flex items-center gap-1">
                   <Check className="w-3 h-3 text-emerald-400" />
                   <span>Pour</span>
                 </span>
               ) : hasDeclined ? (
-                <span className="px-2 py-1 rounded-lg bg-rose-900/80 border border-rose-600/60 text-rose-300 text-[10px] font-bold flex items-center gap-1">
+                <span className="px-2 py-1 rounded-lg bg-rose-900/80 border border-rose-600/60 text-rose-300 text-xs font-bold flex items-center gap-1">
                   <X className="w-3 h-3 text-rose-400" />
                   <span>Contre</span>
                 </span>
@@ -151,7 +151,7 @@ export const IntegrationProposalWidget: React.FC<IntegrationProposalWidgetProps>
                       triggerHaptic('success');
                       onRespondVote(true);
                     }}
-                    className="px-2.5 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shadow-md flex items-center gap-1 transition active:scale-95 cursor-pointer"
+                    className="px-2.5 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md flex items-center gap-1 transition active:scale-95 cursor-pointer"
                     title="Accepter l'intégration"
                   >
                     <Check className="w-3.5 h-3.5" />
@@ -163,7 +163,7 @@ export const IntegrationProposalWidget: React.FC<IntegrationProposalWidgetProps>
                       triggerHaptic('light');
                       onRespondVote(false);
                     }}
-                    className="px-2 py-1 rounded-xl bg-slate-800 hover:bg-rose-900/80 text-slate-300 hover:text-rose-200 border border-slate-700 text-[11px] font-semibold transition active:scale-95 cursor-pointer"
+                    className="px-2 py-1 rounded-xl bg-slate-800 hover:bg-rose-900/80 text-slate-300 hover:text-rose-200 border border-slate-700 text-xs font-semibold transition active:scale-95 cursor-pointer"
                     title="Refuser l'intégration"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -199,7 +199,7 @@ export const IntegrationProposalWidget: React.FC<IntegrationProposalWidgetProps>
             <span className="p-1 rounded-lg bg-amber-500/20 text-amber-300">
               <Eye className="w-3.5 h-3.5 text-amber-400" />
             </span>
-            <span className="text-[11px] text-slate-300 font-medium">
+            <span className="text-xs text-slate-300 font-medium">
               Spectateur (Place libre)
             </span>
           </div>

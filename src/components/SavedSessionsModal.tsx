@@ -162,7 +162,7 @@ export const SavedSessionsModal: React.FC<SavedSessionsModalProps> = ({
               <p className="text-xs text-slate-400 font-medium">
                 Aucune Manche enregistrée pour le moment.
               </p>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-xs text-slate-500">
                 La Manche en cours est sauvegardée automatiquement au fil du jeu.
               </p>
             </div>
@@ -210,7 +210,7 @@ export const SavedSessionsModal: React.FC<SavedSessionsModalProps> = ({
                           {session.title}
                         </span>
                         {isActive && (
-                          <span className="text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1.5 py-0.2 rounded shrink-0 flex items-center gap-0.5">
+                          <span className="text-xs font-black bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1.5 py-0.2 rounded shrink-0 flex items-center gap-0.5">
                             <BookmarkCheck className="w-3 h-3 text-amber-400" />
                             <span>En cours</span>
                           </span>
@@ -242,7 +242,7 @@ export const SavedSessionsModal: React.FC<SavedSessionsModalProps> = ({
                   </div>
 
                   {/* Details pills */}
-                  <div className="flex items-center justify-between gap-1 text-[10px] text-slate-300 bg-slate-900/60 px-2 py-1.5 rounded-lg border border-slate-800/80 flex-wrap">
+                  <div className="flex items-center justify-between gap-1 text-xs text-slate-300 bg-slate-900/60 px-2 py-1.5 rounded-lg border border-slate-800/80 flex-wrap">
                     <div className="flex items-center gap-1 text-slate-400">
                       <Clock className="w-3 h-3 text-amber-400/80 shrink-0" />
                       <span>{formatDate(session.updatedAt)}</span>
@@ -258,7 +258,7 @@ export const SavedSessionsModal: React.FC<SavedSessionsModalProps> = ({
                       <span>{humanPlayer ? humanPlayer.capital : 0} pts</span>
                     </div>
 
-                    <div className="text-slate-400 font-mono text-[9px]">
+                    <div className="text-slate-400 font-mono text-xs">
                       P{session.gameState.partieCount || 1} · {session.baseBet}pts
                     </div>
                   </div>
@@ -284,7 +284,7 @@ export const SavedSessionsModal: React.FC<SavedSessionsModalProps> = ({
         </div>
 
         {/* Footer info */}
-        <div className="text-[10px] text-slate-400 text-center border-t border-slate-800 pt-2.5">
+        <div className="text-xs text-slate-400 text-center border-t border-slate-800 pt-2.5">
           Toutes les sauvegardes sont conservées localement dans ton navigateur.
         </div>
       </motion.div>

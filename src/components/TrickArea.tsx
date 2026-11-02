@@ -145,7 +145,7 @@ export const TrickArea: React.FC<TrickAreaProps> = ({
                     {/* Pas la carte / Non-winning tag on the card */}
                     {isDiscard && (
                       <div className="absolute inset-0 bg-slate-900/30 rounded-xl flex items-center justify-center p-1 backdrop-blur-[0.5px]">
-                        <span className="bg-rose-950/95 text-rose-200 border border-rose-600 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm text-center leading-tight">
+                        <span className="bg-rose-950/95 text-rose-200 border border-rose-600 text-[11px] font-bold px-2 py-0.5 rounded shadow-sm text-center leading-tight">
                           Pas la carte
                         </span>
                       </div>
@@ -155,19 +155,19 @@ export const TrickArea: React.FC<TrickAreaProps> = ({
                   {/* Status label under card */}
                   <div className="mt-1.5">
                     {play.isLeadCard ? (
-                      <span className="text-[10px] font-semibold text-slate-200 bg-slate-800 px-2 py-0.5 rounded border border-slate-700 shadow-sm">
+                      <span className="text-[11px] font-semibold text-slate-200 bg-slate-800 px-2 py-0.5 rounded border border-slate-700 shadow-sm">
                         Entame ({suitInfo.name})
                       </span>
                     ) : play.isWinningSoFar ? (
-                      <span className="text-[10px] font-bold text-amber-300 bg-slate-800 px-2 py-0.5 rounded border border-amber-500/50 flex items-center gap-1 shadow-sm">
+                      <span className="text-[11px] font-bold text-amber-300 bg-slate-800 px-2 py-0.5 rounded border border-amber-500/50 flex items-center gap-1 shadow-sm">
                         <Crown className="w-2.5 h-2.5 text-amber-400" /> Mène
                       </span>
                     ) : isDiscard ? (
-                      <span className="text-[10px] font-medium text-rose-300 bg-rose-950/70 border border-rose-900/60 px-2 py-0.5 rounded">
+                      <span className="text-[11px] font-medium text-rose-300 bg-rose-950/70 border border-rose-900/60 px-2 py-0.5 rounded">
                         Non gagnante
                       </span>
                     ) : (
-                      <span className="text-[10px] font-medium text-slate-300 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                      <span className="text-[11px] font-medium text-slate-300 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
                         A suivi ({play.card.value})
                       </span>
                     )}

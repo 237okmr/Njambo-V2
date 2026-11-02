@@ -115,7 +115,7 @@ export const RulesModal: React.FC<RulesModalProps> = ({
                       Objectif : Remporter le 5ᵉ tour
                     </h3>
                   </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  <span className="text-xs font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
                     5 cartes en main
                   </span>
                 </div>
@@ -123,13 +123,13 @@ export const RulesModal: React.FC<RulesModalProps> = ({
                 <div className="grid grid-cols-5 gap-1 text-center font-mono my-2">
                   {[1, 2, 3, 4].map((h) => (
                     <div key={h} className="p-1.5 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-400">
-                      <div className="text-[9px] uppercase">Tour {h}</div>
-                      <div className="text-[10px] text-slate-300">Placement</div>
+                      <div className="text-xs uppercase">Tour {h}</div>
+                      <div className="text-xs text-slate-300">Placement</div>
                     </div>
                   ))}
                   <div className="p-1.5 rounded-lg bg-amber-500 text-slate-950 font-black shadow border border-amber-300">
-                    <div className="text-[9px] uppercase">Tour 5</div>
-                    <div className="text-[10px]">🏆 Gagne la Partie</div>
+                    <div className="text-xs uppercase">Tour 5</div>
+                    <div className="text-xs">🏆 Gagne la Partie</div>
                   </div>
                 </div>
               </div>
@@ -143,7 +143,7 @@ export const RulesModal: React.FC<RulesModalProps> = ({
                       Hiérarchie des Cartes (31 cartes)
                     </h3>
                   </div>
-                  <span className="text-[10px] text-slate-400 font-mono">10♠ exclu</span>
+                  <span className="text-xs text-slate-400 font-mono">10♠ exclu</span>
                 </div>
 
                 {/* Card hierarchy visual */}
@@ -161,14 +161,14 @@ export const RulesModal: React.FC<RulesModalProps> = ({
                     <div key={c.rank} className="flex items-center gap-1 shrink-0">
                       <div className={`px-2 py-1 rounded-lg border text-center font-mono ${c.bg}`}>
                         <div className="text-xs font-black">{c.rank}</div>
-                        <div className="text-[8px] font-sans">{c.power}</div>
+                        <div className="text-xs font-sans">{c.power}</div>
                       </div>
                       {i < 7 && <span className="text-slate-600 text-xs">›</span>}
                     </div>
                   ))}
                 </div>
 
-                <div className="flex items-center justify-center gap-3 mt-2 text-[10px] text-slate-400">
+                <div className="flex items-center justify-center gap-3 mt-2 text-xs text-slate-400">
                   <span className="text-rose-400 font-bold">♥ Koubi (8)</span>
                   <span className="text-amber-400 font-bold">♦ Zing (8)</span>
                   <span className="text-emerald-400 font-bold">♣ Tchaka (8)</span>
@@ -184,7 +184,7 @@ export const RulesModal: React.FC<RulesModalProps> = ({
                     Règle du Tour & Obligation de Couleur
                   </h3>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                   <div className="p-2 rounded-lg bg-emerald-950/30 border border-emerald-500/30 flex items-start gap-2">
                     <span className="text-emerald-400 font-black">🟢</span>
                     <div>
@@ -211,9 +211,9 @@ export const RulesModal: React.FC<RulesModalProps> = ({
                   <div>
                     <div className="flex items-center gap-1.5">
                       <span className="font-black text-xs text-slate-300">Kora / Double</span>
-                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-500/30 text-slate-200">×2 / ×4</span>
+                      <span className="text-xs font-bold px-1.5 py-0.2 rounded bg-slate-500/30 text-slate-200">×2 / ×4</span>
                     </div>
-                    <div className="text-[10px] text-slate-300 mt-0.5">
+                    <div className="text-xs text-slate-300 mt-0.5">
                       Gagner le 5ᵉ tour avec un <strong>3</strong> double la mise de chaque perdant.
                     </div>
                   </div>
@@ -226,9 +226,9 @@ export const RulesModal: React.FC<RulesModalProps> = ({
                   <div>
                     <div className="flex items-center gap-1.5">
                       <span className="font-black text-xs text-amber-300">Trois 7 & ≤21</span>
-                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-500/30 text-amber-200">Instantané</span>
+                      <span className="text-xs font-bold px-1.5 py-0.2 rounded bg-amber-500/30 text-amber-200">Instantané</span>
                     </div>
-                    <div className="text-[10px] text-slate-300 mt-0.5">
+                    <div className="text-xs text-slate-300 mt-0.5">
                       3 cartes "7" ou somme main <strong>≤ 21</strong> à la distribution = victoire directe de la partie !
                     </div>
                   </div>
@@ -246,19 +246,19 @@ export const RulesModal: React.FC<RulesModalProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                   <div className="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
                     <span className="text-amber-400 font-bold">🔥 KORA (×2) :</span>
-                    <p className="text-slate-300 text-[11px] mt-0.5">Remporter le 5ᵉ tour avec un "3". Les perdants paient le double de leur mise.</p>
+                    <p className="text-slate-300 text-xs mt-0.5">Remporter le 5ᵉ tour avec un "3". Les perdants paient le double de leur mise.</p>
                   </div>
                   <div className="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
                     <span className="text-slate-300 font-bold">⚡ DOUBLE KORA (×4) :</span>
-                    <p className="text-slate-300 text-[11px] mt-0.5">Gagner le 4ᵉ puis le 5ᵉ tour avec un "3". Les perdants paient 4× la mise.</p>
+                    <p className="text-slate-300 text-xs mt-0.5">Gagner le 4ᵉ puis le 5ᵉ tour avec un "3". Les perdants paient 4× la mise.</p>
                   </div>
                   <div className="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
                     <span className="text-emerald-400 font-bold">✨ MOINS DE 21 :</span>
-                    <p className="text-slate-300 text-[11px] mt-0.5">Somme des 5 cartes ≤ 21 dès la distribution = fin de la partie et victoire du pot.</p>
+                    <p className="text-slate-300 text-xs mt-0.5">Somme des 5 cartes ≤ 21 dès la distribution = fin de la partie et victoire du pot.</p>
                   </div>
                   <div className="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
                     <span className="text-amber-400 font-bold">🃏 LES 3 "7" :</span>
-                    <p className="text-slate-300 text-[11px] mt-0.5">Posséder trois 7 dans sa main initiale = victoire instantanée de la partie.</p>
+                    <p className="text-slate-300 text-xs mt-0.5">Posséder trois 7 dans sa main initiale = victoire instantanée de la partie.</p>
                   </div>
                 </div>
               </div>
@@ -268,10 +268,10 @@ export const RulesModal: React.FC<RulesModalProps> = ({
                   <Layers className="w-4 h-4" />
                   <span>Déroulement, Donneur & Ordre de Jeu</span>
                 </h3>
-                <p className="text-slate-300 text-[11px] leading-relaxed">
+                <p className="text-slate-300 text-xs leading-relaxed">
                   Le vainqueur de la partie précédente devient le <strong>donneur</strong> (distribue les cartes). Le joueur situé immédiatement après le donneur (à sa gauche) joue la <strong>première carte du 1ᵉʳ tour</strong>. Aux tours suivants, le gagnant du tour précédent garde la main (entame le tour suivant).
                 </p>
-                <p className="text-slate-300 text-[11px] leading-relaxed">
+                <p className="text-slate-300 text-xs leading-relaxed">
                   Une <strong>Manche</strong> est une succession de parties jusqu'à la victoire finale. Elle se joue au capital de jetons. Chaque joueur verse la mise au début de chaque partie. Tout joueur à court de jetons est éliminé. Le dernier joueur en lice remporte la manche !
                 </p>
               </div>
@@ -281,7 +281,7 @@ export const RulesModal: React.FC<RulesModalProps> = ({
 
         {/* Footer */}
         <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between shrink-0">
-          <span className="text-[11px] text-slate-500">
+          <span className="text-xs text-slate-500">
             Njambo Kora · 31 cartes
           </span>
           <button

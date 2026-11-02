@@ -46,10 +46,10 @@ export const EarlyCloseProposalWidget: React.FC<EarlyCloseProposalWidgetProps> =
                 <Handshake className="w-4 h-4 text-amber-400 animate-bounce" />
               </span>
               <div className="flex flex-col">
-                <span className="text-[11px] text-slate-100 font-bold leading-tight">
+                <span className="text-xs text-slate-100 font-bold leading-tight">
                   Fin de partie d'un commun accord ?
                 </span>
-                <span className="text-[9px] text-slate-300">
+                <span className="text-xs text-slate-300">
                   {isLocalProposer ? 'Ta demande' : `Par ${proposal.proposerName}`} • Accord : {agreedCount}/{totalRequired}
                 </span>
               </div>
@@ -82,7 +82,7 @@ export const EarlyCloseProposalWidget: React.FC<EarlyCloseProposalWidgetProps> =
                   </button>
                 </>
               ) : (
-                <span className="text-[10px] font-bold text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <span className="text-xs font-bold text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
                   <Check className="w-3 h-3 text-amber-400" /> En attente des autres...
                 </span>
               )}

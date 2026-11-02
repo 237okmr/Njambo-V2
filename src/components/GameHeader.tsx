@@ -156,7 +156,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
         <div className="flex items-center justify-center min-w-0 mx-1 flex-1 sm:flex-initial">
           <div className="flex items-center gap-1.5 sm:gap-3 px-2 sm:px-3 py-1 rounded-full bg-slate-950/90 border border-slate-800/90 shadow-inner text-xs min-w-0 max-w-full">
             {/* Breadcrumbs */}
-            <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] tracking-tight min-w-0">
+            <div className="flex items-center gap-1.5 text-[11px] tracking-tight min-w-0">
               {isOnlineActive ? (
                 <span className="text-slate-400 font-semibold flex items-center gap-1 shrink-0">
                   <span className="hidden xs:inline">🌐 Multi</span>
@@ -165,7 +165,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
               ) : (
                 <span className="text-emerald-400 font-semibold flex items-center gap-1 shrink-0">
                   <span className="hidden xs:inline">🎮 Solo</span>
-                  <span className="xs:hidden">🎮</span>
+                  <span className="hidden min-[360px]:inline xs:hidden">🎮</span>
                 </span>
               )}
               
@@ -177,7 +177,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                 </>
               )}
 
-              <span className="text-slate-600 shrink-0">›</span>
+              <span className="hidden min-[360px]:inline text-slate-600 shrink-0">›</span>
               <span className="text-white font-bold flex items-center gap-1 shrink-0">
                 <span className="hidden xs:inline">Manche</span>
                 <span className="xs:hidden">M.</span>
@@ -189,7 +189,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
 
             {/* Mobile Pot Counter (<1024px) */}
             <div className="flex items-center gap-1 lg:hidden">
-              <span className="text-slate-400 text-[10px] sm:text-[11px]">Pot</span>
+              <span className="text-slate-400 text-[11px]">Pot</span>
               <span className="font-extrabold text-emerald-400 flex items-center gap-0.5 text-[11px] sm:text-xs font-mono">
                 <span>{activeGameState.pot || 0}</span>
                 <span className="text-[11px] text-amber-400 font-normal">🪙</span>
@@ -209,7 +209,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                 <div className="absolute top-0 w-3.5 h-1.5 rounded-full bg-gradient-to-r from-amber-400 via-amber-200 to-amber-500 border border-amber-100 shadow-sm animate-pulse" />
               </div>
               <div className="flex flex-col leading-none">
-                <span className="text-[9px] uppercase tracking-wider text-emerald-300/80 font-bold">Pot</span>
+                <span className="text-[11px] uppercase tracking-wider text-emerald-300/80 font-bold">Pot</span>
                 <span className="font-extrabold text-amber-300 text-xs sm:text-sm font-mono tracking-tight flex items-center gap-0.5">
                   <span>{activeGameState.pot || 0}</span>
                 </span>
@@ -255,7 +255,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
             <SlidersHorizontal className="w-3.5 h-3.5 text-slate-300 shrink-0" />
             <span className="font-medium">Menu</span>
             {pendingInvitesCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white font-black text-[9px] flex items-center justify-center animate-bounce shadow">
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white font-black text-[11px] flex items-center justify-center animate-bounce shadow">
                 {pendingInvitesCount}
               </span>
             )}
@@ -369,11 +369,11 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                           <span className="font-bold text-xs text-white group-hover:text-amber-300 transition">
                             {profile.displayName}
                           </span>
-                          <span className={`text-[9px] px-1.5 py-0.2 rounded font-semibold border ${currentTitle.borderClass} ${currentTitle.colorClass} bg-slate-900`}>
+                          <span className={`text-[11px] px-1.5 py-0.2 rounded font-semibold border ${currentTitle.borderClass} ${currentTitle.colorClass} bg-slate-900`}>
                             {currentTitle.badge} {currentTitle.title}
                           </span>
                         </div>
-                        <span className="text-[10px] text-slate-400">
+                        <span className="text-[11px] text-slate-400">
                           {stats.gamesWon}V / {stats.gamesPlayed}P • {isLoggedIn ? 'Cloud Google' : 'Invité'}
                         </span>
                       </div>
@@ -386,7 +386,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
 
                 {/* CATEGORY 1: En jeu (Confort & Rythme) */}
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1">
                     Gameplay & Confort
                   </span>
                   <div className="bg-slate-950/60 rounded-2xl p-1 border border-slate-800/60 flex flex-col gap-0.5">
@@ -400,7 +400,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                           <Zap className="w-4 h-4 text-amber-400 fill-amber-400 shrink-0" />
                           <div>
                             <span className="font-semibold text-xs text-slate-100 block">Vitesse du jeu</span>
-                            <span className="text-[10px] text-slate-400">Accélérer les tours des IA</span>
+                            <span className="text-[11px] text-slate-400">Accélérer les tours des IA</span>
                           </div>
                         </div>
                         <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-950/70 text-amber-300 border border-amber-800/60 font-mono">
@@ -424,7 +424,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                           </span>
                           <div>
                             <span className="font-semibold text-xs text-slate-100 block">Niveau des IA</span>
-                            <span className="text-[10px] text-slate-400">Modifier l'intelligence adverse</span>
+                            <span className="text-[11px] text-slate-400">Modifier l'intelligence adverse</span>
                           </div>
                         </div>
                         <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-950/70 text-amber-300 border border-amber-800/60">
@@ -446,11 +446,11 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                         )}
                         <div>
                           <span className="font-semibold text-xs text-slate-100 block">Effets sonores</span>
-                          <span className="text-[10px] text-slate-400">Cartes, jetons et annonces</span>
+                          <span className="text-[11px] text-slate-400">Cartes, jetons et annonces</span>
                         </div>
                       </div>
                       <span
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${
                           soundEnabled
                             ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
                             : 'bg-slate-800 text-slate-400'
@@ -471,11 +471,11 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                         />
                         <div>
                           <span className="font-semibold text-xs text-slate-100 block">Ambiance sonore</span>
-                          <span className="text-[10px] text-slate-400">Musique de fond immersive</span>
+                          <span className="text-[11px] text-slate-400">Musique de fond immersive</span>
                         </div>
                       </div>
                       <span
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${
                           ambienceEnabled
                             ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
                             : 'bg-slate-800 text-slate-400'
@@ -489,7 +489,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
 
                 {/* CATEGORY 2: Assistance & Outils */}
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1">
                     Assistance & Outils
                   </span>
                   <div className="bg-slate-950/60 rounded-2xl p-1 border border-slate-800/60 flex flex-col gap-0.5">
@@ -504,7 +504,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                       <HelpCircle className="w-4 h-4 text-slate-400 shrink-0" />
                       <div>
                         <span className="font-semibold text-xs text-slate-100 block">Règles du jeu</span>
-                        <span className="text-[10px] text-slate-400">Ordre des cartes, Kora et calcul du pot</span>
+                        <span className="text-[11px] text-slate-400">Ordre des cartes, Kora et calcul du pot</span>
                       </div>
                     </button>
 
@@ -519,7 +519,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                       <FolderOpen className="w-4 h-4 text-amber-400 shrink-0" />
                       <div>
                         <span className="font-semibold text-xs text-slate-100 block">Manches sauvegardées</span>
-                        <span className="text-[10px] text-slate-400">Reprendre ou organiser tes parties</span>
+                        <span className="text-[11px] text-slate-400">Reprendre ou organiser tes parties</span>
                       </div>
                     </button>
 
@@ -535,11 +535,11 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                         <Users className="w-4 h-4 text-emerald-400 shrink-0" />
                         <div>
                           <span className="font-semibold text-xs text-slate-100 block">Multijoueur en ligne</span>
-                          <span className="text-[10px] text-slate-400">Salons privés et parties rapides</span>
+                          <span className="text-[11px] text-slate-400">Salons privés et parties rapides</span>
                         </div>
                       </div>
                       {pendingInvitesCount > 0 && (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white animate-pulse">
+                        <span className="px-2 py-0.5 rounded-full text-[11px] font-black bg-rose-500 text-white animate-pulse">
                           {pendingInvitesCount} invité
                         </span>
                       )}
@@ -558,10 +558,10 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                         <Trophy className="w-4 h-4 text-amber-400 shrink-0" />
                         <div>
                           <span className="font-semibold text-xs text-slate-100 block">Palmarès</span>
-                          <span className="text-[10px] text-slate-400">Classement et statistiques des joueurs</span>
+                          <span className="text-[11px] text-slate-400">Classement et statistiques des joueurs</span>
                         </div>
                       </div>
-                      <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full">
+                      <span className="text-[11px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full">
                         Voir
                       </span>
                     </button>
@@ -583,7 +583,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                         <span className="font-semibold text-xs text-slate-100 block">
                           {isFullscreen ? 'Quitter le plein écran' : 'Mode plein écran'}
                         </span>
-                        <span className="text-[10px] text-slate-400">Agrandir la zone de jeu</span>
+                        <span className="text-[11px] text-slate-400">Agrandir la zone de jeu</span>
                       </div>
                     </button>
 
@@ -599,7 +599,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                         <Download className="w-4 h-4 text-emerald-400 shrink-0" />
                         <div>
                           <span className="font-semibold text-xs text-emerald-200 block">Installer l'application</span>
-                          <span className="text-[10px] text-emerald-400/80">Accès rapide depuis l'écran d'accueil</span>
+                          <span className="text-[11px] text-emerald-400/80">Accès rapide depuis l'écran d'accueil</span>
                         </div>
                       </button>
                     )}
@@ -608,7 +608,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
 
                 {/* CATEGORY 3: Session de jeu (Sauvegarde & Quitter) */}
                 <div className="flex flex-col gap-1.5 pt-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1">
                     Gestion de la partie
                   </span>
                   <div className="bg-slate-950/60 rounded-2xl p-1 border border-slate-800/60 flex flex-col gap-1">
@@ -624,13 +624,13 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                             <span className="font-semibold text-xs text-slate-100 block">
                               {justSaved ? 'Manche sauvegardée !' : 'Sauvegarder la manche'}
                             </span>
-                            <span className="text-[10px] text-slate-400">Enregistrer l'état actuel</span>
+                            <span className="text-[11px] text-slate-400">Enregistrer l'état actuel</span>
                           </div>
                         </div>
                         {justSaved ? (
                           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                         ) : (
-                          <span className="text-[10px] text-slate-400">Auto</span>
+                          <span className="text-[11px] text-slate-400">Auto</span>
                         )}
                       </button>
                     )}
@@ -646,7 +646,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                           <span className="font-semibold text-xs text-rose-100 block">
                             {isOnlineActive ? 'Quitter la partie en ligne' : "Retourner à l'accueil"}
                           </span>
-                          <span className="text-[10px] text-rose-300/70">
+                          <span className="text-[11px] text-rose-300/70">
                             {isOnlineActive
                               ? 'Déclare un forfait pour la manche'
                               : 'La partie en cours reste sauvegardée'}

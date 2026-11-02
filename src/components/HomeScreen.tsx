@@ -412,7 +412,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] sm:text-xs font-bold mb-2 shadow-sm"
+            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold mb-2 shadow-sm"
           >
             <Sparkles className="w-3 h-3 text-amber-400" />
             <span>Jeu de cartes du Continent</span>
@@ -444,11 +444,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 <div className="flex flex-col min-w-0">
                   <div className="flex items-center gap-1.5">
                     <span className="leading-tight text-xs sm:text-sm font-black truncate text-slate-100">Table en direct : {activeMultiplayerRoom.id}</span>
-                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-600/60 text-white border border-emerald-400/40 shrink-0">
+                    <span className="text-xs font-bold px-1.5 py-0.2 rounded-full bg-emerald-600/60 text-white border border-emerald-400/40 shrink-0">
                       En cours
                     </span>
                   </div>
-                  <span className="text-[10px] font-semibold text-slate-300 truncate">
+                  <span className="text-xs font-semibold text-slate-300 truncate">
                     {activeMultiplayerRoom.players?.length || 4} Joueurs · Mise : {activeMultiplayerRoom.baseBet || 10} 🪙
                   </span>
                 </div>
@@ -492,13 +492,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               </div>
               <div className="flex items-center gap-1.5 min-w-0">
                 <span className="leading-tight text-xs sm:text-sm font-extrabold text-white truncate group-hover:text-amber-200 transition">Kora Cash</span>
-                <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase tracking-wider shrink-0">
+                <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase tracking-wider shrink-0">
                   {koraCashEntry === 'COMING_SOON' ? 'Bientôt' : koraCashStatus?.environment === 'LIVE' ? 'Argent réel' : 'Démo'}
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 group-hover:text-amber-400 transition shrink-0 relative z-10">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 group-hover:text-amber-400 transition shrink-0 relative z-10">
               {koraCashWallet.wallet && (
                 <span className="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-200 border border-amber-500/30 font-black">
                   {formatFcfa(koraCashWallet.wallet.available)}
@@ -526,7 +526,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 <Play className="w-5 h-5 fill-slate-950" />
                 Reprendre
               </span>
-              <span className="relative z-10 text-[11px] font-bold text-slate-900/80 truncate max-w-full">
+              <span className="relative z-10 text-xs font-bold text-slate-900/80 truncate max-w-full">
                 Partie {activeSession.gameState.partieCount || 1} · Tour {activeSession.gameState.currentTrickNumber || 1}/5 · Pot: {activeSession.gameState.pot || 0} pts
               </span>
             </motion.button>
@@ -553,7 +553,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               Jouer
             </span>
             {pendingInvitesCount > 0 && (
-              <span className="absolute top-1.5 right-2 z-10 min-w-5 h-5 px-1 rounded-full bg-rose-600 text-white font-black text-[11px] flex items-center justify-center shadow-md">
+              <span className="absolute top-1.5 right-2 z-10 min-w-5 h-5 px-1 rounded-full bg-rose-600 text-white font-black text-xs flex items-center justify-center shadow-md">
                 {pendingInvitesCount}
               </span>
             )}
@@ -579,13 +579,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   <span className="leading-tight text-xs sm:text-sm font-extrabold text-white truncate group-hover:text-purple-200 transition">
                     Palmarès
                   </span>
-                  <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 uppercase tracking-wider shrink-0">
+                  <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 uppercase tracking-wider shrink-0">
                     Classement
                   </span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-1 text-[11px] font-bold text-slate-400 group-hover:text-purple-300 transition shrink-0 relative z-10">
+              <div className="flex items-center gap-1 text-xs font-bold text-slate-400 group-hover:text-purple-300 transition shrink-0 relative z-10">
                 <span>Voir</span>
                 <span>→</span>
               </div>
@@ -666,7 +666,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   <span className="relative w-9 h-9 rounded-lg bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center shrink-0">
                     <AnimatedConnectedTableIcon />
                     {pendingInvitesCount > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-0.5 rounded-full bg-rose-600 text-white font-black text-[10px] flex items-center justify-center shadow-md">
+                      <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-0.5 rounded-full bg-rose-600 text-white font-black text-xs flex items-center justify-center shadow-md">
                         {pendingInvitesCount}
                       </span>
                     )}
@@ -674,7 +674,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   <span className="flex flex-col min-w-0">
                     <span className="flex items-center gap-1.5">
                       <span className="text-sm font-black text-white group-hover:text-cyan-200 transition">Multijoueur</span>
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 uppercase tracking-wider shrink-0">
+                      <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 uppercase tracking-wider shrink-0">
                         Direct
                       </span>
                     </span>
@@ -697,7 +697,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               type="button"
               id="btn-home-saved-sessions"
               onClick={onOpenSavedSessions}
-              className="text-[11px] text-slate-400 hover:text-amber-300 transition underline underline-offset-2 cursor-pointer inline-flex items-center gap-1"
+              className="text-xs text-slate-400 hover:text-amber-300 transition underline underline-offset-2 cursor-pointer inline-flex items-center gap-1"
             >
               <FolderOpen className="w-3 h-3 text-amber-400" />
               <span>Gérer mes {savedSessionsCount} parties sauvegardées</span>
@@ -705,9 +705,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </div>
         )}
 
-        <p className="text-[10px] text-slate-500 text-center mt-0.5 font-medium flex items-center justify-center gap-2">
+        <p className="text-xs text-slate-500 text-center mt-0.5 font-medium flex items-center justify-center gap-2">
           <span>Mises, Kora & Double Kora</span>
-          <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-900 border border-slate-800 text-slate-400 font-mono">
+          <span className="text-xs px-1.5 py-0.2 rounded bg-slate-900 border border-slate-800 text-slate-400 font-mono">
             v{APP_VERSION}
           </span>
         </p>
@@ -725,7 +725,7 @@ const AbandonMultiplayerControl: React.FC<{
   if (isConfirming) {
     return (
       <div className="flex flex-col gap-1.5 mt-2 p-2 rounded-lg bg-rose-950/80 border border-rose-800/80 text-rose-200">
-        <p className="text-[11px] leading-tight font-medium">
+        <p className="text-xs leading-tight font-medium">
           Abandonner la table ? Ta mise sera perdue et l'IA prendra le relais.
         </p>
         <div className="flex items-center gap-2 mt-0.5">

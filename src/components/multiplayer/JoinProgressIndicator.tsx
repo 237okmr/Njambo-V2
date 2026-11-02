@@ -72,7 +72,7 @@ export const JoinProgressIndicator: React.FC<JoinProgressIndicatorProps> = ({
           <Loader2 className="w-4 h-4 text-amber-400 animate-spin shrink-0" />
           <div className="flex flex-col min-w-0">
             {roomCode && (
-              <span className="text-[10px] font-black uppercase text-amber-400">
+              <span className="text-xs font-black uppercase text-amber-400">
                 Table #{roomCode}
               </span>
             )}
@@ -105,7 +105,7 @@ export const JoinProgressIndicator: React.FC<JoinProgressIndicatorProps> = ({
         <button
           type="button"
           onClick={onCancel}
-          className="h-7 px-2.5 rounded-lg bg-slate-800 hover:bg-rose-500/20 hover:text-rose-200 hover:border-rose-500/40 text-slate-300 border border-slate-700 text-[11px] font-bold transition active:scale-95 cursor-pointer shrink-0"
+          className="h-7 px-2.5 rounded-lg bg-slate-800 hover:bg-rose-500/20 hover:text-rose-200 hover:border-rose-500/40 text-slate-300 border border-slate-700 text-xs font-bold transition active:scale-95 cursor-pointer shrink-0"
         >
           Annuler
         </button>

@@ -182,7 +182,7 @@ export const QuickContextualReaction: React.FC<QuickContextualReactionProps> = (
       <span className="truncate max-w-[85px] sm:max-w-[125px] inline-block align-middle">
         {currentText}
       </span>
-      <span className="hidden lg:inline-block text-[9px] uppercase px-1 py-0.2 rounded bg-slate-950/30 text-amber-300/90 font-mono">
+      <span className="hidden lg:inline-block text-[11px] uppercase px-1 py-0.2 rounded bg-slate-950/30 text-amber-300/90 font-mono">
         1-tap
       </span>
     </button>

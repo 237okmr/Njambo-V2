@@ -101,7 +101,7 @@ export const PlayZoneFelt: React.FC<PlayZoneFeltProps> = ({
   return (
     <div
       id="play-zone-felt"
-      className={`relative w-full rounded-2xl bg-emerald-900 lg:bg-[radial-gradient(ellipse_at_center,#065f46_0%,#044332_55%,#022c22_100%)] border transition-all duration-300 sm:border-4 p-1.5 sm:p-2.5 lg:p-4 lg:max-w-3xl lg:mx-auto flex flex-col justify-between min-h-[115px] sm:min-h-[160px] lg:min-h-0 overflow-hidden my-auto ${
+      className={`relative w-full rounded-2xl bg-emerald-900 lg:bg-[radial-gradient(ellipse_at_center,#065f46_0%,#044332_55%,#022c22_100%)] border transition-all duration-300 sm:border-4 p-1.5 short:p-1 sm:p-2.5 lg:p-4 lg:max-w-3xl lg:mx-auto flex flex-col justify-between min-h-[115px] short:min-h-[88px] sm:min-h-[160px] lg:min-h-0 overflow-hidden my-auto ${
         hasKoraThreat
           ? 'border-rose-500/90 shadow-[inset_0_0_30px_rgba(225,29,72,0.45),0_0_35px_rgba(225,29,72,0.65)] animate-pulse'
           : isDecisiveFifthTrick
@@ -164,7 +164,7 @@ export const PlayZoneFelt: React.FC<PlayZoneFeltProps> = ({
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="flex items-center gap-1 bg-slate-950 border border-slate-400 px-2.5 py-0.5 rounded-full text-slate-200 text-[10px] sm:text-[11px] font-black shadow-lg animate-pulse"
+            className="flex items-center gap-1 bg-slate-950 border border-slate-400 px-2.5 py-0.5 rounded-full text-slate-200 text-[11px] font-black shadow-lg animate-pulse"
           >
             <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
             <span className="sm:hidden">⚡ DOUBLE KORA (x4) !</span>
@@ -174,7 +174,7 @@ export const PlayZoneFelt: React.FC<PlayZoneFeltProps> = ({
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="flex items-center gap-1 bg-slate-950 border border-slate-400 px-2.5 py-0.5 rounded-full text-slate-200 text-[10px] sm:text-[11px] font-bold shadow"
+            className="flex items-center gap-1 bg-slate-950 border border-slate-400 px-2.5 py-0.5 rounded-full text-slate-200 text-[11px] font-bold shadow"
           >
             <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
             <span className="sm:hidden">⚡ {trick4WinnerWithThreeName.split(' ')[0]} : '3' au Tour 4 → Double Kora possible</span>
@@ -184,7 +184,7 @@ export const PlayZoneFelt: React.FC<PlayZoneFeltProps> = ({
           <div className="flex items-center gap-1 bg-slate-900/90 px-2.5 py-0.5 rounded-full border border-amber-400/50 text-amber-300 text-[11px] font-black shadow">
             <span>Entame :</span>
             <span className={leadSuitInfo.color}>{leadSuitInfo.symbol}</span>
-            <span className="uppercase text-[10px]">{leadSuitInfo.name}</span>
+            <span className="uppercase text-[11px]">{leadSuitInfo.name}</span>
           </div>
         ) : (
           <div className="text-[11px] text-emerald-300/80 font-medium">
@@ -204,7 +204,7 @@ export const PlayZoneFelt: React.FC<PlayZoneFeltProps> = ({
                 key={`empty-slot-${index}`}
                 className="h-[clamp(72px,12dvh,100px)] sm:h-24 lg:h-36 xl:h-40 max-lg:aspect-[5/7] max-lg:justify-self-center rounded-xl border-2 border-dashed border-emerald-700/40 bg-emerald-950/20 flex flex-col items-center justify-center text-emerald-600/60"
               >
-                <span className="text-[10px] sm:text-xs lg:text-sm font-bold">…</span>
+                <span className="text-[11px] sm:text-xs lg:text-sm font-bold">…</span>
               </div>
             );
           }
@@ -245,7 +245,7 @@ export const PlayZoneFelt: React.FC<PlayZoneFeltProps> = ({
             >
               {/* Player name tag at top */}
               <div className="flex items-center justify-between leading-none pointer-events-none border-b border-slate-100 pb-0.5">
-                <span className="text-[9px] sm:text-[10px] lg:text-xs font-black uppercase text-slate-700 truncate max-w-[55px] sm:max-w-[70px] lg:max-w-[100px]">
+                <span className="text-[11px] lg:text-xs font-black uppercase text-slate-700 truncate max-w-[55px] sm:max-w-[70px] lg:max-w-[100px]">
                   {play.playerName.split(' ')[0]}
                 </span>
                 <span className={`hidden lg:inline text-[10px] sm:text-xs lg:text-sm font-black ${suitInfo.color}`}>
@@ -273,7 +273,7 @@ export const PlayZoneFelt: React.FC<PlayZoneFeltProps> = ({
               {isAutoPlayedBot && (
                 <div
                   title="Joué automatiquement par le bot d'urgence (délai 20s dépassé)"
-                  className="absolute bottom-1 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black text-[7px] sm:text-[8px] px-1.5 py-0.2 rounded-full border border-amber-300 shadow flex items-center gap-0.5 whitespace-nowrap z-25 tracking-tight"
+                  className="absolute bottom-1 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black text-[11px] px-1.5 py-0.2 rounded-full border border-amber-300 shadow flex items-center gap-0.5 whitespace-nowrap z-25 tracking-tight"
                 >
                   <span>🤖</span>
                   <span>Coup auto (20s)</span>
@@ -291,7 +291,7 @@ export const PlayZoneFelt: React.FC<PlayZoneFeltProps> = ({
                   <div className="absolute inset-0 overflow-hidden pointer-events-none z-20">
                     <div className="w-full h-1 bg-gradient-to-r from-transparent via-rose-500 via-amber-300 to-transparent shadow-[0_0_12px_rgba(244,63,94,0.9)] animate-cut-slash" />
                   </div>
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-rose-600 to-amber-600 text-white px-2 py-0.5 rounded-full text-[8px] sm:text-[9px] font-black uppercase shadow-lg border border-amber-300 flex items-center gap-1 z-30 animate-cut-badge">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-rose-600 to-amber-600 text-white px-2 py-0.5 rounded-full text-[11px] font-black uppercase shadow-lg border border-amber-300 flex items-center gap-1 z-30 animate-cut-badge">
                     <Scissors className="w-2.5 h-2.5" />
                     <span>COUPÉ !</span>
                   </div>
@@ -300,7 +300,7 @@ export const PlayZoneFelt: React.FC<PlayZoneFeltProps> = ({
 
               {/* Winner Tag */}
               {isWinner && !isCutCard && (
-                <div className="absolute top-1 right-1 bg-amber-400 text-slate-950 px-1.5 py-0.5 rounded-md text-[8px] sm:text-[9px] font-black uppercase shadow-md hidden sm:flex items-center gap-0.5 whitespace-nowrap z-20 animate-lead-badge">
+                <div className="absolute top-1 right-1 bg-amber-400 text-slate-950 px-1.5 py-0.5 rounded-md text-[11px] font-black uppercase shadow-md hidden sm:flex items-center gap-0.5 whitespace-nowrap z-20 animate-lead-badge">
                   <Sparkles className="w-2.5 h-2.5" />
                   <span>Maître</span>
                 </div>
@@ -367,7 +367,7 @@ export const PlayZoneFelt: React.FC<PlayZoneFeltProps> = ({
                     }`}
                   >
                     <div className="flex items-center justify-between leading-none">
-                      <span className={`text-[10px] sm:text-xs font-black ${sInfo.color}`}>
+                      <span className={`text-[11px] sm:text-xs font-black ${sInfo.color}`}>
                         {card.value}
                       </span>
                       <span className={`text-[8px] sm:text-[10px] ${sInfo.color}`}>{sInfo.symbol}</span>
@@ -378,7 +378,7 @@ export const PlayZoneFelt: React.FC<PlayZoneFeltProps> = ({
                     </div>
 
                     <div className="flex items-center justify-end leading-none">
-                      <span className={`text-[9px] sm:text-[11px] font-black ${sInfo.color}`}>
+                      <span className={`text-[11px] font-black ${sInfo.color}`}>
                         {card.value}
                       </span>
                     </div>
@@ -388,7 +388,7 @@ export const PlayZoneFelt: React.FC<PlayZoneFeltProps> = ({
             </div>
 
             {/* Bottom summary explanation */}
-            <div className="text-[10px] sm:text-xs font-semibold text-slate-200 bg-slate-950/80 px-3 py-1 rounded-full border border-slate-700">
+            <div className="text-[11px] sm:text-xs font-semibold text-slate-200 bg-slate-950/80 px-3 py-1 rounded-full border border-slate-700">
               {instantWinReveal.winType === 'UNDER_21' ? (
                 <span>Total de la main = <b className="text-emerald-300">{instantWinReveal.scoreOrCount} pts</b> (≤ 21) · Victoire automatique !</span>
               ) : (

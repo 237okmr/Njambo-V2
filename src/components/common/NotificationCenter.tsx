@@ -214,7 +214,7 @@ export const NotificationViewport: React.FC = () => {
             </span>
             <span className="min-w-0 flex-1">
               {item.title && (
-                <span className={`block text-[10px] font-black uppercase tracking-wider ${style.title}`}>
+                <span className={`block text-xs font-black uppercase tracking-wider ${style.title}`}>
                   {item.title}
                 </span>
               )}

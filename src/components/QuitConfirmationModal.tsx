@@ -83,10 +83,10 @@ export const QuitConfirmationModal: React.FC<QuitConfirmationModalProps> = ({
                     Quitter le mode spectateur ?
                   </h2>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-950/60 text-slate-300 border border-slate-800/50">
+                    <span className="text-xs font-bold px-1.5 py-0.2 rounded bg-slate-950/60 text-slate-300 border border-slate-800/50">
                       Spectateur
                     </span>
-                    <span className="text-[10px] text-slate-400">
+                    <span className="text-xs text-slate-400">
                       Observation en direct
                     </span>
                   </div>
@@ -143,10 +143,10 @@ export const QuitConfirmationModal: React.FC<QuitConfirmationModalProps> = ({
                   Déclarer Forfait & Quitter ?
                 </h2>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-rose-950/60 text-rose-300 border border-rose-800/50">
+                  <span className="text-xs font-bold px-1.5 py-0.2 rounded bg-rose-950/60 text-rose-300 border border-rose-800/50">
                     Partie {partieCount}
                   </span>
-                  <span className="text-[10px] text-slate-400">
+                  <span className="text-xs text-slate-400">
                     {activePlayersCount} joueurs à table
                   </span>
                 </div>
@@ -154,7 +154,7 @@ export const QuitConfirmationModal: React.FC<QuitConfirmationModalProps> = ({
             </div>
 
             {/* Bot Relay & Forfeiture Warning Info */}
-            <div className="bg-slate-950/70 p-3 rounded-xl border border-slate-800 text-[11px] text-slate-300 flex flex-col gap-1.5 leading-relaxed">
+            <div className="bg-slate-950/70 p-3 rounded-xl border border-slate-800 text-xs text-slate-300 flex flex-col gap-1.5 leading-relaxed">
               <div className="flex items-center gap-1.5 text-amber-400 font-bold text-xs">
                 <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
                 <span>Relais IA & Règles d'abandon</span>
@@ -186,7 +186,7 @@ export const QuitConfirmationModal: React.FC<QuitConfirmationModalProps> = ({
                 <span className="font-mono text-sm text-rose-400">-{totalForfeitLoss} 🪙</span>
               </div>
 
-              <div className="flex items-center justify-between text-[11px] text-slate-400 bg-slate-950/50 px-2 py-1 rounded">
+              <div className="flex items-center justify-between text-xs text-slate-400 bg-slate-950/50 px-2 py-1 rounded">
                 <span>Capital restant après forfait :</span>
                 <span className="font-mono font-bold text-emerald-400 flex items-center gap-1">
                   <Coins className="w-3 h-3 text-amber-400" />
@@ -253,10 +253,10 @@ export const QuitConfirmationModal: React.FC<QuitConfirmationModalProps> = ({
                   Quitter la Manche ?
                 </h2>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-950/60 text-amber-300 border border-amber-800/50">
+                  <span className="text-xs font-bold px-1.5 py-0.2 rounded bg-amber-950/60 text-amber-300 border border-amber-800/50">
                     Partie {partieCount}
                   </span>
-                  <span className="text-[10px] text-slate-400">
+                  <span className="text-xs text-slate-400">
                     {activePlayersCount} joueurs en jeu
                   </span>
                 </div>

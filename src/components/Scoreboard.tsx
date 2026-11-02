@@ -129,7 +129,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
           )}
 
           <span
-            className={`text-[10px] sm:text-[11px] font-bold px-1.5 py-0.5 rounded-full border shrink-0 whitespace-nowrap ${
+            className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full border shrink-0 whitespace-nowrap ${
               isDecisiveTrick
                 ? 'bg-amber-500/20 text-amber-300 border-amber-400/50 animate-pulse font-extrabold'
                 : 'bg-slate-900/90 text-amber-300/90 border-slate-800'
@@ -147,7 +147,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             <button
               type="button"
               onClick={onOpenMultiplayerLobby}
-              className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-500/50 text-[10px] sm:text-[11px] font-bold hover:bg-emerald-900/80 transition"
+              className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-500/50 text-[11px] font-bold hover:bg-emerald-900/80 transition"
               title="Afficher le salon multijoueur"
             >
               <Globe className="w-3 h-3 text-emerald-400 animate-spin-slow" />
@@ -158,7 +158,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
               <button
                 type="button"
                 onClick={onOpenMultiplayerHub}
-                className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-900 hover:bg-amber-950/40 text-slate-300 hover:text-amber-300 border border-slate-800 hover:border-amber-500/50 text-[10px] sm:text-[11px] font-bold transition shadow-sm"
+                className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-900 hover:bg-amber-950/40 text-slate-300 hover:text-amber-300 border border-slate-800 hover:border-amber-500/50 text-[11px] font-bold transition shadow-sm"
                 title="Jouer en ligne avec de vrais joueurs"
               >
                 <Globe className="w-3 h-3 text-amber-400" />
@@ -169,16 +169,16 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
 
           {/* Desktop Rule Badges */}
           <div className="hidden lg:flex items-center gap-1.5">
-            <span className="text-[10px] font-medium text-slate-400 bg-slate-900/70 border border-slate-800 px-2 py-0.5 rounded-full">
+            <span className="text-[11px] font-medium text-slate-400 bg-slate-900/70 border border-slate-800 px-2 py-0.5 rounded-full">
               Mise: {baseBet} jetons
             </span>
             {enableUnder21 && (
-              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 px-2 py-0.5 rounded-full">
+              <span className="text-[11px] font-bold text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 px-2 py-0.5 rounded-full">
                 ≤21
               </span>
             )}
             {enableDoubleKora && (
-              <span className="text-[10px] font-bold text-slate-300 bg-slate-950/40 border border-slate-800/40 px-2 py-0.5 rounded-full flex items-center gap-0.5">
+              <span className="text-[11px] font-bold text-slate-300 bg-slate-950/40 border border-slate-800/40 px-2 py-0.5 rounded-full flex items-center gap-0.5">
                 <Zap className="w-2.5 h-2.5 text-amber-300 fill-amber-300" />
                 x4
               </span>
@@ -193,9 +193,9 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
           className="flex items-center gap-1 sm:gap-1.5 bg-gradient-to-b from-amber-500/15 to-amber-950/30 border border-amber-500/30 px-2.5 py-0.5 sm:py-1 rounded-full text-xs font-bold text-amber-300 shadow-sm shrink-0"
         >
           <Coins className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-          <span className="text-[10px] uppercase font-bold text-amber-400/80 tracking-wider">Pot</span>
+          <span className="text-[11px] uppercase font-bold text-amber-400/80 tracking-wider">Pot</span>
           <span className="font-mono text-xs sm:text-sm font-black text-amber-300">{pot}</span>
-          <span className="text-[10px] text-amber-300/70 font-normal">jetons</span>
+          <span className="text-[11px] text-amber-300/70 font-normal">jetons</span>
         </div>
 
         {/* Right: Quick Tools & Menu Toggle */}
@@ -273,7 +273,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
               <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
                 Tableau des Capitaux
               </span>
-              <span className="text-[10px] text-slate-500">
+              <span className="text-[11px] text-slate-500">
                 ({activePlayers.length} en jeu · Mise {baseBet} jetons)
               </span>
             </div>
@@ -364,18 +364,18 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                       {isEliminated ? (
-                        <span className="text-[9px] px-1 py-0.2 rounded bg-rose-950 text-rose-300 font-bold border border-rose-800/80 flex items-center gap-0.5">
+                        <span className="text-[11px] px-1 py-0.2 rounded bg-rose-950 text-rose-300 font-bold border border-rose-800/80 flex items-center gap-0.5">
                           <Skull className="w-2.5 h-2.5" /> Éliminé
                         </span>
                       ) : (
                         <>
                           {isDealer && (
-                            <span className="text-[9px] px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
+                            <span className="text-[11px] px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
                               D
                             </span>
                           )}
                           {isLead && (
-                            <span className="text-[9px] px-1 py-0.2 rounded bg-slate-500/20 text-slate-300 font-bold border border-slate-500/30">
+                            <span className="text-[11px] px-1 py-0.2 rounded bg-slate-500/20 text-slate-300 font-bold border border-slate-500/30">
                               E
                             </span>
                           )}
@@ -385,18 +385,18 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                   </div>
 
                   <div className="mt-1.5 flex items-baseline justify-between gap-1">
-                    <span className="text-[10px] text-slate-400 shrink-0">Capital :</span>
+                    <span className="text-[11px] text-slate-400 shrink-0">Capital :</span>
                     <span
                       className={`font-mono text-xs sm:text-sm font-black truncate text-right ${
                         isEliminated ? 'text-rose-400 line-through' : 'text-amber-300'
                       }`}
                     >
-                      {player.capital} <span className="text-[9px] sm:text-[10px] font-normal text-slate-400">jetons</span>
+                      {player.capital} <span className="text-[11px] font-normal text-slate-400">jetons</span>
                     </span>
                   </div>
 
                   {!isEliminated && (
-                    <div className="mt-0.5 text-[9px] text-slate-400 flex justify-between border-t border-slate-800/60 pt-1">
+                    <div className="mt-0.5 text-[11px] text-slate-400 flex justify-between border-t border-slate-800/60 pt-1">
                       <span>Tours remportés :</span>
                       <span className="font-semibold text-slate-200">
                         {player.tricksWonInRound} / 5

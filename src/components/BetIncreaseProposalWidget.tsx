@@ -114,17 +114,17 @@ export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps>
                 <Flame className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
               </span>
               <div className="flex flex-col min-w-0">
-                <span className="text-[11px] text-slate-200 font-bold leading-tight flex items-center gap-1 truncate">
+                <span className="text-xs text-slate-200 font-bold leading-tight flex items-center gap-1 truncate">
                   Hausse : <strong className="text-amber-300 font-mono font-black text-xs">{proposal.proposedBet} 🪙</strong>
                 </span>
-                <span className="text-[9px] text-slate-400 font-normal truncate">
+                <span className="text-xs text-slate-400 font-normal truncate">
                   {isLocalProposer ? 'Ta proposition' : `Par ${proposal.proposerName}`} ({agreedCount}/{totalRequired} OK)
                 </span>
               </div>
             </div>
 
             {/* Countdown Badge */}
-            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-900/80 border border-amber-500/40 text-amber-300 text-[10px] font-mono font-bold shrink-0">
+            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-900/80 border border-amber-500/40 text-amber-300 text-xs font-mono font-bold shrink-0">
               <Clock className="w-3 h-3 text-amber-400 animate-spin" />
               <span>{timeLeft}s</span>
             </div>
@@ -137,14 +137,14 @@ export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps>
                     triggerHaptic('light');
                     onCancel();
                   }}
-                  className="px-2 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-[10px] font-semibold flex items-center gap-1 transition active:scale-95 cursor-pointer"
+                  className="px-2 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-xs font-semibold flex items-center gap-1 transition active:scale-95 cursor-pointer"
                   title="Annuler la proposition"
                 >
                   <X className="w-3 h-3 text-rose-400" />
                   <span>Annuler</span>
                 </button>
               ) : hasLocalAgreed ? (
-                <span className="px-2 py-0.5 rounded-md bg-emerald-900/60 border border-emerald-600/50 text-emerald-300 text-[10px] font-bold flex items-center gap-1">
+                <span className="px-2 py-0.5 rounded-md bg-emerald-900/60 border border-emerald-600/50 text-emerald-300 text-xs font-bold flex items-center gap-1">
                   <Check className="w-3 h-3 text-emerald-400" />
                   <span>Accepté</span>
                 </span>
@@ -156,7 +156,7 @@ export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps>
                       triggerHaptic('success');
                       onRespond(true);
                     }}
-                    className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] shadow-sm flex items-center gap-1 transition active:scale-95 cursor-pointer"
+                    className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm flex items-center gap-1 transition active:scale-95 cursor-pointer"
                   >
                     <Check className="w-3.5 h-3.5" />
                     <span>Accepter</span>
@@ -167,7 +167,7 @@ export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps>
                       triggerHaptic('light');
                       onRespond(false);
                     }}
-                    className="p-1 rounded-lg bg-slate-800/80 hover:bg-rose-950 hover:border-rose-700/60 text-slate-400 hover:text-rose-300 border border-slate-700 text-[10px] transition active:scale-95 cursor-pointer"
+                    className="p-1 rounded-lg bg-slate-800/80 hover:bg-rose-950 hover:border-rose-700/60 text-slate-400 hover:text-rose-300 border border-slate-700 text-xs transition active:scale-95 cursor-pointer"
                     title="Refuser"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -226,7 +226,7 @@ export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps>
               <Zap className="w-3.5 h-3.5 text-slate-400 fill-slate-400" />
             </motion.div>
             <span>Monter mise</span>
-            <span className="text-[10px] opacity-75 font-mono">({currentBaseBet}➔x2)</span>
+            <span className="text-xs opacity-75 font-mono">({currentBaseBet}➔x2)</span>
           </button>
         ) : (
           <button
@@ -264,7 +264,7 @@ export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps>
                 <span className="text-xs sm:text-sm font-bold text-slate-50 group-hover:text-white transition-colors tracking-tight leading-tight">
                   Rehausser la mise
                 </span>
-                <span className="text-[10px] text-slate-300/75 truncate hidden xs:inline">
+                <span className="text-xs text-slate-300/75 truncate hidden xs:inline">
                   Pour les prochaines parties de la manche
                 </span>
               </div>
@@ -296,7 +296,7 @@ export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps>
                   </div>
                   <div>
                     <h3 className="font-bold text-sm text-amber-200">Augmenter la mise</h3>
-                    <p className="text-[11px] text-slate-400">Pour les prochaines parties de la manche</p>
+                    <p className="text-xs text-slate-400">Pour les prochaines parties de la manche</p>
                   </div>
                 </div>
                 <button
@@ -310,12 +310,12 @@ export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps>
 
               <div className="bg-slate-950/60 rounded-xl p-3 border border-slate-800/80 flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Mise actuelle</span>
+                  <span className="text-xs text-slate-400 uppercase tracking-wider block">Mise actuelle</span>
                   <span className="text-sm font-bold text-slate-200 font-mono">{currentBaseBet} jetons</span>
                 </div>
                 <div className="h-6 w-px bg-slate-800" />
                 <div className="text-right">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Plafond table (tapis min)</span>
+                  <span className="text-xs text-slate-400 uppercase tracking-wider block">Plafond table (tapis min)</span>
                   <span className="text-sm font-bold text-amber-400 font-mono">{maxAllowedBet} jetons</span>
                 </div>
               </div>
@@ -336,7 +336,7 @@ export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps>
                       }`}
                     >
                       <span>{p.label}</span>
-                      <span className="text-[9px] opacity-80 font-mono">{p.value}</span>
+                      <span className="text-xs opacity-80 font-mono">{p.value}</span>
                     </button>
                   ))}
                 </div>
@@ -359,7 +359,7 @@ export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps>
                 />
               </div>
 
-              <div className="text-[11px] text-slate-400 flex items-start gap-1.5 bg-slate-950/40 p-2 rounded-lg border border-slate-800/60">
+              <div className="text-xs text-slate-400 flex items-start gap-1.5 bg-slate-950/40 p-2 rounded-lg border border-slate-800/60">
                 <Users className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
                 <span>Tous les joueurs humains de la table doivent accepter à l'unanimité pour valider.</span>
               </div>

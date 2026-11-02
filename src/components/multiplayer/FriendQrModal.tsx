@@ -86,7 +86,7 @@ export const FriendQrModal: React.FC<FriendQrModalProps> = ({
           {/* Friend Code Display Card */}
           <div className="w-full p-3.5 rounded-2xl bg-gradient-to-br from-amber-500/20 via-slate-950 to-slate-950 border border-amber-500/40 flex items-center justify-between gap-2">
             <div className="flex flex-col text-left">
-              <span className="text-[10px] font-black uppercase tracking-wider text-amber-400">Mon Code Ami Unique</span>
+              <span className="text-xs font-black uppercase tracking-wider text-amber-400">Mon Code Ami Unique</span>
               <span className="text-xl font-black text-white font-mono tracking-wider">{friendCode}</span>
             </div>
             <button
@@ -110,7 +110,7 @@ export const FriendQrModal: React.FC<FriendQrModalProps> = ({
               fgColor="#0f172a"
             />
           </div>
-          <span className="text-[11px] text-slate-400 -mt-1">
+          <span className="text-xs text-slate-400 -mt-1">
             Faites scanner ce QR Code par un ami avec son appareil photo
           </span>
 

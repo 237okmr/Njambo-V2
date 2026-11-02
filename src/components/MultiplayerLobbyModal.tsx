@@ -186,7 +186,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
         {/* Header: Room Code and Share */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-800 gap-3">
           <div>
-            <span className="text-[10px] font-black uppercase text-amber-400 tracking-wider">
+            <span className="text-xs font-black uppercase text-amber-400 tracking-wider">
               Salon Multijoueur
             </span>
             <h2 className="text-xl font-black text-white flex items-center gap-2">
@@ -257,7 +257,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
               <span className="text-xs font-black text-amber-200">
                 Environnement de test
               </span>
-              <span className="text-[11px] text-amber-300/90 leading-relaxed">
+              <span className="text-xs text-amber-300/90 leading-relaxed">
                 Tu es sur l'environnement de test. Tes amis ne pourront pas rejoindre depuis le lien public. Ouvre{' '}
                 <a
                   href="https://njambo-kora.ai.studio"
@@ -277,7 +277,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between text-xs font-bold text-slate-400">
             <span>Joueurs Connectés ({connectedHumansCount}/{maxSeats})</span>
-            <span className="text-[11px] text-amber-400">
+            <span className="text-xs text-amber-400">
               {room.fillWithBots ? 'Compléter avec virtuels' : '100% Humains'}
             </span>
           </div>
@@ -310,7 +310,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                             <Crown className="w-3 h-3 text-amber-400 shrink-0" />
                           )}
                         </div>
-                        <span className="text-[10px] text-slate-400">
+                        <span className="text-xs text-slate-400">
                           {player.isHost
                             ? 'Hôte'
                             : player.isReady
@@ -322,19 +322,19 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
 
                     <div className="flex items-center gap-1 shrink-0">
                       {player.connected === false && player.disconnectGraceExpiresAt ? (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1">
+                        <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1">
                           Déconnecté (<DisconnectCountdown expiresAt={player.disconnectGraceExpiresAt} />)
                         </span>
                       ) : player.isHost ? (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                        <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
                           Hôte
                         </span>
                       ) : player.isReady ? (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
+                        <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
                           <Check className="w-3 h-3" /> Prêt
                         </span>
                       ) : (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                        <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
                           Pas prêt
                         </span>
                       )}
@@ -369,11 +369,11 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                       <span>{seatIdx + 1}</span>
                     )}
                   </div>
-                  <div className="flex flex-col text-[10px] leading-tight">
+                  <div className="flex flex-col text-xs leading-tight">
                     <span className="font-semibold text-slate-400">
                       {room.fillWithBots ? `Joueur Virtuel ${seatIdx + 1}` : `Siège ${seatIdx + 1}`}
                     </span>
-                    <span className="text-[9px] text-slate-500">
+                    <span className="text-xs text-slate-500">
                       {room.fillWithBots ? 'Prêt au départ' : 'En attente...'}
                     </span>
                   </div>
@@ -385,12 +385,12 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
           {/* Spectators list if any */}
           {spectators.length > 0 && (
             <div className="mt-1 p-2 rounded-xl bg-slate-950/50 border border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-              <span className="flex items-center gap-1.5 text-[11px]">
+              <span className="flex items-center gap-1.5 text-xs">
                 <span className="w-2 h-2 rounded-full bg-slate-400" />
                 Spectateurs ({spectators.length}) : {spectators.map((s) => s.name).join(', ')}
               </span>
               {isLocalSpectator && (
-                <span className="text-[10px] text-slate-300 font-bold">
+                <span className="text-xs text-slate-300 font-bold">
                   Tu observes ce salon
                 </span>
               )}
@@ -399,7 +399,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
         </div>
 
         {/* Room Game Rules Badges */}
-        <div className="flex flex-wrap items-center justify-between gap-1.5 p-2 rounded-xl bg-slate-950/60 border border-slate-800 text-[10px]">
+        <div className="flex flex-wrap items-center justify-between gap-1.5 p-2 rounded-xl bg-slate-950/60 border border-slate-800 text-xs">
           <span className="text-slate-400">Mise: <b className="text-amber-300">{room.baseBet} pts</b></span>
           <span className="text-slate-400">Capital: <b className="text-amber-300">{room.initialCapital} pts</b></span>
           <span className="text-amber-300 font-bold flex items-center gap-1">
@@ -442,7 +442,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                 <div className="flex items-center gap-1 w-full sm:w-auto">
                   <span className="text-slate-400 font-medium">Absence :</span>
                   <span
-                    className="text-amber-400 font-bold text-[10px] bg-amber-500/10 px-1.5 py-0.5 rounded"
+                    className="text-amber-400 font-bold text-xs bg-amber-500/10 px-1.5 py-0.5 rounded"
                     title="Un relais joue des cartes neutres jusqu'à la fin de la partie et ne peut pas gagner le pot. Le joueur peut revenir à tout moment."
                   >
                     Relais IA
@@ -461,7 +461,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                           key={opt.val}
                           type="button"
                           onClick={() => onUpdateSettings({ turnTimerSeconds: opt.val })}
-                          className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition ${
+                          className={`px-1.5 py-0.5 rounded text-xs font-bold border transition ${
                             currentTimer === opt.val
                               ? 'bg-amber-500 text-slate-950 border-amber-400 font-black'
                               : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
@@ -481,7 +481,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                     <button
                       type="button"
                       onClick={() => onUpdateSettings({ enableDoubleKora: !room.enableDoubleKora })}
-                      className={`px-2 py-0.5 rounded text-[10px] font-bold border transition ${
+                      className={`px-2 py-0.5 rounded text-xs font-bold border transition ${
                         room.enableDoubleKora
                           ? 'bg-slate-500/20 text-slate-300 border-slate-500/40 font-black'
                           : 'bg-slate-900 text-slate-500 border-slate-800'
@@ -493,7 +493,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                     <button
                       type="button"
                       onClick={() => onUpdateSettings({ enableUnder21: !room.enableUnder21 })}
-                      className={`px-2 py-0.5 rounded text-[10px] font-bold border transition ${
+                      className={`px-2 py-0.5 rounded text-xs font-bold border transition ${
                         room.enableUnder21
                           ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-black'
                           : 'bg-slate-900 text-slate-500 border-slate-800'
@@ -507,7 +507,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                 <button
                   type="button"
                   onClick={() => onToggleFillWithBots(!room.fillWithBots)}
-                  className={`px-2 py-0.5 rounded text-[10px] font-bold border transition ${
+                  className={`px-2 py-0.5 rounded text-xs font-bold border transition ${
                     room.fillWithBots
                       ? 'bg-slate-500/20 text-slate-300 border-slate-500/40 font-black'
                       : 'bg-slate-900 text-slate-400 border-slate-800'
@@ -569,7 +569,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
               )}
 
               {!canStartInstantly && hasMinimumHumans && (
-                <p className="text-[11px] text-center text-slate-400">
+                <p className="text-xs text-center text-slate-400">
                   Tous les invités doivent être <b className="text-emerald-400">« Prêts »</b> avant le lancement. Clique pour leur envoyer une alerte.
                 </p>
               )}
@@ -628,7 +628,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
 
             {/* Contextual Tip for Waiting Players */}
             {!isHost && (
-              <p className="text-[11px] text-center text-slate-400 leading-tight">
+              <p className="text-xs text-center text-slate-400 leading-tight">
                 💡 <b className="text-slate-300">Astuce :</b> Tu peux fermer cette fenêtre pour réviser les <b className="text-amber-400">Règles du jeu</b> pendant l'attente.
               </p>
             )}
@@ -644,7 +644,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                   onClick={async () => {
                     await onClaimHost();
                   }}
-                  className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 transition"
+                  className="px-2 py-0.5 rounded text-xs font-bold bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 transition"
                   title="Si l'hôte ne répond pas, devenir hôte du salon"
                 >
                   Devenir Hôte
@@ -661,7 +661,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
               >
                 <span>👥 Voter pour compléter la table avec des virtuels</span>
                 {room.botVotes && room.botVotes.length > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-full bg-slate-500 text-slate-950 font-black text-[10px]">
+                  <span className="px-1.5 py-0.2 rounded-full bg-slate-500 text-slate-950 font-black text-xs">
                     {room.botVotes.length}/{Math.ceil(room.players.filter((p) => p.isHuman).length / 2)}
                   </span>
                 )}

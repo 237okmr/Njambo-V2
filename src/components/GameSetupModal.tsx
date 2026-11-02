@@ -378,12 +378,12 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
         soundEnabled={soundEnabled}
         contextBadge={
           isMancheInProgress ? (
-            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-semibold truncate">
+            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold truncate">
               <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
               <span className="truncate">Partie {currentPartieCount} en cours</span>
             </div>
           ) : (
-            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-800/80 border border-slate-700/80 text-slate-300 text-[11px] font-medium">
+            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-800/80 border border-slate-700/80 text-slate-300 text-xs font-medium">
               <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
               <span>Solo Hors-Ligne</span>
             </div>
@@ -477,7 +477,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
                   <Users className="w-3.5 h-3.5 text-amber-400" />
                   <span>Format de la Table</span>
                 </div>
-                <span className="text-[11px] font-semibold text-amber-300 font-mono">
+                <span className="text-xs font-semibold text-amber-300 font-mono">
                   {selectedCount + 1} Joueurs au total
                 </span>
               </div>
@@ -511,7 +511,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
                         {opt.label}
                       </span>
                       <span
-                        className={`text-[10px] font-semibold tracking-tight ${
+                        className={`text-xs font-semibold tracking-tight ${
                           isSelected ? 'text-slate-950/80 font-bold' : 'text-slate-400'
                         }`}
                       >
@@ -530,7 +530,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
                   <Coins className="w-3.5 h-3.5 text-amber-400" />
                   <span>Enjeux Financiers</span>
                 </span>
-                <span className="text-[11px] font-mono text-slate-400">
+                <span className="text-xs font-mono text-slate-400">
                   Autonomie : <strong className="text-amber-300 font-bold">{Math.round(selectedCapital / selectedBet)}</strong> parties
                 </span>
               </div>
@@ -539,7 +539,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between text-xs px-0.5">
                   <span className="text-slate-300 font-medium">Mise par partie</span>
-                  <span className="text-amber-300 font-bold font-mono text-[11px]">
+                  <span className="text-amber-300 font-bold font-mono text-xs">
                     {selectedBet} jetons / joueur
                   </span>
                 </div>
@@ -570,7 +570,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
               <div className="flex flex-col gap-1 pt-1 border-t border-white/[0.04]">
                 <div className="flex items-center justify-between text-xs px-0.5">
                   <span className="text-slate-300 font-medium">Capital de départ</span>
-                  <span className="text-amber-300 font-bold font-mono text-[11px]">
+                  <span className="text-amber-300 font-bold font-mono text-xs">
                     {selectedCapital} jetons
                   </span>
                 </div>
@@ -605,7 +605,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
                   <Brain className="w-3.5 h-3.5 text-amber-400" />
                   <span>Niveau de l'IA</span>
                 </div>
-                <span className="text-[11px] font-semibold text-amber-300 font-mono">
+                <span className="text-xs font-semibold text-amber-300 font-mono">
                   {difficultyOptions.find((d) => d.id === selectedDifficulty)?.stars}
                 </span>
               </div>
@@ -638,7 +638,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
                         {lvl.label}
                       </span>
                       <span
-                        className={`text-[9px] font-semibold tracking-tight ${
+                        className={`text-xs font-semibold tracking-tight ${
                           isSelected
                             ? isGM
                               ? 'text-slate-100 font-bold'
@@ -653,11 +653,11 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
                 })}
               </div>
 
-              <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-slate-400 px-1">
+              <div className="flex items-center justify-between text-xs text-slate-400 px-1">
                 <span className="truncate mr-2">
                   {difficultyOptions.find((d) => d.id === selectedDifficulty)?.tagline}
                 </span>
-                <span className="text-slate-500 font-mono text-[10px] shrink-0">
+                <span className="text-slate-500 font-mono text-xs shrink-0">
                   {AI_DIFFICULTIES_INFO[selectedDifficulty]?.name}
                 </span>
               </div>
@@ -678,11 +678,11 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
                     <Zap className="w-3.5 h-3.5 text-amber-400" />
                     <span>Hausse des Mises (Solo)</span>
                   </div>
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-400/10 text-amber-300 border border-amber-400/20 capitalize">
+                  <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-amber-400/10 text-amber-300 border border-amber-400/20 capitalize">
                     {soloBetIncreaseMode}
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-400 leading-tight">
+                <p className="text-xs text-slate-400 leading-tight">
                   {soloBetIncreaseMode === 'souverain' && 'Souverain : tu modifies la mise directement, sans vote des bots.'}
                   {soloBetIncreaseMode === 'tactique' && 'Tactique : tu proposes des hausses que les bots peuvent accepter ou refuser.'}
                   {soloBetIncreaseMode === 'symetrique' && 'Symétrique : toi et les bots pouvez initier des hausses (vote unanime requis).'}
@@ -752,7 +752,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
                       <div className="text-xs font-bold text-white truncate leading-tight">
                         Double Kora (×4)
                       </div>
-                      <div className="text-[10px] text-slate-400 truncate">
+                      <div className="text-xs text-slate-400 truncate">
                         Quadruplé avec le 3
                       </div>
                     </div>
@@ -794,7 +794,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
                       <div className="text-xs font-bold text-white truncate leading-tight">
                         Moins de 21 (≤21)
                       </div>
-                      <div className="text-[10px] text-slate-400 truncate">
+                      <div className="text-xs text-slate-400 truncate">
                         Victoire instantanée
                       </div>
                     </div>
@@ -840,7 +840,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
                       <div className="text-xs font-bold text-white truncate leading-tight">
                         Profils Adversaires
                       </div>
-                      <div className="text-[10px] text-slate-400 truncate">
+                      <div className="text-xs text-slate-400 truncate">
                         Archétypes visibles
                       </div>
                     </div>
@@ -886,7 +886,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
                       <div className="text-xs font-bold text-white truncate leading-tight">
                         Alerte Chasseur
                       </div>
-                      <div className="text-[10px] text-slate-400 truncate">
+                      <div className="text-xs text-slate-400 truncate">
                         Offensive Kora
                       </div>
                     </div>
@@ -903,7 +903,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
               </div>
 
               {/* Ligne contextuelle discrète pour l'économie */}
-              <div className="flex items-center justify-between text-[11px] text-slate-400 px-1 pt-1 border-t border-white/[0.04]">
+              <div className="flex items-center justify-between text-xs text-slate-400 px-1 pt-1 border-t border-white/[0.04]">
                 <span>Pot partie : <strong className="text-white font-mono">{regularTrickPot} 🪙</strong> ({totalPlayers}J)</span>
                 <span className="text-amber-300 font-medium">Pot Kora : <strong className="font-mono">{koraPot} 🪙</strong> (×2)</span>
               </div>
@@ -1013,7 +1013,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
                 <p>
                   Lancer une <strong className="text-amber-300">nouvelle manche</strong> réinitialisera les capitaux de tous les joueurs à {selectedCapital} jetons.
                 </p>
-                <p className="text-slate-400 text-[11px]">
+                <p className="text-slate-400 text-xs">
                   💡 <em>Tu peux sauvegarder ta progression actuelle avant de redémarrer.</em>
                 </p>
               </div>

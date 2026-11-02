@@ -290,10 +290,10 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
           <span className={`font-mono font-black text-sm sm:text-base ${colorClass}`}>
             {sign}{fortune.toLocaleString('fr-FR')} 🪙
           </span>
-          <span className="text-[8px] text-slate-500 whitespace-nowrap">
+          <span className="text-xs text-slate-500 whitespace-nowrap">
             G:{gains} · P:{pertes}
           </span>
-          <span className="text-[7px] text-slate-600 font-bold tracking-wider uppercase">
+          <span className="text-xs text-slate-600 font-bold tracking-wider uppercase">
             🌐 Multijoueur
           </span>
         </div>
@@ -307,10 +307,10 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
             {player.koraCount + player.doubleKoraCount * 2} pts
           </span>
           <div className="flex gap-0.5 flex-wrap justify-center max-w-[80px]">
-            <span className="px-1 py-0.2 rounded bg-amber-500/10 text-amber-400 text-[7px] font-black border border-amber-500/20 whitespace-nowrap">
+            <span className="px-1 py-0.2 rounded bg-amber-500/10 text-amber-400 text-xs font-black border border-amber-500/20 whitespace-nowrap">
               👑 {player.koraCount} K.
             </span>
-            <span className="px-1 py-0.2 rounded bg-slate-500/10 text-slate-400 text-[7px] font-black border border-slate-500/20 whitespace-nowrap">
+            <span className="px-1 py-0.2 rounded bg-slate-500/10 text-slate-400 text-xs font-black border border-slate-500/20 whitespace-nowrap">
               💎 {player.doubleKoraCount} D.
             </span>
           </div>
@@ -324,7 +324,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
           <span className="font-mono font-black text-sm sm:text-base text-amber-400">
             {player.winRate}%
           </span>
-          <span className="text-[8px] text-slate-500 whitespace-nowrap mt-0.5">
+          <span className="text-xs text-slate-500 whitespace-nowrap mt-0.5">
             {player.gamesWon}/{player.gamesPlayed} j.
           </span>
         </div>
@@ -339,13 +339,13 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
           <span className="font-mono font-black text-sm sm:text-base text-amber-400 flex items-center gap-1">
             <span className="text-xs">⭐</span>
             <span>{mastery.toLocaleString('fr-FR')}</span>
-            <span className="text-[10px] font-bold text-amber-300/90">pts</span>
+            <span className="text-xs font-bold text-amber-300/90">pts</span>
           </span>
-          <span className="text-[8px] text-slate-500 whitespace-nowrap uppercase tracking-wider font-bold">
+          <span className="text-xs text-slate-500 whitespace-nowrap uppercase tracking-wider font-bold">
             Score Maîtrise
           </span>
         </div>
-        <div className="flex items-center justify-center gap-1 flex-wrap text-[8px] font-mono">
+        <div className="flex items-center justify-center gap-1 flex-wrap text-xs font-mono">
           {player.manchesWon !== undefined && player.manchesWon > 0 && (
             <span className="px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300 font-bold whitespace-nowrap">
               🏆 {player.manchesWon}m
@@ -380,10 +380,10 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
           <span className={`font-mono font-black text-xs ${colorClass}`}>
             {sign}{fortune.toLocaleString('fr-FR')} 🪙
           </span>
-          <span className="text-[9px] text-slate-500 whitespace-nowrap mt-0.5">
+          <span className="text-xs text-slate-500 whitespace-nowrap mt-0.5">
             Gains: {gains} 🪙 · Pertes: {pertes} 🪙
           </span>
-          <span className="text-[8px] text-slate-600 font-bold tracking-wider mt-0.5 uppercase">
+          <span className="text-xs text-slate-600 font-bold tracking-wider mt-0.5 uppercase">
             🌐 Multijoueur
           </span>
         </div>
@@ -398,10 +398,10 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
             {totalPoints} pts
           </span>
           <div className="flex gap-1 flex-wrap justify-center max-w-[120px]">
-            <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded bg-amber-500/10 text-amber-400 text-[8px] font-bold border border-amber-500/20 whitespace-nowrap">
+            <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded bg-amber-500/10 text-amber-400 text-xs font-bold border border-amber-500/20 whitespace-nowrap">
               👑 {player.koraCount} K.
             </span>
-            <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded bg-slate-500/10 text-slate-400 text-[8px] font-bold border border-slate-500/20 whitespace-nowrap">
+            <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded bg-slate-500/10 text-slate-400 text-xs font-bold border border-slate-500/20 whitespace-nowrap">
               💎 {player.doubleKoraCount} D.
             </span>
           </div>
@@ -415,7 +415,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
           <span className="font-mono font-black text-xs text-amber-400">
             {player.winRate}%
           </span>
-          <span className="text-[9px] text-slate-500 whitespace-nowrap mt-0.5">
+          <span className="text-xs text-slate-500 whitespace-nowrap mt-0.5">
             {player.gamesWon}/{player.gamesPlayed} parties
           </span>
         </div>
@@ -430,18 +430,18 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
           <span>⭐</span>
           <span>{mastery.toLocaleString('fr-FR')} pts</span>
         </span>
-        <div className="flex flex-col items-center gap-0.5 text-[9px]">
+        <div className="flex flex-col items-center gap-0.5 text-xs">
           {(player.manchesWon !== undefined && player.manchesWon > 0) && (
             <div className="flex items-center gap-1 px-1.2 py-0.2 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300 whitespace-nowrap">
               <span>🏆</span>
-              <span className="font-mono font-bold text-[9px]">{player.manchesWon}</span>
-              <span className="text-[7px] opacity-75 font-medium">{player.manchesWon > 1 ? 'manches' : 'manche'}</span>
+              <span className="font-mono font-bold text-xs">{player.manchesWon}</span>
+              <span className="text-xs opacity-75 font-medium">{player.manchesWon > 1 ? 'manches' : 'manche'}</span>
             </div>
           )}
           <div className="flex items-center gap-1 px-1.2 py-0.2 rounded bg-slate-800/40 border border-slate-800/50 text-slate-300 whitespace-nowrap">
             <span>🃏</span>
-            <span className="font-mono font-bold text-[9px]">{player.partiesWon || player.gamesWon}</span>
-            <span className="text-[7px] opacity-75 font-medium">parties</span>
+            <span className="font-mono font-bold text-xs">{player.partiesWon || player.gamesWon}</span>
+            <span className="text-xs opacity-75 font-medium">parties</span>
           </div>
         </div>
       </div>
@@ -469,10 +469,10 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
           <span className={`font-mono font-black text-xs sm:text-sm ${colorClass}`}>
             {sign}{fortune.toLocaleString('fr-FR')} 🪙
           </span>
-          <span className="text-[9px] text-slate-500 mt-0.5">
+          <span className="text-xs text-slate-500 mt-0.5">
             Gains: {gains} 🪙 · Pertes: {pertes} 🪙
           </span>
-          <span className="text-[8px] text-slate-600 font-bold uppercase mt-0.5">
+          <span className="text-xs text-slate-600 font-bold uppercase mt-0.5">
             🌐 Multijoueur
           </span>
         </div>
@@ -487,10 +487,10 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
             {totalPoints} pts
           </span>
           <div className="flex gap-1.5 flex-wrap justify-end">
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 text-[9px] font-bold border border-amber-500/20 whitespace-nowrap">
+            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 text-xs font-bold border border-amber-500/20 whitespace-nowrap">
               👑 {player.koraCount} Kora
             </span>
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-500/10 text-slate-300 text-[9px] font-bold border border-slate-500/20 whitespace-nowrap">
+            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-500/10 text-slate-300 text-xs font-bold border border-slate-500/20 whitespace-nowrap">
               💎 {player.doubleKoraCount} Double
             </span>
           </div>
@@ -504,7 +504,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
           <span className="font-mono font-black text-xs sm:text-sm text-amber-400">
             {player.winRate}%
           </span>
-          <span className="text-[9px] text-slate-500 mt-0.5">
+          <span className="text-xs text-slate-500 mt-0.5">
             {player.gamesWon}/{player.gamesPlayed} parties
           </span>
         </div>
@@ -519,7 +519,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
           <span className="text-xs">⭐</span>
           <span>{mastery.toLocaleString('fr-FR')} pts</span>
         </div>
-        <div className="flex flex-col items-end gap-0.5 text-[9px]">
+        <div className="flex flex-col items-end gap-0.5 text-xs">
           <div className="flex items-center gap-1.5 text-slate-400">
             {(player.manchesWon !== undefined && player.manchesWon > 0) && (
               <span className="px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300 font-medium">
@@ -644,7 +644,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
               <button
                 onClick={() => setSelectedTimeframe('ALL')}
                 disabled={activeCategory === 'CHIPS'}
-                className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all duration-200 ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all duration-200 ${
                   selectedTimeframe === 'ALL'
                     ? 'bg-amber-500 text-slate-950 shadow-sm shadow-amber-500/20'
                     : 'text-slate-400 hover:text-slate-200'
@@ -655,7 +655,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
               <button
                 onClick={() => setSelectedTimeframe('WEEK')}
                 disabled={activeCategory === 'CHIPS'}
-                className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all duration-200 ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all duration-200 ${
                   activeCategory === 'CHIPS'
                     ? 'opacity-30 text-slate-500 cursor-not-allowed'
                     : selectedTimeframe === 'WEEK'
@@ -668,7 +668,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
               <button
                 onClick={() => setSelectedTimeframe('MONTH')}
                 disabled={activeCategory === 'CHIPS'}
-                className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all duration-200 ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all duration-200 ${
                   activeCategory === 'CHIPS'
                     ? 'opacity-30 text-slate-500 cursor-not-allowed'
                     : selectedTimeframe === 'MONTH'
@@ -684,7 +684,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
             <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
               <button
                 onClick={() => setSelectedModeFilter('ALL')}
-                className={`px-2.5 py-1 rounded-full text-[10px] font-bold border transition-all duration-200 shrink-0 cursor-pointer ${
+                className={`px-2.5 py-1 rounded-full text-xs font-bold border transition-all duration-200 shrink-0 cursor-pointer ${
                   selectedModeFilter === 'ALL'
                     ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm shadow-amber-500/5'
                     : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-slate-300 hover:border-slate-700'
@@ -694,7 +694,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
               </button>
               <button
                 onClick={() => setSelectedModeFilter('MULTIPLAYER')}
-                className={`px-2.5 py-1 rounded-full text-[10px] font-bold border transition-all duration-200 shrink-0 flex items-center gap-1 cursor-pointer ${
+                className={`px-2.5 py-1 rounded-full text-xs font-bold border transition-all duration-200 shrink-0 flex items-center gap-1 cursor-pointer ${
                   selectedModeFilter === 'MULTIPLAYER'
                     ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm shadow-amber-500/5'
                     : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-slate-300 hover:border-slate-700'
@@ -705,7 +705,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
               {activeCategory !== 'CHIPS' && (
                 <button
                   onClick={() => setSelectedModeFilter('SOLO')}
-                  className={`px-2.5 py-1 rounded-full text-[10px] font-bold border transition-all duration-200 shrink-0 flex items-center gap-1 cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-full text-xs font-bold border transition-all duration-200 shrink-0 flex items-center gap-1 cursor-pointer ${
                     selectedModeFilter === 'SOLO'
                       ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm shadow-amber-500/5'
                       : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-slate-300 hover:border-slate-700'
@@ -723,7 +723,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                     setSelectedTimeframe('ALL');
                     setSearchQuery('');
                   }}
-                  className="px-2 py-1 rounded-full text-[10px] font-bold border border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 transition-all duration-200 shrink-0 flex items-center gap-1 shadow-sm cursor-pointer ml-1"
+                  className="px-2 py-1 rounded-full text-xs font-bold border border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 transition-all duration-200 shrink-0 flex items-center gap-1 shadow-sm cursor-pointer ml-1"
                 >
                   <X className="w-3 h-3" />
                   <span>Réinit</span>
@@ -734,7 +734,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
 
           {/* Short info note for Fortune (CHIPS category) */}
           {activeCategory === 'CHIPS' && (
-            <div className="flex items-center gap-1.5 text-[10px] text-amber-400 bg-amber-500/5 px-2.5 py-1.5 rounded-lg border border-amber-500/10 mt-1 w-full">
+            <div className="flex items-center gap-1.5 text-xs text-amber-400 bg-amber-500/5 px-2.5 py-1.5 rounded-lg border border-amber-500/10 mt-1 w-full">
               <Info className="w-3.5 h-3.5 text-amber-500 shrink-0" />
               <span>Fortune : cumul multijoueur depuis le début</span>
             </div>
@@ -751,12 +751,12 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
             >
               <div className="flex items-center gap-2 min-w-0">
                 <Trophy className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                <span className="font-bold text-[11px] sm:text-xs text-amber-200 truncate">
-                  Score de Maîtrise (barème 1 à 20 pts)
+                <span className="font-bold text-xs text-amber-200 truncate">
+                  Score de Maîtrise
                 </span>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
-                <span className="text-[10px] text-amber-400 font-bold bg-amber-500/15 px-2 py-0.5 rounded-full border border-amber-500/25">
+                <span className="text-xs text-amber-400 font-bold bg-amber-500/15 px-2 py-0.5 rounded-full border border-amber-500/25">
                   {showMasteryHelp ? 'Masquer ▲' : 'Détails ▼'}
                 </span>
               </div>
@@ -764,7 +764,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
 
             {/* Quick compact summary pills when not expanded */}
             {!showMasteryHelp && (
-              <div className="px-3 pb-2 pt-0 flex items-center gap-1.5 overflow-x-auto no-scrollbar text-[9px] font-mono text-slate-300">
+              <div className="px-3 pb-2 pt-0 flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs font-mono text-slate-300">
                 <span className="px-1.5 py-0.5 rounded bg-slate-900/90 border border-slate-800 shrink-0">
                   <strong className="text-amber-400">Manche 10</strong> / <strong className="text-amber-400">Partie 1</strong>
                 </span>
@@ -779,11 +779,11 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
 
             {/* Full detailed breakdown when expanded */}
             {showMasteryHelp && (
-              <div className="p-3 pt-0 border-t border-amber-500/15 space-y-2 text-[11px] text-slate-400">
-                <p className="leading-relaxed text-slate-300 text-[11px]">
+              <div className="p-3 pt-0 border-t border-amber-500/15 space-y-2 text-xs text-slate-400">
+                <p className="leading-relaxed text-slate-300 text-xs">
                   <strong>Barème officiel du Score de Maîtrise v2 :</strong> Points de base calculés pour chaque réalisation, puis ajustés par le coefficient du mode de jeu (plafond solo : 30 pts/jour).
                 </p>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 font-mono text-[10px]">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 font-mono text-xs">
                   <div className="p-1.5 rounded bg-slate-900/90 border border-slate-800 text-slate-300">
                     <span className="text-amber-400 font-bold">10 pts</span> Manche gagnée
                   </div>
@@ -797,7 +797,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                     <span className="font-bold text-slate-400">15 pts</span> Double Kora 💎
                   </div>
                 </div>
-                <div className="p-2 rounded bg-amber-500/10 border border-amber-500/20 text-[10px] text-amber-300">
+                <div className="p-2 rounded bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300">
                   <strong>Coefficients de mode :</strong> Multijoueur ×1,0 | Solo Expert/Grand Maître ×0,4 | Solo Normal ×0,2 | Solo Facile ×0,05.
                 </div>
               </div>
@@ -811,7 +811,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
             <Info className="w-4 h-4 mt-0.5 shrink-0 text-amber-400" />
             <div className="space-y-0.5">
               <span className="font-bold">Seuil d'éligibilité requis</span>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
+              <p className="text-xs text-slate-400 leading-relaxed">
                 Seuls les compétiteurs ayant disputé au moins <strong className="text-amber-400">10 parties</strong> figurent dans ce classement pour garantir des taux de réussite représentatifs.
               </p>
             </div>
@@ -828,16 +828,16 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                 className="flex flex-col items-center justify-between p-1.5 xs:p-2.5 sm:p-3 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 cursor-pointer transition hover:scale-102 h-56 relative shadow-lg"
               >
                 <div className="flex flex-col items-center w-full min-w-0">
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-slate-800 text-slate-300 text-[8px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow border border-slate-700 whitespace-nowrap">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-slate-800 text-slate-300 text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow border border-slate-700 whitespace-nowrap">
                     🥈 #2 ARGENT
                   </div>
                   <div className="mt-2.5 shrink-0">
                     <PlayerAvatar avatarId={top3[1].avatarId} size="md" photoURL={top3[1].photoURL} />
                   </div>
-                  <span className="text-[11px] font-bold text-white mt-2 truncate max-w-full text-center">
+                  <span className="text-xs font-bold text-white mt-2 truncate max-w-full text-center">
                     {top3[1].displayName}
                   </span>
-                  <span className="text-[9px] text-slate-400 mt-0.5 truncate max-w-full text-center">
+                  <span className="text-xs text-slate-400 mt-0.5 truncate max-w-full text-center">
                     {top3[1].title.badge} {top3[1].title.title}
                   </span>
                 </div>
@@ -852,7 +852,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                 className="flex flex-col items-center justify-between p-1.5 xs:p-2.5 sm:p-3 rounded-2xl bg-gradient-to-b from-amber-500/15 to-slate-900/95 border-2 border-amber-400 cursor-pointer transition hover:scale-105 h-56 relative shadow-xl shadow-amber-500/5 z-10"
               >
                 <div className="flex flex-col items-center w-full min-w-0">
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-slate-950 text-[8px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 shadow whitespace-nowrap">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-slate-950 text-xs font-black px-2 py-0.5 rounded-full flex items-center gap-1 shadow whitespace-nowrap">
                     <Crown className="w-2.5 h-2.5 fill-slate-950" /> #1 MAÎTRE
                   </div>
                   <div className="mt-2.5 shrink-0">
@@ -861,7 +861,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                   <span className="text-xs sm:text-sm font-black text-amber-300 mt-2 truncate max-w-full text-center">
                     {top3[0].displayName}
                   </span>
-                  <span className="text-[9px] font-bold text-amber-400/80 mt-0.5 truncate max-w-full text-center">
+                  <span className="text-xs font-bold text-amber-400/80 mt-0.5 truncate max-w-full text-center">
                     {top3[0].title.badge} {top3[0].title.title}
                   </span>
                 </div>
@@ -876,16 +876,16 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                 className="flex flex-col items-center justify-between p-1.5 xs:p-2.5 sm:p-3 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 cursor-pointer transition hover:scale-102 h-56 relative shadow-lg"
               >
                 <div className="flex flex-col items-center w-full min-w-0">
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-800 text-slate-300 text-[8px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow border border-slate-700/80 whitespace-nowrap">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-800 text-slate-300 text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow border border-slate-700/80 whitespace-nowrap">
                     🥉 #3 BRONZE
                   </div>
                   <div className="mt-2.5 shrink-0">
                     <PlayerAvatar avatarId={top3[2].avatarId} size="md" photoURL={top3[2].photoURL} />
                   </div>
-                  <span className="text-[11px] font-bold text-white mt-2 truncate max-w-full text-center">
+                  <span className="text-xs font-bold text-white mt-2 truncate max-w-full text-center">
                     {top3[2].displayName}
                   </span>
-                  <span className="text-[9px] text-slate-400 mt-0.5 truncate max-w-full text-center">
+                  <span className="text-xs text-slate-400 mt-0.5 truncate max-w-full text-center">
                     {top3[2].title.badge} {top3[2].title.title}
                   </span>
                 </div>
@@ -914,7 +914,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                   ? 'Aucun joueur trouvé pour cette recherche.'
                   : 'Aucun joueur qualifié pour le moment.'}
               </p>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-xs text-slate-500">
                 Connecte-toi avec Google et joue des parties pour figurer au Palmarès !
               </p>
             </div>
@@ -963,15 +963,15 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                           {player.displayName}
                         </span>
                         {player.isCurrentUser && (
-                          <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-amber-500 text-slate-950">
+                          <span className="text-xs font-black px-1.5 py-0.2 rounded bg-amber-500 text-slate-950">
                             Toi
                           </span>
                         )}
-                        <span className="text-[10px] text-slate-500 font-mono">
+                        <span className="text-xs text-slate-500 font-mono">
                           {player.friendCode}
                         </span>
                       </div>
-                      <span className={`text-[10px] font-medium ${player.title.colorClass}`}>
+                      <span className={`text-xs font-medium ${player.title.colorClass}`}>
                         {player.title.badge} {player.title.title}
                       </span>
                     </div>
@@ -1014,13 +1014,13 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
               <div className="flex flex-col min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs font-black text-white">Ta position au Palmarès</span>
-                  <span className="text-[10px] font-mono text-amber-400">
+                  <span className="text-xs font-mono text-amber-400">
                     (Rang #{userRank.rank}/{userRank.totalRankedPlayers})
                   </span>
                 </div>
                 
                 {/* Dynamically Computed Points Gap to Next Player */}
-                <div className="text-[11px] text-slate-400 truncate flex items-center gap-1 flex-wrap mt-0.5">
+                <div className="text-xs text-slate-400 truncate flex items-center gap-1 flex-wrap mt-0.5">
                   {userRank.nextPlayerName ? (
                     <>
                       <span>Écart :</span>
@@ -1032,7 +1032,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                       <span className="text-slate-200 font-bold truncate max-w-[90px]" title={userRank.nextPlayerName}>
                         {userRank.nextPlayerName}
                       </span>
-                      <span className="text-slate-500 font-mono text-[9px] bg-slate-950 px-1 py-0.2 rounded border border-slate-800 shrink-0">
+                      <span className="text-slate-500 font-mono text-xs bg-slate-950 px-1 py-0.2 rounded border border-slate-800 shrink-0">
                         #{userRank.rank - 1}
                       </span>
                     </>
@@ -1056,10 +1056,10 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                       style={{ width: `${progressPercent}%` }}
                     />
                   </div>
-                  <span className="text-[10px] text-amber-400 font-bold font-mono shrink-0">
+                  <span className="text-xs text-amber-400 font-bold font-mono shrink-0">
                     {progressPercent}%
                   </span>
-                  <span className="text-[9px] text-slate-400 truncate max-w-[100px]" title={nextTitle ? `Prochain titre : ${nextTitle.title}` : 'Max'}>
+                  <span className="text-xs text-slate-400 truncate max-w-[100px]" title={nextTitle ? `Prochain titre : ${nextTitle.title}` : 'Max'}>
                     vers {nextTitle ? nextTitle.title : 'MAX'}
                   </span>
                 </div>
@@ -1069,7 +1069,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
             <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end shrink-0">
               {/* Highlight own stats */}
               <div className="px-3 py-1 bg-slate-950 rounded-lg border border-slate-800 text-center sm:text-right min-w-[80px]">
-                <div className="text-[8px] text-slate-500 uppercase font-black">{activeCategory === 'CHIPS' ? 'Ta fortune' : activeCategory === 'WINS' ? 'Ton score' : activeCategory === 'KORAS' ? 'Tes Koras' : 'Ton ratio'}</div>
+                <div className="text-xs text-slate-500 uppercase font-black">{activeCategory === 'CHIPS' ? 'Ta fortune' : activeCategory === 'WINS' ? 'Ton score' : activeCategory === 'KORAS' ? 'Tes Koras' : 'Ton ratio'}</div>
                 <div className={`text-xs font-black font-mono ${
                   activeCategory === 'CHIPS'
                     ? ((profile?.stats?.fortune || 0) > 0 ? 'text-emerald-400' : (profile?.stats?.fortune || 0) < 0 ? 'text-rose-400' : 'text-slate-400')
@@ -1090,7 +1090,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                 <button
                   type="button"
                   onClick={onOpenProfile}
-                  className="h-9 px-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold text-[11px] flex items-center gap-1 cursor-pointer transition shrink-0"
+                  className="h-9 px-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold text-xs flex items-center gap-1 cursor-pointer transition shrink-0"
                 >
                   <span>Profil</span>
                   <ChevronRight className="w-3.5 h-3.5" />
@@ -1136,7 +1136,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                   <span className={`text-xs font-bold ${selectedPlayer.title.colorClass}`}>
                     {selectedPlayer.title.badge} {selectedPlayer.title.title}
                   </span>
-                  <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                  <div className="text-xs text-slate-400 font-mono mt-0.5">
                     Code Ami : {selectedPlayer.friendCode}
                   </div>
                 </div>
@@ -1168,7 +1168,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
 
               {/* Details for Fortune in Inspect modal */}
               {selectedPlayer.fortune !== undefined && (
-                <div className="text-[10px] text-slate-500 text-center -mt-2">
+                <div className="text-xs text-slate-500 text-center -mt-2">
                   Bénéfice net Multijoueur • Gains: {selectedPlayer.multiplayerGains || 0} 🪙 · Pertes: {selectedPlayer.multiplayerPertes || 0} 🪙
                 </div>
               )}

@@ -169,7 +169,7 @@ export const MultiplayerHubModal: React.FC<MultiplayerHubModalProps> = ({
           <div>
             <h2 className="text-lg font-black text-white flex items-center gap-2">
               <span>Multijoueur en Ligne</span>
-              <span className="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-700">
+              <span className="text-xs uppercase font-extrabold px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-700">
                 Temps Réel
               </span>
             </h2>
@@ -243,11 +243,11 @@ export const MultiplayerHubModal: React.FC<MultiplayerHubModalProps> = ({
             {/* Format de la table (1vs1 par défaut ou 4 Joueurs) */}
             <div className="p-2.5 bg-slate-950/60 rounded-2xl border border-slate-800 flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-extrabold uppercase text-amber-400 flex items-center gap-1">
+                <span className="text-xs font-extrabold uppercase text-amber-400 flex items-center gap-1">
                   <Users className="w-3.5 h-3.5 text-amber-400" />
                   <span>Format de Table</span>
                 </span>
-                <span className="text-[10px] text-slate-400 font-mono">
+                <span className="text-xs text-slate-400 font-mono">
                   {maxPlayers === 2 ? 'Duel 1 contre 1' : 'Table Standard (4p)'}
                 </span>
               </div>
@@ -280,11 +280,11 @@ export const MultiplayerHubModal: React.FC<MultiplayerHubModalProps> = ({
             {/* Options des places vides & Cadence en ligne */}
             <div className="p-2.5 bg-slate-950/60 rounded-2xl border border-slate-800 flex flex-col gap-2">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-extrabold uppercase text-amber-400 flex items-center gap-1">
+                <span className="text-xs font-extrabold uppercase text-amber-400 flex items-center gap-1">
                   <Users className="w-3.5 h-3.5 text-slate-400" />
                   <span>Remplissage</span>
                 </span>
-                <span className="text-[11px] font-extrabold uppercase text-amber-400 flex items-center gap-1">
+                <span className="text-xs font-extrabold uppercase text-amber-400 flex items-center gap-1">
                   <Timer className="w-3.5 h-3.5" />
                   <span>Timer / Tour</span>
                 </span>
@@ -338,7 +338,7 @@ export const MultiplayerHubModal: React.FC<MultiplayerHubModalProps> = ({
 
               <div className="flex flex-col gap-1 bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
                 <span className="text-xs font-bold text-slate-300">Absence d'un joueur (déconnexion, inactivité, départ)</span>
-                <p className="text-[11px] leading-snug text-slate-400">
+                <p className="text-xs leading-snug text-slate-400">
                   Un relais joue des cartes neutres jusqu'à la fin de la partie et ne peut pas gagner le pot. Le joueur
                   reprend la main en revenant ; sinon il perd sa mise et passe la partie suivante, puis peut revenir au
                   début de n'importe quelle partie.
@@ -347,7 +347,7 @@ export const MultiplayerHubModal: React.FC<MultiplayerHubModalProps> = ({
             {/* Mises, Capitaux & Variantes */}
             <div className="grid grid-cols-2 gap-2">
               <div className="p-2 bg-slate-950/60 rounded-xl border border-slate-800 flex items-center justify-between">
-                <span className="text-[10px] font-bold text-slate-400 uppercase">Mise</span>
+                <span className="text-xs font-bold text-slate-400 uppercase">Mise</span>
                 <select
                   value={baseBet}
                   onChange={(e) => setBaseBet(Number(e.target.value))}
@@ -361,7 +361,7 @@ export const MultiplayerHubModal: React.FC<MultiplayerHubModalProps> = ({
               </div>
 
               <div className="p-2 bg-slate-950/60 rounded-xl border border-slate-800 flex items-center justify-between">
-                <span className="text-[10px] font-bold text-slate-400 uppercase">Capital</span>
+                <span className="text-xs font-bold text-slate-400 uppercase">Capital</span>
                 <select
                   value={initialCapital}
                   onChange={(e) => setInitialCapital(Number(e.target.value))}
@@ -388,7 +388,7 @@ export const MultiplayerHubModal: React.FC<MultiplayerHubModalProps> = ({
                   <Zap className="w-3.5 h-3.5 text-slate-400" />
                   <span>Double Kora</span>
                 </div>
-                <span className="text-[10px] font-black px-1.5 py-0.2 rounded bg-slate-500/20 text-slate-300">×4</span>
+                <span className="text-xs font-black px-1.5 py-0.2 rounded bg-slate-500/20 text-slate-300">×4</span>
               </div>
 
               <div
@@ -403,7 +403,7 @@ export const MultiplayerHubModal: React.FC<MultiplayerHubModalProps> = ({
                   <span className="text-emerald-400 font-black text-xs">≤21</span>
                   <span>Moins de 21</span>
                 </div>
-                <span className="text-[10px] font-black px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300">Actif</span>
+                <span className="text-xs font-black px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300">Actif</span>
               </div>
             </div>
 
@@ -442,7 +442,7 @@ export const MultiplayerHubModal: React.FC<MultiplayerHubModalProps> = ({
                 placeholder="Ex: K9T4"
                 className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-center text-xl tracking-widest font-mono font-black text-amber-300 focus:outline-none focus:border-amber-400 uppercase transition"
               />
-              <p className="text-[11px] text-slate-400 text-center">
+              <p className="text-xs text-slate-400 text-center">
                 Demandez le code à 4 lettres au créateur du salon pour le rejoindre.
               </p>
             </div>

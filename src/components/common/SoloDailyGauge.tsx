@@ -20,7 +20,7 @@ export const SoloDailyGauge: React.FC<SoloDailyGaugeProps> = ({ soloDaily, compa
     : `Prochaines victoires solo : ${Math.round(status.rate * 100)} % des points.`;
   return (
     <div className={`w-full rounded-xl border border-amber-500/25 bg-slate-950/60 ${compact ? 'p-2' : 'p-3'}`}>
-      <div className="flex items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+      <div className="flex items-center justify-between gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">
         <span>Points solo du jour</span>
         <span className="font-mono text-amber-300">
           {Number(status.points.toFixed(2))} / {status.cap}
@@ -34,7 +34,7 @@ export const SoloDailyGauge: React.FC<SoloDailyGaugeProps> = ({ soloDaily, compa
           style={{ width: `${percent}%` }}
         />
       </div>
-      <div className={`mt-1.5 text-[10px] ${status.reached ? 'text-rose-300' : 'text-slate-400'}`}>{message}</div>
+      <div className={`mt-1.5 text-xs ${status.reached ? 'text-rose-300' : 'text-slate-400'}`}>{message}</div>
     </div>
   );
 };

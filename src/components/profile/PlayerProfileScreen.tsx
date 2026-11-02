@@ -309,13 +309,13 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
         backLabel="Retour"
         onBack={handleBackClick}
         backTitle={sourceScreen === 'GAME' ? 'Retourner à la partie en cours' : 'Retourner à l’accueil'}
-        title="Profil"
+        title={<span className="hidden min-[360px]:block text-xs sm:text-sm md:text-base font-black tracking-tight uppercase text-white truncate">Profil</span>}
         onToggleSound={onToggleSound}
         soundEnabled={soundEnabled}
         onHome={onClose}
         contextBadge={
           (isGameActive || sourceScreen === 'GAME') ? (
-            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-[11px] font-semibold">
+            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>
                 Partie en cours {isMultiplayer ? `(Multi ${gamePlayerCount}J)` : '(Solo vs IA)'}
@@ -341,7 +341,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
               <Coins className="w-3.5 h-3.5 text-amber-400" />
               <span>{(chips || 1000).toLocaleString()}</span>
             </div>
-            <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 px-2.5 py-1 rounded-xl bg-slate-800/80 border border-slate-700/80">
+            <div className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-slate-400 px-2.5 py-1 rounded-xl bg-slate-800/80 border border-slate-700/80">
               {isLoggedIn ? (
                 <>
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
@@ -406,7 +406,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   <button
                     type="button"
                     onClick={() => setShowAvatarSheet(true)}
-                    className="text-[11px] font-bold text-amber-300 hover:text-amber-200 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 px-3 py-1 rounded-full flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-xs"
+                    className="text-xs font-bold text-amber-300 hover:text-amber-200 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 px-3 py-1 rounded-full flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-xs"
                     title="Ouvrir le tiroir des avatars"
                   >
                     <Sparkles className="w-3 h-3 text-amber-400" />
@@ -502,7 +502,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                         Sanction Fair-Play Active : {activeSanction.type}
                       </h4>
                       {activeSanction.expiresAt && (
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-500/30 text-rose-200 font-bold shrink-0">
+                        <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-rose-500/30 text-rose-200 font-bold shrink-0">
                           Expire dans {Math.max(1, Math.ceil((activeSanction.expiresAt - Date.now()) / 60000))} min
                         </span>
                       )}
@@ -510,7 +510,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     <p className="text-xs text-rose-200 leading-relaxed font-medium">
                       {activeSanction.reason}
                     </p>
-                    <p className="text-[11px] text-rose-300/80">
+                    <p className="text-xs text-rose-300/80">
                       Les abandons et déconnexions en cours de partie impactent la communauté et limitent tes accès multijoueur.
                     </p>
                   </div>
@@ -528,7 +528,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                       <h4 className="text-xs font-black uppercase tracking-wider text-amber-300">
                         Synchronisation en attente ({offlineQueueCount})
                       </h4>
-                      <p className="text-[11px] text-amber-200/90 truncate">
+                      <p className="text-xs text-amber-200/90 truncate">
                         Données enregistrées localement en attente de téléversement cloud.
                       </p>
                     </div>
@@ -548,7 +548,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                 {/* Solde de jetons */}
                 <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 via-slate-900 to-slate-900 border border-amber-500/30 flex items-center justify-between gap-3 shadow-md">
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+                    <span className="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
                       <Coins className="w-3.5 h-3.5 text-amber-400" />
                       Solde de Jetons
                     </span>
@@ -556,7 +556,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                       {(chips || 1000).toLocaleString()}{' '}
                       <span className="text-xs font-bold text-amber-400/80 font-sans">jetons</span>
                     </div>
-                    <p className="text-[10px] text-slate-400">
+                    <p className="text-xs text-slate-400">
                       Synchronisé avec tes parties et gains de pot
                     </p>
                   </div>
@@ -568,7 +568,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                 {/* Indice Fair-Play */}
                 <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center justify-between gap-3 shadow-md">
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
                       <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                       Réputation Fair-Play
                     </span>
@@ -589,7 +589,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                           : 'Pénalisé'}
                       </span>
                     </div>
-                    <p className="text-[10px] text-slate-400">
+                    <p className="text-xs text-slate-400">
                       {fairPlay?.totalForfeits || 0} abandon(s) • {fairPlay?.totalFoldRounds || 0} fold(s)
                     </p>
                   </div>
@@ -621,7 +621,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     <p className="text-xs font-bold text-white flex items-center gap-2">
                       <span>{isLoggedIn ? 'Compte Google Protégé' : 'Sauvegarder avec Google'}</span>
                       <span
-                        className={`text-[10px] px-2 py-0.2 rounded-full font-bold ${
+                        className={`hidden sm:inline text-xs px-2 py-0.2 rounded-full font-bold ${
                           isLoggedIn
                             ? 'bg-emerald-500/20 text-emerald-300'
                             : 'bg-amber-400/20 text-amber-300 animate-pulse'
@@ -630,7 +630,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                         {isLoggedIn ? 'En ligne' : 'Recommandé'}
                       </span>
                     </p>
-                    <p className="text-[11px] text-slate-400 truncate">
+                    <p className="text-xs text-slate-400 truncate">
                       {isLoggedIn
                         ? `Connecté en tant que ${safeProfile.email || safeProfile.displayName}`
                         : 'Sauvegarde tes victoires et tes trophées dans le Cloud'}
@@ -652,7 +652,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                       <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                       Choisir ton avatar de table (8 disponibles)
                     </h3>
-                    <p className="text-[11px] text-slate-400">
+                    <p className="text-xs text-slate-400">
                       Touche un avatar pour personnaliser ta présence sur le tapis.
                     </p>
                   </div>
@@ -697,7 +697,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
 
                         {/* Name Label */}
                         <span
-                          className={`text-[10px] sm:text-xs font-semibold mt-1.5 truncate w-full text-center tracking-tight ${
+                          className={`text-[11px] leading-tight font-semibold mt-1.5 w-full text-center tracking-tight [overflow-wrap:anywhere] ${
                             isSelected ? 'text-amber-300 font-bold' : 'text-slate-300 group-hover:text-white'
                           }`}
                         >
@@ -730,7 +730,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   </div>
                   <div className="min-w-0">
                     <h3 className="text-xs sm:text-sm font-bold text-white">Diagnostic de connexion</h3>
-                    <p className="text-[11px] text-slate-400">Vérifier l'état du serveur, latence, jetons et erreurs.</p>
+                    <p className="text-xs text-slate-400">Vérifier l'état du serveur, latence, jetons et erreurs.</p>
                   </div>
                 </div>
                 <button
@@ -755,7 +755,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   </div>
                   <div className="flex flex-col text-left">
                     <span className="font-bold text-slate-200 group-hover:text-white">Joueurs bloqués</span>
-                    <span className="text-[10px] text-slate-400">Gérer ta liste de blocage ({blockedPlayers.length})</span>
+                    <span className="text-xs text-slate-400">Gérer ta liste de blocage ({blockedPlayers.length})</span>
                   </div>
                 </div>
                 <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-slate-300 transition-transform group-hover:translate-x-0.5" />
@@ -801,7 +801,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                           <h2 className="text-lg sm:text-xl font-black text-white truncate">
                             {safeProfile.displayName}
                           </h2>
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                          <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
                             <ShieldCheck className="w-3 h-3" />
                             COMPTE GOOGLE VÉRIFIÉ
                           </span>
@@ -811,7 +811,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                           {safeProfile.email || 'Compte Google synchronisé'}
                         </p>
 
-                        <p className="text-[11px] text-slate-400 flex items-center justify-center sm:justify-start gap-1.5 pt-0.5">
+                        <p className="text-xs text-slate-400 flex items-center justify-center sm:justify-start gap-1.5 pt-0.5">
                           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                           <span>Sauvegarde Cloud Firestore active et synchronisée</span>
                         </p>
@@ -821,15 +821,15 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     {/* Quick Synced Metrics Recap */}
                     <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800/80 text-center">
                       <div className="p-2.5 bg-slate-950/60 rounded-xl border border-slate-800/60">
-                        <span className="text-[10px] uppercase font-bold text-slate-400">Parties Cloud</span>
+                        <span className="text-xs uppercase font-bold text-slate-400">Parties Cloud</span>
                         <p className="text-base font-black text-white font-mono">{safeStats.gamesPlayed || 0}</p>
                       </div>
                       <div className="p-2.5 bg-slate-950/60 rounded-xl border border-slate-800/60">
-                        <span className="text-[10px] uppercase font-bold text-slate-400">Victoires</span>
+                        <span className="text-xs uppercase font-bold text-slate-400">Victoires</span>
                         <p className="text-base font-black text-emerald-400 font-mono">{safeStats.gamesWon || 0}</p>
                       </div>
                       <div className="p-2.5 bg-slate-950/60 rounded-xl border border-slate-800/60">
-                        <span className="text-[10px] uppercase font-bold text-slate-400">Koras 👑</span>
+                        <span className="text-xs uppercase font-bold text-slate-400">Koras 👑</span>
                         <p className="text-base font-black text-amber-400 font-mono">{safeStats.koraCount || 0}</p>
                       </div>
                     </div>
@@ -842,7 +842,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                         <Cloud className="w-4 h-4" />
                       </div>
                       <h4 className="text-xs font-bold text-white">Sauvegarde Firestore</h4>
-                      <p className="text-[11px] text-slate-400 leading-snug">
+                      <p className="text-xs text-slate-400 leading-snug">
                         Chaque victoire et trophée est gravé instantanément dans ta base Cloud sécurisée.
                       </p>
                     </div>
@@ -852,7 +852,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                         <Smartphone className="w-4 h-4" />
                       </div>
                       <h4 className="text-xs font-bold text-white">Multi-Appareils</h4>
-                      <p className="text-[11px] text-slate-400 leading-snug">
+                      <p className="text-xs text-slate-400 leading-snug">
                         Joue sur mobile, PWA ou PC : ton rang et tes avatars te suivent partout.
                       </p>
                     </div>
@@ -862,7 +862,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                         <CheckCircle2 className="w-4 h-4" />
                       </div>
                       <h4 className="text-xs font-bold text-white">Anti-Perte Absolu</h4>
-                      <p className="text-[11px] text-slate-400 leading-snug">
+                      <p className="text-xs text-slate-400 leading-snug">
                         Même en vidant ton cache ou en changeant de téléphone, ton historique reste intact.
                       </p>
                     </div>
@@ -872,7 +872,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
                     <div className="text-center sm:text-left space-y-0.5">
                       <p className="text-xs font-bold text-white">Gestion de la session</p>
-                      <p className="text-[11px] text-slate-400">
+                      <p className="text-xs text-slate-400">
                         Tu peux synchroniser manuellement ou te déconnecter pour repasser en mode invité.
                       </p>
                     </div>
@@ -946,7 +946,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                         )}
                       </button>
 
-                      <p className="text-[11px] text-slate-400 flex items-center justify-center gap-1.5">
+                      <p className="text-xs text-slate-400 flex items-center justify-center gap-1.5">
                         <Lock className="w-3 h-3 text-slate-500" />
                         <span>Connexion officielle sans mot de passe via Google Identity Services</span>
                       </p>
@@ -975,7 +975,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                         <ShieldCheck className="w-4 h-4" />
                       </div>
                       <h4 className="text-xs font-bold text-white">Sécurité Cloud</h4>
-                      <p className="text-[11px] text-slate-400 leading-snug">
+                      <p className="text-xs text-slate-400 leading-snug">
                         Tes trophées restent enregistrés pour toujours, même après réinitialisation de ton navigateur.
                       </p>
                     </div>
@@ -985,7 +985,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                         <Smartphone className="w-4 h-4" />
                       </div>
                       <h4 className="text-xs font-bold text-white">Multi-Appareils</h4>
-                      <p className="text-[11px] text-slate-400 leading-snug">
+                      <p className="text-xs text-slate-400 leading-snug">
                         Retrouve ta progression sur ton mobile, ta tablette ou ton ordinateur de bureau.
                       </p>
                     </div>
@@ -995,7 +995,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                         <Crown className="w-4 h-4" />
                       </div>
                       <h4 className="text-xs font-bold text-white">Statut Multijoueur</h4>
-                      <p className="text-[11px] text-slate-400 leading-snug">
+                      <p className="text-xs text-slate-400 leading-snug">
                         Arbore ton avatar personnalisé et ton rang honorifique dans toutes les salles multijoueurs.
                       </p>
                     </div>
@@ -1048,7 +1048,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                           <PlayerAvatar avatarId="lion" size="sm" className="w-9 h-9 border border-rose-500/30" />
                           <div className="flex flex-col min-w-0">
                             <span className="text-xs font-bold text-white truncate">{player.displayName}</span>
-                            <span className="text-[10px] text-amber-400 font-mono font-bold">{player.friendCode}</span>
+                            <span className="text-xs text-amber-400 font-mono font-bold">{player.friendCode}</span>
                           </div>
                         </div>
 
@@ -1080,7 +1080,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-white">Statistiques Consolidées</h4>
-                    <p className="text-[10px] text-slate-400">
+                    <p className="text-xs text-slate-400">
                       {isLoggedIn
                         ? 'Données synchronisées avec ton profil Firestore Cloud'
                         : 'Mode Invité : Données conservées localement avec fusion Cloud à la connexion'}
@@ -1126,7 +1126,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                       <span className="text-xs font-black text-white group-hover:text-amber-300 transition-colors">
                         Palmarès & Classement
                       </span>
-                      <span className="text-[11px] text-slate-400 truncate">
+                      <span className="text-xs text-slate-400 truncate">
                         Découvre ton rang face aux autres joueurs de la communauté
                       </span>
                     </div>
@@ -1148,7 +1148,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                       <Award className="w-6 h-6" />
                     </div>
                     <div>
-                      <div className="text-[10px] uppercase font-bold tracking-wider text-amber-400/90">
+                      <div className="text-xs uppercase font-bold tracking-wider text-amber-400/90">
                         Indicateur Officiel de Performance
                       </div>
                       <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-1.5">
@@ -1163,7 +1163,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     <div className="text-2xl sm:text-3xl font-black text-amber-400 font-mono">
                       {(safeStats.masteryScore || 0).toLocaleString()} <span className="text-xs font-bold text-amber-200">pts</span>
                     </div>
-                    <span className="text-[10px] text-slate-400">Total accumulé</span>
+                    <span className="text-xs text-slate-400">Total accumulé</span>
                   </div>
                 </div>
 
@@ -1171,32 +1171,32 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-amber-500/20 text-center">
                   <div className="p-2 bg-slate-950/60 rounded-xl border border-slate-800/80">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Manches Multi</span>
+                    <span className="text-xs uppercase font-bold text-slate-400 block">Manches Multi</span>
                     <span className="text-sm font-black text-amber-300 font-mono">
                       {safeStats.multiplayerManchesWon || 0}
                     </span>
-                    <span className="text-[9px] text-slate-500 block">(+10 pts/m)</span>
+                    <span className="text-xs text-slate-500 block">(+10 pts/m)</span>
                   </div>
                   <div className="p-2 bg-slate-950/60 rounded-xl border border-slate-800/80">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Manches Solo</span>
+                    <span className="text-xs uppercase font-bold text-slate-400 block">Manches Solo</span>
                     <span className="text-sm font-black text-amber-300 font-mono">
                       {safeStats.soloManchesWon || (safeStats.soloManchesWonHard || 0) + (safeStats.soloManchesWonNormal || 0) + (safeStats.soloManchesWonEasy || 0)}
                     </span>
-                    <span className="text-[9px] text-slate-500 block">(1 à 6 pts/m)</span>
+                    <span className="text-xs text-slate-500 block">(1 à 6 pts/m)</span>
                   </div>
                   <div className="p-2 bg-slate-950/60 rounded-xl border border-slate-800/80">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Parties gagnées</span>
+                    <span className="text-xs uppercase font-bold text-slate-400 block">Parties gagnées</span>
                     <span className="text-sm font-black text-emerald-400 font-mono">
                       {safeStats.partiesWon || safeStats.gamesWon || 0}
                     </span>
-                    <span className="text-[9px] text-slate-500 block">(+1 pt/partie)</span>
+                    <span className="text-xs text-slate-500 block">(+1 pt/partie)</span>
                   </div>
                   <div className="p-2 bg-slate-950/60 rounded-xl border border-slate-800/80">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Koras / Dbl</span>
+                    <span className="text-xs uppercase font-bold text-slate-400 block">Koras / Dbl</span>
                     <span className="text-sm font-black text-amber-300 font-mono">
                       {safeStats.koraCount || 0} / {safeStats.doubleKoraCount || 0}
                     </span>
-                    <span className="text-[9px] text-slate-500 block">(+5 / +20 pts)</span>
+                    <span className="text-xs text-slate-500 block">(+5 / +20 pts)</span>
                   </div>
                 </div>
               </div>
@@ -1212,12 +1212,12 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   <div className="text-2xl sm:text-3xl font-black text-white font-mono">
                     {safeStats.gamesPlayed || 0}
                   </div>
-                  <div className="text-[11px] text-slate-400 flex items-center gap-1.5 pt-1">
+                  <div className="text-xs text-slate-400 flex items-center gap-1.5 pt-1">
                     <span className="text-slate-300 font-semibold">{safeStats.soloGamesPlayed || 0}</span> Solo
                     <span>•</span>
                     <span className="text-slate-300 font-semibold">{safeStats.multiplayerGamesPlayed || 0}</span> Multi
                   </div>
-                  <div className="text-[10px] text-slate-500 pt-0.5 border-t border-slate-800/80">
+                  <div className="text-xs text-slate-500 pt-0.5 border-t border-slate-800/80">
                     Dont <span className="text-amber-400 font-bold">{safeStats.partiesWon || safeStats.gamesWon || 0}</span> parties remportées
                   </div>
                 </div>
@@ -1231,12 +1231,12 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   <div className="text-2xl sm:text-3xl font-black text-emerald-400 font-mono">
                     {safeStats.gamesWon || 0}
                   </div>
-                  <div className="text-[11px] text-slate-400 flex items-center gap-1.5 pt-1">
+                  <div className="text-xs text-slate-400 flex items-center gap-1.5 pt-1">
                     <span className="text-emerald-400 font-semibold">{safeStats.soloGamesWon || 0}</span> Solo
                     <span>•</span>
                     <span className="text-emerald-400 font-semibold">{safeStats.multiplayerGamesWon || 0}</span> Multi
                   </div>
-                  <div className="text-[10px] text-slate-500 pt-0.5 border-t border-slate-800/80">
+                  <div className="text-xs text-slate-500 pt-0.5 border-t border-slate-800/80">
                     Taux : <strong className="text-emerald-300 font-bold">{winRate}%</strong> · Défaites : {(safeStats.gamesPlayed || 0) - (safeStats.gamesWon || 0)}
                   </div>
                 </div>
@@ -1250,10 +1250,10 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   <div className="text-2xl sm:text-3xl font-black text-amber-400 font-mono">
                     {safeStats.koraCount || 0}
                   </div>
-                  <div className="text-[11px] text-slate-400 pt-1">
+                  <div className="text-xs text-slate-400 pt-1">
                     Multiplicateur pot : <strong className="text-amber-300 font-bold">x2</strong>
                   </div>
-                  <div className="text-[10px] text-slate-500 pt-0.5 border-t border-slate-800/80">
+                  <div className="text-xs text-slate-500 pt-0.5 border-t border-slate-800/80">
                     Koras simples infligés
                   </div>
                 </div>
@@ -1267,10 +1267,10 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   <div className="text-2xl sm:text-3xl font-black text-amber-300 font-mono">
                     {safeStats.doubleKoraCount || 0}
                   </div>
-                  <div className="text-[11px] text-slate-400 pt-1">
+                  <div className="text-xs text-slate-400 pt-1">
                     Multiplicateur pot : <strong className="text-amber-300 font-bold">x4</strong>
                   </div>
-                  <div className="text-[10px] text-slate-500 pt-0.5 border-t border-slate-800/80">
+                  <div className="text-xs text-slate-500 pt-0.5 border-t border-slate-800/80">
                     Coups suprêmes (Double Kora)
                   </div>
                 </div>
@@ -1284,10 +1284,10 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   <div className="text-2xl sm:text-3xl font-black text-amber-300 font-mono">
                     {(safeStats.biggestPotWon || 0).toLocaleString()} <span className="text-xs font-bold text-slate-400">pts</span>
                   </div>
-                  <div className="text-[11px] text-slate-400 pt-1">
+                  <div className="text-xs text-slate-400 pt-1">
                     Record en une seule partie
                   </div>
-                  <div className="text-[10px] text-slate-500 pt-0.5 border-t border-slate-800/80">
+                  <div className="text-xs text-slate-500 pt-0.5 border-t border-slate-800/80">
                     Solde actuel : <strong className="text-amber-400 font-mono">{(chips || 1000).toLocaleString()}</strong>
                   </div>
                 </div>
@@ -1301,10 +1301,10 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   <div className="text-2xl sm:text-3xl font-black text-slate-400 font-mono">
                     {avgTricks} <span className="text-xs font-bold text-slate-400">/ 5</span>
                   </div>
-                  <div className="text-[11px] text-slate-400 pt-1">
+                  <div className="text-xs text-slate-400 pt-1">
                     Tours remportés par partie
                   </div>
-                  <div className="text-[10px] text-slate-500 pt-0.5 border-t border-slate-800/80">
+                  <div className="text-xs text-slate-500 pt-0.5 border-t border-slate-800/80">
                     Total : {safeStats.totalTricksWon || 0} tours
                   </div>
                 </div>
@@ -1317,7 +1317,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     <BarChart3 className="w-4 h-4 text-amber-400" />
                     Comparatif Détaillé : Solo vs Multijoueur
                   </h3>
-                  <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-md font-semibold">
+                  <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-md font-semibold">
                     Analyse de Style
                   </span>
                 </div>
@@ -1326,7 +1326,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   {/* Taux de Victoire comparative list */}
                   <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800/80 flex flex-col justify-between space-y-2">
                     <div>
-                      <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Taux de Réussite</span>
+                      <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">Taux de Réussite</span>
                       <div className="flex items-baseline justify-between mt-1">
                         <span className="text-xs text-slate-400">Mode Solo (IA)</span>
                         <span className="text-sm font-extrabold text-amber-400 font-mono">
@@ -1347,7 +1347,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                         <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${safeStats.multiplayerWinRate || 0}%` }}></div>
                       </div>
                     </div>
-                    <div className="text-[10px] text-slate-500 pt-1.5 border-t border-slate-900 flex justify-between">
+                    <div className="text-xs text-slate-500 pt-1.5 border-t border-slate-900 flex justify-between">
                       <span>Solo: {safeStats.soloGamesWon}/{safeStats.soloGamesPlayed}</span>
                       <span>Multi: {safeStats.multiplayerGamesWon}/{safeStats.multiplayerGamesPlayed}</span>
                     </div>
@@ -1356,13 +1356,13 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   {/* Koras comparatif */}
                   <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800/80 flex flex-col justify-between space-y-2">
                     <div>
-                      <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Koras & Coups de Maître</span>
+                      <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">Koras & Coups de Maître</span>
                       
                       <div className="flex justify-between items-center mt-2.5">
                         <span className="text-xs text-slate-300">Entraînement Solo</span>
                         <div className="text-right">
                           <span className="text-sm font-extrabold text-white font-mono">{safeStats.soloKoraCount || 0}</span>
-                          <span className="text-[10px] text-slate-500 ml-1">({safeStats.soloDoubleKoraCount || 0} dbl)</span>
+                          <span className="text-xs text-slate-500 ml-1">({safeStats.soloDoubleKoraCount || 0} dbl)</span>
                         </div>
                       </div>
 
@@ -1370,11 +1370,11 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                         <span className="text-xs text-slate-300">Compétition Multi</span>
                         <div className="text-right">
                           <span className="text-sm font-extrabold text-amber-400 font-mono">{safeStats.multiplayerKoraCount || 0}</span>
-                          <span className="text-[10px] text-amber-500/60 ml-1">({safeStats.multiplayerDoubleKoraCount || 0} dbl)</span>
+                          <span className="text-xs text-amber-500/60 ml-1">({safeStats.multiplayerDoubleKoraCount || 0} dbl)</span>
                         </div>
                       </div>
                     </div>
-                    <div className="text-[10px] text-slate-500 pt-1.5 border-t border-slate-900">
+                    <div className="text-xs text-slate-500 pt-1.5 border-t border-slate-900">
                       Total: <span className="text-amber-400 font-bold">{safeStats.koraCount || 0}</span> Koras infligés au total
                     </div>
                   </div>
@@ -1382,7 +1382,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   {/* Fortune accumulée */}
                   <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800/80 flex flex-col justify-between space-y-2">
                     <div>
-                      <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Fortune & Gains (Jetons)</span>
+                      <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">Fortune & Gains (Jetons)</span>
                       
                       <div className="flex justify-between items-center mt-2.5">
                         <span className="text-xs text-slate-300">Gains contre l'IA</span>
@@ -1398,7 +1398,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                         </span>
                       </div>
                     </div>
-                    <div className="text-[10px] text-slate-500 pt-1.5 border-t border-slate-900 flex justify-between">
+                    <div className="text-xs text-slate-500 pt-1.5 border-t border-slate-900 flex justify-between">
                       <span>Gains Multi: {safeStats.multiplayerGains.toLocaleString()}</span>
                       <span>Pertes: {safeStats.multiplayerPertes.toLocaleString()}</span>
                     </div>
@@ -1415,23 +1415,23 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">
-                    <span className="text-[10px] uppercase font-bold text-slate-400">Abandons / Forfaits</span>
+                    <span className="text-xs uppercase font-bold text-slate-400">Abandons / Forfaits</span>
                     <div className="text-lg font-black text-white font-mono pt-1">
                       {fairPlay?.totalForfeits || 0}
                     </div>
-                    <p className="text-[10px] text-slate-400">Parties quittées prématurément</p>
+                    <p className="text-xs text-slate-400">Parties quittées prématurément</p>
                   </div>
 
                   <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">
-                    <span className="text-[10px] uppercase font-bold text-slate-400">Folds Stratégiques</span>
+                    <span className="text-xs uppercase font-bold text-slate-400">Folds Stratégiques</span>
                     <div className="text-lg font-black text-amber-300 font-mono pt-1">
                       {fairPlay?.totalFoldRounds || 0}
                     </div>
-                    <p className="text-[10px] text-slate-400">Rounds passés (Fold réglementaire)</p>
+                    <p className="text-xs text-slate-400">Rounds passés (Fold réglementaire)</p>
                   </div>
 
                   <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">
-                    <span className="text-[10px] uppercase font-bold text-slate-400">Sanction Actuelle</span>
+                    <span className="text-xs uppercase font-bold text-slate-400">Sanction Actuelle</span>
                     <div className="text-xs font-bold font-mono pt-1">
                       {activeSanction && activeSanction.active ? (
                         <span className="text-rose-400 font-black">{activeSanction.type}</span>
@@ -1439,7 +1439,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                         <span className="text-emerald-400 font-semibold">Aucune (Profil Sain)</span>
                       )}
                     </div>
-                    <p className="text-[10px] text-slate-400">Statut dans les salons multijoueurs</p>
+                    <p className="text-xs text-slate-400">Statut dans les salons multijoueurs</p>
                   </div>
                 </div>
               </div>
@@ -1454,7 +1454,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   <div className="flex items-center justify-between p-3 bg-slate-950 rounded-xl border border-slate-800">
                     <div className="space-y-0.5">
                       <span className="text-xs font-bold text-white">Moins de 21 points (Under 21)</span>
-                      <p className="text-[11px] text-slate-400">Victoire mathématique par carte basse</p>
+                      <p className="text-xs text-slate-400">Victoire mathématique par carte basse</p>
                     </div>
                     <span className="text-base font-black text-amber-400 font-mono">
                       {safeStats.under21Count || 0}
@@ -1464,7 +1464,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   <div className="flex items-center justify-between p-3 bg-slate-950 rounded-xl border border-slate-800">
                     <div className="space-y-0.5">
                       <span className="text-xs font-bold text-white">Trois 7 consécutifs</span>
-                      <p className="text-[11px] text-slate-400">Combinaison légendaire du jeu</p>
+                      <p className="text-xs text-slate-400">Combinaison légendaire du jeu</p>
                     </div>
                     <span className="text-base font-black text-amber-400 font-mono">
                       {safeStats.threeSevensCount || 0}
@@ -1488,7 +1488,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   <div className="flex items-center gap-3">
                     <span className="text-3xl sm:text-4xl">{safeTitle.badge}</span>
                     <div>
-                      <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                      <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">
                         Ton grade actuel
                       </span>
                       <h2 className={`text-lg sm:text-xl font-black ${safeTitle.colorClass}`}>
@@ -1568,11 +1568,11 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                               >
                                 {t.title}
                               </span>
-                              <span className="text-[10px] text-slate-500 font-mono">
+                              <span className="text-xs text-slate-500 font-mono">
                                 ({t.subtitle})
                               </span>
                             </div>
-                            <p className="text-[11px] text-slate-400 leading-snug">
+                            <p className="text-xs text-slate-400 leading-snug">
                               {t.description}
                             </p>
                           </div>
@@ -1580,16 +1580,16 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
 
                         <div className="shrink-0">
                           {isUnlocked ? (
-                            <span className="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-lg flex items-center gap-1">
+                            <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-lg flex items-center gap-1">
                               <Check className="w-3 h-3" />
                               Obtenu
                             </span>
                           ) : isNext ? (
-                            <span className="text-[11px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1 rounded-lg">
+                            <span className="text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1 rounded-lg">
                               En cours ({progressPercent}%)
                             </span>
                           ) : (
-                            <span className="text-[11px] text-slate-500 bg-slate-800 px-2.5 py-1 rounded-lg flex items-center gap-1">
+                            <span className="text-xs text-slate-500 bg-slate-800 px-2.5 py-1 rounded-lg flex items-center gap-1">
                               <Lock className="w-3 h-3" />
                               Verrouillé
                             </span>
@@ -1625,7 +1625,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     key={f.id}
                     type="button"
                     onClick={() => setHistoryFilter(f.id)}
-                    className={`py-1.5 px-0.5 sm:px-1 rounded-lg text-[10px] sm:text-xs font-bold transition text-center truncate cursor-pointer ${
+                    className={`py-1.5 px-0.5 sm:px-1 rounded-lg text-xs font-bold transition text-center truncate cursor-pointer ${
                       historyFilter === f.id
                         ? 'bg-amber-500 text-slate-950 shadow font-black'
                         : 'text-slate-400 hover:text-white hover:bg-slate-800'
@@ -1698,43 +1698,43 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
 
                               {/* Distinction Manche Complète vs Donne Individuelle */}
                               {item.isMancheFinalWin || item.isMancheOver || !item.partieNumber ? (
-                                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
+                                <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
                                   <Trophy className="w-2.5 h-2.5" /> Manche Complète
                                 </span>
                               ) : (
-                                <span className="text-[10px] px-2 py-0.5 rounded-full font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                                <span className="text-xs px-2 py-0.5 rounded-full font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">
                                   Partie #{item.partieNumber}
                                 </span>
                               )}
 
                               {item.winType === 'KORA' && (
-                                <span className="text-[10px] px-1.5 py-0.2 rounded font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                <span className="text-xs px-1.5 py-0.2 rounded font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
                                   👑 KORA
                                 </span>
                               )}
                               {item.winType === 'DOUBLE_KORA' && (
-                                <span className="text-[10px] px-1.5 py-0.2 rounded font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                                <span className="text-xs px-1.5 py-0.2 rounded font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
                                   ⚡ DOUBLE KORA
                                 </span>
                               )}
                               {item.winType === 'UNDER_21' && (
-                                <span className="text-[10px] px-1.5 py-0.2 rounded font-bold bg-slate-500/20 text-slate-300 border border-slate-500/30">
+                                <span className="text-xs px-1.5 py-0.2 rounded font-bold bg-slate-500/20 text-slate-300 border border-slate-500/30">
                                   🎯 Moins de 21
                                 </span>
                               )}
                               {item.winType === 'THREE_SEVENS' && (
-                                <span className="text-[10px] px-1.5 py-0.2 rounded font-bold bg-slate-500/20 text-slate-300 border border-slate-500/30">
+                                <span className="text-xs px-1.5 py-0.2 rounded font-bold bg-slate-500/20 text-slate-300 border border-slate-500/30">
                                   🎴 Trois 7
                                 </span>
                               )}
                               {item.winType === 'FORFEIT' && (
-                                <span className="text-[10px] px-1.5 py-0.2 rounded font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                                <span className="text-xs px-1.5 py-0.2 rounded font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
                                   ⚠️ Forfait
                                 </span>
                               )}
                             </div>
 
-                            <p className="text-[11px] text-slate-400">
+                            <p className="text-xs text-slate-400">
                               {isWin
                                 ? `Vainqueur : Toi`
                                 : `Vainqueur : ${item.winnerName || 'Adversaire'}`}{' '}
@@ -1742,7 +1742,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                             </p>
 
                             {/* Opponents and duration if available */}
-                            <div className="flex items-center gap-3 text-[10px] text-slate-500 flex-wrap">
+                            <div className="flex items-center gap-3 text-xs text-slate-500 flex-wrap">
                               {item.durationSeconds && (
                                 <span className="flex items-center gap-1">
                                   <Clock className="w-3 h-3 text-slate-400" />
@@ -1769,12 +1769,12 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                             <Coins className="w-3.5 h-3.5" />
                             <span>{isWin ? `+${item.potWon}` : `-${item.baseBet || 5}`} jetons</span>
                           </div>
-                          <span className="text-[10px] text-slate-500">
+                          <span className="text-xs text-slate-500">
                             {item.tricksWon !== undefined ? `${item.tricksWon} tour(s) remportés` : 'Pot réel validé'}
                           </span>
                           {item.mode === 'SOLO' && item.isWinner && typeof item.masteryPointsAwarded === 'number' && (
                             <span
-                              className={`text-[10px] font-mono font-bold ${
+                              className={`text-xs font-mono font-bold ${
                                 item.masteryPointsAwarded > 0 ? 'text-amber-300' : 'text-slate-500'
                               }`}
                             >

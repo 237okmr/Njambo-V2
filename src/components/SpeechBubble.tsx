@@ -65,7 +65,7 @@ export const SpeechBubble: React.FC<SpeechBubbleProps> = ({
       >
         {/* Top Header Badge: Author Name / Pseudo */}
         <div
-          className={`absolute -top-2.5 left-3 sm:left-4 px-2 py-0.5 rounded-full border text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-md whitespace-nowrap ${activeBadgeBg}`}
+          className={`absolute -top-2.5 left-3 sm:left-4 px-2 py-0.5 rounded-full border text-[11px] font-black uppercase tracking-wider flex items-center gap-1 shadow-md whitespace-nowrap ${activeBadgeBg}`}
         >
           <span className="text-[11px] leading-none">{activeIcon}</span>
           <span className="truncate max-w-[130px] sm:max-w-[180px]">{authorName}</span>

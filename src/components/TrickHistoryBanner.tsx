@@ -85,7 +85,7 @@ export const TrickHistoryBanner: React.FC<TrickHistoryBannerProps> = ({
                     {isWinning && (
                       <span
                         title="Mène le tour"
-                        className="flex items-center gap-0.5 text-[10px] bg-amber-400 text-slate-950 font-bold px-1.5 py-0.5 rounded shadow-sm"
+                        className="flex items-center gap-0.5 text-[11px] bg-amber-400 text-slate-950 font-bold px-1.5 py-0.5 rounded shadow-sm"
                       >
                         <Crown className="w-2.5 h-2.5" /> Gagne
                       </span>
@@ -93,7 +93,7 @@ export const TrickHistoryBanner: React.FC<TrickHistoryBannerProps> = ({
                     {!isMatch && (
                       <span
                         title="Pas la carte (non gagnante)"
-                        className="text-[10px] bg-rose-950/90 text-rose-300 border border-rose-800/60 font-medium px-1.5 py-0.5 rounded"
+                        className="text-[11px] bg-rose-950/90 text-rose-300 border border-rose-800/60 font-medium px-1.5 py-0.5 rounded"
                       >
                         Pas la carte
                       </span>
@@ -101,7 +101,7 @@ export const TrickHistoryBanner: React.FC<TrickHistoryBannerProps> = ({
                     {isLeadCard && !isWinning && (
                       <span
                         title="Carte d'entame"
-                        className="text-[10px] bg-slate-700 text-slate-200 border border-slate-600 font-medium px-1.5 py-0.5 rounded"
+                        className="text-[11px] bg-slate-700 text-slate-200 border border-slate-600 font-medium px-1.5 py-0.5 rounded"
                       >
                         Entame
                       </span>

@@ -109,11 +109,11 @@ const NotificationRow: React.FC<NotificationRowProps> = ({ item, now, onOpen, on
                 {item.title}
               </span>
             </div>
-            <span className="block truncate text-[11px] text-slate-400">{item.body}</span>
+            <span className="block truncate text-xs text-slate-400">{item.body}</span>
             <div className="mt-1 flex items-center gap-1.5">
-              <span className="text-[10px] font-medium text-slate-500">{formatRelativeTime(item.createdAt, now)}</span>
+              <span className="text-xs font-medium text-slate-500">{formatRelativeTime(item.createdAt, now)}</span>
               {statusTag && (
-                <span className={`rounded-md border px-1.5 py-0.5 text-[10px] font-black ${statusTag.className}`}>
+                <span className={`rounded-md border px-1.5 py-0.5 text-xs font-black ${statusTag.className}`}>
                   {statusTag.label}
                 </span>
               )}
@@ -121,7 +121,7 @@ const NotificationRow: React.FC<NotificationRowProps> = ({ item, now, onOpen, on
           </div>
 
           {actionable && (
-            <span className="flex h-8 shrink-0 items-center gap-0.5 rounded-lg border border-amber-500/40 bg-amber-500/15 px-2 text-[11px] font-black text-amber-300">
+            <span className="flex h-8 shrink-0 items-center gap-0.5 rounded-lg border border-amber-500/40 bg-amber-500/15 px-2 text-xs font-black text-amber-300">
               Voir
               <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
             </span>
@@ -255,7 +255,7 @@ export const NotificationHistoryScreen: React.FC<NotificationHistoryScreenProps>
                 <BellOff className="h-7 w-7 text-slate-400" />
               </div>
               <h3 className="text-sm font-bold text-slate-200">Aucune notification</h3>
-              <p className="max-w-[240px] text-[11px] text-slate-400">
+              <p className="max-w-[240px] text-xs text-slate-400">
                 Les invitations à une table et les demandes d'amis que tu reçois apparaîtront ici.
               </p>
             </div>

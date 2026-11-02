@@ -204,7 +204,7 @@ export const ConnectionDiagnosticModal: React.FC<ConnectionDiagnosticModalProps>
               <h3 id="diagnostic-title" className="text-base font-black text-white truncate">
                 Diagnostic de Connexion
               </h3>
-              <p className="text-[11px] text-slate-400 truncate">
+              <p className="text-xs text-slate-400 truncate">
                 Informations réseau et serveur en lecture seule
               </p>
             </div>
@@ -229,7 +229,7 @@ export const ConnectionDiagnosticModal: React.FC<ConnectionDiagnosticModalProps>
                 <Wifi className="w-3.5 h-3.5 text-slate-400" />
                 <span>Connexion Temps Réel</span>
               </span>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border flex items-center gap-1.5 ${socketInfo.badgeBg}`}>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border flex items-center gap-1.5 ${socketInfo.badgeBg}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${socketInfo.dotBg}`} />
                 <span>{socketInfo.label}</span>
               </span>
@@ -237,7 +237,7 @@ export const ConnectionDiagnosticModal: React.FC<ConnectionDiagnosticModalProps>
 
             <div className="grid grid-cols-2 gap-2 text-xs pt-1">
               <div className="p-2 rounded-xl bg-slate-900/80 border border-slate-800/60 flex flex-col">
-                <span className="text-[10px] text-slate-400 font-medium">Latence dernier ping</span>
+                <span className="text-xs text-slate-400 font-medium">Latence dernier ping</span>
                 <span className="text-sm font-mono font-bold text-white mt-0.5">
                   {latencyMs !== null ? (
                     <span className={latencyMs < 120 ? 'text-emerald-400' : latencyMs < 300 ? 'text-amber-400' : 'text-rose-400'}>
@@ -250,7 +250,7 @@ export const ConnectionDiagnosticModal: React.FC<ConnectionDiagnosticModalProps>
               </div>
 
               <div className="p-2 rounded-xl bg-slate-900/80 border border-slate-800/60 flex flex-col">
-                <span className="text-[10px] text-slate-400 font-medium">Table active</span>
+                <span className="text-xs text-slate-400 font-medium">Table active</span>
                 <span className="text-sm font-mono font-bold text-amber-300 mt-0.5 truncate">
                   {activeRoomCode || <span className="text-slate-500 font-sans text-xs font-normal">Aucune</span>}
                 </span>
@@ -270,12 +270,12 @@ export const ConnectionDiagnosticModal: React.FC<ConnectionDiagnosticModalProps>
                 <span className="text-slate-400">Type de compte :</span>
                 <span className="font-bold flex items-center gap-1.5">
                   {isGoogleUser ? (
-                    <span className="px-2 py-0.5 rounded-full bg-slate-500/15 border border-slate-500/30 text-slate-300 text-[11px] flex items-center gap-1">
+                    <span className="px-2 py-0.5 rounded-full bg-slate-500/15 border border-slate-500/30 text-slate-300 text-xs flex items-center gap-1">
                       <GoogleIcon className="w-3 h-3" />
                       <span>Compte Google</span>
                     </span>
                   ) : (
-                    <span className="px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-[11px]">
+                    <span className="px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-xs">
                       Invité (Anonyme)
                     </span>
                   )}
@@ -286,12 +286,12 @@ export const ConnectionDiagnosticModal: React.FC<ConnectionDiagnosticModalProps>
                 <span className="text-slate-400">Jeton de reconnexion :</span>
                 <span className="font-mono text-xs flex items-center gap-1.5">
                   {tokenDisplay.present ? (
-                    <span className="px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[11px] font-bold flex items-center gap-1">
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center gap-1">
                       <ShieldCheck className="w-3 h-3 text-emerald-400" />
                       <span>Oui ({tokenDisplay.preview})</span>
                     </span>
                   ) : (
-                    <span className="text-slate-500 text-[11px]">Non (aucun)</span>
+                    <span className="text-slate-500 text-xs">Non (aucun)</span>
                   )}
                 </span>
               </div>
@@ -306,7 +306,7 @@ export const ConnectionDiagnosticModal: React.FC<ConnectionDiagnosticModalProps>
                 <span>Dernière Erreur Serveur</span>
               </span>
               {lastError && (
-                <span className="text-[10px] text-slate-500 font-mono">
+                <span className="text-xs text-slate-500 font-mono">
                   {new Date(lastError.timestamp).toLocaleTimeString()}
                 </span>
               )}
@@ -314,7 +314,7 @@ export const ConnectionDiagnosticModal: React.FC<ConnectionDiagnosticModalProps>
 
             {lastError ? (
               <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs flex flex-col gap-1">
-                <div className="flex items-center gap-1.5 font-mono font-bold text-rose-300 text-[11px]">
+                <div className="flex items-center gap-1.5 font-mono font-bold text-rose-300 text-xs">
                   <span className="px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-200">
                     {lastError.code}
                   </span>
@@ -343,7 +343,7 @@ export const ConnectionDiagnosticModal: React.FC<ConnectionDiagnosticModalProps>
                 id="btn-refresh-health"
                 onClick={fetchHealth}
                 disabled={healthLoading}
-                className="text-[11px] text-slate-400 hover:text-white flex items-center gap-1 transition cursor-pointer disabled:opacity-50"
+                className="text-xs text-slate-400 hover:text-white flex items-center gap-1 transition cursor-pointer disabled:opacity-50"
                 title="Rafraîchir les données du serveur"
               >
                 <RefreshCw className={`w-3 h-3 ${healthLoading ? 'animate-spin text-amber-400' : ''}`} />
@@ -354,14 +354,14 @@ export const ConnectionDiagnosticModal: React.FC<ConnectionDiagnosticModalProps>
             <div className="flex flex-col gap-1.5 text-xs">
               <div className="flex items-center justify-between">
                 <span className="text-slate-400">Version App :</span>
-                <span className="font-mono text-white text-[11px] font-bold">
+                <span className="font-mono text-white text-xs font-bold">
                   {APP_VERSION}
                 </span>
               </div>
 
               <div className="flex items-center justify-between">
                 <span className="text-slate-400">Instance ID serveur :</span>
-                <span className="font-mono text-emerald-300 text-[11px]">
+                <span className="font-mono text-emerald-300 text-xs">
                   {healthLoading ? (
                     '...'
                   ) : healthData?.instanceId ? (
@@ -376,12 +376,12 @@ export const ConnectionDiagnosticModal: React.FC<ConnectionDiagnosticModalProps>
 
               <div className="flex items-center justify-between">
                 <span className="text-slate-400">Salons actifs serveur :</span>
-                <span className="font-mono text-amber-300 text-[11px] font-bold">
+                <span className="font-mono text-amber-300 text-xs font-bold">
                   {healthLoading ? '...' : healthData?.activeRooms !== undefined ? healthData.activeRooms : 'N/A'}
                 </span>
               </div>
 
-              <div className="flex items-center justify-between pt-1 border-t border-slate-800/40 text-[10px] text-slate-500">
+              <div className="flex items-center justify-between pt-1 border-t border-slate-800/40 text-xs text-slate-500">
                 <span className="truncate">URL : {typeof window !== 'undefined' ? window.location.origin : ''}</span>
               </div>
             </div>

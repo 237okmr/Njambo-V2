@@ -40,10 +40,10 @@ export const KoraHunterAlertBanner: React.FC<KoraHunterAlertBannerProps> = ({
               </div>
               
               <div className="min-w-0">
-                <span className="text-[11px] font-black uppercase tracking-wider text-amber-400 mr-1.5 inline-flex items-center">
+                <span className="text-xs font-black uppercase tracking-wider text-amber-400 mr-1.5 inline-flex items-center">
                   🔥 Chasseur de Kora !
                 </span>
-                <span className="text-[11px] text-amber-200/90 font-medium inline">
+                <span className="text-xs text-amber-200/90 font-medium inline">
                   Un joueur prépare un Kora (victoire au 3). Protège tes cartes !
                 </span>
               </div>

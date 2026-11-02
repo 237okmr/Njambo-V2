@@ -83,7 +83,7 @@ export const BetIncreaseCountUpBanner: React.FC<BetIncreaseCountUpBannerProps> =
           {/* Golden Badge Card */}
           <div className="relative flex flex-col items-center justify-center gap-1.5 px-6 py-4 rounded-2xl bg-gradient-to-b from-slate-900/95 via-amber-950/95 to-slate-950/95 border-2 border-amber-400 shadow-[0_0_40px_rgba(245,158,11,0.5),inset_0_1px_1px_rgba(255,255,255,0.4)] backdrop-blur-md text-center max-w-xs sm:max-w-sm">
             {/* Top Tag */}
-            <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/60 text-amber-300 text-[10px] sm:text-xs font-black uppercase tracking-wider">
+            <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/60 text-amber-300 text-xs font-black uppercase tracking-wider">
               <Flame className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
               <span>Mise augmentée</span>
               <Sparkles className="w-3 h-3 text-amber-300" />
@@ -108,7 +108,7 @@ export const BetIncreaseCountUpBanner: React.FC<BetIncreaseCountUpBannerProps> =
             </div>
 
             {/* Subtitle */}
-            <div className="flex items-center gap-1 text-[11px] text-amber-200/90 font-medium">
+            <div className="flex items-center gap-1 text-xs text-amber-200/90 font-medium">
               <Zap className="w-3 h-3 text-amber-400 fill-amber-400" />
               <span>Unanimité atteinte · Dès la prochaine partie !</span>
             </div>

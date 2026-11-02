@@ -110,7 +110,7 @@ export const InstallPwaModal: React.FC<InstallPwaModalProps> = ({
             <div>
               <div className="flex flex-wrap items-center gap-1.5">
                 <h3 className="text-lg font-black text-white">Installer sur Android</h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
                   Chrome
                 </span>
               </div>
@@ -124,7 +124,7 @@ export const InstallPwaModal: React.FC<InstallPwaModalProps> = ({
               <CheckCircle2 className="w-6 h-6 text-emerald-400 flex-shrink-0" />
               <div className="text-xs text-emerald-200">
                 <p className="font-bold text-emerald-300">Application installée avec succès !</p>
-                <p className="text-[11px] text-emerald-400/80 mt-0.5">
+                <p className="text-xs text-emerald-400/80 mt-0.5">
                   Njambo Kora est désormais accessible directement parmi tes icônes Android.
                 </p>
               </div>
@@ -138,7 +138,7 @@ export const InstallPwaModal: React.FC<InstallPwaModalProps> = ({
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>Plein écran</span>
                   </div>
-                  <span className="text-[11px] text-slate-400 leading-tight">
+                  <span className="text-xs text-slate-400 leading-tight">
                     Sans barre de navigation Chrome
                   </span>
                 </div>
@@ -147,7 +147,7 @@ export const InstallPwaModal: React.FC<InstallPwaModalProps> = ({
                     <ShieldCheck className="w-3.5 h-3.5" />
                     <span>Tiroir d'apps</span>
                   </div>
-                  <span className="text-[11px] text-slate-400 leading-tight">
+                  <span className="text-xs text-slate-400 leading-tight">
                     Icône dédiée avec tes autres applications
                   </span>
                 </div>
@@ -172,7 +172,7 @@ export const InstallPwaModal: React.FC<InstallPwaModalProps> = ({
                   <p className="text-xs font-bold text-amber-300 mb-1 flex items-center gap-1.5">
                     <span>💡 Pour installer dans Chrome sur Android :</span>
                   </p>
-                  <p className="text-[11px] text-slate-300 leading-relaxed mb-2.5">
+                  <p className="text-xs text-slate-300 leading-relaxed mb-2.5">
                     Ouvre le jeu dans un onglet Chrome, puis utilise le menu d'installation ci-dessous.
                   </p>
                   <button
@@ -188,27 +188,27 @@ export const InstallPwaModal: React.FC<InstallPwaModalProps> = ({
 
               {/* Step-by-Step Android Chrome Visual Schematic */}
               <div className="p-3 rounded-2xl bg-slate-950/70 border border-slate-800 text-left">
-                <h4 className="text-[10px] font-black text-amber-300 uppercase tracking-wider mb-2.5">
+                <h4 className="text-xs font-black text-amber-300 uppercase tracking-wider mb-2.5">
                   Guide Rapide Chrome Android
                 </h4>
 
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div className="p-2 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col items-center gap-1">
-                    <span className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-300 font-black text-[10px] flex items-center justify-center">1</span>
+                    <span className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-300 font-black text-xs flex items-center justify-center">1</span>
                     <span className="font-mono font-bold text-xs text-white">Menu ⋮</span>
-                    <span className="text-[9px] text-slate-400">En haut à droite</span>
+                    <span className="text-xs text-slate-400">En haut à droite</span>
                   </div>
 
                   <div className="p-2 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col items-center gap-1">
-                    <span className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-300 font-black text-[10px] flex items-center justify-center">2</span>
+                    <span className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-300 font-black text-xs flex items-center justify-center">2</span>
                     <span className="font-bold text-xs text-amber-300">Installer</span>
-                    <span className="text-[9px] text-slate-400">l'application</span>
+                    <span className="text-xs text-slate-400">l'application</span>
                   </div>
 
                   <div className="p-2 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col items-center gap-1">
-                    <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-300 font-black text-[10px] flex items-center justify-center">3</span>
+                    <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-300 font-black text-xs flex items-center justify-center">3</span>
                     <span className="font-bold text-xs text-emerald-300">Prêt</span>
-                    <span className="text-[9px] text-slate-400">Icône sur l'écran</span>
+                    <span className="text-xs text-slate-400">Icône sur l'écran</span>
                   </div>
                 </div>
               </div>

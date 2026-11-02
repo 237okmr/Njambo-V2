@@ -37,7 +37,7 @@ export const UpdateNotificationBanner: React.FC<UpdateNotificationBannerProps> =
               <span className="text-xs font-black leading-tight text-slate-950">
                 {isReloading ? 'Actualisation...' : 'Mise à jour prête !'}
               </span>
-              <span className="text-[10px] font-bold text-slate-900/80 truncate">
+              <span className="text-xs font-bold text-slate-900/80 truncate">
                 {isGameActive
                   ? 'Finissez le tour ou appliquez maintenant'
                   : 'Nouvelle version disponible'}
@@ -49,7 +49,7 @@ export const UpdateNotificationBanner: React.FC<UpdateNotificationBannerProps> =
             type="button"
             disabled={isReloading}
             onClick={onUpdateNow}
-            className="shrink-0 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-900 active:scale-95 text-amber-300 text-[11px] font-black shadow-md transition cursor-pointer flex items-center gap-1 disabled:opacity-60"
+            className="shrink-0 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-900 active:scale-95 text-amber-300 text-xs font-black shadow-md transition cursor-pointer flex items-center gap-1 disabled:opacity-60"
           >
             {isReloading ? (
               <span>...</span>

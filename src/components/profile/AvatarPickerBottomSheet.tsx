@@ -57,7 +57,7 @@ export const AvatarPickerBottomSheet: React.FC<AvatarPickerBottomSheetProps> = (
                 <h3 className="text-sm sm:text-base font-black text-white tracking-tight truncate">
                   Choisir ton avatar de table
                 </h3>
-                <p className="text-[11px] text-slate-400 truncate">
+                <p className="text-xs text-slate-400 truncate">
                   Visible par tous les joueurs en Solo et Multijoueur
                 </p>
               </div>
@@ -94,7 +94,7 @@ export const AvatarPickerBottomSheet: React.FC<AvatarPickerBottomSheetProps> = (
                   />
                   <div className="text-left truncate">
                     <p className="text-xs font-bold text-white">Utiliser ma Photo Google</p>
-                    <p className="text-[10px] text-slate-400">Photo de profil du compte lié</p>
+                    <p className="text-xs text-slate-400">Photo de profil du compte lié</p>
                   </div>
                 </div>
 
@@ -137,7 +137,7 @@ export const AvatarPickerBottomSheet: React.FC<AvatarPickerBottomSheetProps> = (
 
                   {/* Name Label */}
                   <span
-                    className={`text-[10px] sm:text-xs font-semibold mt-1.5 truncate w-full text-center tracking-tight ${
+                    className={`text-[11px] leading-tight font-semibold mt-1.5 w-full text-center tracking-tight [overflow-wrap:anywhere] ${
                       isSelected ? 'text-amber-300 font-bold' : 'text-slate-300 group-hover:text-white'
                     }`}
                   >

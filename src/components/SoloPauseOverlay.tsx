@@ -53,19 +53,19 @@ export const SoloPauseOverlay: React.FC<SoloPauseOverlayProps> = ({
           {/* Game Context Capsule */}
           <div className="w-full bg-slate-800/60 border border-slate-700/50 rounded-2xl p-3.5 flex items-center justify-around text-xs">
             <div className="flex flex-col items-center gap-0.5">
-              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Mise</span>
+              <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">Mise</span>
               <span className="font-extrabold text-amber-300 text-sm">{gameState.baseBet || 10} 🪙</span>
             </div>
             <div className="w-px h-7 bg-slate-700/60" />
             <div className="flex flex-col items-center gap-0.5">
-              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Pli</span>
+              <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">Pli</span>
               <span className="font-extrabold text-slate-200 text-sm">
                 {gameState.currentTrickNumber || 1} / 5
               </span>
             </div>
             <div className="w-px h-7 bg-slate-700/60" />
             <div className="flex flex-col items-center gap-0.5">
-              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Tour</span>
+              <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">Tour</span>
               <span className={`font-extrabold text-sm ${isHumanTurn ? 'text-emerald-400' : 'text-slate-300'}`}>
                 {isHumanTurn ? 'À toi' : currentTurnPlayer?.name || 'IA'}
               </span>
@@ -102,7 +102,7 @@ export const SoloPauseOverlay: React.FC<SoloPauseOverlayProps> = ({
           </div>
 
           {/* Status micro-pill */}
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-400/90 font-medium">
+          <div className="flex items-center gap-1.5 text-xs text-slate-400/90 font-medium">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
             <span>Ta progression et tes jetons sont sécurisés</span>
           </div>

@@ -222,7 +222,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
               <div className="flex flex-col text-left min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-slate-100 text-xs sm:text-sm truncate">{playerName}</span>
-                  <span className="shrink-0 bg-emerald-950/90 text-emerald-300 border border-emerald-700/80 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="shrink-0 bg-emerald-950/90 text-emerald-300 border border-emerald-700/80 text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
                     <Radio className="w-2.5 h-2.5 text-emerald-400 animate-pulse" />
                     {isForfeit ? 'Forfait (cette partie)' : isEliminated ? 'Éliminé' : 'Spectateur (Partie passée)'}
                   </span>
@@ -393,7 +393,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
       <div className="flex flex-col items-center justify-center w-full max-w-2xl lg:max-w-3xl">
         {/* Mobile Gestural Guidance Pill */}
         {isHumanTurn && hand.length > 0 && !isDealing && !instantWinReveal && (
-          <div className="flex items-center gap-1 text-[10px] text-amber-400/90 font-medium mb-0.5 animate-pulse select-none">
+          <div className="flex items-center gap-1 text-[11px] text-amber-400/90 font-medium mb-0.5 animate-pulse select-none">
             <ChevronUp className="w-3 h-3 text-amber-400 animate-bounce" />
             <span>Glisse vers le haut ou touche 2x pour jouer</span>
           </div>
@@ -401,7 +401,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
 
         <div
           id="human-cards-tray"
-          className="flex items-end justify-center gap-1 sm:gap-3 lg:gap-3 py-0.5 min-h-[105px] sm:min-h-[185px] lg:min-h-[175px] overflow-visible w-full"
+          className="flex items-end justify-center gap-1 sm:gap-3 lg:gap-3 py-0.5 min-h-[105px] short:min-h-[78px] sm:min-h-[185px] lg:min-h-[175px] overflow-visible w-full"
         >
           {(() => {
             const humanDealtCount = isDealing
@@ -472,7 +472,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
                         zIndex: isSelected ? 30 : isInstantWinCard ? 20 : (isDesktop ? 10 + idx : undefined),
                       }}
                       transition={{ type: 'spring', damping: 20, stiffness: 320 }}
-                      className={`relative w-14 sm:w-24 md:w-28 lg:w-20 xl:w-24 h-22 sm:h-36 md:h-40 lg:h-32 xl:h-36 rounded-xl bg-white text-slate-950 p-1 sm:p-2.5 flex flex-col justify-between shadow-2xl select-none text-left cursor-grab active:cursor-grabbing transition-[border-color,box-shadow] duration-150 overflow-hidden ${
+                      className={`relative w-14 h-22 short:h-[72px] sm:w-24 md:w-28 lg:w-20 xl:w-24 sm:h-36 md:h-40 lg:h-32 xl:h-36 rounded-xl bg-white text-slate-950 p-1 sm:p-2.5 flex flex-col justify-between shadow-2xl select-none text-left cursor-grab active:cursor-grabbing transition-[border-color,box-shadow] duration-150 overflow-hidden ${
                         isDealing
                           ? 'ring-2 ring-amber-400 border-2 border-amber-300 shadow-amber-400/30'
                           : isInstantWinCard
@@ -541,7 +541,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
                 {Array.from({ length: placeholderCount }).map((_, pIdx) => (
                   <div
                     key={`human-placeholder-${pIdx}`}
-                    className="relative w-14 sm:w-24 md:w-28 h-22 sm:h-36 md:h-40 rounded-xl border-2 border-dashed border-slate-700/60 bg-slate-950/40 flex items-center justify-center text-slate-700 text-base font-serif select-none"
+                    className="relative w-14 h-22 short:h-[72px] sm:w-24 md:w-28 sm:h-36 md:h-40 rounded-xl border-2 border-dashed border-slate-700/60 bg-slate-950/40 flex items-center justify-center text-slate-700 text-base font-serif select-none"
                     title="Carte en attente de distribution"
                   >
                     🂠
@@ -667,7 +667,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
             {selectedCard.label} prête
           </div>
         ) : (
-          <div className="mt-0.5 text-[11px] text-slate-500 text-center">
+          <div className="mt-0.5 short:hidden text-[11px] text-slate-500 text-center">
             {isDealing
               ? 'Distribution en cours...'
               : isHumanInstantWinner

@@ -26,7 +26,7 @@ export const NotificationBell: React.FC = () => {
     >
       <Bell className={`w-4 h-4 ${unread > 0 ? 'text-amber-400' : 'text-slate-400'}`} />
       {unread > 0 && (
-        <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-black leading-none flex items-center justify-center shadow ring-2 ring-slate-900">
+        <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-xs font-black leading-none flex items-center justify-center shadow ring-2 ring-slate-900">
           {unread > 99 ? '99+' : unread}
         </span>
       )}

@@ -1327,7 +1327,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
         onHome={room ? handleHome : undefined}
         contextBadge={
           <span
-            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 shrink-0 ${
+            className={`text-xs font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 shrink-0 ${
               isConnected
                 ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
                 : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
@@ -1433,7 +1433,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                 <span className="text-xs font-black text-amber-200">
                   Environnement de test
                 </span>
-                <span className="text-[11px] text-amber-300/90 leading-relaxed">
+                <span className="text-xs text-amber-300/90 leading-relaxed">
                   Tu es sur l'environnement de test. Tes amis ne pourront pas rejoindre depuis le lien public. Ouvre{' '}
                   <a
                     href="https://njambo-kora.ai.studio"
@@ -1462,7 +1462,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   <span className="text-xs font-black text-white truncate">
                     {friendAcceptedToast.name} a accepté ta demande !
                   </span>
-                  <span className="text-[10px] text-emerald-300/90 font-medium truncate">
+                  <span className="text-xs text-emerald-300/90 font-medium truncate">
                     Vous êtes désormais amis connectés.
                   </span>
                 </div>
@@ -1489,7 +1489,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   <span className="text-xs font-black text-amber-200 truncate">
                     L'hôte a quitté l'app quelques instants, la table l'attend
                   </span>
-                  <span className="text-[11px] text-amber-300/90 truncate">
+                  <span className="text-xs text-amber-300/90 truncate">
                     Temps restant : {graceSecondsLeft}s
                   </span>
                 </div>
@@ -1508,7 +1508,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   <span className="text-xs font-black text-rose-200 truncate">
                     ⚠️ L'hôte est déconnecté
                   </span>
-                  <span className="text-[11px] text-rose-300/90 truncate">
+                  <span className="text-xs text-rose-300/90 truncate">
                     Reprends l'organisation du salon pour lancer la partie.
                   </span>
                 </div>
@@ -1539,7 +1539,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   <span className="text-xs font-black text-amber-200 truncate">
                     {isHost ? '⚠️ Inactivité détectée !' : '⚠️ L’hôte est inactif...'}
                   </span>
-                  <span className="text-[11px] text-amber-300/90 truncate">
+                  <span className="text-xs text-amber-300/90 truncate">
                     {isHost
                       ? `Transféré dans ${graceSecondsLeft}s si non lancé`
                       : `Transfert du rôle d'hôte dans ${graceSecondsLeft}s`}
@@ -1585,7 +1585,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                       ? `La partie démarre dans ${autoStartSecondsLeft} s (tu peux aussi cliquer sur Lancer)`
                       : `La partie démarre dans ${autoStartSecondsLeft} s`}
                   </span>
-                  <span className="text-[11px] text-amber-300/90 truncate">
+                  <span className="text-xs text-amber-300/90 truncate">
                     {isHost
                       ? 'Table publique prête · Démarrage automatique imminent ou clic sur Lancer'
                       : 'Table publique prête · Démarrage automatique'}
@@ -1619,7 +1619,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col items-center justify-center shrink-0">
-                  <span className="text-[9px] font-black uppercase tracking-wider text-amber-400">Code</span>
+                  <span className="text-xs font-black uppercase tracking-wider text-amber-400">Code</span>
                   <span className="text-lg font-black text-white tracking-wider">{room.id}</span>
                 </div>
                 <div className="flex flex-col">
@@ -1627,12 +1627,12 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                     <span className="text-sm font-black text-white truncate max-w-[140px]">
                       Table de {room.hostName}
                     </span>
-                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-slate-500/20 text-slate-300 border border-slate-500/30">
+                    <span className="text-xs font-bold px-1.5 py-0.2 rounded-full bg-slate-500/20 text-slate-300 border border-slate-500/30">
                       {room.isPublic !== false ? 'Public' : 'Privé'}
                     </span>
                     {/* Badge 100% Humains vs Mixte */}
                     <span
-                      className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${
+                      className={`text-xs font-black px-2 py-0.5 rounded-full border ${
                         !room.fillWithBots
                           ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
                           : 'bg-slate-500/20 text-slate-300 border-slate-500/40'
@@ -1676,7 +1676,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                         <span>Prendre un siège 🪑</span>
                       </button>
                     ) : (
-                      <span className="h-10 px-3 rounded-xl text-[11px] font-bold bg-slate-950/80 border border-slate-500/30 text-slate-300 flex items-center justify-center gap-1.5">
+                      <span className="h-10 px-3 rounded-xl text-xs font-bold bg-slate-950/80 border border-slate-500/30 text-slate-300 flex items-center justify-center gap-1.5">
                         <Eye className="w-3.5 h-3.5" />
                         <span>Observateur</span>
                       </span>
@@ -1703,7 +1703,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                       )}
                       <span
                         id="lobby-non-host-status"
-                        className={`text-[11px] font-semibold flex items-center gap-1 text-right ${
+                        className={`text-xs font-semibold flex items-center gap-1 text-right ${
                           room.autoStartCountdownAt ? 'text-amber-300 animate-pulse' : 'text-slate-400'
                         }`}
                       >
@@ -1797,7 +1797,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                     {room.isPublic !== false && room.autoStartCountdownAt && (
                       <span
                         id="lobby-host-autostart-status"
-                        className="text-[11px] text-amber-300 font-semibold flex items-center gap-1 text-right animate-pulse"
+                        className="text-xs text-amber-300 font-semibold flex items-center gap-1 text-right animate-pulse"
                       >
                         <Clock className="w-3 h-3 text-amber-400 animate-spin" />
                         {`La partie démarre dans ${autoStartSecondsLeft !== null ? autoStartSecondsLeft : Math.max(0, Math.ceil((room.autoStartCountdownAt - webSocketService.getServerTime()) / 1000))} s (tu peux aussi cliquer sur Lancer)`}
@@ -1811,7 +1811,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
             {/* Host or Guest Emergency Action: Switch or Vote Bots */}
             {!room.fillWithBots && (
               <div className={`pt-2 border-t flex items-center justify-between gap-2 ${isLongWait ? 'border-amber-700/60' : 'border-slate-800'}`}>
-                <span className={`text-[11px] flex items-center gap-1 ${isLongWait ? 'text-amber-300 font-bold' : 'text-slate-400'}`}>
+                <span className={`text-xs flex items-center gap-1 ${isLongWait ? 'text-amber-300 font-bold' : 'text-slate-400'}`}>
                   {isLongWait && <Clock className="w-3 h-3 animate-pulse" />}
                   {isHost
                     ? "L'attente est trop longue ?"
@@ -1831,7 +1831,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                       onToggleFillWithBots(true);
                     }
                   }}
-                  className={`h-8 px-3 rounded-lg border text-[11px] font-bold flex items-center gap-1.5 cursor-pointer transition active:scale-95 ${
+                  className={`h-8 px-3 rounded-lg border text-xs font-bold flex items-center gap-1.5 cursor-pointer transition active:scale-95 ${
                     isLongWait
                       ? 'bg-amber-500/30 hover:bg-amber-500/40 text-amber-200 border-amber-500/60 animate-pulse'
                       : !isHost && room.botVotes?.includes(localPlayerId)
@@ -1852,7 +1852,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
             )}
 
             {/* Active Variants Badges */}
-            <div className="flex items-center gap-2 pt-2 border-t border-slate-800/80 text-[11px] flex-wrap">
+            <div className="flex items-center gap-2 pt-2 border-t border-slate-800/80 text-xs flex-wrap">
               <span className="text-slate-400 font-medium">Règles :</span>
               <span className="px-2 py-0.5 rounded-md bg-slate-800 text-amber-300 font-bold border border-slate-700">
                 Trois 7 (Permanent)
@@ -1911,17 +1911,17 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                         <div className="flex items-center gap-1">
                           <span className="text-xs font-black text-white truncate max-w-[100px]">{p.name}</span>
                           {isMe && (
-                            <span className="text-[8px] font-black px-1 rounded bg-amber-400 text-slate-950 uppercase">
+                            <span className="text-xs font-black px-1 rounded bg-amber-400 text-slate-950 uppercase">
                               Moi
                             </span>
                           )}
                           {isMe && isLoggedIn && (
-                            <span className="text-[8px] font-black px-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-0.5" title="Google Lié">
+                            <span className="text-xs font-black px-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-0.5" title="Google Lié">
                               <Check className="w-2 h-2" /> Google
                             </span>
                           )}
                         </div>
-                        <span className="text-[10px] text-slate-400 truncate">
+                        <span className="text-xs text-slate-400 truncate">
                           {p.isHost ? 'Hôte' : p.isHuman ? 'Humain' : 'Robot'}
                         </span>
                       </div>
@@ -1931,7 +1931,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                       {!isMe && p.isHuman && (
                         isFriend ? (
                           <span
-                            className="h-7 px-2 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold flex items-center gap-1 select-none"
+                            className="h-7 px-2 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center gap-1 select-none"
                             title="Ce joueur fait partie de tes amis"
                           >
                             <Check className="w-3 h-3 text-emerald-400" />
@@ -1939,7 +1939,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                           </span>
                         ) : isPendingSent ? (
                           <span
-                            className="h-7 px-2 rounded-lg bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] font-bold flex items-center gap-1 select-none"
+                            className="h-7 px-2 rounded-lg bg-amber-500/15 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-1 select-none"
                             title="Demande d'ami envoyée, en attente d'acceptation"
                           >
                             <Clock className="w-3 h-3 text-amber-400 animate-pulse" />
@@ -1964,7 +1964,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                                 }
                               }
                             }}
-                            className="h-7 px-2 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 text-[10px] font-bold hover:brightness-110 transition cursor-pointer shadow-xs"
+                            className="h-7 px-2 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 text-xs font-bold hover:brightness-110 transition cursor-pointer shadow-xs"
                             title="Accepter la demande d'ami"
                           >
                             {isActing ? '...' : 'Accepter'}
@@ -1990,7 +1990,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                                 triggerHaptic('success');
                               }
                             }}
-                            className="h-7 px-2 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold hover:bg-amber-500 hover:text-slate-950 transition cursor-pointer flex items-center gap-1"
+                            className="h-7 px-2 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-bold hover:bg-amber-500 hover:text-slate-950 transition cursor-pointer flex items-center gap-1"
                             title="Ajouter en ami"
                           >
                             <UserPlus className="w-3 h-3" />
@@ -2000,15 +2000,15 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                       )}
 
                       {p.isHost ? (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
                           Hôte
                         </span>
                       ) : p.isReady ? (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
                           <Check className="w-2.5 h-2.5" /> Prêt
                         </span>
                       ) : (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
                           Attente
                         </span>
                       )}
@@ -2037,12 +2037,12 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                     </div>
                     <div className="flex flex-col">
                       <span className="text-xs font-semibold text-slate-500">Siège libre</span>
-                      <span className="text-[10px] text-slate-600">
+                      <span className="text-xs text-slate-600">
                         {room.fillWithBots ? 'Complété par un robot au lancement' : 'En attente d’un joueur...'}
                       </span>
                     </div>
                   </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-600 border border-slate-800">
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-600 border border-slate-800">
                     Libre
                   </span>
                 </div>
@@ -2058,7 +2058,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                     <span>Observateurs en direct ({spectators.length})</span>
                   </span>
                   {isLocalSpectator && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-950 text-slate-300 border border-slate-500/30">
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-950 text-slate-300 border border-slate-500/30">
                       Tu es observateur
                     </span>
                   )}
@@ -2080,7 +2080,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                           {spec.name.replace(/\s*\(Obs\)$/, '')}
                         </span>
                         {isMe && (
-                          <span className="text-[9px] font-black text-slate-300 uppercase">(Moi)</span>
+                          <span className="text-xs font-black text-slate-300 uppercase">(Moi)</span>
                         )}
                         {room.hostId === localPlayerId && !isMe && onKickPlayer && (
                           <button
@@ -2111,7 +2111,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
               <MessageCircle className="w-5 h-5" />
               <span className="text-left">Inviter un ami sur WhatsApp en 1 clic</span>
             </div>
-            <span className="px-2 py-0.5 rounded-full bg-white/20 text-[10px]">Partager</span>
+            <span className="px-2 py-0.5 rounded-full bg-white/20 text-xs">Partager</span>
           </button>
 
           {/* Bottom Leave Table Button for mobile ergonomics */}
@@ -2143,7 +2143,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   <span className="text-xs font-black text-white truncate">
                     {friendAcceptedToast.name} a accepté ta demande !
                   </span>
-                  <span className="text-[10px] text-emerald-300/90 font-medium truncate">
+                  <span className="text-xs text-emerald-300/90 font-medium truncate">
                     Vous êtes désormais amis connectés.
                   </span>
                 </div>
@@ -2184,7 +2184,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                     Sanction Fair-Play : {activeSanction.type}
                   </h4>
                   {activeSanction.expiresAt && (
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-500/30 text-rose-200 font-bold shrink-0">
+                    <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-rose-500/30 text-rose-200 font-bold shrink-0">
                       Expire dans {Math.max(1, Math.ceil((activeSanction.expiresAt - Date.now()) / 60000))} min
                     </span>
                   )}
@@ -2192,7 +2192,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                 <p className="text-xs text-rose-200 font-medium">
                   {activeSanction.reason}
                 </p>
-                <p className="text-[10px] text-rose-300/80">
+                <p className="text-xs text-rose-300/80">
                   Les abandons répétés en cours de partie limitent tes accès aux salons multijoueurs.
                 </p>
               </div>
@@ -2250,7 +2250,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
               <div className="p-5 rounded-3xl bg-gradient-to-br from-emerald-500/20 via-slate-900 to-slate-900 border border-emerald-500/40 shadow-xl flex flex-col gap-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                    <span className="text-xs font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
                       <Crown className="w-3.5 h-3.5 fill-emerald-400 text-emerald-400" /> Salon Personnalisé
                     </span>
                     <h2 className="text-lg sm:text-xl font-black text-white">Créer une Table</h2>
@@ -2295,7 +2295,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   </div>
                   <div className="flex flex-col min-w-0">
                     <h3 className="text-xs sm:text-sm font-black text-white truncate">Rejoindre par Code</h3>
-                    <p className="text-[11px] text-slate-400 truncate">Saisis le code à 4 lettres partagé</p>
+                    <p className="text-xs text-slate-400 truncate">Saisis le code à 4 lettres partagé</p>
                   </div>
                 </div>
 
@@ -2368,11 +2368,11 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                     <div className="flex flex-col min-w-0">
                       <div className="flex items-center gap-1.5">
                         <h3 className="text-xs sm:text-sm font-black text-white truncate group-hover:text-amber-300 transition-colors">Partie Rapide</h3>
-                        <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                        <span className="hidden min-[400px]:inline text-xs font-black uppercase px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
                           Matchmaking
                         </span>
                       </div>
-                      <p className="text-[11px] text-slate-300 truncate">
+                      <p className="text-xs text-slate-300 truncate">
                         Trouve instantanément des adversaires ou démarre avec des bots.
                       </p>
                     </div>
@@ -2389,7 +2389,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   <>
                     {/* Jetons Bet Selector Pills */}
                     <div className="flex flex-col gap-1.5">
-                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                      <span className="text-xs font-bold text-slate-400 flex items-center gap-1">
                         <Coins className="w-3.5 h-3.5 text-amber-400" /> Choisir la mise en Jetons :
                       </span>
                       <div className="grid grid-cols-3 gap-2">
@@ -2408,7 +2408,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                             }`}
                           >
                             <span>{bet}</span>
-                            <span className="text-[10px] opacity-80">🪙</span>
+                            <span className="text-xs opacity-80">🪙</span>
                           </button>
                         ))}
                       </div>
@@ -2433,7 +2433,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                               Annuler
                             </button>
                           </div>
-                          <span className="text-[10px] text-slate-400 text-center">
+                          <span className="text-xs text-slate-400 text-center">
                             Si aucune table humaine n'est trouvée, lancement automatique avec bots.
                           </span>
                         </div>
@@ -2479,7 +2479,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                       setQuickFilter('ALL');
                       triggerHaptic('light');
                     }}
-                    className={`h-8 rounded-lg text-[11px] font-bold transition cursor-pointer flex items-center justify-center ${
+                    className={`h-8 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center ${
                       quickFilter === 'ALL'
                         ? 'bg-amber-500 text-slate-950 font-black'
                         : 'bg-slate-900 text-slate-400 border border-slate-800 hover:bg-slate-800'
@@ -2493,7 +2493,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                       setQuickFilter('ONLY_HUMANS');
                       triggerHaptic('light');
                     }}
-                    className={`h-8 rounded-lg text-[11px] font-bold transition cursor-pointer flex items-center justify-center ${
+                    className={`h-8 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center ${
                       quickFilter === 'ONLY_HUMANS'
                         ? 'bg-amber-500 text-slate-950 font-black'
                         : 'bg-slate-900 text-slate-400 border border-slate-800 hover:bg-slate-800'
@@ -2507,7 +2507,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                       setQuickFilter('READY_TO_PLAY');
                       triggerHaptic('light');
                     }}
-                    className={`h-8 rounded-lg text-[11px] font-bold transition cursor-pointer flex items-center justify-center ${
+                    className={`h-8 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center ${
                       quickFilter === 'READY_TO_PLAY'
                         ? 'bg-amber-500 text-slate-950 font-black'
                         : 'bg-slate-900 text-slate-400 border border-slate-800 hover:bg-slate-800'
@@ -2553,7 +2553,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   </div>
                   <div className="flex flex-col gap-1">
                     <h3 className="text-sm font-black text-slate-200">Aucune table disponible</h3>
-                    <p className="text-[11px] text-slate-400 max-w-[250px] leading-relaxed">
+                    <p className="text-xs text-slate-400 max-w-[250px] leading-relaxed">
                       Aucun salon public ne correspond à tes critères actuels. Crée ta propre table et laisse les autres te rejoindre !
                     </p>
                   </div>
@@ -2592,14 +2592,14 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                               />
                               <div className="flex flex-col min-w-0">
                                 <span className="text-xs font-black text-white truncate">{r.hostName}</span>
-                                <span className="text-[10px] text-slate-400">Code #{r.id}</span>
+                                <span className="text-xs text-slate-400">Code #{r.id}</span>
                               </div>
                             </div>
 
                             <div className="flex items-center gap-1.5 flex-wrap justify-end">
                               {/* Host absent badge */}
                               {r.hostAbsent && (
-                                <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
+                                <span className="text-xs font-black px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
                                   <Clock className="w-2.5 h-2.5 text-amber-300 animate-spin" />
                                   Hôte absent
                                 </span>
@@ -2608,30 +2608,30 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                               {/* Status Pill */}
                               {isPlaying ? (
                                 r.status === 'MANCHE_OVER' ? (
-                                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-500/20 text-slate-300 border border-slate-500/40 flex items-center gap-1">
+                                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-500/20 text-slate-300 border border-slate-500/40 flex items-center gap-1">
                                     <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
                                     Fin de manche
                                   </span>
                                 ) : canReplaceBot ? (
-                                  <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1 animate-pulse">
+                                  <span className="text-xs font-black px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1 animate-pulse">
                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                                     Place libre
                                   </span>
                                 ) : (
-                                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-500/20 text-slate-300 border border-slate-500/40 flex items-center gap-1">
+                                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-500/20 text-slate-300 border border-slate-500/40 flex items-center gap-1">
                                     <Eye className="w-2.5 h-2.5 text-slate-300" />
                                     En direct
                                   </span>
                                 )
                               ) : (
-                                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
                                   Salon
                                 </span>
                               )}
 
                               {/* Human vs Bot Badge */}
                               <span
-                                className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${
+                                className={`text-xs font-black px-2 py-0.5 rounded-full border ${
                                   !r.fillWithBots
                                     ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
                                     : 'bg-slate-500/20 text-slate-300 border-slate-500/40'
@@ -2644,7 +2644,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                           </div>
 
                           {/* Line 2: Details & Badges */}
-                          <div className="flex items-center gap-2 text-[11px] text-slate-400 flex-wrap">
+                          <div className="flex items-center gap-2 text-xs text-slate-400 flex-wrap">
                             {isPlaying ? (
                               <>
                                 <span className="text-slate-300 font-semibold">Partie #{r.currentPartie || 1}</span>
@@ -2679,7 +2679,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
 
                           {/* Host absent detailed timestamp subtitle */}
                           {r.hostAbsent && (
-                            <div className="text-[10px] text-amber-300/90 font-mono flex items-center gap-1.5 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">
+                            <div className="text-xs text-amber-300/90 font-mono flex items-center gap-1.5 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">
                               <Clock className="w-3 h-3 text-amber-400 shrink-0" />
                               <span>
                                 Créée il y a {Math.max(0, Math.floor((Date.now() - (r.createdAt || Date.now())) / 60000))} min · Hôte absent depuis {Math.max(0, Math.floor((Date.now() - (r.hostAbsentSince || r.createdAt || Date.now())) / 60000))} min
@@ -2727,7 +2727,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                         {activeRooms.length > 0 && (
                           <div className="flex flex-col gap-2.5">
                             {waitingRooms.length > 0 && (
-                              <div className="text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5 px-1 pt-1">
+                              <div className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5 px-1 pt-1">
                                 <Users className="w-3.5 h-3.5 text-emerald-400" />
                                 <span>Tables actives ({activeRooms.length})</span>
                               </div>
@@ -2737,7 +2737,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                         )}
                         {waitingRooms.length > 0 && (
                           <div className="flex flex-col gap-2.5 mt-2">
-                            <div className="text-[11px] font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5 px-1 pt-2 border-t border-slate-800/80">
+                            <div className="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5 px-1 pt-2 border-t border-slate-800/80">
                               <Clock className="w-3.5 h-3.5 text-amber-400" />
                               <span>En attente de l'hôte ({waitingRooms.length})</span>
                             </div>
@@ -2794,7 +2794,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                           />
                           <div className="flex flex-col">
                             <span className="text-xs font-black text-white">{inv.fromUserName} te défie !</span>
-                            <span className="text-[10px] text-slate-400">
+                            <span className="text-xs text-slate-400">
                               Table #{inv.roomCode} · {inv.baseBet} Jetons 🪙
                             </span>
                           </div>
@@ -2833,7 +2833,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
               {/* Compact Friend Code Bar */}
               <div className="px-3.5 py-2 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between gap-2 shadow-sm">
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 shrink-0">Code :</span>
+                  <span className="text-xs uppercase font-bold text-slate-400 shrink-0">Code :</span>
                   <span className="text-xs font-black text-amber-400 font-mono tracking-wide truncate">
                     {FriendService.getFriendCode(localPlayerId, profile?.friendCode)}
                   </span>
@@ -2892,7 +2892,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                       Reçues{pendingReceivedRequests.length > 0 ? ` (${pendingReceivedRequests.length})` : ''}
                     </span>
                     {pendingReceivedRequests.length > 0 && (
-                      <span className="ml-0.5 px-1.5 py-0.2 bg-rose-500 text-white text-[10px] font-black rounded-full animate-pulse shadow-sm shrink-0">
+                      <span className="ml-0.5 px-1.5 py-0.2 bg-rose-500 text-white text-xs font-black rounded-full animate-pulse shadow-sm shrink-0">
                         {pendingReceivedRequests.length}
                       </span>
                     )}
@@ -2939,7 +2939,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                       </div>
                       <div className="flex flex-col gap-1">
                         <h3 className="text-sm font-black text-slate-200">Tu joues seul ?</h3>
-                        <p className="text-[11px] text-slate-400 max-w-[250px] leading-relaxed">
+                        <p className="text-xs text-slate-400 max-w-[250px] leading-relaxed">
                           Ta liste d'amis est vide. Recherche des joueurs par Code Ami ou invite tes proches par WhatsApp !
                         </p>
                       </div>
@@ -3019,17 +3019,17 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                                 <div className="flex items-center gap-1.5">
                                   <span className="text-xs font-black text-white truncate">{friendName}</span>
                                   {friendCode && (
-                                    <span className="text-[10px] text-amber-400 font-mono font-bold">
+                                    <span className="text-xs text-amber-400 font-mono font-bold">
                                       {friendCode}
                                     </span>
                                   )}
                                 </div>
                                 <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border ${badgeStyle}`}>
+                                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded-md border ${badgeStyle}`}>
                                     {badgeText}
                                   </span>
                                   {summary && (
-                                    <span className="text-[9px] text-slate-400 font-medium">
+                                    <span className="text-xs text-slate-400 font-medium">
                                       ({summary.humanPlayersCount}/{summary.maxPlayers} joueurs)
                                     </span>
                                   )}
@@ -3156,7 +3156,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                       </div>
                       <div className="flex flex-col gap-1">
                         <h3 className="text-sm font-bold text-slate-200">Aucune demande reçue</h3>
-                        <p className="text-[11px] text-slate-400 max-w-[240px]">
+                        <p className="text-xs text-slate-400 max-w-[240px]">
                           Lorsque d'autres joueurs t'ajoutent par ton Code Ami, leurs invitations apparaîtront ici.
                         </p>
                       </div>
@@ -3177,8 +3177,8 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                             />
                             <div className="flex flex-col min-w-0">
                               <span className="text-xs font-black text-white truncate">{req.displayName}</span>
-                              <span className="text-[10px] text-amber-400 font-mono font-bold">{req.friendCode}</span>
-                              <span className="text-[9px] text-slate-400">Souhaite devenir ton ami</span>
+                              <span className="text-xs text-amber-400 font-mono font-bold">{req.friendCode}</span>
+                              <span className="text-xs text-slate-400">Souhaite devenir ton ami</span>
                             </div>
                           </div>
 
@@ -3229,7 +3229,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                       </div>
                       <div className="flex flex-col gap-1">
                         <h3 className="text-sm font-bold text-slate-200">Aucune demande en attente</h3>
-                        <p className="text-[11px] text-slate-400 max-w-[240px]">
+                        <p className="text-xs text-slate-400 max-w-[240px]">
                           Toutes les demandes que tu as envoyées ont été traitées.
                         </p>
                       </div>
@@ -3250,8 +3250,8 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                             />
                             <div className="flex flex-col min-w-0">
                               <span className="text-xs font-bold text-slate-200 truncate">{req.displayName}</span>
-                              <span className="text-[10px] text-amber-400 font-mono">{req.friendCode}</span>
-                              <span className="text-[9px] text-slate-400 flex items-center gap-1">
+                              <span className="text-xs text-amber-400 font-mono">{req.friendCode}</span>
+                              <span className="text-xs text-slate-400 flex items-center gap-1">
                                 <Clock className="w-3 h-3 text-amber-400" /> En attente de confirmation
                               </span>
                             </div>
@@ -3286,7 +3286,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                         setRecentPlayers([]);
                         triggerHaptic('light');
                       }}
-                      className="text-[11px] font-bold text-slate-400 hover:text-rose-400 flex items-center gap-1 transition cursor-pointer"
+                      className="text-xs font-bold text-slate-400 hover:text-rose-400 flex items-center gap-1 transition cursor-pointer"
                       title="Effacer l'historique des adversaires récents"
                     >
                       <Trash2 className="w-3 h-3" />
@@ -3315,7 +3315,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                             <div className="flex items-center gap-1.5 min-w-0">
                               <span className="text-xs font-bold text-slate-200 truncate">{r.name}</span>
                               {isMe && (
-                                <span className="text-[8px] font-black px-1 rounded bg-amber-400 text-slate-950 uppercase">
+                                <span className="text-xs font-black px-1 rounded bg-amber-400 text-slate-950 uppercase">
                                   Moi
                                 </span>
                               )}
@@ -3335,7 +3335,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                                   });
                                   triggerHaptic('light');
                                 }}
-                                className="h-6 px-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/20 text-[10px] font-bold flex items-center gap-1 transition active:scale-95 cursor-pointer"
+                                className="h-6 px-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/20 text-xs font-bold flex items-center gap-1 transition active:scale-95 cursor-pointer"
                                 title="Voir les statistiques du Face-à-Face direct"
                               >
                                 <Swords className="w-2.5 h-2.5 text-amber-400" />
@@ -3345,7 +3345,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
 
                             {isMe ? null : isFriend ? (
                               <span
-                                className="h-6 px-2 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold flex items-center gap-1 select-none"
+                                className="h-6 px-2 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center gap-1 select-none"
                                 title="Ce joueur fait partie de tes amis"
                               >
                                 <Check className="w-2.5 h-2.5 text-emerald-400" />
@@ -3353,7 +3353,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                               </span>
                             ) : isPendingSent ? (
                               <span
-                                className="h-6 px-2 rounded-lg bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] font-bold flex items-center gap-1 select-none"
+                                className="h-6 px-2 rounded-lg bg-amber-500/15 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-1 select-none"
                                 title="Demande d'ami envoyée, en attente"
                               >
                                 <Clock className="w-2.5 h-2.5 text-amber-400 animate-pulse" />
@@ -3378,7 +3378,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                                     }
                                   }
                                 }}
-                                className="h-6 px-2 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 text-[10px] font-bold hover:brightness-110 transition cursor-pointer"
+                                className="h-6 px-2 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 text-xs font-bold hover:brightness-110 transition cursor-pointer"
                                 title="Accepter la demande d'ami"
                               >
                                 {isActing ? '...' : 'Accepter'}
@@ -3404,7 +3404,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                                     triggerHaptic('success');
                                   }
                                 }}
-                                className="h-6 px-2 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold hover:bg-amber-500 hover:text-slate-950 transition cursor-pointer flex items-center gap-1"
+                                className="h-6 px-2 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-bold hover:bg-amber-500 hover:text-slate-950 transition cursor-pointer flex items-center gap-1"
                                 title="Ajouter en ami"
                               >
                                 <UserPlus className="w-2.5 h-2.5" />
@@ -3555,10 +3555,10 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
               {/* 1. CAPACITÉ DE LA TABLE (2, 3 ou 4 Joueurs) */}
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-slate-400 font-bold flex items-center gap-1">
+                  <span className="text-xs text-slate-400 font-bold flex items-center gap-1">
                     <Users className="w-3 h-3 text-amber-400" /> Capacité de la Table
                   </span>
-                  <span className="text-[10px] text-slate-500">2 à 4 joueurs</span>
+                  <span className="text-xs text-slate-500">2 à 4 joueurs</span>
                 </div>
                 <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                   {[
@@ -3577,7 +3577,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                       }`}
                     >
                       <span className="text-xs font-black leading-tight">{item.label}</span>
-                      <span className="text-[8.5px] opacity-70 leading-none">{item.sub}</span>
+                      <span className="text-xs opacity-70 leading-none">{item.sub}</span>
                     </button>
                   ))}
                 </div>
@@ -3585,7 +3585,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
 
               {/* 2. SÉLECTEUR CENTRAL : TYPE D'ADVERSAIRES (HAUTEUR RÉDUITE & HORIZONTALE) */}
               <div className="flex flex-col gap-1">
-                <span className="text-[11px] text-slate-400 font-bold">Type d'Adversaires</span>
+                <span className="text-xs text-slate-400 font-bold">Type d'Adversaires</span>
                 <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
                   <button
                     type="button"
@@ -3617,7 +3617,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
 
               {/* 3. Visibilité de la Table */}
               <div className="flex flex-col gap-1">
-                <span className="text-[11px] text-slate-400 font-bold">Visibilité de la Table</span>
+                <span className="text-xs text-slate-400 font-bold">Visibilité de la Table</span>
                 <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
                   <button
                     type="button"
@@ -3659,7 +3659,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                       </div>
                       <div className="flex flex-col min-w-0">
                         <span className="text-xs font-bold text-white">Compte Google requis en Privé</span>
-                        <span className="text-[10px] text-slate-300 leading-tight">
+                        <span className="text-xs text-slate-300 leading-tight">
                           Garantit l'accès aux invités et enregistre l'historique du salon.
                         </span>
                       </div>
@@ -3668,7 +3668,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                       <button
                         type="button"
                         onClick={() => setIsPublicRoom(true)}
-                        className="text-[10px] text-slate-400 hover:text-white underline cursor-pointer"
+                        className="text-xs text-slate-400 hover:text-white underline cursor-pointer"
                       >
                         Passer en Public (Sans compte)
                       </button>
@@ -3677,7 +3677,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                         id="btn-create-modal-google-auth"
                         disabled={isAuthLoading}
                         onClick={handleGoogleSignIn}
-                        className="h-6.5 px-2.5 rounded-lg bg-white hover:bg-slate-100 text-slate-950 font-black text-[10px] flex items-center gap-1 shadow transition active:scale-95 cursor-pointer disabled:opacity-50"
+                        className="h-6.5 px-2.5 rounded-lg bg-white hover:bg-slate-100 text-slate-950 font-black text-xs flex items-center gap-1 shadow transition active:scale-95 cursor-pointer disabled:opacity-50"
                       >
                         <GoogleIcon className="w-3 h-3" />
                         <span>{isAuthLoading ? '...' : 'Sauvegarder avec Google'}</span>
@@ -3690,10 +3690,10 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
               {/* 4. Mise par Manche (Enjeu) */}
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-slate-400 font-bold flex items-center gap-1">
+                  <span className="text-xs text-slate-400 font-bold flex items-center gap-1">
                     <Coins className="w-3 h-3 text-amber-400" /> Mise par Manche (Enjeu)
                   </span>
-                  <span className="text-[10px] text-slate-500">Coût de chaque manche</span>
+                  <span className="text-xs text-slate-500">Coût de chaque manche</span>
                 </div>
                 <div className="grid grid-cols-4 gap-1.5">
                   {[10, 25, 50, 100].map((bet, idx) => (
@@ -3716,10 +3716,10 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
               {/* 5. Capital Initial (Bankroll) */}
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-slate-400 font-bold flex items-center gap-1">
+                  <span className="text-xs text-slate-400 font-bold flex items-center gap-1">
                     <Coins className="w-3 h-3 text-amber-400" /> Capital Initial (Bankroll)
                   </span>
-                  <span className="text-[10px] text-slate-500">Total avant élimination</span>
+                  <span className="text-xs text-slate-500">Total avant élimination</span>
                 </div>
                 <div className="grid grid-cols-4 gap-1.5">
                   {[50, 100, 200, 500].map((cap, idx) => (
@@ -3741,7 +3741,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
 
               {/* 6. Timer de Tour */}
               <div className="flex flex-col gap-1">
-                <span className="text-[11px] text-slate-400 font-bold">Timer de Tour</span>
+                <span className="text-xs text-slate-400 font-bold">Timer de Tour</span>
                 <div className="grid grid-cols-3 gap-1.5">
                   {getTurnTimerChoices(getPublicParamNumber('turnTimerSeconds')).map((t, idx) => (
                     <button
@@ -3764,8 +3764,8 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
               <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-800">
                 <div className="flex items-center justify-between p-2 rounded-xl bg-slate-950/70 border border-slate-800/70">
                   <div className="flex flex-col min-w-0 pr-1">
-                    <span className="text-[11px] font-bold text-white truncate">Double Kora</span>
-                    <span className="text-[9px] text-emerald-400 font-bold">×4 gain</span>
+                    <span className="text-xs font-bold text-white truncate">Double Kora</span>
+                    <span className="text-xs text-emerald-400 font-bold">×4 gain</span>
                   </div>
                   <button
                     type="button"
@@ -3784,8 +3784,8 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
 
                 <div className="flex items-center justify-between p-2 rounded-xl bg-slate-950/70 border border-slate-800/70">
                   <div className="flex flex-col min-w-0 pr-1">
-                    <span className="text-[11px] font-bold text-white truncate">Moins de 21</span>
-                    <span className="text-[9px] text-slate-400 font-bold">≤ 21 victoire</span>
+                    <span className="text-xs font-bold text-white truncate">Moins de 21</span>
+                    <span className="text-xs text-slate-400 font-bold">≤ 21 victoire</span>
                   </div>
                   <button
                     type="button"
@@ -3841,7 +3841,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                           ? 'Création du salon...'
                           : `Créer la Table ${isPublicRoom ? 'Publique' : 'Privée'}`}
                       </span>
-                      <span className="text-[10px] text-emerald-950/80 font-bold leading-none">
+                      <span className="text-xs text-emerald-950/80 font-bold leading-none">
                         Lancement immédiat
                       </span>
                     </div>
@@ -3951,7 +3951,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   </div>
                   <div>
                     <h3 className="text-base font-black text-white">Ajouter un Ami</h3>
-                    <p className="text-[10px] text-slate-400">Recherche un adversaire par pseudo ou Code Ami</p>
+                    <p className="text-xs text-slate-400">Recherche un adversaire par pseudo ou Code Ami</p>
                   </div>
                 </div>
                 <button
@@ -3971,7 +3971,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   <ShieldCheck className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
                   <div className="flex flex-col gap-1.5 flex-1">
                     <span className="text-xs font-bold text-amber-300">Connexion Google recommandée</span>
-                    <p className="text-[10px] text-slate-300 leading-relaxed">
+                    <p className="text-xs text-slate-300 leading-relaxed">
                       Pour envoyer une demande officielle qui apparaîtra dans les alertes du joueur et synchroniser tes amis entre appareils, connecte ton compte Google.
                     </p>
                     <button
@@ -3989,7 +3989,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
               <div className="flex flex-col gap-2">
                 <label className="text-xs text-slate-300 font-bold flex items-center justify-between">
                   <span>Rechercher un joueur</span>
-                  <span className="text-[10px] text-amber-400 font-mono">
+                  <span className="text-xs text-amber-400 font-mono">
                     Mon Code : {FriendService.getFriendCode(localPlayerId, profile?.friendCode)}
                   </span>
                 </label>
@@ -4024,7 +4024,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
               {/* SEARCH RESULTS */}
               {newFriendInput.trim().length > 0 && (
                 <div className="flex flex-col gap-2">
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                     Résultats de recherche ({friendSearchResults.length})
                   </span>
 
@@ -4071,7 +4071,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                                 <span className="text-xs font-bold text-white truncate">
                                   {player.displayName} {isSelf && '(Toi)'}
                                 </span>
-                                <span className="text-[10px] text-amber-400 font-mono">
+                                <span className="text-xs text-amber-400 font-mono">
                                   {player.friendCode}
                                 </span>
                               </div>
@@ -4080,15 +4080,15 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                             {/* DYNAMIC ACTION BUTTON */}
                             <div className="shrink-0 flex items-center gap-1.5">
                               {isSelf ? (
-                                <span className="text-[10px] text-slate-500 font-bold px-2 py-1 rounded-lg bg-slate-800">
+                                <span className="text-xs text-slate-500 font-bold px-2 py-1 rounded-lg bg-slate-800">
                                   Toi
                                 </span>
                               ) : isAlreadyFriend ? (
-                                <span className="text-[10px] text-emerald-400 font-bold px-2 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-1">
+                                <span className="text-xs text-emerald-400 font-bold px-2 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-1">
                                   <Check className="w-3 h-3" /> Ami
                                 </span>
                               ) : isPendingSent ? (
-                                <span className="text-[10px] text-amber-300 font-bold px-2 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center gap-1">
+                                <span className="text-xs text-amber-300 font-bold px-2 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center gap-1">
                                   <Clock className="w-3 h-3" /> Envoyée
                                 </span>
                               ) : isPendingReceived ? (
@@ -4270,7 +4270,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   </span>
                   .
                 </p>
-                <p className="text-[11px] sm:text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-400 mt-1">
                   Rejoindre ou créer une autre table sans la terminer sera comptabilisé comme un abandon de ta part.
                 </p>
               </div>

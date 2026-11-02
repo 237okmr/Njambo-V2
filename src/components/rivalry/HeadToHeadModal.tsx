@@ -99,7 +99,7 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                 <h2 className="text-sm sm:text-base font-black text-white tracking-wide">
                   Face-à-Face & Rivalité
                 </h2>
-                <span className="text-[10px] text-slate-400">
+                <span className="text-xs text-slate-400">
                   Statistiques & Historique direct
                 </span>
               </div>
@@ -136,7 +136,7 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                           className="w-12 h-12 rounded-2xl ring-2 ring-emerald-500/40"
                         />
                         {isLeading && totalMatches > 0 && (
-                          <span className="absolute -top-2 -right-1 bg-amber-500 text-slate-950 p-1 rounded-full text-[10px] shadow-md">
+                          <span className="absolute -top-2 -right-1 bg-amber-500 text-slate-950 p-1 rounded-full text-xs shadow-md">
                             👑
                           </span>
                         )}
@@ -147,7 +147,7 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                       <span className="text-xl sm:text-2xl font-black text-emerald-400 font-mono">
                         {playerWins}
                       </span>
-                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                         Victoires
                       </span>
                     </div>
@@ -157,11 +157,11 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                       <div className="w-10 h-10 rounded-2xl bg-slate-950/80 border border-amber-500/40 flex items-center justify-center shadow-lg mb-1">
                         <Swords className="w-5 h-5 text-amber-400" />
                       </div>
-                      <span className="text-[11px] font-mono font-black text-slate-300">
+                      <span className="text-xs font-mono font-black text-slate-300">
                         {totalMatches} {totalMatches === 1 ? 'partie' : 'parties'}
                       </span>
                       {stats?.currentStreak && stats.currentStreak.count > 1 && (
-                        <div className="mt-1 flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[9px] font-black">
+                        <div className="mt-1 flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-black">
                           <Flame className="w-2.5 h-2.5 text-amber-400" />
                           <span>
                             {stats.currentStreak.winner === 'player'
@@ -181,7 +181,7 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                           className="w-12 h-12 rounded-2xl ring-2 ring-slate-500/40"
                         />
                         {!isLeading && !isTied && totalMatches > 0 && (
-                          <span className="absolute -top-2 -right-1 bg-amber-500 text-slate-950 p-1 rounded-full text-[10px] shadow-md">
+                          <span className="absolute -top-2 -right-1 bg-amber-500 text-slate-950 p-1 rounded-full text-xs shadow-md">
                             👑
                           </span>
                         )}
@@ -192,7 +192,7 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                       <span className="text-xl sm:text-2xl font-black text-slate-400 font-mono">
                         {oppWins}
                       </span>
-                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                         Victoires
                       </span>
                     </div>
@@ -201,7 +201,7 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                   {/* Domination Bar */}
                   {totalMatches > 0 ? (
                     <div className="flex flex-col gap-1 mt-1">
-                      <div className="flex items-center justify-between text-[10px] font-bold">
+                      <div className="flex items-center justify-between text-xs font-bold">
                         <span className="text-emerald-400">{playerWinPercent}% domination</span>
                         <span className="text-slate-400">{oppWinPercent}%</span>
                       </div>
@@ -218,7 +218,7 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                     </div>
                   ) : (
                     <div className="text-center py-1">
-                      <span className="text-[11px] text-amber-400/90 font-semibold">
+                      <span className="text-xs text-amber-400/90 font-semibold">
                         Aucun duel enregistré pour le moment. Lance le premier défi !
                       </span>
                     </div>
@@ -231,7 +231,7 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                   <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800 flex flex-col gap-1">
                     <div className="flex items-center gap-1.5 text-slate-400">
                       <Coins className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                      <span className="text-[10px] font-bold uppercase tracking-wider">Bilan Jetons</span>
+                      <span className="text-xs font-bold uppercase tracking-wider">Bilan Jetons</span>
                     </div>
                     <span
                       className={`text-base sm:text-lg font-mono font-black ${
@@ -240,7 +240,7 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                     >
                       {(stats?.netChipsDelta || 0) > 0 ? `+${stats?.netChipsDelta}` : stats?.netChipsDelta || 0} 🪙
                     </span>
-                    <span className="text-[9px] text-slate-400">
+                    <span className="text-xs text-slate-400">
                       {(stats?.netChipsDelta || 0) >= 0
                         ? 'Gain net contre cet adversaire'
                         : 'Déficit net contre cet adversaire'}
@@ -251,18 +251,18 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                   <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800 flex flex-col gap-1">
                     <div className="flex items-center gap-1.5 text-slate-400">
                       <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                      <span className="text-[10px] font-bold uppercase tracking-wider">Exploits Kora</span>
+                      <span className="text-xs font-bold uppercase tracking-wider">Exploits Kora</span>
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-xs font-black text-emerald-400 font-mono">
                         {stats?.korasInflicted || 0} infligé{(stats?.korasInflicted || 0) > 1 ? 's' : ''}
                       </span>
-                      <span className="text-[10px] text-slate-500">vs</span>
+                      <span className="text-xs text-slate-500">vs</span>
                       <span className="text-xs font-black text-rose-400 font-mono">
                         {stats?.korasSuffered || 0} reçu{(stats?.korasSuffered || 0) > 1 ? 's' : ''}
                       </span>
                     </div>
-                    <span className="text-[9px] text-slate-400">
+                    <span className="text-xs text-slate-400">
                       {(stats?.doubleKorasInflicted || 0) > 0 && `(dont ${stats?.doubleKorasInflicted} Double Kora)`}
                     </span>
                   </div>
@@ -271,30 +271,30 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                   <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800 flex flex-col gap-1">
                     <div className="flex items-center gap-1.5 text-slate-400">
                       <TrendingUp className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <span className="text-[10px] font-bold uppercase tracking-wider">Moyenne de Plis</span>
+                      <span className="text-xs font-bold uppercase tracking-wider">Moyenne de Plis</span>
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-xs font-black text-emerald-400 font-mono">
                         {stats?.playerAvgTricks || 0} / partie
                       </span>
-                      <span className="text-[10px] text-slate-500">vs</span>
+                      <span className="text-xs text-slate-500">vs</span>
                       <span className="text-xs font-black text-slate-400 font-mono">
                         {stats?.opponentAvgTricks || 0}
                       </span>
                     </div>
-                    <span className="text-[9px] text-slate-400">Prises de cartes par partie</span>
+                    <span className="text-xs text-slate-400">Prises de cartes par partie</span>
                   </div>
 
                   {/* Ratio / Mastery */}
                   <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800 flex flex-col gap-1">
                     <div className="flex items-center gap-1.5 text-slate-400">
                       <Trophy className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                      <span className="text-[10px] font-bold uppercase tracking-wider">Taux de Réussite</span>
+                      <span className="text-xs font-bold uppercase tracking-wider">Taux de Réussite</span>
                     </div>
                     <span className="text-base sm:text-lg font-mono font-black text-amber-300">
                       {stats?.winRate || 0}%
                     </span>
-                    <span className="text-[9px] text-slate-400">
+                    <span className="text-xs text-slate-400">
                       {totalMatches > 0
                         ? `${playerWins} V / ${totalMatches} Total`
                         : 'En attente de duel'}
@@ -310,7 +310,7 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                       <span>Dernières confrontations</span>
                     </div>
                     {stats?.lastPlayedAt ? (
-                      <span className="text-[10px] text-slate-500 font-medium">
+                      <span className="text-xs text-slate-500 font-medium">
                         Dernier match : {new Date(stats.lastPlayedAt).toLocaleDateString('fr-FR')}
                       </span>
                     ) : null}
@@ -355,7 +355,7 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                           >
                             <div className="flex items-center gap-2 min-w-0">
                               <span
-                                className={`w-6 h-6 rounded-lg flex items-center justify-center font-black text-[10px] shrink-0 ${
+                                className={`w-6 h-6 rounded-lg flex items-center justify-center font-black text-xs shrink-0 ${
                                   isWin ? 'bg-emerald-500 text-slate-950' : 'bg-rose-500 text-white'
                                 }`}
                               >
@@ -367,11 +367,11 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                                   <span className="font-bold text-white truncate">
                                     {isWin ? 'Victoire' : `Victoire de ${opponent.name}`}
                                   </span>
-                                  <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${winBadgeClass}`}>
+                                  <span className={`text-xs font-bold px-1.5 py-0.2 rounded border ${winBadgeClass}`}>
                                     {winLabel}
                                   </span>
                                 </div>
-                                <span className="text-[10px] text-slate-400">{dateStr}</span>
+                                <span className="text-xs text-slate-400">{dateStr}</span>
                               </div>
                             </div>
 
@@ -383,7 +383,7 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                               >
                                 {m.netDelta > 0 ? `+${m.netDelta}` : m.netDelta} 🪙
                               </span>
-                              <span className="text-[9px] text-slate-400">
+                              <span className="text-xs text-slate-400">
                                 Mise {m.baseBet} 🪙
                               </span>
                             </div>
@@ -394,7 +394,7 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                   ) : (
                     <div className="py-6 px-4 rounded-xl bg-slate-950/40 border border-slate-800 text-center flex flex-col items-center gap-1">
                       <span className="text-xs text-slate-300 font-bold">Pas encore d'historique</span>
-                      <span className="text-[10px] text-slate-500">
+                      <span className="text-xs text-slate-500">
                         Jouez une partie multijoueur ensemble pour alimenter vos statistiques de face-à-face.
                       </span>
                     </div>

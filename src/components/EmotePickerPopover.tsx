@@ -142,7 +142,7 @@ export const EmotePickerPopover: React.FC<EmotePickerPopoverProps> = ({
                 <button
                   type="button"
                   onClick={() => setCategory('TACTICAL')}
-                  className={`flex-1 py-1 px-2 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                  className={`flex-1 py-1 px-2 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer ${
                     category === 'TACTICAL'
                       ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-sm'
                       : 'text-slate-400 hover:text-slate-200'
@@ -154,7 +154,7 @@ export const EmotePickerPopover: React.FC<EmotePickerPopoverProps> = ({
                 <button
                   type="button"
                   onClick={() => setCategory('CLASSIC')}
-                  className={`flex-1 py-1 px-2 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                  className={`flex-1 py-1 px-2 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer ${
                     category === 'CLASSIC'
                       ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-sm'
                       : 'text-slate-400 hover:text-slate-200'
@@ -182,7 +182,7 @@ export const EmotePickerPopover: React.FC<EmotePickerPopoverProps> = ({
                         <Zap className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
                         <span>Proposer une hausse de mise</span>
                       </div>
-                      <span className="text-[10px] bg-amber-500/30 px-2 py-0.5 rounded text-amber-200 font-mono">
+                      <span className="text-xs bg-amber-500/30 px-2 py-0.5 rounded text-amber-200 font-mono">
                         Voter ↗
                       </span>
                     </button>
@@ -198,7 +198,7 @@ export const EmotePickerPopover: React.FC<EmotePickerPopoverProps> = ({
                           className="w-full text-left px-3 py-2 rounded-lg bg-slate-900/85 hover:bg-amber-950/40 active:bg-amber-950/60 text-slate-200 hover:text-amber-200 border border-slate-800/90 hover:border-amber-500/40 transition flex items-center justify-between group active:scale-[0.98] cursor-pointer"
                         >
                           <span className="font-semibold text-xs truncate">{phrase}</span>
-                          <span className="text-[10px] text-amber-400/70 group-hover:text-amber-400 font-medium shrink-0 ml-2">
+                          <span className="text-xs text-amber-400/70 group-hover:text-amber-400 font-medium shrink-0 ml-2">
                             {isRaise ? 'Proposer →' : 'Dire →'}
                           </span>
                         </button>
@@ -219,7 +219,7 @@ export const EmotePickerPopover: React.FC<EmotePickerPopoverProps> = ({
                       className="w-full text-left px-3 py-2 rounded-lg bg-slate-900/85 hover:bg-amber-950/40 active:bg-amber-950/60 text-slate-200 hover:text-amber-200 border border-slate-800/90 hover:border-amber-500/40 transition flex items-center justify-between group active:scale-[0.98] cursor-pointer"
                     >
                       <span className="font-semibold text-xs truncate">{phrase}</span>
-                      <span className="text-[10px] text-slate-400/70 group-hover:text-slate-400 font-medium shrink-0 ml-2">
+                      <span className="text-xs text-slate-400/70 group-hover:text-slate-400 font-medium shrink-0 ml-2">
                         Dire →
                       </span>
                     </button>

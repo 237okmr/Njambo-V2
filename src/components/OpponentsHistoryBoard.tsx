@@ -52,7 +52,7 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
   return (
     <div
       id={filterMode === 'localOnly' ? 'local-player-history-board' : 'opponents-history-board'}
-      className={`w-full bg-slate-900/95 border border-slate-800 rounded-2xl p-2 sm:p-2.5 shadow-lg flex flex-col gap-1.5 shrink-0 ${className}`}
+      className={`w-full bg-slate-900/95 border border-slate-800 rounded-2xl p-2 short:p-1 sm:p-2.5 shadow-lg flex flex-col gap-1.5 short:gap-0.5 shrink-0 ${className}`}
     >
       {isDealing && filterMode !== 'localOnly' && (
         <div className="w-full bg-gradient-to-r from-amber-950/80 via-amber-900/90 to-amber-950/80 border border-amber-500/50 rounded-xl px-3 py-1.5 flex items-center justify-between text-amber-200 text-xs font-bold shadow-md animate-pulse">
@@ -60,7 +60,7 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
             <span className="text-base">🂠</span>
             <span>Distribution (3+2) en cours...</span>
           </div>
-          <div className="text-[10px] sm:text-xs text-amber-300 font-mono bg-amber-950/90 px-2 py-0.5 rounded border border-amber-500/40">
+          <div className="text-[11px] sm:text-xs text-amber-300 font-mono bg-amber-950/90 px-2 py-0.5 rounded border border-amber-500/40">
             {Object.values(cardsDealtCountByPlayer || {}).some((c: number) => c > 3) ? '2ème Passe (+2 cartes)' : '1ère Passe (3 cartes)'}
           </div>
         </div>
@@ -166,7 +166,7 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
           <div
             key={player.id || `player-${playerIndex}`}
             id={`player-row-${player.id}`}
-            className={`relative flex flex-row items-center justify-between lg:flex-col lg:items-stretch lg:gap-1.5 gap-2 px-2 py-1.5 lg:p-2 rounded-xl transition-all duration-300 ${
+            className={`relative flex flex-row items-center justify-between lg:flex-col lg:items-stretch lg:gap-1.5 gap-2 px-2 py-1.5 short:py-0.5 lg:p-2 rounded-xl transition-all duration-300 ${
               isForfeit || isFolded
                 ? 'bg-rose-950/40 border border-rose-900/60 opacity-60 grayscale'
                 : isEliminated
@@ -263,7 +263,7 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                     </span>
                     {isInstantWinner && (
                       <span
-                        className={`text-[8px] font-black px-1.5 py-0.2 rounded shadow uppercase animate-pulse ${
+                        className={`text-[11px] font-black px-1.5 py-0.2 rounded shadow uppercase animate-pulse ${
                           instantWinReveal?.winType === 'UNDER_21'
                             ? 'bg-emerald-400 text-slate-950'
                             : 'bg-amber-400 text-slate-950'
@@ -273,35 +273,35 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                       </span>
                     )}
                     {!isEliminated && !isForfeit && isDealer && (
-                      <span className="text-[8px] font-black px-1 py-0.2 bg-amber-500/20 text-amber-300 rounded border border-amber-500/30">
+                      <span className="text-[11px] font-black px-1 py-0.2 bg-amber-500/20 text-amber-300 rounded border border-amber-500/30">
                         D
                       </span>
                     )}
                     {!isEliminated && !isForfeit && isLead && (
-                      <span className="text-[8px] font-black px-1 py-0.2 bg-slate-500/20 text-slate-300 rounded border border-slate-500/30">
+                      <span className="text-[11px] font-black px-1 py-0.2 bg-slate-500/20 text-slate-300 rounded border border-slate-500/30">
                         E
                       </span>
                     )}
                     {isOnlineRemoteHuman && !isEliminated && !isForfeit && !isDisconnected && (
-                      <span className="text-[8px] font-bold px-1 py-0.2 bg-slate-500/20 text-slate-300 rounded border border-slate-500/30 hidden xs:inline">
+                      <span className="text-[11px] font-bold px-1 py-0.2 bg-slate-500/20 text-slate-300 rounded border border-slate-500/30 hidden xs:inline">
                         En ligne
                       </span>
                     )}
                     {isDisconnected && (
                       <span
-                        className="text-[8px] font-bold px-1.5 py-0.2 bg-amber-500/20 text-amber-300 rounded border border-amber-500/40 animate-pulse flex items-center gap-0.5"
+                        className="text-[11px] font-bold px-1.5 py-0.2 bg-amber-500/20 text-amber-300 rounded border border-amber-500/40 animate-pulse flex items-center gap-0.5"
                         title="Micro-coupure : Reconnexion en attente"
                       >
                         <WifiOff className="w-2.5 h-2.5" />
                         <span>{graceSecondsLeft > 0 ? `${graceSecondsLeft}s` : 'Déco'}</span>
                         {player.consecutiveMissedTurns === 1 && (
-                          <span className="text-[7px] text-amber-400 font-mono">(1/2)</span>
+                          <span className="text-[11px] text-amber-400 font-mono">(1/2)</span>
                         )}
                       </span>
                     )}
                     {isForfeit ? (
                       <span
-                        className="text-[8px] font-extrabold px-1.5 py-0.2 bg-rose-500/30 text-rose-300 rounded border border-rose-500/50 flex items-center gap-0.5"
+                        className="text-[11px] font-extrabold px-1.5 py-0.2 bg-rose-500/30 text-rose-300 rounded border border-rose-500/50 flex items-center gap-0.5"
                         title="Partie perdue par forfait"
                       >
                         <Ban className="w-2.5 h-2.5" />
@@ -309,7 +309,7 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                       </span>
                     ) : isFolded ? (
                       <span
-                        className="text-[8px] font-extrabold px-1.5 py-0.2 bg-rose-500/30 text-rose-300 rounded border border-rose-500/50 flex items-center gap-0.5"
+                        className="text-[11px] font-extrabold px-1.5 py-0.2 bg-rose-500/30 text-rose-300 rounded border border-rose-500/50 flex items-center gap-0.5"
                         title="A passé cette partie"
                       >
                         <span>A passé</span>
@@ -317,7 +317,7 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                     ) : null}
                     {isCurrentTurn && !instantWinReveal && !isEliminated && !isForfeit && turnRemainingSeconds !== undefined && turnRemainingSeconds !== null && (
                       <span
-                        className={`text-[8px] font-mono font-black px-1.5 py-0.2 rounded border transition-colors flex items-center gap-0.5 ${
+                        className={`text-[11px] font-mono font-black px-1.5 py-0.2 rounded border transition-colors flex items-center gap-0.5 ${
                           isDisconnected
                             ? 'bg-amber-950 text-amber-300 border-amber-400 animate-pulse'
                             : turnRemainingSeconds <= 5
@@ -328,35 +328,35 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                       >
                         <span>⏳</span>
                         <span>{turnRemainingSeconds}s</span>
-                        {isDisconnected && <span className="text-[7px] text-amber-300 font-bold uppercase">(Bot)</span>}
+                        {isDisconnected && <span className="text-[11px] text-amber-300 font-bold uppercase">(Bot)</span>}
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
                     <span className="flex items-center gap-0.5 font-mono font-bold text-amber-400">
                       <Coins className="w-2.5 h-2.5" />
                       <span>{player.capital}</span>
                     </span>
                     {isForfeit ? (
-                      <span className="text-[9px] font-bold text-rose-400 uppercase">Forfait</span>
+                      <span className="text-[11px] font-bold text-rose-400 uppercase">Forfait</span>
                     ) : player.isFoldedInRound ? (
-                      <span className="text-[9px] font-bold text-rose-400 uppercase">A passé</span>
+                      <span className="text-[11px] font-bold text-rose-400 uppercase">A passé</span>
                     ) : player.isAiRelay ? (
-                      <span className="text-[9px] font-bold text-amber-300 uppercase flex items-center gap-0.5">🤖 Relais IA</span>
+                      <span className="text-[11px] font-bold text-amber-300 uppercase flex items-center gap-0.5">🤖 Relais IA</span>
                     ) : isDisconnected ? (
-                      <span className="text-[9px] font-bold text-amber-400 uppercase flex items-center gap-0.5">📡 Hors-ligne</span>
+                      <span className="text-[11px] font-bold text-amber-400 uppercase flex items-center gap-0.5">📡 Hors-ligne</span>
                     ) : !isEliminated ? (
                       <div className="lg:hidden">
-                        <span className="font-bold text-slate-200">{player.tricksWonInRound}</span>/5 tours
+                        <span className="font-bold text-slate-200">{player.tricksWonInRound}</span>/5<span className="hidden min-[360px]:inline"> tours</span>
                         {player.tricksWonInRound > 1 ? 's' : ''}
                       </div>
                     ) : (
-                      <span className="text-[9px] font-bold text-rose-400 uppercase">Éliminé</span>
+                      <span className="text-[11px] font-bold text-rose-400 uppercase">Éliminé</span>
                     )}
                     {stratInfo && !isEliminated && !isForfeit && !isInstantWinner && (
                       <span
                         title={`Style de jeu : ${stratInfo.name} - ${stratInfo.description}`}
-                        className={`text-[9px] px-1 py-0.2 rounded border flex items-center gap-0.5 ${stratInfo.badgeBg}`}
+                        className={`text-[11px] px-1 py-0.2 rounded border flex items-center gap-0.5 ${stratInfo.badgeBg}`}
                       >
                         <span>{stratInfo.icon}</span>
                         <span className="hidden sm:inline font-medium">{stratInfo.name}</span>
@@ -368,7 +368,7 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
 
               {/* Right side info on desktop only (tricks won badge) */}
               {!isEliminated && !isForfeit && (
-                <div className="hidden lg:flex items-center gap-1 bg-slate-900/90 px-2 py-0.5 rounded-lg border border-slate-700/60 text-[10px]">
+                <div className="hidden lg:flex items-center gap-1 bg-slate-900/90 px-2 py-0.5 rounded-lg border border-slate-700/60 text-[11px]">
                   <span className="font-mono font-black text-amber-400">{player.tricksWonInRound}</span>
                   <span className="text-slate-400">/ 5 tours</span>
                 </div>
@@ -376,16 +376,16 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
             </div>
 
             {/* Bottom Row on Desktop (or Right on Mobile): Exactly 5 Slots for the 5 tricks of the round */}
-            <div className="flex items-center justify-end lg:justify-start gap-1 sm:gap-1.5 lg:gap-1.5 w-auto lg:w-full lg:pt-0.5">
+            <div className="flex items-center justify-end lg:justify-start gap-0.5 min-[360px]:gap-1 sm:gap-1.5 lg:gap-1.5 w-auto lg:w-full lg:pt-0.5">
               {/* If forfeit or eliminated with no cards played, show BANNER */}
               {isForfeit && completedPlays.length === 0 ? (
-                <div className="px-3 py-1 bg-rose-950/60 border border-rose-800/80 rounded-lg text-rose-400 text-[10px] font-extrabold tracking-wider uppercase flex items-center gap-1">
+                <div className="px-3 py-1 bg-rose-950/60 border border-rose-800/80 rounded-lg text-rose-400 text-[11px] font-extrabold tracking-wider uppercase flex items-center gap-1">
                   <Ban className="w-3 h-3" />
                   <span className="hidden sm:inline">Partie Perdue (Forfait / Déconnexion)</span>
                   <span className="sm:hidden">Forfait</span>
                 </div>
               ) : isEliminated && completedPlays.length === 0 ? (
-                <div className="px-3 py-1 bg-rose-950/40 border border-rose-800/60 rounded-lg text-rose-400 text-[10px] font-extrabold tracking-wider uppercase flex items-center gap-1">
+                <div className="px-3 py-1 bg-rose-950/40 border border-rose-800/60 rounded-lg text-rose-400 text-[11px] font-extrabold tracking-wider uppercase flex items-center gap-1">
                   <Skull className="w-3 h-3" />
                   <span className="hidden sm:inline">Éliminé de la Manche (Capital insuffisant)</span>
                   <span className="sm:hidden">Éliminé</span>
@@ -404,7 +404,7 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                       animate={{ scale: 1, y: 0, opacity: 1 }}
                       transition={{ delay: cIdx * 0.06, type: 'spring', damping: 15 }}
                       title={`${card.label} (${card.value} pts)`}
-                      className={`relative w-7 xs:w-8 sm:w-9 lg:w-8 xl:w-9 h-9 xs:h-10 sm:h-12 lg:h-11 xl:h-12 rounded-lg bg-white text-slate-950 flex flex-col justify-between p-0.5 sm:p-1 shadow-md text-[9px] xs:text-[10px] sm:text-xs font-bold select-none ${
+                      className={`relative w-7 xs:w-8 sm:w-9 lg:w-8 xl:w-9 h-9 short:h-7 xs:h-10 short:xs:h-7 sm:h-12 lg:h-11 xl:h-12 rounded-lg bg-white text-slate-950 flex flex-col justify-between p-0.5 sm:p-1 shadow-md text-[11px] sm:text-xs font-bold select-none ${
                         isHighlight
                           ? 'border-2 border-amber-400 ring-2 ring-amber-400 shadow-amber-400/40'
                           : 'border border-slate-300'
@@ -418,7 +418,7 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
 
                       {/* Center symbol */}
                       <div
-                        className={`self-center text-[10px] xs:text-xs sm:text-sm leading-none pointer-events-none ${suitInfo.color}`}
+                        className={`self-center short:hidden text-[10px] xs:text-xs sm:text-sm leading-none pointer-events-none ${suitInfo.color}`}
                       >
                         {suitInfo.symbol}
                       </div>
@@ -447,7 +447,7 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                             ? ' (Tour en cours)'
                             : ''
                         }`}
-                        className={`relative w-7 xs:w-8 sm:w-9 lg:w-8 xl:w-9 h-9 xs:h-10 sm:h-12 lg:h-11 xl:h-12 rounded-lg text-slate-950 flex flex-col justify-between p-0.5 sm:p-1 text-[9px] xs:text-[10px] sm:text-xs font-bold border select-none transition-all ${
+                        className={`relative w-7 xs:w-8 sm:w-9 lg:w-8 xl:w-9 h-9 short:h-7 xs:h-10 short:xs:h-7 sm:h-12 lg:h-11 xl:h-12 rounded-lg text-slate-950 flex flex-col justify-between p-0.5 sm:p-1 text-[11px] sm:text-xs font-bold border select-none transition-all ${
                           item.wasWinner
                             ? 'bg-gradient-to-b from-amber-50 to-amber-100/95 border-2 border-amber-300 ring-2 ring-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.65)] font-black z-10'
                             : item.isCurrent
@@ -463,7 +463,7 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
 
                         {/* Center symbol */}
                         <div
-                          className={`self-center text-[10px] xs:text-xs sm:text-sm leading-none pointer-events-none ${suitInfo.color}`}
+                          className={`self-center short:hidden text-[10px] xs:text-xs sm:text-sm leading-none pointer-events-none ${suitInfo.color}`}
                         >
                           {suitInfo.symbol}
                         </div>
@@ -496,11 +496,11 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             transition={{ duration: 0.22, ease: 'easeOut' }}
                             title={isLocalPlayer ? 'Carte en main' : 'Carte en main (non jouée)'}
-                            className={`w-7 xs:w-8 sm:w-9 lg:w-8 xl:w-9 h-9 xs:h-10 sm:h-12 lg:h-11 xl:h-12 rounded-lg ${
+                            className={`w-7 xs:w-8 sm:w-9 lg:w-8 xl:w-9 h-9 short:h-7 xs:h-10 short:xs:h-7 sm:h-12 lg:h-11 xl:h-12 rounded-lg ${
                               isLocalPlayer
                                 ? 'bg-gradient-to-br from-emerald-800 via-emerald-900 to-slate-950 border-2 border-emerald-400/90 text-emerald-300 shadow-emerald-500/30'
                                 : 'bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 border-2 border-slate-400/90 text-slate-300 shadow-slate-500/30'
-                            } shadow-md flex items-center justify-center text-[10px] xs:text-xs font-serif select-none transition-all ${
+                            } shadow-md flex items-center justify-center text-[11px] xs:text-xs font-serif select-none transition-all ${
                               isDealing ? 'ring-2 ring-amber-400/60 animate-pulse' : ''
                             }`}
                           >
@@ -512,7 +512,7 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                         {Array.from({ length: placeholderCount }).map((_, sIdx) => (
                           <div
                             key={`slot-${player.id}-${sIdx}`}
-                            className="w-7 xs:w-8 sm:w-9 lg:w-8 xl:w-9 h-9 xs:h-10 sm:h-12 lg:h-11 xl:h-12 rounded-lg border-2 border-dashed border-slate-700/60 bg-slate-950/40 flex items-center justify-center text-slate-700 text-[10px] select-none"
+                            className="w-7 xs:w-8 sm:w-9 lg:w-8 xl:w-9 h-9 short:h-7 xs:h-10 short:xs:h-7 sm:h-12 lg:h-11 xl:h-12 rounded-lg border-2 border-dashed border-slate-700/60 bg-slate-950/40 flex items-center justify-center text-slate-700 text-[11px] select-none"
                             title="Emplacement de carte disponible"
                           />
                         ))}
