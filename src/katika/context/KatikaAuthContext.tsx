@@ -10,7 +10,9 @@ import {
 } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
 
-export const KATIKA_AUTHORIZED_EMAIL = '237okmr@gmail.com';
+import { KATIKA_AUTHORIZED_EMAIL } from '../../utils/adminAccess';
+
+export { KATIKA_AUTHORIZED_EMAIL };
 
 interface KatikaAuthContextType {
   user: User | null;

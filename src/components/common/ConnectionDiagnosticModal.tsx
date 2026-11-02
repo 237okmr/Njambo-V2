@@ -16,9 +16,9 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { wsService } from '../../services/websocketService';
-import { getPlayerId } from '../../services/identity';
 import { auth } from '../../lib/firebase';
-import { APP_VERSION, APP_BUILD_ID } from '../../version';
+import { APP_VERSION } from '../../version';
+import { buildDiagnosticReport, copyTextToClipboard, fetchDiagnosticHealth } from '../../services/diagnosticReport';
 import { GoogleIcon } from './GoogleIcon';
 
 interface HealthResponse {
@@ -54,7 +54,6 @@ export const ConnectionDiagnosticModal: React.FC<ConnectionDiagnosticModalProps>
   // Auth / Identity info
   const currentUser = auth.currentUser;
   const isGoogleUser = Boolean(currentUser && !currentUser.isAnonymous);
-  const localPlayerId = getPlayerId();
 
   // Socket state label & style
   const getSocketStateInfo = () => {
@@ -102,17 +101,7 @@ export const ConnectionDiagnosticModal: React.FC<ConnectionDiagnosticModalProps>
     setHealthLoading(true);
     setHealthError(null);
     try {
-      // Trigger a ping concurrently to update latency
-      wsService.triggerPing();
-
-      const res = await fetch('/api/health', {
-        headers: { Accept: 'application/json' },
-        cache: 'no-store',
-      });
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
-      const data: HealthResponse = await res.json();
+      const data: HealthResponse = await fetchDiagnosticHealth();
       setHealthData(data);
       setLastRefreshedAt(Date.now());
     } catch (err: any) {
@@ -128,58 +117,12 @@ export const ConnectionDiagnosticModal: React.FC<ConnectionDiagnosticModalProps>
     }
   }, [isOpen, fetchHealth]);
 
-  // Build Diagnostic Report text for clipboard
-  const buildDiagnosticText = () => {
-    const lines = [
-      '=== DIAGNOSTIC CONNEXION NJAMBO KORA ===',
-      `Date du rapport : ${new Date().toISOString()}`,
-      `URL du site : ${typeof window !== 'undefined' ? window.location.origin : 'N/A'}`,
-      `Version App : ${APP_VERSION} (${APP_BUILD_ID})`,
-      '',
-      '--- ÉTAT TEMPS RÉEL ---',
-      `Statut WebSocket : ${socketInfo.label}`,
-      `Latence dernier ping : ${latencyMs !== null ? `${latencyMs} ms` : 'Non mesurée (aucun ping-pong récent)'}`,
-      `Table active : ${activeRoomCode || 'Aucune'}`,
-      '',
-      '--- IDENTITÉ & SESSION ---',
-      `Type identité : ${isGoogleUser ? `Compte Google (${currentUser?.displayName || currentUser?.email || 'Vérifié'})` : 'Invité (Anonyme)'}`,
-      `Identifiant joueur : ${localPlayerId}`,
-      `Jeton de reconnexion présent : ${tokenDisplay.present ? `Oui (préfixe: ${tokenDisplay.preview})` : 'Non'}`,
-      '',
-      '--- DERNIÈRE ERREUR SERVEUR ---',
-      lastError
-        ? `Code : ${lastError.code}\nMessage : ${lastError.message}\nHeure : ${new Date(lastError.timestamp).toLocaleTimeString()}`
-        : 'Aucune erreur serveur reçue durant cette session.',
-      '',
-      '--- ÉTAT DU SERVEUR (/api/health) ---',
-      healthData
-        ? `Statut : ${healthData.status}\nInstance ID : ${healthData.instanceId || 'N/A'}\nSalons actifs : ${healthData.activeRooms ?? 'N/A'}\nServeur démarré le : ${healthData.bootedAt ? new Date(healthData.bootedAt).toLocaleString() : 'N/A'}`
-        : `Statut : ${healthLoading ? 'Chargement en cours...' : healthError ? `Erreur (${healthError})` : 'Non disponible'}`,
-      '========================================',
-    ];
-    return lines.join('\n');
-  };
-
   const handleCopyDiagnostic = async () => {
-    try {
-      const text = buildDiagnosticText();
-      await navigator.clipboard.writeText(text);
+    const healthFallback = healthLoading ? 'Chargement en cours...' : healthError ? `Erreur (${healthError})` : 'Non disponible';
+    const copiedOk = await copyTextToClipboard(buildDiagnosticReport(healthData, healthFallback));
+    if (copiedOk) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
-    } catch {
-      // Fallback if clipboard API is restricted
-      const textarea = document.createElement('textarea');
-      textarea.value = buildDiagnosticText();
-      document.body.appendChild(textarea);
-      textarea.select();
-      try {
-        document.execCommand('copy');
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2500);
-      } catch (err) {
-        console.warn('[Diagnostic] Copy failed:', err);
-      }
-      document.body.removeChild(textarea);
     }
   };
 

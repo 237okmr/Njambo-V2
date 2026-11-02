@@ -73,6 +73,7 @@ import { FriendQrModal } from './FriendQrModal';
 import { JoinProgressIndicator } from './JoinProgressIndicator';
 import { HeadToHeadModal } from '../rivalry/HeadToHeadModal';
 import { ConnectionDiagnosticModal } from '../common/ConnectionDiagnosticModal';
+import { ReportProblemCard } from '../common/ReportProblemCard';
 import { usePlayerProfile } from '../../context/PlayerProfileContext';
 import { useInvitations } from '../../context/InvitationsContext';
 import { NativeScreenHeader } from '../common/NativeScreenHeader';
@@ -3912,18 +3913,13 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                 onToast={handleCopyCode}
               />
 
-              {/* Diagnostic de connexion */}
-              <button
-                type="button"
-                onClick={() => {
+              {/* Signaler un problème (diagnostic détaillé réservé aux admins) */}
+              <ReportProblemCard
+                onOpenDiagnostic={() => {
                   setShowSettingsModal(false);
                   setShowDiagnosticModal(true);
                 }}
-                className="w-full h-10 px-3 rounded-xl bg-slate-950 border border-slate-700/80 hover:border-amber-500/50 text-slate-300 hover:text-amber-400 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
-              >
-                <Activity className="w-4 h-4 text-amber-400" />
-                <span>Diagnostic de connexion</span>
-              </button>
+              />
 
               <button
                 type="button"

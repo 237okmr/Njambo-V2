@@ -23,27 +23,24 @@ import {
   RefreshCw,
   Cloud,
   Smartphone,
-  CheckCircle2,
   Coins,
   AlertTriangle,
   Clock,
   Users,
-  Activity,
   UserX,
 } from 'lucide-react';
 import { usePlayerProfile } from '../../context/PlayerProfileContext';
 import { FriendService, BlockedPlayerRecord } from '../../services/friendService';
 import { triggerHaptic } from '../../utils/sound';
 import { PlayerAvatar } from './PlayerAvatar';
-import { FlatAvatarIcon } from './FlatAvatarIcon';
 import { PushNotificationToggle } from './PushNotificationToggle';
 import { AvatarPickerBottomSheet } from './AvatarPickerBottomSheet';
 import { ConnectionDiagnosticModal } from '../common/ConnectionDiagnosticModal';
+import { ReportProblemCard } from '../common/ReportProblemCard';
 import { NativeScreenHeader } from '../common/NativeScreenHeader';
 import { NativeSegmentedNav, SegmentTab } from '../common/NativeSegmentedNav';
 import { useBackLayer } from '../../hooks/useBackLayer';
 import {
-  AVATAR_OPTIONS,
   HONORIFIC_TITLES,
   AvatarOptionId,
   PlayerGameHistoryItem,
@@ -298,7 +295,6 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
         title={<span className="hidden min-[360px]:block text-xs sm:text-sm md:text-base font-black tracking-tight uppercase text-white truncate">Profil</span>}
         onToggleSound={onToggleSound}
         soundEnabled={soundEnabled}
-        onHome={onClose}
         contextBadge={
           (isGameActive || sourceScreen === 'GAME') ? (
             <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold">
@@ -323,20 +319,6 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                 <span className="hidden sm:inline">Palmarès</span>
               </button>
             )}
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 font-mono font-bold text-xs shadow-xs">
-              <Coins className="w-3.5 h-3.5 text-amber-400" />
-              <span>{(chips || 1000).toLocaleString()}</span>
-            </div>
-            <div className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-slate-400 px-2.5 py-1 rounded-xl bg-slate-800/80 border border-slate-700/80">
-              {isLoggedIn ? (
-                <>
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="text-emerald-300">Google lié</span>
-                </>
-              ) : (
-                <span className="text-slate-400">Mode Invité</span>
-              )}
-            </div>
           </div>
         }
       />
@@ -465,7 +447,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     </span>
 
                     <span className="text-xs text-slate-300 font-semibold px-2.5 py-0.5 rounded-md bg-slate-800/80 border border-slate-700/60">
-                      {safeStats.gamesWon || 0}V / {safeStats.gamesPlayed || 0} parties ({winRate}%)
+                      {safeStats.gamesWon || 0} victoires sur {safeStats.gamesPlayed || 0} parties ({winRate} %)
                     </span>
                   </div>
 
@@ -485,7 +467,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   <div className="space-y-1 flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <h4 className="text-xs font-black uppercase tracking-wider text-rose-300">
-                        Sanction Fair-Play Active : {activeSanction.type}
+                        Sanction fair-play : {activeSanction.type}
                       </h4>
                       {activeSanction.expiresAt && (
                         <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-rose-500/30 text-rose-200 font-bold shrink-0">
@@ -512,10 +494,10 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     </div>
                     <div className="space-y-0.5 min-w-0">
                       <h4 className="text-xs font-black uppercase tracking-wider text-amber-300">
-                        Synchronisation en attente ({offlineQueueCount})
+                        Envoi en attente ({offlineQueueCount})
                       </h4>
                       <p className="text-xs text-amber-200/90 truncate">
-                        Données enregistrées localement en attente de téléversement cloud.
+                        Tes derniers résultats sont gardés sur ce téléphone en attendant.
                       </p>
                     </div>
                   </div>
@@ -526,7 +508,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     }}
                     className="h-8 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black shrink-0 transition active:scale-95 cursor-pointer shadow"
                   >
-                    Synchroniser
+                    Envoyer
                   </button>
                 </div>
               )}
@@ -536,18 +518,18 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   <div className="space-y-1">
                     <span className="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
                       <Coins className="w-3.5 h-3.5 text-amber-400" />
-                      Solde de Jetons
+                      Solde de jetons
                     </span>
                     <div className="text-2xl font-black text-amber-300 font-mono tracking-tight">
-                      {(chips || 1000).toLocaleString()}{' '}
+                      {chips.toLocaleString()}{' '}
                       <span className="text-xs font-bold text-amber-400/80 font-sans">jetons</span>
                     </div>
                     <p className="text-xs text-slate-400">
-                      Synchronisé avec tes parties et gains de pot
+                      Tes gains et pertes en Solo et Multijoueur
                     </p>
                   </div>
                   <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0 shadow-inner">
-                    <Coins className="w-6 h-6 animate-pulse" />
+                    <Coins className="w-6 h-6" />
                   </div>
                 </div>
 
@@ -556,7 +538,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   <div className="space-y-1">
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
                       <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                      Réputation Fair-Play
+                      Fair-play
                     </span>
                     <div className="flex items-center gap-2">
                       <span
@@ -576,7 +558,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                       </span>
                     </div>
                     <p className="text-xs text-slate-400">
-                      {fairPlay?.totalForfeits || 0} abandon(s) • {fairPlay?.totalFoldRounds || 0} fold(s)
+                      {fairPlay?.totalForfeits || 0} abandon(s) • {fairPlay?.totalFoldRounds || 0} forfait(s)
                     </p>
                   </div>
                   <div className="w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-emerald-400 shrink-0">
@@ -585,122 +567,26 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                 </div>
               </div>
 
-              {/* Quick Status banner to Google tab */}
-              <button
-                type="button"
-                onClick={() => setActiveTab('google')}
-                className={`w-full p-3.5 rounded-2xl border flex items-center justify-between gap-3 text-left transition-all duration-150 cursor-pointer active:scale-[0.99] shadow-sm ${
-                  isLoggedIn
-                    ? 'bg-emerald-500/10 border-emerald-500/30 hover:bg-emerald-500/15'
-                    : 'bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-amber-500/5 border-amber-500/30 hover:border-amber-400/50'
-                }`}
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                      isLoggedIn ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-300'
-                    }`}
-                  >
-                    {isLoggedIn ? <ShieldCheck className="w-5 h-5" /> : <GoogleIcon className="w-5 h-5" />}
+              {/* Invité : invitation à sauvegarder avec Google */}
+              {!isLoggedIn && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('google')}
+                  className="w-full p-3.5 rounded-2xl border bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-amber-500/5 border-amber-500/30 hover:border-amber-400/50 flex items-center justify-between gap-3 text-left transition-all duration-150 cursor-pointer active:scale-[0.99] shadow-sm"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-amber-500/20 text-amber-300">
+                      <GoogleIcon className="w-5 h-5" />
+                    </div>
+                    <div className="truncate">
+                      <p className="text-xs font-bold text-white">Sauvegarder avec Google</p>
+                      <p className="text-xs text-slate-400 truncate">Garde tes victoires et tes trophées, même sur un autre téléphone</p>
+                    </div>
                   </div>
-                  <div className="truncate">
-                    <p className="text-xs font-bold text-white flex items-center gap-2">
-                      <span>{isLoggedIn ? 'Compte Google Protégé' : 'Sauvegarder avec Google'}</span>
-                      <span
-                        className={`hidden sm:inline text-xs px-2 py-0.2 rounded-full font-bold ${
-                          isLoggedIn
-                            ? 'bg-emerald-500/20 text-emerald-300'
-                            : 'bg-amber-400/20 text-amber-300 animate-pulse'
-                        }`}
-                      >
-                        {isLoggedIn ? 'En ligne' : 'Recommandé'}
-                      </span>
-                    </p>
-                    <p className="text-xs text-slate-400 truncate">
-                      {isLoggedIn
-                        ? `Connecté en tant que ${safeProfile.email || safeProfile.displayName}`
-                        : 'Sauvegarde tes victoires et tes trophées dans le Cloud'}
-                    </p>
-                  </div>
-                </div>
+                  <ArrowRight className="w-4 h-4 shrink-0 text-amber-300" />
+                </button>
+              )}
 
-                <div className="flex items-center gap-1 text-xs font-bold shrink-0 text-amber-300">
-                  <span className="hidden sm:inline">Gérer</span>
-                  <ArrowRight className="w-4 h-4" />
-                </div>
-              </button>
-
-              {/* Avatar Selector Gallery: Option A - Grille 4x2 Confortable */}
-              <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-md">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-xs sm:text-sm font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                      Choisir ton avatar de table (8 disponibles)
-                    </h3>
-                    <p className="text-xs text-slate-400">
-                      Touche un avatar pour personnaliser ta présence sur le tapis.
-                    </p>
-                  </div>
-
-                  {safeProfile.photoURL && (
-                    <button
-                      type="button"
-                      onClick={() => updateAvatar('google')}
-                      className={`text-xs px-3 py-1.5 rounded-xl border transition-all cursor-pointer font-bold ${
-                        safeProfile.avatarId === 'google'
-                          ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md'
-                          : 'bg-slate-800 border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700'
-                      }`}
-                    >
-                      Photo Google
-                    </button>
-                  )}
-                </div>
-
-                {/* 4 columns x 2 rows Grid */}
-                <div className="grid grid-cols-4 gap-2 sm:gap-3">
-                  {AVATAR_OPTIONS.map((opt) => {
-                    const isSelected = safeProfile.avatarId === opt.id;
-                    return (
-                      <button
-                        key={opt.id}
-                        type="button"
-                        onClick={() => updateAvatar(opt.id)}
-                        className={`group relative flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-xl border transition-all duration-150 cursor-pointer active:scale-95 ${
-                          isSelected
-                            ? 'bg-amber-500/20 border-amber-400 shadow-lg ring-2 ring-amber-400/40 scale-[1.03]'
-                            : 'bg-slate-950/70 border-slate-800 hover:border-slate-700 hover:bg-slate-800/60 hover:scale-[1.02]'
-                        }`}
-                        title={opt.description}
-                      >
-                        {/* Flat Design Avatar on White Background */}
-                        <div
-                          className={`w-11 h-11 sm:w-13 sm:h-13 rounded-full flex items-center justify-center p-1.5 sm:p-2 bg-white border-2 ${opt.borderClass} shadow-md transition-transform group-hover:scale-105`}
-                        >
-                          <FlatAvatarIcon avatarId={opt.id} />
-                        </div>
-
-                        {/* Name Label */}
-                        <span
-                          className={`text-[11px] leading-tight font-semibold mt-1.5 w-full text-center tracking-tight [overflow-wrap:anywhere] ${
-                            isSelected ? 'text-amber-300 font-bold' : 'text-slate-300 group-hover:text-white'
-                          }`}
-                        >
-                          {opt.name}
-                        </span>
-
-                        {/* Selected Indicator Checkmark */}
-                        {isSelected && (
-                          <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-amber-400 text-slate-950 flex items-center justify-center shadow">
-                            <Check className="w-2.5 h-2.5 stroke-[3]" />
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
 
               {/* Push Notifications Card */}
               <PushNotificationToggle
@@ -708,44 +594,9 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                 userName={safeProfile.displayName || 'Joueur'}
               />
 
-              {/* Diagnostic de Connexion Temps Réel Card */}
-              <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
-                <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto">
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
-                    <Activity className="w-5 h-5 text-amber-400" />
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="text-xs sm:text-sm font-bold text-white">Diagnostic de connexion</h3>
-                    <p className="text-xs text-slate-400">Vérifier l'état du serveur, latence, jetons et erreurs.</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowDiagnosticModal(true)}
-                  className="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-400 hover:text-amber-300 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer shrink-0"
-                >
-                  <Activity className="w-3.5 h-3.5" />
-                  <span>Ouvrir le diagnostic</span>
-                </button>
-              </div>
+              {/* Signaler un problème (diagnostic détaillé réservé aux admins) */}
+              <ReportProblemCard onOpenDiagnostic={() => setShowDiagnosticModal(true)} />
 
-              {/* Quick Link: Blocked Players */}
-              <button
-                type="button"
-                onClick={() => setActiveTab('blocked')}
-                className="w-full p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 flex items-center justify-between text-xs font-bold text-slate-200 transition cursor-pointer shadow-sm group"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                    <UserX className="w-4 h-4" />
-                  </div>
-                  <div className="flex flex-col text-left">
-                    <span className="font-bold text-slate-200 group-hover:text-white">Joueurs bloqués</span>
-                    <span className="text-xs text-slate-400">Gérer ta liste de blocage ({blockedPlayers.length})</span>
-                  </div>
-                </div>
-                <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-slate-300 transition-transform group-hover:translate-x-0.5" />
-              </button>
             </div>
           )}
 
@@ -789,7 +640,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                           </h2>
                           <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
                             <ShieldCheck className="w-3 h-3" />
-                            COMPTE GOOGLE VÉRIFIÉ
+                            Compte Google
                           </span>
                         </div>
 
@@ -799,81 +650,24 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
 
                         <p className="text-xs text-slate-400 flex items-center justify-center sm:justify-start gap-1.5 pt-0.5">
                           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                          <span>Sauvegarde Cloud Firestore active et synchronisée</span>
+                          <span>Ta progression est sauvegardée sur ce compte</span>
                         </p>
                       </div>
                     </div>
 
-                    {/* Quick Synced Metrics Recap */}
-                    <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800/80 text-center">
-                      <div className="p-2.5 bg-slate-950/60 rounded-xl border border-slate-800/60">
-                        <span className="text-xs uppercase font-bold text-slate-400">Parties Cloud</span>
-                        <p className="text-base font-black text-white font-mono">{safeStats.gamesPlayed || 0}</p>
-                      </div>
-                      <div className="p-2.5 bg-slate-950/60 rounded-xl border border-slate-800/60">
-                        <span className="text-xs uppercase font-bold text-slate-400">Victoires</span>
-                        <p className="text-base font-black text-emerald-400 font-mono">{safeStats.gamesWon || 0}</p>
-                      </div>
-                      <div className="p-2.5 bg-slate-950/60 rounded-xl border border-slate-800/60">
-                        <span className="text-xs uppercase font-bold text-slate-400">Koras 👑</span>
-                        <p className="text-base font-black text-amber-400 font-mono">{safeStats.koraCount || 0}</p>
-                      </div>
-                    </div>
                   </div>
 
-                  {/* 3 Cloud Advantages Pillars */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-1.5 shadow-sm">
-                      <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-                        <Cloud className="w-4 h-4" />
-                      </div>
-                      <h4 className="text-xs font-bold text-white">Sauvegarde Firestore</h4>
-                      <p className="text-xs text-slate-400 leading-snug">
-                        Chaque victoire et trophée est gravé instantanément dans ta base Cloud sécurisée.
-                      </p>
-                    </div>
-
-                    <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-1.5 shadow-sm">
-                      <div className="w-8 h-8 rounded-xl bg-slate-500/10 text-slate-400 flex items-center justify-center">
-                        <Smartphone className="w-4 h-4" />
-                      </div>
-                      <h4 className="text-xs font-bold text-white">Multi-Appareils</h4>
-                      <p className="text-xs text-slate-400 leading-snug">
-                        Joue sur mobile, PWA ou PC : ton rang et tes avatars te suivent partout.
-                      </p>
-                    </div>
-
-                    <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-1.5 shadow-sm">
-                      <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center">
-                        <CheckCircle2 className="w-4 h-4" />
-                      </div>
-                      <h4 className="text-xs font-bold text-white">Anti-Perte Absolu</h4>
-                      <p className="text-xs text-slate-400 leading-snug">
-                        Même en vidant ton cache ou en changeant de téléphone, ton historique reste intact.
-                      </p>
-                    </div>
-                  </div>
 
                   {/* Account Actions Bar */}
                   <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
                     <div className="text-center sm:text-left space-y-0.5">
-                      <p className="text-xs font-bold text-white">Gestion de la session</p>
+                      <p className="text-xs font-bold text-white">Déconnexion</p>
                       <p className="text-xs text-slate-400">
-                        Tu peux synchroniser manuellement ou te déconnecter pour repasser en mode invité.
+                        Tu repasseras en mode invité sur cet appareil.
                       </p>
                     </div>
 
                     <div className="flex items-center gap-2 w-full sm:w-auto">
-                      <button
-                        type="button"
-                        onClick={loginWithGoogle}
-                        disabled={isSyncing}
-                        className="flex-1 sm:flex-initial px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 disabled:opacity-50"
-                      >
-                        <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-amber-400' : ''}`} />
-                        <span>Resynchroniser</span>
-                      </button>
-
                       <button
                         type="button"
                         onClick={logout}
@@ -881,7 +675,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                         className="flex-1 sm:flex-initial px-4 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 hover:text-rose-200 border border-rose-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 disabled:opacity-50"
                       >
                         <LogOut className="w-3.5 h-3.5" />
-                        <span>Déconnexion</span>
+                        <span>Se déconnecter</span>
                       </button>
                     </div>
                   </div>
@@ -897,7 +691,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     {/* Badge */}
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold">
                       <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                      <span>SAUVEGARDE PERMANENTE DANS LE CLOUD</span>
+                      <span>SAUVEGARDE PERMANENTE</span>
                     </div>
 
                     {/* Headline */}
@@ -934,7 +728,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
 
                       <p className="text-xs text-slate-400 flex items-center justify-center gap-1.5">
                         <Lock className="w-3 h-3 text-slate-500" />
-                        <span>Connexion officielle sans mot de passe via Google Identity Services</span>
+                        <span>Connexion sans mot de passe, par Google</span>
                       </p>
                     </div>
                   </div>
@@ -960,7 +754,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                       <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
                         <ShieldCheck className="w-4 h-4" />
                       </div>
-                      <h4 className="text-xs font-bold text-white">Sécurité Cloud</h4>
+                      <h4 className="text-xs font-bold text-white">Sauvegarde</h4>
                       <p className="text-xs text-slate-400 leading-snug">
                         Tes trophées restent enregistrés pour toujours, même après réinitialisation de ton navigateur.
                       </p>
@@ -1065,11 +859,11 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     <Cloud className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-white">Statistiques Consolidées</h4>
+                    <h4 className="text-xs font-bold text-white">Tes statistiques</h4>
                     <p className="text-xs text-slate-400">
                       {isLoggedIn
-                        ? 'Données synchronisées avec ton profil Firestore Cloud'
-                        : 'Mode Invité : Données conservées localement avec fusion Cloud à la connexion'}
+                        ? 'Sauvegardées sur ton compte Google'
+                        : 'Enregistrées sur ce téléphone jusqu’à ta connexion à Google'}
                     </p>
                   </div>
                 </div>
@@ -1098,33 +892,6 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                 </button>
               </div>
 
-              {/* Palmarès Callout Banner */}
-              {onOpenLeaderboard && (
-                <div
-                  onClick={onOpenLeaderboard}
-                  className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-slate-900 to-slate-900 border border-amber-500/30 flex items-center justify-between gap-3 hover:border-amber-400/50 cursor-pointer transition shadow-md group"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 group-hover:scale-105 transition shrink-0">
-                      <Trophy className="w-5 h-5 fill-amber-400 text-amber-400" />
-                    </div>
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-xs font-black text-white group-hover:text-amber-300 transition-colors">
-                        Palmarès & Classement
-                      </span>
-                      <span className="text-xs text-slate-400 truncate">
-                        Découvre ton rang face aux autres joueurs de la communauté
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="px-3 py-1.5 rounded-xl bg-amber-500 text-slate-950 font-black text-xs group-hover:bg-amber-400 transition shrink-0 shadow-sm cursor-pointer"
-                  >
-                    Consulter
-                  </button>
-                </div>
-              )}
 
               {/* Score de Maîtrise Highlight Banner */}
               <div className="bg-gradient-to-r from-amber-950/60 via-slate-900 to-amber-950/40 border-2 border-amber-500/40 rounded-2xl p-4 sm:p-5 shadow-lg space-y-3">
@@ -1134,14 +901,8 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                       <Award className="w-6 h-6" />
                     </div>
                     <div>
-                      <div className="text-xs uppercase font-bold tracking-wider text-amber-400/90">
-                        Indicateur Officiel de Performance
-                      </div>
                       <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-1.5">
                         <span>Score de Maîtrise</span>
-                        <span className="text-xs font-bold text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-md border border-amber-500/30">
-                          Échelle 1-20 pts
-                        </span>
                       </h3>
                     </div>
                   </div>
@@ -1161,28 +922,28 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     <span className="text-sm font-black text-amber-300 font-mono">
                       {safeStats.multiplayerManchesWon || 0}
                     </span>
-                    <span className="text-xs text-slate-500 block">(+10 pts/m)</span>
+                    <span className="text-xs text-slate-500 block">+10 points par manche</span>
                   </div>
                   <div className="p-2 bg-slate-950/60 rounded-xl border border-slate-800/80">
                     <span className="text-xs uppercase font-bold text-slate-400 block">Manches Solo</span>
                     <span className="text-sm font-black text-amber-300 font-mono">
                       {safeStats.soloManchesWon || (safeStats.soloManchesWonHard || 0) + (safeStats.soloManchesWonNormal || 0) + (safeStats.soloManchesWonEasy || 0)}
                     </span>
-                    <span className="text-xs text-slate-500 block">(1 à 6 pts/m)</span>
+                    <span className="text-xs text-slate-500 block">1 à 6 points par manche</span>
                   </div>
                   <div className="p-2 bg-slate-950/60 rounded-xl border border-slate-800/80">
                     <span className="text-xs uppercase font-bold text-slate-400 block">Parties gagnées</span>
                     <span className="text-sm font-black text-emerald-400 font-mono">
                       {safeStats.partiesWon || safeStats.gamesWon || 0}
                     </span>
-                    <span className="text-xs text-slate-500 block">(+1 pt/partie)</span>
+                    <span className="text-xs text-slate-500 block">+1 point par partie</span>
                   </div>
                   <div className="p-2 bg-slate-950/60 rounded-xl border border-slate-800/80">
-                    <span className="text-xs uppercase font-bold text-slate-400 block">Koras / Dbl</span>
+                    <span className="text-xs uppercase font-bold text-slate-400 block">Koras / Doubles</span>
                     <span className="text-sm font-black text-amber-300 font-mono">
                       {safeStats.koraCount || 0} / {safeStats.doubleKoraCount || 0}
                     </span>
-                    <span className="text-xs text-slate-500 block">(+5 / +20 pts)</span>
+                    <span className="text-xs text-slate-500 block">+5 et +20 points</span>
                   </div>
                 </div>
               </div>
@@ -1237,10 +998,10 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     {safeStats.koraCount || 0}
                   </div>
                   <div className="text-xs text-slate-400 pt-1">
-                    Multiplicateur pot : <strong className="text-amber-300 font-bold">x2</strong>
+                    Pot multiplié par <strong className="text-amber-300 font-bold">2</strong>
                   </div>
                   <div className="text-xs text-slate-500 pt-0.5 border-t border-slate-800/80">
-                    Koras simples infligés
+                    Koras simples
                   </div>
                 </div>
 
@@ -1254,10 +1015,10 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     {safeStats.doubleKoraCount || 0}
                   </div>
                   <div className="text-xs text-slate-400 pt-1">
-                    Multiplicateur pot : <strong className="text-amber-300 font-bold">x4</strong>
+                    Pot multiplié par <strong className="text-amber-300 font-bold">4</strong>
                   </div>
                   <div className="text-xs text-slate-500 pt-0.5 border-t border-slate-800/80">
-                    Coups suprêmes (Double Kora)
+                    Doubles Koras réussis
                   </div>
                 </div>
 
@@ -1273,15 +1034,12 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   <div className="text-xs text-slate-400 pt-1">
                     Record en une seule partie
                   </div>
-                  <div className="text-xs text-slate-500 pt-0.5 border-t border-slate-800/80">
-                    Solde actuel : <strong className="text-amber-400 font-mono">{(chips || 1000).toLocaleString()}</strong>
-                  </div>
                 </div>
 
                 {/* 6. Moyenne de Tours par donne */}
                 <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 space-y-1 shadow-sm">
                   <div className="flex items-center justify-between text-slate-400">
-                    <span className="text-xs font-bold uppercase tracking-wider">Moyenne Tours</span>
+                    <span className="text-xs font-bold uppercase tracking-wider">Tours gagnés</span>
                     <Award className="w-4 h-4 text-slate-400" />
                   </div>
                   <div className="text-2xl sm:text-3xl font-black text-slate-400 font-mono">
@@ -1301,20 +1059,17 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs sm:text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
                     <BarChart3 className="w-4 h-4 text-amber-400" />
-                    Comparatif Détaillé : Solo vs Multijoueur
+                    Solo et Multijoueur
                   </h3>
-                  <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-md font-semibold">
-                    Analyse de Style
-                  </span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Taux de Victoire comparative list */}
                   <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800/80 flex flex-col justify-between space-y-2">
                     <div>
-                      <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">Taux de Réussite</span>
+                      <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">Taux de victoire</span>
                       <div className="flex items-baseline justify-between mt-1">
-                        <span className="text-xs text-slate-400">Mode Solo (IA)</span>
+                        <span className="text-xs text-slate-400">Solo</span>
                         <span className="text-sm font-extrabold text-amber-400 font-mono">
                           {safeStats.soloWinRate || 0}%
                         </span>
@@ -1324,7 +1079,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                       </div>
 
                       <div className="flex items-baseline justify-between mt-2">
-                        <span className="text-xs text-slate-400">Mode Multi (Joueurs)</span>
+                        <span className="text-xs text-slate-400">Multijoueur</span>
                         <span className="text-sm font-extrabold text-emerald-400 font-mono">
                           {safeStats.multiplayerWinRate || 0}%
                         </span>
@@ -1342,51 +1097,51 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   {/* Koras comparatif */}
                   <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800/80 flex flex-col justify-between space-y-2">
                     <div>
-                      <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">Koras & Coups de Maître</span>
+                      <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">Koras</span>
                       
                       <div className="flex justify-between items-center mt-2.5">
-                        <span className="text-xs text-slate-300">Entraînement Solo</span>
+                        <span className="text-xs text-slate-300">Solo</span>
                         <div className="text-right">
                           <span className="text-sm font-extrabold text-white font-mono">{safeStats.soloKoraCount || 0}</span>
-                          <span className="text-xs text-slate-500 ml-1">({safeStats.soloDoubleKoraCount || 0} dbl)</span>
+                          <span className="text-xs text-slate-500 ml-1">({safeStats.soloDoubleKoraCount || 0} doubles)</span>
                         </div>
                       </div>
 
                       <div className="flex justify-between items-center mt-2">
-                        <span className="text-xs text-slate-300">Compétition Multi</span>
+                        <span className="text-xs text-slate-300">Multijoueur</span>
                         <div className="text-right">
                           <span className="text-sm font-extrabold text-amber-400 font-mono">{safeStats.multiplayerKoraCount || 0}</span>
-                          <span className="text-xs text-amber-500/60 ml-1">({safeStats.multiplayerDoubleKoraCount || 0} dbl)</span>
+                          <span className="text-xs text-amber-500/60 ml-1">({safeStats.multiplayerDoubleKoraCount || 0} doubles)</span>
                         </div>
                       </div>
                     </div>
                     <div className="text-xs text-slate-500 pt-1.5 border-t border-slate-900">
-                      Total: <span className="text-amber-400 font-bold">{safeStats.koraCount || 0}</span> Koras infligés au total
+                      Total: <span className="text-amber-400 font-bold">{safeStats.koraCount || 0}</span> Koras au total
                     </div>
                   </div>
 
                   {/* Fortune accumulée */}
                   <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800/80 flex flex-col justify-between space-y-2">
                     <div>
-                      <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">Fortune & Gains (Jetons)</span>
+                      <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">Gains en jetons</span>
                       
                       <div className="flex justify-between items-center mt-2.5">
-                        <span className="text-xs text-slate-300">Gains contre l'IA</span>
+                        <span className="text-xs text-slate-300">Solo</span>
                         <span className={`text-sm font-extrabold font-mono ${safeStats.soloFortune >= 0 ? 'text-slate-300' : 'text-rose-400'}`}>
                           {safeStats.soloFortune >= 0 ? '+' : ''}{(safeStats.soloFortune || 0).toLocaleString()}
                         </span>
                       </div>
 
                       <div className="flex justify-between items-center mt-2">
-                        <span className="text-xs text-slate-300">Gains en Ligne (vrais)</span>
+                        <span className="text-xs text-slate-300">Multijoueur</span>
                         <span className={`text-sm font-extrabold font-mono ${safeStats.fortune >= 0 ? 'text-amber-400' : 'text-rose-400'}`}>
                           {safeStats.fortune >= 0 ? '+' : ''}{(safeStats.fortune || 0).toLocaleString()}
                         </span>
                       </div>
                     </div>
                     <div className="text-xs text-slate-500 pt-1.5 border-t border-slate-900 flex justify-between">
-                      <span>Gains Multi: {safeStats.multiplayerGains.toLocaleString()}</span>
-                      <span>Pertes: {safeStats.multiplayerPertes.toLocaleString()}</span>
+                      <span>Gagnés : {safeStats.multiplayerGains.toLocaleString()}</span>
+                      <span>Perdus : {safeStats.multiplayerPertes.toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
@@ -1396,12 +1151,12 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
               <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3 shadow-md">
                 <h3 className="text-xs sm:text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                  Statistiques de Fair-Play & Engagement
+                  Fair-play
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">
-                    <span className="text-xs uppercase font-bold text-slate-400">Abandons / Forfaits</span>
+                    <span className="text-xs uppercase font-bold text-slate-400">Abandons</span>
                     <div className="text-lg font-black text-white font-mono pt-1">
                       {fairPlay?.totalForfeits || 0}
                     </div>
@@ -1409,20 +1164,20 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   </div>
 
                   <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">
-                    <span className="text-xs uppercase font-bold text-slate-400">Folds Stratégiques</span>
+                    <span className="text-xs uppercase font-bold text-slate-400">Forfaits déclarés</span>
                     <div className="text-lg font-black text-amber-300 font-mono pt-1">
                       {fairPlay?.totalFoldRounds || 0}
                     </div>
-                    <p className="text-xs text-slate-400">Rounds passés (Fold réglementaire)</p>
+                    <p className="text-xs text-slate-400">Parties passées en déclarant forfait</p>
                   </div>
 
                   <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">
-                    <span className="text-xs uppercase font-bold text-slate-400">Sanction Actuelle</span>
+                    <span className="text-xs uppercase font-bold text-slate-400">Sanction en cours</span>
                     <div className="text-xs font-bold font-mono pt-1">
                       {activeSanction && activeSanction.active ? (
                         <span className="text-rose-400 font-black">{activeSanction.type}</span>
                       ) : (
-                        <span className="text-emerald-400 font-semibold">Aucune (Profil Sain)</span>
+                        <span className="text-emerald-400 font-semibold">Aucune</span>
                       )}
                     </div>
                     <p className="text-xs text-slate-400">Statut dans les salons multijoueurs</p>
@@ -1433,14 +1188,13 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
               {/* Special Strategic Accomplishments */}
               <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3 shadow-md">
                 <h3 className="text-xs sm:text-sm font-bold text-slate-200 uppercase tracking-wider">
-                  Victoires Stratégiques & Spéciales
+                  Victoires spéciales
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="flex items-center justify-between p-3 bg-slate-950 rounded-xl border border-slate-800">
                     <div className="space-y-0.5">
-                      <span className="text-xs font-bold text-white">Moins de 21 points (Under 21)</span>
-                      <p className="text-xs text-slate-400">Victoire mathématique par carte basse</p>
+                      <span className="text-xs font-bold text-white">Moins de 21 points</span>
                     </div>
                     <span className="text-base font-black text-amber-400 font-mono">
                       {safeStats.under21Count || 0}
@@ -1521,7 +1275,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
               {/* All Titles Roadmap */}
               <div className="space-y-3">
                 <h3 className="text-xs sm:text-sm font-bold text-slate-300 uppercase tracking-wider">
-                  Tous les Rangs Honorifiques
+                  Tous les rangs
                 </h3>
 
                 <div className="space-y-2.5">
@@ -1678,14 +1432,14 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span className="text-xs font-bold text-white">
                                 {item.mode === 'SOLO'
-                                  ? 'Solo (vs IA)'
+                                  ? 'Solo'
                                   : `Multijoueur (${item.playerCount || 4}J)`}
                               </span>
 
                               {/* Distinction Manche Complète vs Donne Individuelle */}
                               {item.isMancheFinalWin || item.isMancheOver || !item.partieNumber ? (
                                 <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
-                                  <Trophy className="w-2.5 h-2.5" /> Manche Complète
+                                  <Trophy className="w-2.5 h-2.5" /> Manche complète
                                 </span>
                               ) : (
                                 <span className="text-xs px-2 py-0.5 rounded-full font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">
@@ -1756,7 +1510,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                             <span>{isWin ? `+${item.potWon}` : `-${item.baseBet || 5}`} jetons</span>
                           </div>
                           <span className="text-xs text-slate-500">
-                            {item.tricksWon !== undefined ? `${item.tricksWon} tour(s) remportés` : 'Pot réel validé'}
+                            {item.tricksWon !== undefined ? `${item.tricksWon} tour(s) gagné(s)` : null}
                           </span>
                           {item.mode === 'SOLO' && item.isWinner && typeof item.masteryPointsAwarded === 'number' && (
                             <span

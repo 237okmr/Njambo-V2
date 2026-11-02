@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { pushNotificationService, PushStatus, PushPreferences } from '../../services/pushNotificationService';
 import { triggerHaptic } from '../../utils/sound';
+import { useIsGameAdmin } from '../../hooks/useIsGameAdmin';
 
 interface PushNotificationToggleProps {
   userId: string;
@@ -36,6 +37,7 @@ export const PushNotificationToggle: React.FC<PushNotificationToggleProps> = ({
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const isAdmin = useIsGameAdmin();
 
   useEffect(() => {
     // Check iOS and Standalone status
@@ -110,7 +112,7 @@ export const PushNotificationToggle: React.FC<PushNotificationToggleProps> = ({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-black text-white">Notifications Push Mobiles</span>
+              <span className="text-sm font-black text-white">Notifications</span>
               {status.isSubscribed ? (
                 <span className="text-xs font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
                   <Check className="w-2.5 h-2.5" />
@@ -186,20 +188,22 @@ export const PushNotificationToggle: React.FC<PushNotificationToggleProps> = ({
 
         {status.isSubscribed && (
           <>
-            <button
-              type="button"
-              onClick={handleSendTest}
-              disabled={isTesting}
-              className="min-h-[40px] px-3.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold transition active:scale-95 flex items-center gap-1.5 cursor-pointer shrink-0"
-              title="Envoyer une notification test"
-            >
-              {isTesting ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-              )}
-              <span>Tester</span>
-            </button>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={handleSendTest}
+                disabled={isTesting}
+                className="min-h-[40px] px-3.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold transition active:scale-95 flex items-center gap-1.5 cursor-pointer shrink-0"
+                title="Envoyer une notification test"
+              >
+                {isTesting ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                )}
+                <span>Tester</span>
+              </button>
+            )}
 
             <button
               type="button"
