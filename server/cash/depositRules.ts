@@ -20,7 +20,12 @@ export interface DepositDoc {
   uid: string;
   /** Absent sur les anciens dépôts : ils appartiennent à la démo. */
   environment?: DepositEnvironment;
+  /** Montant payé par le joueur : c'est ce que Campay collecte. */
   amount: number;
+  /** Frais figés à la création, tels qu'annoncés. Absents sur les anciens dépôts : crédit à 100 %. */
+  fee?: number;
+  /** Montant crédité au solde du joueur. */
+  credited?: number;
   mode: DepositMode;
   status: DepositStatus;
   createdAt: number;

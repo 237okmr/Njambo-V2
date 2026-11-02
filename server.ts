@@ -23,7 +23,18 @@ import { runLegacyAction, createFirestoreLegacyStore } from './server/rooms/lega
 import { isKoraMoment } from './src/katika/visual/situation';
 import { pushService, buildGameUrl } from './server/pushService';
 import { saveProviderCredentials, getProviderCredentialsMasked } from './server/cash/cashSecrets';
-import { testCampayConnection, createLiveCampayDeps, createLiveWithdrawalDeps } from './server/cash/campayClient';
+import { testCampayConnection, createLiveCampayDeps, createLiveWithdrawalDeps, readCampayBalance } from './server/cash/campayClient';
+import {
+  getFinancePeriods,
+  getFinanceSettings,
+  getFinanceTotals,
+  getLatestBaseline,
+  getOwedToPlayers,
+  listReconciliations,
+  saveReconciliation,
+  updateFinanceSettings,
+} from './server/cash/financeStore';
+import { computeReconciliation, parseFinanceSettingsPatch, parseManualBalance } from './server/cash/financeRules';
 import { startCampayDeposit, verifyMyDeposit, handleCampayWebhook } from './server/cash/campayDeposits';
 import { extractWebhookEvent, normalizeCameroonPhone } from './server/cash/campayRules';
 import {
@@ -76,6 +87,7 @@ import {
   setPlayerFreeze,
   updateProtectionSettings,
 } from './server/cash/protectionStore';
+import { randomBytes } from 'crypto';
 import { dateKeyFor } from './server/cash/withdrawalRules';
 import { COLLUSION_REASON_LABELS, REVIEW_REASON_LABELS, exclusionEnd, parseProtectionSettingsPatch } from './server/cash/protectionRules';
 import { setWalletChangeListener } from './server/cash/walletEvents';
@@ -970,8 +982,8 @@ async function startServer() {
   app.get('/api/cash/status', async (_req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     try {
-      const cfg = await getKoraCashConfig();
-      res.json({ success: true, ...toPublicStatus(cfg) });
+      const [cfg, finance] = await Promise.all([getKoraCashConfig(), getFinanceSettings()]);
+      res.json({ success: true, ...toPublicStatus(cfg), depositFeePercent: finance.depositFeePercent });
     } catch (err) {
       console.warn('[KoraCash] Lecture du statut public impossible, statut « désactivé » renvoyé.', err instanceof Error ? err.message : String(err));
       res.json({ success: true, enabled: false, environment: 'DEMO', depositMode: 'SIMULATED' });
@@ -1936,6 +1948,88 @@ async function startServer() {
     } catch (err) {
       console.error('[KoraCash] Lecture de la file des retraits impossible.', err instanceof Error ? err.message : String(err));
       res.status(500).json({ success: false, error: 'Lecture des retraits impossible.' });
+    }
+  });
+
+  // Finances : recettes et marge par période, ce qui est dû aux joueurs, derniers rapprochements.
+  app.get('/api/katika/cash/finance', async (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const settings = await getFinanceSettings();
+      const [periods, owed, reports, baseline] = await Promise.all([getFinancePeriods(settings), getOwedToPlayers(), listReconciliations(), getLatestBaseline()]);
+      res.json({ success: true, settings, periods, owed, reports, hasBaseline: baseline !== null });
+    } catch (err) {
+      console.error('[KoraCash] Lecture des finances impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Lecture des finances impossible.' });
+    }
+  });
+
+  app.post('/api/katika/cash/finance-settings', express.json(), async (req, res) => {
+    const parsed = parseFinanceSettingsPatch(req.body);
+    if (!parsed.ok || !parsed.patch) {
+      return res.status(400).json({ success: false, error: parsed.error || 'Corps de requête invalide.' });
+    }
+    try {
+      const settings = await updateFinanceSettings(parsed.patch, (req as any).katikaUser?.email as string | undefined);
+      res.json({ success: true, settings });
+    } catch (err) {
+      console.error('[KoraCash] Enregistrement des réglages financiers impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Enregistrement impossible.' });
+    }
+  });
+
+  // Rapprochement à la demande. Un écart est seulement signalé : rien n'est gelé ni modifié ici.
+  app.post('/api/katika/cash/reconciliation', express.json(), async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const isBaseline = req.body?.baseline === true;
+    const note = typeof req.body?.note === 'string' ? req.body.note.trim().slice(0, 300) : '';
+    if (isBaseline && !note) {
+      return res.status(400).json({ success: false, error: 'Indique pourquoi tu enregistres ce point de départ.' });
+    }
+    try {
+      let campayBalance: number;
+      let source: 'API' | 'MANUAL';
+      if (req.body?.manualBalance !== undefined && req.body?.manualBalance !== null) {
+        const manual = parseManualBalance(req.body.manualBalance);
+        if (manual === null) return res.status(400).json({ success: false, error: 'Solde saisi invalide.' });
+        campayBalance = manual;
+        source = 'MANUAL';
+      } else {
+        const read = await readCampayBalance();
+        if (read.kind !== 'OK') return res.status(200).json({ success: false, needsManual: true, error: read.message });
+        campayBalance = read.balance;
+        source = 'API';
+      }
+      const [settings, owed, counters, baseline] = await Promise.all([getFinanceSettings(), getOwedToPlayers(), getFinanceTotals(), getLatestBaseline()]);
+      const result = computeReconciliation({
+        campayBalance,
+        owed: owed.owed,
+        counters,
+        baseline: isBaseline || !baseline ? null : { realMargin: baseline.realMargin, counters: baseline.counters },
+        settings,
+      });
+      const now = Date.now();
+      const doc = {
+        id: `rec_${now}_${randomBytes(4).toString('hex')}`,
+        environment: 'DEMO' as const,
+        source,
+        ...result,
+        ...(isBaseline ? { expectedMargin: result.realMargin, gap: 0, alert: false } : {}),
+        available: owed.available,
+        locked: owed.locked,
+        inFlight: owed.inFlight,
+        inFlightCount: owed.inFlightCount,
+        counters,
+        isBaseline,
+        ...(note ? { note } : {}),
+        actor: String((req as any).katikaUser?.email || 'katika'),
+        createdAt: now,
+      };
+      await saveReconciliation(doc);
+      res.json({ success: true, report: doc });
+    } catch (err) {
+      console.error('[KoraCash] Rapprochement impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Rapprochement impossible.' });
     }
   });
 

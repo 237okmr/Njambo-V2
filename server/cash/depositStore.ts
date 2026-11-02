@@ -12,6 +12,8 @@ import { applyMovement } from './walletLedger';
 import { CashWallet } from './cashTypes';
 import { verifyPhoneFromDeposit } from './phoneBookStore';
 import { getWithdrawalSettings } from './withdrawalStore';
+import { getFinanceSettings } from './financeStore';
+import { computeDepositQuote } from './financeRules';
 import {
   DepositDoc,
   DepositEnvironment,
@@ -28,11 +30,14 @@ export const CASH_DEPOSITS_COLLECTION = 'cash_deposits';
 /** Crée un dépôt en attente. Le montant doit avoir été validé par parseDepositAmount avant l'appel. */
 export async function createDeposit(uid: string, amount: number, mode: DepositMode, environment: DepositEnvironment = 'DEMO', phone?: string): Promise<DepositDoc> {
   const now = Date.now();
+  // Les frais sont figés ici : un changement de taux dans Katika ne touche pas un paiement déjà lancé.
+  const quote = mode === 'CAMPAY' ? computeDepositQuote(amount, (await getFinanceSettings()).depositFeePercent) : null;
   const deposit: DepositDoc = {
     id: newDepositId(),
     uid,
     environment,
     amount,
+    ...(quote ? { fee: quote.fee, credited: quote.credited } : {}),
     mode,
     status: 'PENDING',
     createdAt: now,
@@ -178,10 +183,11 @@ export async function confirmDeposit(id: string, providerRef?: string): Promise<
     ref: ledgerRefForDeposit(existing.id),
     uid: existing.uid,
     kind: 'DEPOSIT',
-    availableDelta: existing.amount,
+    availableDelta: existing.credited ?? existing.amount,
     lockedDelta: 0,
     environment: existing.environment ?? 'DEMO',
-    meta: { depositId: existing.id, mode: existing.mode },
+    meta: { depositId: existing.id, mode: existing.mode, ...(existing.fee ? { fee: existing.fee } : {}) },
+    ...(existing.mode === 'CAMPAY' ? { finance: { depositsGross: existing.amount, depositFees: existing.fee ?? 0 } } : {}),
   });
 
   const db = getFirebaseAdminAppDb();

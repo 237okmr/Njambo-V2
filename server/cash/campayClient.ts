@@ -23,6 +23,7 @@ import {
   transitionWithdrawal,
 } from './withdrawalStore';
 import { getWithdrawalGate } from './protectionStore';
+import { parseCampayBalance } from './financeRules';
 import {
   attachCampayReference,
   confirmDeposit,
@@ -297,6 +298,30 @@ export async function readCampayTransaction(reference: string): Promise<Transact
     };
   } catch {
     return { kind: 'UNAVAILABLE', message: 'Aucune réponse de Campay.' };
+  }
+}
+
+/**
+ * Solde de l'application chez Campay. Adresse relevée dans une bibliothèque non officielle : si elle ne répond pas, Katika propose
+ * la saisie du montant. Une réponse illisible n'est jamais prise pour un solde à zéro.
+ */
+export async function readCampayBalance(): Promise<{ kind: 'OK'; balance: number } | { kind: 'UNAVAILABLE'; message: string }> {
+  try {
+    const creds = await getProviderCredentials('campay', 'demo');
+    if (!creds) return { kind: 'UNAVAILABLE', message: 'Identifiants Campay absents.' };
+    const token = await resolveDemoToken(creds);
+    if (!token) return { kind: 'UNAVAILABLE', message: 'Jeton Campay indisponible.' };
+    const res = await fetch(`${CAMPAY_DEMO_BASE_URL}/api/balance/`, {
+      method: 'GET',
+      headers: { Authorization: `Token ${token}` },
+      signal: AbortSignal.timeout(providerTimeoutMs()),
+    });
+    if (!res.ok) return { kind: 'UNAVAILABLE', message: `Campay n’a pas donné son solde (statut ${res.status}). Saisis celui de ton tableau de bord.` };
+    const balance = parseCampayBalance(await res.json().catch(() => null));
+    if (balance === null) return { kind: 'UNAVAILABLE', message: 'Réponse de Campay illisible. Saisis le solde de ton tableau de bord.' };
+    return { kind: 'OK', balance };
+  } catch {
+    return { kind: 'UNAVAILABLE', message: 'Campay ne répond pas. Saisis le solde de ton tableau de bord.' };
   }
 }
 

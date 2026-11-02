@@ -23,6 +23,7 @@ import {
 import { computeMovement, isValidRef } from './cashLedgerRules';
 import { emitWalletChanged } from './walletEvents';
 import { dateKeyFor } from './withdrawalRules';
+import { addFinanceCounters } from './financeStore';
 import { CASH_DAILY_TOTALS_COLLECTION, CASH_PLAYER_ACTIVITY_COLLECTION, dailyTotalsDocId, playerActivityDocId } from './protectionStore';
 
 function walletFromData(uid: string, data: Partial<CashWallet> | undefined): CashWallet {
@@ -124,6 +125,8 @@ export async function applyMovement(input: CashMovementInput): Promise<ApplyMove
     tx.set(ledgerRef, entry);
     tx.set(walletRef, wallet);
 
+    if (input.finance) addFinanceCounters(tx, input.finance, now, input.environment ?? 'DEMO');
+
     // Totaux du jour et dernière activité : écrits avec le mouvement, ils ne peuvent pas s'écarter du registre.
     if (input.kind === 'DEPOSIT' || input.kind === 'TABLE_SETTLEMENT') {
       const isDeposit = input.kind === 'DEPOSIT';
@@ -134,7 +137,7 @@ export async function applyMovement(input: CashMovementInput): Promise<ApplyMove
         {
           uid: input.uid,
           dateKey,
-          ...(isDeposit ? { deposits: FieldValue.increment(input.availableDelta) } : { settlementNet: FieldValue.increment(input.lockedDelta) }),
+          ...(isDeposit ? { deposits: FieldValue.increment(input.finance?.depositsGross ?? input.availableDelta) } : { settlementNet: FieldValue.increment(input.lockedDelta) }),
         },
         { merge: true }
       );

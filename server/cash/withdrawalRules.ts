@@ -124,7 +124,7 @@ export const DEFAULT_WITHDRAWAL_SETTINGS: WithdrawalSettings = {
   enabled: false,
   autoThresholdFcfa: 5000,
   dailyAutoFcfa: 20000,
-  feePercent: 0,
+  feePercent: 1.5,
   maxPhones: 3,
   updatedAt: 0,
 };

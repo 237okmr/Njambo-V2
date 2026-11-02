@@ -1,17 +1,19 @@
 import React from 'react';
 import { CheckCircle2, Clock, Loader2, ShieldAlert } from 'lucide-react';
 import { CashPhone } from '../services/koraCashClient';
-import { DepositUi, formatFcfa, formatPhone } from '../services/koraCashFormat';
+import { DepositUi, formatFcfa, formatPhone, parseTypedAmount, quoteWithdrawal } from '../services/koraCashFormat';
 import { KoraCashDepositsState } from '../hooks/useKoraCashDeposits';
 
 interface KoraCashDepositPanelProps {
   ui: DepositUi;
   phones: CashPhone[];
   deposits: KoraCashDepositsState;
+  /** Frais à la charge du joueur : le montant crédité est annoncé avant le paiement. */
+  feePercent?: number;
 }
 
 /** Onglet Portefeuille, partie Déposer : l'état et le suivi des paiements sont portés par la page. */
-export const KoraCashDepositPanel: React.FC<KoraCashDepositPanelProps> = ({ ui, phones, deposits }) => {
+export const KoraCashDepositPanel: React.FC<KoraCashDepositPanelProps> = ({ ui, phones, deposits, feePercent = 0 }) => {
   const {
     selectedQuick,
     setSelectedQuick,
@@ -34,6 +36,10 @@ export const KoraCashDepositPanel: React.FC<KoraCashDepositPanelProps> = ({ ui, 
     handleVerifyListed,
     startAnotherDeposit,
   } = deposits;
+
+  const typedAmount = parseTypedAmount(deposits.typed, { min: ui.minAmount, max: ui.maxAmount ?? undefined });
+  const chosenAmount = deposits.typed.trim() !== '' ? (typedAmount.ok ? typedAmount.amount : undefined) : deposits.selectedQuick ?? undefined;
+  const quote = chosenAmount !== undefined ? quoteWithdrawal(chosenAmount, feePercent) : null;
 
   return (
     <div className="flex flex-col gap-2.5 p-3 rounded-2xl bg-slate-950/60 border border-slate-800">
@@ -109,6 +115,11 @@ export const KoraCashDepositPanel: React.FC<KoraCashDepositPanelProps> = ({ ui, 
           aria-label="Numéro Mobile Money"
           className="w-full h-10 px-3 rounded-xl bg-slate-900 border border-slate-700 focus:border-amber-400 outline-none text-xs text-white placeholder:text-slate-500"
         />
+      )}
+      {quote && quote.fee > 0 && (
+        <p id="kora-cash-deposit-quote" className="text-xs font-bold text-slate-200">
+          Tu paies {formatFcfa(chosenAmount)}, frais {formatFcfa(quote.fee)} : {formatFcfa(quote.net)} crédités sur ton solde.
+        </p>
       )}
       <button
         type="button"

@@ -282,7 +282,7 @@ export const KoraCashScreen: React.FC<KoraCashScreenProps> = ({ onClose, onOpenC
               {walletView === 'deposit' && (
                 <>
                   <p className={`px-3 py-2 rounded-xl text-xs font-bold border ${isLive ? 'bg-rose-500/10 text-rose-200 border-rose-500/30' : 'bg-amber-500/10 text-amber-200 border-amber-500/30'}`}>{ui.banner}</p>
-                  {ui.canDeposit ? <KoraCashDepositPanel ui={ui} phones={phones} deposits={deposits} /> : <SoonCard title="Dépôt bientôt ouvert" text="Le dépôt par Mobile Money n’est pas encore disponible." />}
+                  {ui.canDeposit ? <KoraCashDepositPanel ui={ui} phones={phones} deposits={deposits} feePercent={status?.depositFeePercent ?? 0} /> : <SoonCard title="Dépôt bientôt ouvert" text="Le dépôt par Mobile Money n’est pas encore disponible." />}
                 </>
               )}
 
@@ -308,6 +308,7 @@ export const KoraCashScreen: React.FC<KoraCashScreenProps> = ({ onClose, onOpenC
                     label="Dépôt"
                     value={!ui.canDeposit ? 'Bientôt' : ui.maxAmount !== null ? `${ui.minAmount} à ${formatFcfa(ui.maxAmount)}` : `À partir de ${formatFcfa(ui.minAmount)}`}
                   />
+                  {ui.canDeposit && (status?.depositFeePercent ?? 0) > 0 && <InfoRow label="Frais de dépôt" value={`${status?.depositFeePercent} %`} />}
                   <InfoRow label="Retrait" value={canWithdraw && withdrawalSettings ? `${withdrawalSettings.minAmount} à ${formatFcfa(withdrawalSettings.maxAmount)}` : 'Bientôt'} />
                   {canWithdraw && withdrawalSettings && <InfoRow label="Frais de retrait" value={`${withdrawalSettings.feePercent} %`} />}
                   {canPlayTables && cashTables && <InfoRow label="Mises aux tables" value={cashTables.betLevels.map((level) => formatFcfa(level)).join(' · ')} />}

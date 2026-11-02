@@ -22,6 +22,7 @@ import { KatikaCampayDepositsCard } from '../../cash/KatikaCampayDepositsCard';
 import { KatikaWithdrawalsCard } from '../../cash/KatikaWithdrawalsCard';
 import { KatikaCashTablesCard } from '../../cash/KatikaCashTablesCard';
 import { KatikaResponsibleGamingCard, KatikaSecurityCard } from '../../cash/KatikaProtectionCards';
+import { KatikaFinanceCard } from '../../cash/KatikaFinanceCard';
 
 const SUB_SECTIONS: { id: KoraCashSubSection; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: 'GENERAL', label: 'Général', icon: Power },
@@ -268,11 +269,12 @@ export const KatikaKoraCashTab: React.FC = () => {
         {activeSection === 'PROVIDERS' && <ProviderKeysPanel />}
         {activeSection === 'DEPOSITS_WITHDRAWALS' && <KatikaWithdrawalsCard />}
         {(activeSection === 'TABLES' || activeSection === 'RAKE') && <KatikaCashTablesCard />}
+        {activeSection === 'FINANCES' && <KatikaFinanceCard />}
         {activeSection === 'SECURITY_ALERTS' && <KatikaSecurityCard />}
         {activeSection === 'RESPONSIBLE_GAMING' && <KatikaResponsibleGamingCard />}
         {activeSection === 'WALLETS_TRANSACTIONS' && <KatikaCampayDepositsCard />}
         {activeSection === 'WALLETS_TRANSACTIONS' && <KatikaDemoCleanupCard />}
-        {activeSection !== 'GENERAL' && activeSection !== 'PROVIDERS' && activeSection !== 'TABLES' && activeSection !== 'RAKE' && activeSection !== 'SECURITY_ALERTS' && activeSection !== 'RESPONSIBLE_GAMING' && renderPlaceholder(activeSection)}
+        {activeSection !== 'GENERAL' && activeSection !== 'PROVIDERS' && activeSection !== 'TABLES' && activeSection !== 'RAKE' && activeSection !== 'FINANCES' && activeSection !== 'SECURITY_ALERTS' && activeSection !== 'RESPONSIBLE_GAMING' && renderPlaceholder(activeSection)}
       </div>
     </div>
   );

@@ -42,6 +42,7 @@ export async function fetchKoraCashStatus(): Promise<KoraCashPublicStatus | null
       enabled: data.enabled === true,
       environment: data.environment === 'LIVE' ? 'LIVE' : 'DEMO',
       depositMode: data.depositMode === 'CAMPAY' ? 'CAMPAY' : 'SIMULATED',
+      depositFeePercent: Number(data.depositFeePercent) || 0,
     };
   } catch {
     return null;

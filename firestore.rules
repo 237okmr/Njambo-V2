@@ -519,6 +519,15 @@ service cloud.firestore {
     match /cash_collusion_alerts/{alertId} {
       allow read, write: if false;
     }
+    match /cash_finance_daily/{docId} {
+      allow read, write: if false;
+    }
+    match /cash_finance_totals/{docId} {
+      allow read, write: if false;
+    }
+    match /cash_reconciliations/{docId} {
+      allow read, write: if false;
+    }
     // Identifiants des prestataires de paiement (chiffrés) : jamais accessibles depuis un client.
     match /server_secrets/{docId} {
       allow read, write: if false;

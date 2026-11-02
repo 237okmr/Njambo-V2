@@ -43,6 +43,8 @@ export interface CashWallet {
   updatedAt: number;
 }
 
+import type { FinanceCounters } from './financeRules';
+
 export type CashMeta = Record<string, string | number | boolean | null>;
 
 export interface CashMovementInput {
@@ -57,6 +59,8 @@ export interface CashMovementInput {
   note?: string;
   /** Portefeuille concerné ; absent : démo. */
   environment?: CashEnvironment;
+  /** Totaux financiers à ajouter avec ce mouvement, seulement s'il est réellement appliqué. */
+  finance?: Partial<FinanceCounters>;
 }
 
 export interface CashLedgerEntry {

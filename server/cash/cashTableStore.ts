@@ -9,6 +9,7 @@ import { recordServerReads } from '../katika/readBudget';
 import { KORA_CASH_CONFIG_COLLECTION, getKoraCashConfig } from './cashConfigStore';
 import { CashEnvironment, ledgerCollectionFor } from './cashTypes';
 import { applyMovement } from './walletLedger';
+import { addFinanceCounters } from './financeStore';
 import { CashPartieDoc, CashSeatDoc, CashTableBook, CashTableDeps } from './cashTables';
 import {
   CASH_TABLE_CONSENT_VERSION,
@@ -111,7 +112,15 @@ function createLiveCashTableDeps(): CashTableDeps {
       return snap.exists ? (snap.data() as CashSeatDoc) : null;
     },
     recordPartie: async (doc) => {
-      await getFirebaseAdminAppDb().collection(CASH_TABLE_PARTIES_COLLECTION).doc(doc.id).set(doc);
+      // La commission ne compte qu'à la première écriture de cette partie : la rejouer n'ajoute rien aux totaux.
+      const db = getFirebaseAdminAppDb();
+      const ref = db.collection(CASH_TABLE_PARTIES_COLLECTION).doc(doc.id);
+      await db.runTransaction(async (tx) => {
+        const snap = await tx.get(ref);
+        if (snap.exists) return;
+        tx.set(ref, doc);
+        addFinanceCounters(tx, { rake: doc.rake }, doc.createdAt, 'DEMO');
+      });
     },
     sumTableLocked: async (uid, tableId, environment: CashEnvironment) => {
       const snap = await getFirebaseAdminAppDb().collection(ledgerCollectionFor(environment)).where('meta.tableId', '==', tableId).get();

@@ -69,7 +69,7 @@ function harness(opts: HarnessOptions = {}) {
   const gate: { current: { blockedMessage: string | null; reviewReasons: string[] } } = { current: { blockedMessage: null, reviewReasons: [] } };
   const deps: WithdrawalDeps = {
     async getSettings() {
-      return { ...DEFAULT_WITHDRAWAL_SETTINGS, enabled: true, ...opts.settings };
+      return { ...DEFAULT_WITHDRAWAL_SETTINGS, enabled: true, feePercent: 0, ...opts.settings };
     },
     async getProtectionGate() {
       return gate.current;
@@ -518,8 +518,8 @@ describe('Retrait — règles pures', () => {
     assert.equal(def.autoThresholdFcfa, 5000);
     assert.equal(def.dailyAutoFcfa, 20000);
     assert.equal(def.maxPhones, 3);
-    assert.equal(def.feePercent, 0);
-    assert.equal(normalizeWithdrawalSettings({ enabled: 'oui', feePercent: 99 }).feePercent, 0);
+    assert.equal(def.feePercent, 1.5);
+    assert.equal(normalizeWithdrawalSettings({ enabled: 'oui', feePercent: 99 }).feePercent, 1.5);
     assert.equal(parseWithdrawalSettingsPatch({ autoThresholdFcfa: 2000 }).ok, true);
     assert.equal(parseWithdrawalSettingsPatch({ autoThresholdFcfa: -1 }).ok, false);
     assert.equal(parseWithdrawalSettingsPatch({ feePercent: 21 }).ok, false);

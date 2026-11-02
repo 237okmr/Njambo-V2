@@ -8,6 +8,7 @@ import { getFirebaseAdminAppDb } from '../firebaseAdmin';
 import { recordServerReads } from '../katika/readBudget';
 import { KORA_CASH_CONFIG_COLLECTION } from './cashConfigStore';
 import { ledgerCollectionFor } from './cashTypes';
+import { addFinanceCounters } from './financeStore';
 import {
   DEFAULT_WITHDRAWAL_SETTINGS,
   WithdrawalDoc,
@@ -67,6 +68,8 @@ export async function transitionWithdrawal(id: string, from: WithdrawalStatus[],
     if (!from.includes(current.status) || !canTransitionWithdrawal(current.status, to)) return null;
     const next: WithdrawalDoc = { ...current, ...patch, status: to, updatedAt: Date.now() };
     tx.set(ref, next);
+    // Un retrait n'arrive à SUCCESS qu'une fois : il ne peut pas compter deux fois dans les totaux.
+    if (to === 'SUCCESS') addFinanceCounters(tx, { withdrawalsNet: next.net, withdrawalFees: next.fee }, next.updatedAt, next.environment);
     return next;
   });
 }

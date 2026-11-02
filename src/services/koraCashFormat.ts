@@ -13,6 +13,8 @@ export interface KoraCashPublicStatus {
   environment: KoraCashEnvironment;
   /** Absent chez un serveur plus ancien : traité comme dépôt fictif. */
   depositMode?: KoraCashDepositMode;
+  /** Frais de dépôt à la charge du joueur. */
+  depositFeePercent?: number;
 }
 
 /** Même minimum que le serveur (server/cash/depositRules.ts). Le serveur reste seul juge : ce chiffre ne sert qu'à guider la saisie. */
