@@ -32,6 +32,23 @@ export function isKnownGamePath(pathname: string): boolean {
   return path === '/' || path === '/game' || screenFromPath(pathname) !== null;
 }
 
+/**
+ * Vrai si l'adresse ouvre la console d'administration : /katika, /copilot ou un paramètre prévu pour cela.
+ * Un mot « katika » ailleurs dans l'adresse (?ref=katika, ?join=KATIKA) n'ouvre rien.
+ * Même logique dans le script de démarrage d'index.html.
+ */
+export function isConsoleLocation(pathname: string, search: string): boolean {
+  const path = pathname.toLowerCase();
+  if (path.startsWith('/katika') || path.startsWith('/copilot')) return true;
+  const params = new URLSearchParams(search.toLowerCase());
+  return (
+    params.has('copilot') ||
+    params.has('katika') ||
+    params.get('mode') === 'copilot' ||
+    params.get('view') === 'copilot'
+  );
+}
+
 /** Adresse à afficher selon les écrans ouverts : celui qui est au premier plan l'emporte. */
 export function routePathFor(open: Partial<Record<RoutedScreen, boolean>>): string {
   const byPriority: RoutedScreen[] = ['notifications', 'leaderboard', 'profile', 'rules', 'multiplayer'];

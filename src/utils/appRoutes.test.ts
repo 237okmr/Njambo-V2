@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { GAME_HOME_PATH, ROUTE_PATHS, isKnownGamePath, routePathFor, screenFromPath } from './appRoutes';
+import { GAME_HOME_PATH, ROUTE_PATHS, isConsoleLocation, isKnownGamePath, routePathFor, screenFromPath } from './appRoutes';
 import { clearBackLayers, consumeBackLayer, pushBackLayer } from './backLayers';
 
 describe('adresses des écrans', () => {
@@ -38,6 +38,25 @@ describe('adresses des écrans', () => {
     assert.equal(routePathFor({ multiplayer: true, profile: true }), ROUTE_PATHS.profile);
     assert.equal(routePathFor({ profile: true, leaderboard: true }), ROUTE_PATHS.leaderboard);
     assert.equal(routePathFor({ leaderboard: true, notifications: true }), ROUTE_PATHS.notifications);
+  });
+});
+
+describe('accès à la console Katika', () => {
+  it('ouvre la console sur ses chemins et ses paramètres prévus', () => {
+    assert.equal(isConsoleLocation('/katika', ''), true);
+    assert.equal(isConsoleLocation('/katika/copilot', ''), true);
+    assert.equal(isConsoleLocation('/copilot/', ''), true);
+    assert.equal(isConsoleLocation('/', '?copilot=1'), true);
+    assert.equal(isConsoleLocation('/', '?katika'), true);
+    assert.equal(isConsoleLocation('/', '?mode=copilot'), true);
+    assert.equal(isConsoleLocation('/', '?view=copilot'), true);
+  });
+
+  it("ne s'ouvre pas pour un simple mot dans l'adresse", () => {
+    assert.equal(isConsoleLocation('/game/', '?ref=katika'), false);
+    assert.equal(isConsoleLocation('/game/', '?join=KATIKA'), false);
+    assert.equal(isConsoleLocation('/game/', '?source=copilot-link'), false);
+    assert.equal(isConsoleLocation('/game/palmares', ''), false);
   });
 });
 

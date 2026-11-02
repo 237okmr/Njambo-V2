@@ -181,8 +181,8 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
 
               <span className="hidden min-[360px]:inline text-slate-600 shrink-0">›</span>
               <span className="text-white font-bold flex items-center gap-1 shrink-0">
-                <span className="hidden xs:inline">Manche</span>
-                <span className="xs:hidden">M.</span>
+                <span className="hidden xs:inline">Partie</span>
+                <span className="xs:hidden">P.</span>
                 <span className="text-amber-300">{activeGameState.partieCount || activeGameState.roundCount || 1}</span>
               </span>
             </div>

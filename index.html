@@ -27,7 +27,8 @@
           var p = window.location.pathname.toLowerCase();
           var s = window.location.search.toLowerCase();
           var h = window.location.hash.toLowerCase();
-          var isCopilot = p.startsWith('/katika') || p.startsWith('/copilot') || s.indexOf('copilot') !== -1 || s.indexOf('katika') !== -1 || h.indexOf('copilot') !== -1 || h.indexOf('katika') !== -1;
+          var q = new URLSearchParams(s);
+          var isCopilot = p.startsWith('/katika') || p.startsWith('/copilot') || q.has('copilot') || q.has('katika') || q.get('mode') === 'copilot' || q.get('view') === 'copilot';
           if (isCopilot) {
             document.title = 'Njambo Copilote - IA & Cockpit';
             var m = document.getElementById('app-manifest');

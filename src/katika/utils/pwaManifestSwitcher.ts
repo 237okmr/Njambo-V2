@@ -1,4 +1,5 @@
 import { runPwaDiagnostic } from './pwaDiagnostic';
+import { isConsoleLocation } from '../../utils/appRoutes';
 
 /**
  * PWA Manifest & App Identity Switcher
@@ -9,18 +10,7 @@ import { runPwaDiagnostic } from './pwaDiagnostic';
 export function syncPwaIdentityFromLocation() {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
 
-  const path = window.location.pathname.toLowerCase();
-  const search = window.location.search.toLowerCase();
-  const hash = window.location.hash.toLowerCase();
-
-  const isCopilotOrKatika =
-    path.startsWith('/katika') ||
-    path.startsWith('/copilot') ||
-    search.includes('copilot') ||
-    search.includes('katika') ||
-    hash.includes('copilot') ||
-    hash.includes('katika') ||
-    search.includes('view=copilot');
+  const isCopilotOrKatika = isConsoleLocation(window.location.pathname, window.location.search);
 
   setPwaIdentity(isCopilotOrKatika ? 'COPILOT' : 'GAME');
 }

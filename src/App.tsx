@@ -6,7 +6,7 @@ import { Card, GameState, Player, SavedManche, AIDifficulty, GamePhase, GameInvi
 import { DEFAULT_BASE_BET, DEFAULT_INITIAL_CAPITAL } from './utils/deck';
 import { sounds, triggerHaptic } from './utils/sound';
 import { getPwaShareBase } from './utils/pwaLinks';
-import { GAME_HOME_PATH, isKnownGamePath, routePathFor, screenFromPath } from './utils/appRoutes';
+import { GAME_HOME_PATH, isConsoleLocation, isKnownGamePath, routePathFor, screenFromPath } from './utils/appRoutes';
 import { consumeBackLayer } from './utils/backLayers';
 
 // Custom Hooks
@@ -90,32 +90,12 @@ export function App() {
   // Katika Route & Mobile Copilot Detection
   const [isKatikaRoute, setIsKatikaRoute] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
-    const path = window.location.pathname.toLowerCase();
-    const search = window.location.search.toLowerCase();
-    const hash = window.location.hash.toLowerCase();
-    return (
-      path.startsWith('/katika') ||
-      path.startsWith('/copilot') ||
-      search.includes('katika') ||
-      search.includes('copilot') ||
-      hash.includes('katika') ||
-      hash.includes('copilot')
-    );
+    return isConsoleLocation(window.location.pathname, window.location.search);
   });
 
   useEffect(() => {
     const handleLocationChange = () => {
-      const path = window.location.pathname.toLowerCase();
-      const search = window.location.search.toLowerCase();
-      const hash = window.location.hash.toLowerCase();
-      setIsKatikaRoute(
-        path.startsWith('/katika') ||
-        path.startsWith('/copilot') ||
-        search.includes('katika') ||
-        search.includes('copilot') ||
-        hash.includes('katika') ||
-        hash.includes('copilot')
-      );
+      setIsKatikaRoute(isConsoleLocation(window.location.pathname, window.location.search));
       syncPwaIdentityFromLocation();
     };
 

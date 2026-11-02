@@ -1,3 +1,4 @@
+import { isConsoleLocation } from '../../utils/appRoutes';
 /**
  * PWA Diagnostic Script for Njambo Kora & Njambo Copilote
  * Validates manifest configuration, active manifest link, scope isolation and Service Worker status.
@@ -71,18 +72,7 @@ export async function runPwaDiagnostic(silent = false): Promise<PwaDiagnosticRep
     };
   }
 
-  const path = window.location.pathname.toLowerCase();
-  const search = window.location.search.toLowerCase();
-  const hash = window.location.hash.toLowerCase();
-
-  const isCopilotExpected =
-    path.startsWith('/katika') ||
-    path.startsWith('/copilot') ||
-    search.includes('copilot') ||
-    search.includes('katika') ||
-    hash.includes('copilot') ||
-    hash.includes('katika') ||
-    search.includes('view=copilot');
+  const isCopilotExpected = isConsoleLocation(window.location.pathname, window.location.search);
 
   const expectedIdentity: 'GAME' | 'COPILOT' = isCopilotExpected ? 'COPILOT' : 'GAME';
   const expectedManifest = isCopilotExpected
