@@ -85,7 +85,7 @@ const DEFAULT_BLANK_SPEC: VisualSpec = {
       priority: 2,
     },
   ],
-  cta: { text: 'Viens tester la bêta' },
+  cta: { text: 'Viens jouer' },
   footer: { text: 'njambo-kora.ai.studio', whatsapp: true, app: true },
 };
 
@@ -368,7 +368,7 @@ export const KatikaVisualComposer: React.FC<KatikaVisualComposerProps> = ({
           id: newId,
           type: 'STAT',
           value: '100%',
-          label: 'ACCÈS LIBRE EN BÊTA',
+          label: 'JOUE MAINTENANT',
           sublabel: 'Accessible directement sur navigateur',
           priority: 1,
         };
@@ -410,7 +410,7 @@ export const KatikaVisualComposer: React.FC<KatikaVisualComposerProps> = ({
         newBlock = {
           id: newId,
           type: 'STEPS',
-          items: ['Ouvre le lien de la bêta', 'Choisis ton pseudo', 'Entre sur le tapis vert'],
+          items: ['Ouvre le lien du jeu', 'Choisis ton pseudo', 'Entre sur le tapis vert'],
           priority: 2,
         };
         break;
@@ -854,7 +854,7 @@ export const KatikaVisualComposer: React.FC<KatikaVisualComposerProps> = ({
                   value={spec.cta.text}
                   onChange={(e) => setSpec({ ...spec, cta: { ...spec.cta, text: e.target.value } })}
                   className="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-amber-300 font-semibold"
-                  placeholder="ex: Viens tester la bêta"
+                  placeholder="ex: Viens jouer"
                 />
               </div>
             </div>
@@ -1330,7 +1330,7 @@ export const KatikaVisualComposer: React.FC<KatikaVisualComposerProps> = ({
                 <div className="font-semibold text-slate-300">💡 Exemples de brief :</div>
                 <div>• « Affiche mème drôle sur les joueurs qui perdent au Kora »</div>
                 <div>• « Comparatif 1vs1 entre joueur prudent et joueur offensif »</div>
-                <div>• « Annonce de mise à jour avec nouvelle version bêta »</div>
+                <div>• « Annonce de mise à jour »</div>
               </div>
             </div>
 

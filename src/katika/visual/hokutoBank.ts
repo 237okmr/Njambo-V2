@@ -33,15 +33,15 @@ export const LOCAL_STORIES: Record<StoryTag, string[]> = {
     "On a tous failli claquer la porte après un mauvais Kora. Moi le premier. Rester jusqu'au bout, c'est ça qui fait la bonne ambiance à la table.",
   ],
   DEBUTANT: [
-    "Tu débutes ? Pas de stress, on a tous commencé par poser une mauvaise carte. Un tour de bêta, deux parties, et les règles te rentrent toutes seules.",
+    "Tu débutes ? Pas de stress, on a tous commencé par poser une mauvaise carte. Un tour, deux parties, et les règles te rentrent toutes seules.",
     "Les règles du Njambo tiennent en deux minutes, mais les finesses prennent des mois. C'est pour ça qu'on y revient. Viens, on t'explique à la table.",
   ],
   TABLE: [
     "Une table, trois amis, un paquet de cartes. Rien de plus, rien de moins. Je construis ce jeu pour retrouver cette ambiance, même quand on est loin les uns des autres.",
-    "Le plus beau dans une partie de Njambo, c'est les commentaires autour de la table. Je voulais garder ça dans la bêta.",
+    "Le plus beau dans une partie de Njambo, c'est les commentaires autour de la table. Je voulais garder ça dans le jeu.",
   ],
   COMMUNAUTE: [
-    "Je construis ce jeu petit à petit, avec les retours des joueurs de la bêta. Chaque partie que tu joues m'aide à l'améliorer. Merci d'être là.",
+    "Je construis ce jeu petit à petit, avec les retours des premiers joueurs. Chaque partie que tu joues m'aide à l'améliorer. Merci d'être là.",
     "Les Maîtres du Kora grandissent doucement. Pas de grand discours, juste des parties entre potes et un jeu qui s'améliore à chaque retour.",
   ],
 };

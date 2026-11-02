@@ -1,5 +1,6 @@
 import { sanitizeNjamboCard } from '../types/socialVisuals';
 import { buildCaptions } from './captionEngine';
+import { sanitizePublicText } from './moneyPolicy';
 import {
   ALLOWED_POST_HASHTAGS,
   BLOCK_LIMITS,
@@ -86,19 +87,10 @@ export function cleanTechnicalIdentifiers(text: string): string {
   return clean.trim();
 }
 
-/**
- * Remplace "gratuit" sans "bêta" par une formulation bêta
- */
+/** Remplace "gratuit" et retire les mots réservés à l'équipe. */
 export function sanitizeGratuitText(text: string): string {
   if (!text || typeof text !== 'string') return '';
-  let clean = text;
-  // 100% gratuit -> bêta ouverte
-  clean = clean.replace(/\b100%\s*gratuit\b/gi, 'bêta ouverte');
-  // gratuitement -> en bêta
-  clean = clean.replace(/\bgratuitement\b/gi, 'en bêta');
-  // gratuit isolé sans bêta
-  clean = clean.replace(/\bgratuit\b(?!\s*(?:en\s+)?bêta)/gi, 'en bêta');
-  return clean;
+  return sanitizePublicText(text);
 }
 
 function truncateWords(text: string, maxWords: number): { text: string; truncated: boolean } {
@@ -175,8 +167,8 @@ export function validateAndRepairSpec(
     const beforeGratuit = t;
     t = sanitizeGratuitText(t);
     if (t !== beforeGratuit) {
-      if (!warnings.includes('Ajustement automatique de la mention "gratuit" vers la bêta.')) {
-        warnings.push('Ajustement automatique de la mention "gratuit" vers la bêta.');
+      if (!warnings.includes('Texte corrigé : « gratuit », « bêta », « démo » ou « version test » remplacé. Relis la phrase.')) {
+        warnings.push('Texte corrigé : « gratuit », « bêta », « démo » ou « version test » remplacé. Relis la phrase.');
       }
       needsReview = true;
     }
@@ -561,7 +553,7 @@ export function validateAndRepairSpec(
     const newHook: VisualBlock = {
       id: 'b_hook_auto',
       type: 'HOOK',
-      text: 'Njambo Kora en Bêta',
+      text: 'Njambo Kora',
       priority: 1,
     };
     // Insère le HOOK juste après un BADGE s'il y en a un, sinon en position 0
@@ -592,7 +584,7 @@ export function validateAndRepairSpec(
   }
 
   // 6. Validation du CTA
-  const rawCtaText = processText(raw.cta?.text || 'Joue en bêta');
+  const rawCtaText = processText(raw.cta?.text || 'Joue');
   const { text: cleanCtaText, truncated: ctaTruncated } = truncateWords(
     rawCtaText,
     BLOCK_LIMITS.CTA_TEXT_MAX_WORDS
@@ -602,7 +594,7 @@ export function validateAndRepairSpec(
   }
 
   const cta = {
-    text: cleanCtaText || 'Joue en bêta',
+    text: cleanCtaText || 'Joue',
     intent: raw.cta?.intent || 'PLAY',
   };
 

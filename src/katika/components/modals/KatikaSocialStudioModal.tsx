@@ -140,14 +140,14 @@ export const KatikaSocialStudioModal: React.FC<KatikaSocialStudioModalProps> = (
             label: '3 KOUBI',
             badge: 'LE KORA AU 5e TOUR',
           },
-          ctaText: 'Rejoins les Maîtres du Kora • En bêta',
+          ctaText: 'Rejoins les Maîtres du Kora',
           linkUrl: `${NJAMBO_DOMAIN} • WhatsApp officiel`,
           postCaption: totalManches != null
-            ? `🃏 CHIFFRE DE LA SEMAINE NJAMBO KORA 🔥\n\nC'est le grand bilan de l'arène : cette semaine, pas moins de ${totalManches} manches ont été disputées par nos joueurs !\n\nAu total, ${koraCount ?? 0} Kora ont retourné des donnes in extremis au 5e tour avec un 3 posé au moment décisif !\n\n👉 Vous étiez de la partie ? Combien de Kora avez-vous validés cette semaine ? Dites-le-nous en commentaire !\n\n🎮 Lien pour tester la bêta (PC & Mobile) : ${NJAMBO_APP_URL}\n💬 Rejoins notre groupe WhatsApp officiel : ${NJAMBO_WHATSAPP_GROUP_URL}`
-            : `🃏 CHIFFRE DE LA SEMAINE NJAMBO KORA 🔥\n\nLes statistiques de la semaine sont en cours de synchronisation dans l'arène Katika.\n\n🎮 Lien pour tester la bêta (PC & Mobile) : ${NJAMBO_APP_URL}\n💬 Rejoins notre groupe WhatsApp officiel : ${NJAMBO_WHATSAPP_GROUP_URL}`,
+            ? `🃏 CHIFFRE DE LA SEMAINE NJAMBO KORA 🔥\n\nC'est le grand bilan de l'arène : cette semaine, pas moins de ${totalManches} manches ont été disputées par nos joueurs !\n\nAu total, ${koraCount ?? 0} Kora ont retourné des donnes in extremis au 5e tour avec un 3 posé au moment décisif !\n\n👉 Vous étiez de la partie ? Combien de Kora avez-vous validés cette semaine ? Dites-le-nous en commentaire !\n\n🎮 Lien du jeu (PC & Mobile) : ${NJAMBO_APP_URL}\n💬 Rejoins notre groupe WhatsApp officiel : ${NJAMBO_WHATSAPP_GROUP_URL}`
+            : `🃏 CHIFFRE DE LA SEMAINE NJAMBO KORA 🔥\n\nLes statistiques de la semaine sont en cours de synchronisation dans l'arène Katika.\n\n🎮 Lien du jeu (PC & Mobile) : ${NJAMBO_APP_URL}\n💬 Rejoins notre groupe WhatsApp officiel : ${NJAMBO_WHATSAPP_GROUP_URL}`,
           whatsAppMessage: totalManches != null
-            ? `🃏 *CHIFFRE DE LA SEMAINE NJAMBO KORA* 🔥\n\n*${totalManches} manches* jouées et *${koraCount ?? 0} Kora* spectaculaires validés cette semaine !\n\n👉 *Joue en bêta en ligne :* ${NJAMBO_APP_URL}\n💬 *Rejoins le groupe officiel des joueurs :* ${NJAMBO_WHATSAPP_GROUP_URL}`
-            : `🃏 *CHIFFRE DE LA SEMAINE NJAMBO KORA* 🔥\n\nStatistiques en cours de calcul.\n\n👉 *Joue en bêta en ligne :* ${NJAMBO_APP_URL}\n💬 *Rejoins le groupe officiel :* ${NJAMBO_WHATSAPP_GROUP_URL}`,
+            ? `🃏 *CHIFFRE DE LA SEMAINE NJAMBO KORA* 🔥\n\n*${totalManches} manches* jouées et *${koraCount ?? 0} Kora* spectaculaires validés cette semaine !\n\n👉 *Joue en ligne :* ${NJAMBO_APP_URL}\n💬 *Rejoins le groupe officiel des joueurs :* ${NJAMBO_WHATSAPP_GROUP_URL}`
+            : `🃏 *CHIFFRE DE LA SEMAINE NJAMBO KORA* 🔥\n\nStatistiques en cours de calcul.\n\n👉 *Joue en ligne :* ${NJAMBO_APP_URL}\n💬 *Rejoins le groupe officiel :* ${NJAMBO_WHATSAPP_GROUP_URL}`,
           hashtags: ['#NjamboKora', '#ChiffreDeLaSemaine', '#MaitresDuKora', '#CamerounGaming', '#JeuxAfricains'],
         };
 
@@ -166,9 +166,9 @@ export const KatikaSocialStudioModal: React.FC<KatikaSocialStudioModalProps> = (
             suit: '♥',
             label: 'DOUBLE KORA',
           },
-          ctaText: 'Viens tester ton niveau • En bêta',
+          ctaText: 'Viens tester ton niveau',
           linkUrl: `${NJAMBO_DOMAIN} • Communauté WhatsApp`,
-          postCaption: `🎙️ PAROLE DE JOUEUR — LA PASSION DU NJAMBO !\n\n« Quand tu places le Double Kora au 5e tour alors que ton adversaire croyait avoir la main... la table entière se tait. Katika restitue exactement cette adrénaline des soirées au quartier ! » — Témoignage joueur.\n\nMerci à tous nos joueurs pour leurs retours passionnés. Le Njambo en ligne continue de grandir avec vous !\n\nToi aussi, rejoins l'aventure et fais-nous part de tes impressions 👇\n🎮 Version bêta : ${NJAMBO_APP_URL}\n💬 Groupe WhatsApp officiel : ${NJAMBO_WHATSAPP_GROUP_URL}`,
+          postCaption: `🎙️ PAROLE DE JOUEUR — LA PASSION DU NJAMBO !\n\n« Quand tu places le Double Kora au 5e tour alors que ton adversaire croyait avoir la main... la table entière se tait. Katika restitue exactement cette adrénaline des soirées au quartier ! » — Témoignage joueur.\n\nMerci à tous nos joueurs pour leurs retours passionnés. Le Njambo en ligne continue de grandir avec vous !\n\nToi aussi, rejoins l'aventure et fais-nous part de tes impressions 👇\n🎮 Joue ici : ${NJAMBO_APP_URL}\n💬 Groupe WhatsApp officiel : ${NJAMBO_WHATSAPP_GROUP_URL}`,
           whatsAppMessage: `🎙️ *PAROLE DE JOUEUR NJAMBO !* 🇨🇲\n\n« Quand tu places le Double Kora au 5e tour... la table entière se tait ! »\n\nViens défier les maîtres en direct :\n👉 ${NJAMBO_APP_URL}\n💬 *Groupe WhatsApp de la communauté :* ${NJAMBO_WHATSAPP_GROUP_URL}`,
           hashtags: ['#Temoignage', '#NjamboKora', '#CommunauteNjambo', '#Cameroun', '#KoraHunter'],
         };
@@ -184,10 +184,10 @@ export const KatikaSocialStudioModal: React.FC<KatikaSocialStudioModalProps> = (
             { rank: '9', suit: '♠', label: 'BLACK' },
             { rank: '3', suit: '♥', label: '3 KOUBI' },
           ],
-          ctaText: 'Mets la stratégie en pratique • En bêta',
+          ctaText: 'Mets la stratégie en pratique',
           linkUrl: `${NJAMBO_DOMAIN} • Rejoins le groupe`,
-          postCaption: `💡 L'ASTUCE DU MAÎTRE : RÉUSSIR SON KORA 🃏\n\nBeaucoup de joueurs débutants se précipitent pour remporter les premiers tours avec leurs plus fortes cartes. Erreur fatale !\n\n👉 La clé du Njambo Kora réside dans la patience : gardez le contrôle, observez les cartes maîtresses déjà défaussées et frappez avec votre 3 au 5e tour lorsque l'adversaire n'a plus de réponse.\n\nQuelle est votre tactique préférée ? Attaque directe ou embuscade au dernier tour ? 💬 Répondez ci-dessous !\n\n🎮 Joue en bêta : ${NJAMBO_APP_URL}\n💬 Débats et conseils sur WhatsApp : ${NJAMBO_WHATSAPP_GROUP_URL}`,
-          whatsAppMessage: `💡 *L'ASTUCE DU MAÎTRE : RÉUSSIR SON KORA !* 🇨🇲\n\nCompte toujours les cartes défaussées et prépare ton 3 pour le 5e tour !\n\n👉 *Pratique tes coups en bêta :* ${NJAMBO_APP_URL}\n💬 *Rejoins le groupe WhatsApp :* ${NJAMBO_WHATSAPP_GROUP_URL}`,
+          postCaption: `💡 L'ASTUCE DU MAÎTRE : RÉUSSIR SON KORA 🃏\n\nBeaucoup de joueurs débutants se précipitent pour remporter les premiers tours avec leurs plus fortes cartes. Erreur fatale !\n\n👉 La clé du Njambo Kora réside dans la patience : gardez le contrôle, observez les cartes maîtresses déjà défaussées et frappez avec votre 3 au 5e tour lorsque l'adversaire n'a plus de réponse.\n\nQuelle est votre tactique préférée ? Attaque directe ou embuscade au dernier tour ? 💬 Répondez ci-dessous !\n\n🎮 Joue en ligne : ${NJAMBO_APP_URL}\n💬 Débats et conseils sur WhatsApp : ${NJAMBO_WHATSAPP_GROUP_URL}`,
+          whatsAppMessage: `💡 *L'ASTUCE DU MAÎTRE : RÉUSSIR SON KORA !* 🇨🇲\n\nCompte toujours les cartes défaussées et prépare ton 3 pour le 5e tour !\n\n👉 *Pratique tes coups :* ${NJAMBO_APP_URL}\n💬 *Rejoins le groupe WhatsApp :* ${NJAMBO_WHATSAPP_GROUP_URL}`,
           hashtags: ['#AstuceDuJour', '#StrategieNjambo', '#ReglesDuJeu', '#DoubleKora', '#NjamboMaster'],
         };
 
@@ -205,7 +205,7 @@ export const KatikaSocialStudioModal: React.FC<KatikaSocialStudioModalProps> = (
           },
           ctaText: 'Identifie ce menteur en commentaire 🤣',
           linkUrl: `${NJAMBO_DOMAIN} • Groupe WhatsApp`,
-          postCaption: `😂 LA VÉRITÉ SUR LES JOUEURS DE NJAMBO AU QUARTIER !\n\nOn a tous cet ami à la table qui répète à chaque tour :\n« Hé gars, ma donne est gâtée, je n'ai rien reçu, je jette n'importe quoi... »\n\nEt dès que tu t'avances confiant au 5e tour... BAM ! Kora sec avec un 3, il rafle la mise et commence à danser !\n\nTague cet ami en commentaire sans rien dire 🤣👇\n\n🎮 Joue au Njambo en bêta ouverte : ${NJAMBO_APP_URL}\n💬 Ambiance garantie sur notre groupe WhatsApp : ${NJAMBO_WHATSAPP_GROUP_URL}`,
+          postCaption: `😂 LA VÉRITÉ SUR LES JOUEURS DE NJAMBO AU QUARTIER !\n\nOn a tous cet ami à la table qui répète à chaque tour :\n« Hé gars, ma donne est gâtée, je n'ai rien reçu, je jette n'importe quoi... »\n\nEt dès que tu t'avances confiant au 5e tour... BAM ! Kora sec avec un 3, il rafle la mise et commence à danser !\n\nTague cet ami en commentaire sans rien dire 🤣👇\n\n🎮 Joue au Njambo : ${NJAMBO_APP_URL}\n💬 Ambiance garantie sur notre groupe WhatsApp : ${NJAMBO_WHATSAPP_GROUP_URL}`,
           whatsAppMessage: `😂 *LA LOI DU NJAMBO AU MBOA !* 🇨🇲\n\n« J'ai une main pourrie, je jette n'importe quoi... »\nEt au 5e tour : BAM ! Kora avec le 3 ! 🃏🤣\n\nQui est ce joueur dans le groupe ? Démasquez-vous sur la table :\n👉 ${NJAMBO_APP_URL}\n💬 *Rejoins notre groupe WhatsApp officiel :* ${NJAMBO_WHATSAPP_GROUP_URL}`,
           hashtags: ['#HumourCameroun', '#NjamboMeme', '#LaLoiDuKora', '#AmbianceQuartier', '#DoubleKora'],
         };
@@ -215,7 +215,7 @@ export const KatikaSocialStudioModal: React.FC<KatikaSocialStudioModalProps> = (
           theme: 'TOURNAMENT_ANNOUNCEMENT',
           badge: 'GRAND TOURNOI NJAMBO 🏆',
           headline: 'Le Grand Clash du Samedi Soir',
-          mainText: 'Affrontez les meilleurs maîtres de la région dans une arène sans pitié ! Inscriptions ouvertes pour la bêta et retransmission en direct.',
+          mainText: 'Affrontez les meilleurs maîtres de la région dans une arène sans pitié ! Inscriptions ouvertes et retransmission en direct.',
           palette: 'EBONY_GOLD',
           eventDetails: {
             date: 'Ce Samedi • 21h00 UTC+1',
@@ -223,10 +223,10 @@ export const KatikaSocialStudioModal: React.FC<KatikaSocialStudioModalProps> = (
             mode: 'Table à 4 • Élimination directe',
             spotsRemaining: '32 Places • Inscriptions Ouvertes',
           },
-          ctaText: 'Inscris-toi au Tournoi • En bêta',
+          ctaText: 'Inscris-toi au Tournoi',
           linkUrl: `${NJAMBO_DOMAIN} • WhatsApp officiel`,
-          postCaption: `🏆 GRAND TOURNOI NJAMBO DU WEEK-END ! 🇨🇲\n\nPréparez vos cartes et affûtez vos tactiques : ce samedi à 21h00, l'arène Katika ouvre ses portes pour le Clash des Maîtres !\n\n💰 Dotation : À annoncer (Jetons virtuels d'amusement)\n⚔️ Format : Table à 4 joueurs, élimination directe\n🎟️ Inscription : Ouverte en bêta, 32 places max !\n\n🎮 Lien du jeu : ${NJAMBO_APP_URL}\n💬 Inscription & canal officiel WhatsApp : ${NJAMBO_WHATSAPP_GROUP_URL}`,
-          whatsAppMessage: `🏆 *GRAND TOURNOI NJAMBO CE SAMEDI 21H !* 🇨🇲\n\nDotation : *À annoncer (Jetons virtuels d'amusement)* + Titre officiel de Maître du Kora !\nFormat : Tables à 4 joueurs • Élimination directe\nPlaces : 32 joueurs max.\n\n👉 *Rejoins la table et joue en bêta :* ${NJAMBO_APP_URL}\n💬 *Inscris-toi sur le groupe WhatsApp officiel :* ${NJAMBO_WHATSAPP_GROUP_URL}\n\nTransférez ce message à vos adversaires préférés ! 🃏`,
+          postCaption: `🏆 GRAND TOURNOI NJAMBO DU WEEK-END ! 🇨🇲\n\nPréparez vos cartes et affûtez vos tactiques : ce samedi à 21h00, l'arène Katika ouvre ses portes pour le Clash des Maîtres !\n\n💰 Dotation : À annoncer (Jetons virtuels d'amusement)\n⚔️ Format : Table à 4 joueurs, élimination directe\n🎟️ Inscription : ouverte, 32 places max !\n\n🎮 Lien du jeu : ${NJAMBO_APP_URL}\n💬 Inscription & canal officiel WhatsApp : ${NJAMBO_WHATSAPP_GROUP_URL}`,
+          whatsAppMessage: `🏆 *GRAND TOURNOI NJAMBO CE SAMEDI 21H !* 🇨🇲\n\nDotation : *À annoncer (Jetons virtuels d'amusement)* + Titre officiel de Maître du Kora !\nFormat : Tables à 4 joueurs • Élimination directe\nPlaces : 32 joueurs max.\n\n👉 *Rejoins la table et joue :* ${NJAMBO_APP_URL}\n💬 *Inscris-toi sur le groupe WhatsApp officiel :* ${NJAMBO_WHATSAPP_GROUP_URL}\n\nTransférez ce message à vos adversaires préférés ! 🃏`,
           hashtags: ['#TournoiNjambo', '#MaitresDuKora', '#EsportCameroun', '#DoubleKora', '#GamingAfrica'],
         };
 
@@ -245,7 +245,7 @@ export const KatikaSocialStudioModal: React.FC<KatikaSocialStudioModalProps> = (
           ctaText: 'Fais glisser pour l’astuce 2 ➔',
           linkUrl: `${NJAMBO_DOMAIN} • Groupe WhatsApp`,
           postCaption: `📚 MINI-GUIDE : 3 RÈGLES D'OR POUR DEVENIR IMBATTABLE AU NJAMBO (Partie 1/3) !\n\nTu perds souvent au 5e tour ? C'est parce que tu te concentres uniquement sur tes propres cartes.\n\nDans ce carrousel, nous te dévoilons les 3 secrets des grands Maîtres du Kora pour anticiper les coups adverses.\n\n👉 Fais glisser pour découvrir la règle #2 et enregistre ce post pour tes prochaines parties !\n\n🎮 Entraîne-toi dès maintenant : ${NJAMBO_APP_URL}\n💬 Rejoins la communauté WhatsApp : ${NJAMBO_WHATSAPP_GROUP_URL}`,
-          whatsAppMessage: `📚 *ASTUCE DU JOUR : COMMENT ÉVITER LE KORA !* 🇨🇲\n\nSecret #1 : Observe toujours les cartes maîtresses tombées aux premiers tours avant de lancer ton 3 au dernier tour.\n\n👉 *Viens t'entraîner en bêta :* ${NJAMBO_APP_URL}\n💬 *Groupe WhatsApp officiel :* ${NJAMBO_WHATSAPP_GROUP_URL}`,
+          whatsAppMessage: `📚 *ASTUCE DU JOUR : COMMENT ÉVITER LE KORA !* 🇨🇲\n\nSecret #1 : Observe toujours les cartes maîtresses tombées aux premiers tours avant de lancer ton 3 au dernier tour.\n\n👉 *Viens t'entraîner :* ${NJAMBO_APP_URL}\n💬 *Groupe WhatsApp officiel :* ${NJAMBO_WHATSAPP_GROUP_URL}`,
           hashtags: ['#GuideNjambo', '#ApprendreLesCartes', '#StrategieKora', '#CamerounGaming'],
         };
 
@@ -278,8 +278,8 @@ export const KatikaSocialStudioModal: React.FC<KatikaSocialStudioModalProps> = (
           },
           ctaText: 'Rejoins le groupe WhatsApp • 100% Passion',
           linkUrl: `${NJAMBO_DOMAIN} • Groupe WhatsApp`,
-          postCaption: `💬 REJOINS LA COMMUNAUTÉ OFFICIELLE NJAMBO KORA ! 🇨🇲\n\nTu aimes le Njambo ? Tu cherches des adversaires à la hauteur pour tes soirées cartes ?\n\nRejoins notre groupe WhatsApp officiel pour :\n⚡ Trouver des joueurs en direct 24/7\n🏆 Participer aux tournois exclusifs du week-end\n💡 Débattre des meilleures stratégies de jeu\n\n👉 Clique sur le lien pour nous rejoindre dès maintenant !\n💬 Groupe WhatsApp : ${NJAMBO_WHATSAPP_GROUP_URL}\n🎮 Teste la bêta en ligne : ${NJAMBO_APP_URL}`,
-          whatsAppMessage: `💬 *REJOINS LE GROUPE OFFICIEL NJAMBO KORA !* 🇨🇲\n\nRejoins les passionnés du jeu de cartes du Mboa :\n⚡ Organise tes duels\n🏆 Tournois exclusifs\n\n👉 *Rejoins le groupe :* ${NJAMBO_WHATSAPP_GROUP_URL}\n🎮 *Joue en bêta :* ${NJAMBO_APP_URL}`,
+          postCaption: `💬 REJOINS LA COMMUNAUTÉ OFFICIELLE NJAMBO KORA ! 🇨🇲\n\nTu aimes le Njambo ? Tu cherches des adversaires à la hauteur pour tes soirées cartes ?\n\nRejoins notre groupe WhatsApp officiel pour :\n⚡ Trouver des joueurs en direct 24/7\n🏆 Participer aux tournois exclusifs du week-end\n💡 Débattre des meilleures stratégies de jeu\n\n👉 Clique sur le lien pour nous rejoindre dès maintenant !\n💬 Groupe WhatsApp : ${NJAMBO_WHATSAPP_GROUP_URL}\n🎮 Joue en ligne : ${NJAMBO_APP_URL}`,
+          whatsAppMessage: `💬 *REJOINS LE GROUPE OFFICIEL NJAMBO KORA !* 🇨🇲\n\nRejoins les passionnés du jeu de cartes du Mboa :\n⚡ Organise tes duels\n🏆 Tournois exclusifs\n\n👉 *Rejoins le groupe :* ${NJAMBO_WHATSAPP_GROUP_URL}\n🎮 *Joue en ligne :* ${NJAMBO_APP_URL}`,
           hashtags: ['#CommunauteNjambo', '#NjamboKora', '#JeuxDeCartes', '#WhatsAppGaming', '#Cameroun'],
         };
 
@@ -289,7 +289,7 @@ export const KatikaSocialStudioModal: React.FC<KatikaSocialStudioModalProps> = (
           badge: SOCIAL_THEMES_CONFIG[theme]?.badge || 'NJAMBO KORA 🃏',
           headline: SOCIAL_THEMES_CONFIG[theme]?.defaultHeadline || 'Prêt pour le Kora ?',
           mainText: 'Rejoignez la table de cartes la plus palpitante du Cameroun en ligne.',
-          ctaText: 'Joue en bêta • Lien en bio',
+          ctaText: 'Joue • Lien en bio',
           linkUrl: `${NJAMBO_DOMAIN} • WhatsApp officiel`,
           postCaption: `🃏 NJAMBO KORA — Le jeu de cartes du Mboa !\n\nVenez tester vos réflexes et vos tactiques en direct sur PC et mobile.\n\n🎮 ${NJAMBO_APP_URL}\n💬 ${NJAMBO_WHATSAPP_GROUP_URL}`,
           whatsAppMessage: `🃏 *NJAMBO KORA EN LIGNE !* 🇨🇲\n\n👉 ${NJAMBO_APP_URL}`,

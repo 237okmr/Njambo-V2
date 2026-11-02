@@ -101,14 +101,14 @@ export const KatikaMobileSocialStudioModal: React.FC<KatikaMobileSocialStudioMod
             label: '3 KOUBI',
             badge: 'LE KORA AU 5e TOUR',
           },
-          ctaText: 'Rejoins les Maîtres du Kora • En bêta',
+          ctaText: 'Rejoins les Maîtres du Kora',
           linkUrl: `${NJAMBO_DOMAIN} • WhatsApp officiel`,
           postCaption: totalManches != null
-            ? `🃏 CHIFFRE DE LA SEMAINE NJAMBO KORA 🔥\n\nC'est le grand bilan de l'arène : cette semaine, pas moins de ${totalManches} manches ont été disputées par nos joueurs !\n\nAu total, ${koraCount ?? 0} Kora ont retourné des donnes in extremis au 5e tour avec un 3 posé au moment décisif !\n\n👉 Vous étiez de la partie ? Combien de Kora avez-vous validés cette semaine ? Dites-le-nous en commentaire !\n\n🎮 Lien du jeu en bêta (PC & Mobile) : ${NJAMBO_APP_URL}\n💬 Rejoins notre groupe WhatsApp officiel : ${NJAMBO_WHATSAPP_GROUP_URL}`
-            : `🃏 CHIFFRE DE LA SEMAINE NJAMBO KORA 🔥\n\nLes statistiques de la semaine sont en cours de synchronisation dans l'arène Katika.\n\n🎮 Lien du jeu en bêta (PC & Mobile) : ${NJAMBO_APP_URL}\n💬 Rejoins notre groupe WhatsApp officiel : ${NJAMBO_WHATSAPP_GROUP_URL}`,
+            ? `🃏 CHIFFRE DE LA SEMAINE NJAMBO KORA 🔥\n\nC'est le grand bilan de l'arène : cette semaine, pas moins de ${totalManches} manches ont été disputées par nos joueurs !\n\nAu total, ${koraCount ?? 0} Kora ont retourné des donnes in extremis au 5e tour avec un 3 posé au moment décisif !\n\n👉 Vous étiez de la partie ? Combien de Kora avez-vous validés cette semaine ? Dites-le-nous en commentaire !\n\n🎮 Lien du jeu (PC & Mobile) : ${NJAMBO_APP_URL}\n💬 Rejoins notre groupe WhatsApp officiel : ${NJAMBO_WHATSAPP_GROUP_URL}`
+            : `🃏 CHIFFRE DE LA SEMAINE NJAMBO KORA 🔥\n\nLes statistiques de la semaine sont en cours de synchronisation dans l'arène Katika.\n\n🎮 Lien du jeu (PC & Mobile) : ${NJAMBO_APP_URL}\n💬 Rejoins notre groupe WhatsApp officiel : ${NJAMBO_WHATSAPP_GROUP_URL}`,
           whatsAppMessage: totalManches != null
-            ? `🃏 *CHIFFRE DE LA SEMAINE NJAMBO KORA* 🔥\n\n*${totalManches} manches* jouées et *${koraCount ?? 0} Kora* spectaculaires !\n\n👉 *Joue en bêta en ligne :* ${NJAMBO_APP_URL}\n💬 *Rejoins le groupe WhatsApp :* ${NJAMBO_WHATSAPP_GROUP_URL}`
-            : `🃏 *CHIFFRE DE LA SEMAINE NJAMBO KORA* 🔥\n\nStatistiques en cours de calcul.\n\n👉 *Joue en bêta en ligne :* ${NJAMBO_APP_URL}\n💬 *Rejoins le groupe WhatsApp :* ${NJAMBO_WHATSAPP_GROUP_URL}`,
+            ? `🃏 *CHIFFRE DE LA SEMAINE NJAMBO KORA* 🔥\n\n*${totalManches} manches* jouées et *${koraCount ?? 0} Kora* spectaculaires !\n\n👉 *Joue en ligne :* ${NJAMBO_APP_URL}\n💬 *Rejoins le groupe WhatsApp :* ${NJAMBO_WHATSAPP_GROUP_URL}`
+            : `🃏 *CHIFFRE DE LA SEMAINE NJAMBO KORA* 🔥\n\nStatistiques en cours de calcul.\n\n👉 *Joue en ligne :* ${NJAMBO_APP_URL}\n💬 *Rejoins le groupe WhatsApp :* ${NJAMBO_WHATSAPP_GROUP_URL}`,
           hashtags: ['#NjamboKora', '#ChiffreDeLaSemaine', '#MaitresDuKora', '#CamerounGaming', '#JeuxAfricains'],
         };
 
@@ -147,9 +147,9 @@ export const KatikaMobileSocialStudioModal: React.FC<KatikaMobileSocialStudioMod
             afterText: 'Timer adaptatif, distribution streamée et alerte Kora Hunter en direct.',
           },
           ctaText: 'Découvre la nouvelle version • Gratuit',
-          linkUrl: `${NJAMBO_DOMAIN} • Rejoins la bêta`,
+          linkUrl: `${NJAMBO_DOMAIN} • Rejoins-nous`,
           postCaption: `⚡ COULISSES & AMÉLIORATIONS NJAMBO KORA !\n\nGrâce aux retours des joueurs, le moteur de jeu vient de franchir un cap :\n\n✅ Donnes ultra-fluides avec animations soignées\n✅ Détection instantanée du Kora et du Double Kora\n✅ Sons immersifs de la table et des jetons\n\nVenez tester dès maintenant sur votre téléphone ou PC ! 👇\n🎮 ${NJAMBO_APP_URL}\n💬 Donne tes impressions sur WhatsApp : ${NJAMBO_WHATSAPP_GROUP_URL}`,
-          whatsAppMessage: `⚡ *NOUVELLE MISE À JOUR NJAMBO KORA !* 🇨🇲\n\nPlus fluide, plus rapide, animations et sons immersifs !\n\n👉 *Teste en direct :* ${NJAMBO_APP_URL}\n💬 *Rejoins la bêta sur WhatsApp :* ${NJAMBO_WHATSAPP_GROUP_URL}`,
+          whatsAppMessage: `⚡ *NOUVELLE MISE À JOUR NJAMBO KORA !* 🇨🇲\n\nPlus fluide, plus rapide, animations et sons immersifs !\n\n👉 *Teste en direct :* ${NJAMBO_APP_URL}\n💬 *Rejoins-nous sur WhatsApp :* ${NJAMBO_WHATSAPP_GROUP_URL}`,
           hashtags: ['#Coulisses', '#MiseAJour', '#GameDesign', '#NjamboKora', '#GamingAfrica'],
         };
 

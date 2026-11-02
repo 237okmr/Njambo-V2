@@ -62,7 +62,7 @@ export const MEME_BANK: MemeEntry[] = [
     setup: "Il jure n'avoir rien en main.",
     punchline: "5e pli. Un 3. Kora. Il sourit déjà.",
     heroCard: { rank: '3', suit: '♥', badge: 'LE KORA !', label: '3 KOUBI' },
-    ctaIntent: 'Deviens Maître du Kora en bêta',
+    ctaIntent: 'Deviens Maître du Kora',
     hashtags: ['#NjamboKora', '#MemeKora', '#Kora au 5e', '#CamerounGaming'],
   },
   // 2. TWO_PANEL / DONNE (Exemple du cahier des charges)
@@ -78,7 +78,7 @@ export const MEME_BANK: MemeEntry[] = [
       afterTitle: "Ce qu'il joue",
       afterText: 'Le 3 gardé au chaud pour le 5e pli.',
     },
-    ctaIntent: 'Mets le bluff à l’épreuve en bêta',
+    ctaIntent: 'Mets le bluff à l’épreuve',
     hashtags: ['#NjamboKora', '#BluffKora', '#DonneGâtée', '#JeuxAfricains'],
   },
   // 3. PUNCHLINE / RAGE_QUIT (Exemple du cahier des charges)
@@ -89,7 +89,7 @@ export const MEME_BANK: MemeEntry[] = [
     setup: "Il perd un Kora et ferme l'appli.",
     punchline: 'Le relais finit la partie. Sans rancune.',
     heroCard: { rank: '3', suit: '♠', badge: 'LE RELAIS', label: '3 BLACK' },
-    ctaIntent: 'Joue sans interruption en bêta',
+    ctaIntent: 'Joue sans interruption',
     hashtags: ['#NjamboKora', '#RelaisAutomatique', '#MaitresDuKora'],
   },
   // 4. TWO_PANEL / KORA
@@ -105,7 +105,7 @@ export const MEME_BANK: MemeEntry[] = [
       afterTitle: 'Tour 5 : Le choc ultime',
       afterText: 'Double Kora validé avec le 3. Silence radio.',
     },
-    ctaIntent: 'Tente le Double Kora en bêta',
+    ctaIntent: 'Tente le Double Kora',
     hashtags: ['#NjamboKora', '#DoubleKora', '#TournantDuJeu'],
   },
   // 5. PUNCHLINE / DEBUTANT
@@ -116,7 +116,7 @@ export const MEME_BANK: MemeEntry[] = [
     setup: 'Débutant jouant son 10 Koubi au premier pli.',
     punchline: 'Toute la table le regarde en silence.',
     heroCard: { rank: '10', suit: '♥', badge: '10 KOUBI', label: 'PREMIER PLI' },
-    ctaIntent: 'Apprends les règles du Njambo en bêta',
+    ctaIntent: 'Apprends les règles du Njambo',
     hashtags: ['#NjamboKora', '#10Koubi', '#ConseilDuMaître'],
   },
   // 6. PUNCHLINE / BLUFF
@@ -127,7 +127,7 @@ export const MEME_BANK: MemeEntry[] = [
     setup: 'Poser le 10 Zing d’un air très serein.',
     punchline: 'Alors qu’il a 3 cartes faibles derrière.',
     heroCard: { rank: '10', suit: '♦', badge: '10 ZING', label: 'BLUFF TOTAL' },
-    ctaIntent: 'Viens tester tes bluffs en bêta',
+    ctaIntent: 'Viens tester tes bluffs',
     hashtags: ['#NjamboKora', '#Zing', '#ArtDuBluff'],
   },
   // 7. TWO_PANEL / TABLE
@@ -143,7 +143,7 @@ export const MEME_BANK: MemeEntry[] = [
       afterTitle: 'Au 5e Tour',
       afterText: 'Concentration maximale. Personne ne respire avant la carte.',
     },
-    ctaIntent: 'Rejoins les tables en bêta',
+    ctaIntent: 'Rejoins les tables',
     hashtags: ['#NjamboKora', '#AmbianceDeJeu', '#KatikaOnline'],
   },
   // 8. PUNCHLINE / COMMUNAUTE
@@ -170,7 +170,7 @@ export const MEME_BANK: MemeEntry[] = [
       afterTitle: 'Après 10 parties',
       afterText: 'Cacher le 3 jusqu’au bout est devenu un art de vivre.',
     },
-    ctaIntent: 'Fais tes débuts sur Katika en bêta',
+    ctaIntent: 'Fais tes débuts sur Katika',
     hashtags: ['#NjamboKora', '#NouveauJoueur', '#Progression'],
   },
   // 10. PUNCHLINE / DONNE
@@ -181,7 +181,7 @@ export const MEME_BANK: MemeEntry[] = [
     setup: 'Quand tu reçois une donne sans aucun 3.',
     punchline: 'Mode défense activé : bloquer les Kora adverses !',
     heroCard: { rank: '9', suit: '♠', badge: 'DÉFENSE', label: '9 BLACK' },
-    ctaIntent: 'Perfectionne ta stratégie en bêta',
+    ctaIntent: 'Perfectionne ta stratégie',
     hashtags: ['#NjamboKora', '#StrategieTactique', '#DefenseKora'],
   },
   // 11. TWO_PANEL / RAGE_QUIT
@@ -197,7 +197,7 @@ export const MEME_BANK: MemeEntry[] = [
       afterTitle: 'Grâce au relais neutre',
       afterText: 'Ses partenaires finissent la manche sans être bloqués.',
     },
-    ctaIntent: 'Découvre le jeu fluide en bêta',
+    ctaIntent: 'Découvre le jeu fluide',
     hashtags: ['#NjamboKora', '#RelaisFairPlay', '#JeuContinu'],
   },
   // 12. PUNCHLINE / KORA
@@ -208,7 +208,7 @@ export const MEME_BANK: MemeEntry[] = [
     setup: 'Le 3 Black que personne n’avait vu venir.',
     punchline: 'Kora validé au 5e pli sous les applaudissements.',
     heroCard: { rank: '3', suit: '♠', badge: 'SURPRISE', label: '3 BLACK' },
-    ctaIntent: 'Joue ta plus belle carte en bêta',
+    ctaIntent: 'Joue ta plus belle carte',
     hashtags: ['#NjamboKora', '#3Black', '#KoraInextremis'],
   },
   // 13. TWO_PANEL / BLUFF
@@ -224,7 +224,7 @@ export const MEME_BANK: MemeEntry[] = [
       afterTitle: 'Ce qu’il pose',
       afterText: 'Une carte moyenne au 4e pli, dépassée instantanément.',
     },
-    ctaIntent: 'Défie les maîtres du bluff en bêta',
+    ctaIntent: 'Défie les maîtres du bluff',
     hashtags: ['#NjamboKora', '#PliDecisif', '#BluffRevele'],
   },
   // 14. PUNCHLINE / TABLE
@@ -235,7 +235,7 @@ export const MEME_BANK: MemeEntry[] = [
     setup: 'Inviter un ami pour « juste une partie ».',
     punchline: '2 heures plus tard, vous êtes encore en train de placer des Kora.',
     heroCard: { rank: '10', suit: '♣', badge: 'ADDICTION', label: '10 TCHAKA' },
-    ctaIntent: 'Invite un ami à jouer en bêta',
+    ctaIntent: 'Invite un ami à jouer',
     hashtags: ['#NjamboKora', '#PartieEntreAmis', '#KatikaSocial'],
   },
   // 15. TWO_PANEL / KORA
@@ -251,7 +251,7 @@ export const MEME_BANK: MemeEntry[] = [
       afterTitle: 'Sur la table',
       afterText: 'Pose le 3 au moment exact. Kora chirurgical !',
     },
-    ctaIntent: 'Exerce ton sens tactique en bêta',
+    ctaIntent: 'Exerce ton sens tactique',
     hashtags: ['#NjamboKora', '#MasterMind', '#KoraChirurgical'],
   },
   // 16. PUNCHLINE / COMMUNAUTE
@@ -262,7 +262,7 @@ export const MEME_BANK: MemeEntry[] = [
     setup: 'Le tournoi du week-end s’annonce sur Katika.',
     punchline: 'Tous les Maîtres du Kora préparent leurs meilleures tactiques.',
     heroCard: { rank: '10', suit: '♥', badge: 'TOURNOI', label: '10 KOUBI' },
-    ctaIntent: 'Inscris-toi au tournoi en bêta',
+    ctaIntent: 'Inscris-toi au tournoi',
     hashtags: ['#NjamboKora', '#TournoiKatika', '#EportAfricain'],
   },
   // 17. TWO_PANEL / DONNE
@@ -278,7 +278,7 @@ export const MEME_BANK: MemeEntry[] = [
       afterTitle: 'La main reçue',
       afterText: 'Des cartes moyennes, mais une stratégie de pli sans faute.',
     },
-    ctaIntent: 'Apprends à rentabiliser tes donnes en bêta',
+    ctaIntent: 'Apprends à rentabiliser tes donnes',
     hashtags: ['#NjamboKora', '#ArtDeLaDonne', '#TactiquePli'],
   },
   // 18. PUNCHLINE / BLUFF
@@ -289,7 +289,7 @@ export const MEME_BANK: MemeEntry[] = [
     setup: 'Ton voisin de table fixe tes cartes.',
     punchline: 'Tu changes ton plan et tu ramasses quand même le 5e pli.',
     heroCard: { rank: '8', suit: '♦', badge: 'STRATÈGE', label: '8 ZING' },
-    ctaIntent: 'Surprends tes adversaires en bêta',
+    ctaIntent: 'Surprends tes adversaires',
     hashtags: ['#NjamboKora', '#EspritTactique', '#JeuDeCartes'],
   },
   // 19. TWO_PANEL / TABLE
@@ -305,7 +305,7 @@ export const MEME_BANK: MemeEntry[] = [
       afterTitle: 'Sur Katika',
       afterText: 'Ouvrir l’application et trouver une table en 3 secondes.',
     },
-    ctaIntent: 'Rejoins une table instantanée en bêta',
+    ctaIntent: 'Rejoins une table instantanée',
     hashtags: ['#NjamboKora', '#KatikaMobile', '#JeuPartout'],
   },
   // 20. PUNCHLINE / KORA
@@ -316,7 +316,7 @@ export const MEME_BANK: MemeEntry[] = [
     setup: '4e et 5e plis gagnés avec un 3.',
     punchline: 'Double Kora légendaire. La partie rentre dans l’histoire.',
     heroCard: { rank: '3', suit: '♦', badge: 'LÉGENDE', label: '3 ZING' },
-    ctaIntent: 'Tente d’entrer dans la légende en bêta',
+    ctaIntent: 'Tente d’entrer dans la légende',
     hashtags: ['#NjamboKora', '#DoubleKoraLégendaire', '#ExploitKatika'],
   },
   // 21. TWO_PANEL / DEBUTANT
@@ -332,7 +332,7 @@ export const MEME_BANK: MemeEntry[] = [
       afterTitle: 'La leçon',
       afterText: 'Désormais, chaque 3 posé est noté mentalement avec précision.',
     },
-    ctaIntent: 'Deviens un joueur aguerri en bêta',
+    ctaIntent: 'Deviens un joueur aguerri',
     hashtags: ['#NjamboKora', '#ComptageDesCartes', '#Apprentissage'],
   },
   // 22. PUNCHLINE / DONNE
@@ -343,7 +343,7 @@ export const MEME_BANK: MemeEntry[] = [
     setup: 'Un 3 de Cœur servi au premier tirage.',
     punchline: 'C’est comme avoir le sourire de la victoire dès le départ.',
     heroCard: { rank: '3', suit: '♥', badge: '3 KOUBI', label: 'CARTE MAGIQUE' },
-    ctaIntent: 'Reçois tes meilleures cartes en bêta',
+    ctaIntent: 'Reçois tes meilleures cartes',
     hashtags: ['#NjamboKora', '#3Koubi', '#ChanceEtTalent'],
   },
   // 23. TWO_PANEL / COMMUNAUTE
@@ -359,7 +359,7 @@ export const MEME_BANK: MemeEntry[] = [
       afterTitle: 'Fin de soirée',
       afterText: 'Tout le monde a placé un Kora, égalité parfaite !',
     },
-    ctaIntent: 'Lance le défi à tes amis en bêta',
+    ctaIntent: 'Lance le défi à tes amis',
     hashtags: ['#NjamboKora', '#DefiEntreAmis', '#Convivialite'],
   },
   // 24. PUNCHLINE / RAGE_QUIT
@@ -370,7 +370,7 @@ export const MEME_BANK: MemeEntry[] = [
     setup: 'Même quand la donne est difficile...',
     punchline: 'Un vrai joueur de Njambo se bat jusqu’au 5e pli.',
     heroCard: { rank: '7', suit: '♣', badge: 'FAIR PLAY', label: '7 TCHAKA' },
-    ctaIntent: 'Rejoins les joueurs passionnés en bêta',
+    ctaIntent: 'Rejoins les joueurs passionnés',
     hashtags: ['#NjamboKora', '#FairPlay', '#EspritDeJeu'],
   },
 ];
@@ -508,10 +508,10 @@ export function convertMemeToSocialCardData(meme: MemeEntry): SocialVisualCardDa
       headline: meme.setup,
       mainText: meme.punchline,
       heroCard: heroCardClean,
-      ctaText: meme.ctaIntent || 'Joue au Njambo Kora en bêta',
+      ctaText: meme.ctaIntent || 'Joue au Njambo Kora',
       linkUrl: NJAMBO_DOMAIN,
-      postCaption: `🃏 MÈME NJAMBO KORA 🔥\n\n« ${meme.setup} »\n👉 ${meme.punchline}\n\n🎮 Joue au Njambo Kora en bêta (PC & Mobile) : ${NJAMBO_APP_URL}\n💬 Rejoins la communauté WhatsApp officielle : ${NJAMBO_WHATSAPP_GROUP_URL}`,
-      whatsAppMessage: `🃏 *MÈME NJAMBO KORA* 🔥\n\n« *${meme.setup}* »\n👉 *${meme.punchline}*\n\n🎮 *Joue en bêta ouverte :* ${NJAMBO_APP_URL}\n💬 *Rejoins le groupe WhatsApp :* ${NJAMBO_WHATSAPP_GROUP_URL}`,
+      postCaption: `🃏 MÈME NJAMBO KORA 🔥\n\n« ${meme.setup} »\n👉 ${meme.punchline}\n\n🎮 Joue au Njambo Kora (PC & Mobile) : ${NJAMBO_APP_URL}\n💬 Rejoins la communauté WhatsApp officielle : ${NJAMBO_WHATSAPP_GROUP_URL}`,
+      whatsAppMessage: `🃏 *MÈME NJAMBO KORA* 🔥\n\n« *${meme.setup}* »\n👉 *${meme.punchline}*\n\n🎮 *Joue ouverte :* ${NJAMBO_APP_URL}\n💬 *Rejoins le groupe WhatsApp :* ${NJAMBO_WHATSAPP_GROUP_URL}`,
       hashtags: defaultHashtags,
     };
   } else {
@@ -529,9 +529,9 @@ export function convertMemeToSocialCardData(meme: MemeEntry): SocialVisualCardDa
         afterText: meme.panels?.afterText || meme.punchline,
       },
       heroCard: heroCardClean,
-      ctaText: meme.ctaIntent || 'Viens vivre l’adrénaline du Njambo en bêta',
+      ctaText: meme.ctaIntent || 'Viens vivre l’adrénaline du Njambo',
       linkUrl: NJAMBO_DOMAIN,
-      postCaption: `🃏 DEUX FACES DU NJAMBO KORA 🇨🇲\n\n🔹 ${meme.panels?.beforeTitle || 'Ce qu’il dit'} : ${meme.panels?.beforeText || meme.setup}\n🔸 ${meme.panels?.afterTitle || 'Ce qu’il fait'} : ${meme.panels?.afterText || meme.punchline}\n\n🎮 Rejoins les Maîtres du Kora en bêta : ${NJAMBO_APP_URL}\n💬 Rejoins le groupe WhatsApp officiel : ${NJAMBO_WHATSAPP_GROUP_URL}`,
+      postCaption: `🃏 DEUX FACES DU NJAMBO KORA 🇨🇲\n\n🔹 ${meme.panels?.beforeTitle || 'Ce qu’il dit'} : ${meme.panels?.beforeText || meme.setup}\n🔸 ${meme.panels?.afterTitle || 'Ce qu’il fait'} : ${meme.panels?.afterText || meme.punchline}\n\n🎮 Rejoins les Maîtres du Kora : ${NJAMBO_APP_URL}\n💬 Rejoins le groupe WhatsApp officiel : ${NJAMBO_WHATSAPP_GROUP_URL}`,
       whatsAppMessage: `🃏 *DEUX FACES DU NJAMBO KORA* 🇨🇲\n\n🔹 *${meme.panels?.beforeTitle || 'Ce qu’il dit'} :* ${meme.panels?.beforeText || meme.setup}\n🔸 *${meme.panels?.afterTitle || 'Ce qu’il fait'} :* ${meme.panels?.afterText || meme.punchline}\n\n🎮 *Joue maintenant :* ${NJAMBO_APP_URL}\n💬 *Rejoins la communauté :* ${NJAMBO_WHATSAPP_GROUP_URL}`,
       hashtags: defaultHashtags,
     };

@@ -2,6 +2,7 @@ import { CTA_LIBRARY, CtaIntent } from '../data/ctaLibrary';
 import { getSocialLinks } from '../services/copilotSettingsService';
 import { buildTrackedAppUrl, generateUtmCampaign } from '../types/socialVisuals';
 import { hashString, pickLocalPost, QuestionType } from './hokutoBank';
+import { sanitizePublicText } from './moneyPolicy';
 import { VisualSpec } from './visualSpec';
 
 export interface CaptionLinks {
@@ -27,8 +28,7 @@ const DEFAULT_FACEBOOK_HASHTAGS = '#NjamboKora #JeuDeCartes #Katika';
 
 function sanitizeGratuit(text: string): string {
   if (!text) return '';
-  // Remplace "gratuit" isolé sans "bêta" à côté par "bêta gratuite"
-  return text.replace(/\bgratuit\b(?!\s+(?:en\s+)?bêta)/gi, 'bêta gratuite');
+  return sanitizePublicText(text);
 }
 
 function truncateChars(text: string, maxLen: number): string {
@@ -98,7 +98,7 @@ export function buildCaptions(spec: VisualSpec, options: CaptionOptions = {}): B
 
   // Formule d'appel à l'action : elle varie d'un post à l'autre (choix stable pour un même visuel)
   const formulas = ctaConfig.captionFormulas;
-  const ctaFormula = sanitizeGratuit(formulas[hashString(seed) % formulas.length] || '🎮 Viens jouer à la bêta :');
+  const ctaFormula = sanitizeGratuit(formulas[hashString(seed) % formulas.length] || '🎮 Viens jouer :');
 
   // Histoire et question : IA d'abord, banque locale d'Hokuto sinon
   const hasAiPost = Boolean(spec.post && (spec.post.story || spec.post.question));
@@ -122,7 +122,7 @@ export function buildCaptions(spec: VisualSpec, options: CaptionOptions = {}): B
   if (whatsappGroupUrl) {
     fbParts.push(`💬 Groupe WhatsApp : ${whatsappGroupUrl}`);
   }
-  fbParts.push(`🎮 Joue en bêta : ${appUrlFacebook}`);
+  fbParts.push(`🎮 Joue en ligne : ${appUrlFacebook}`);
   fbParts.push(facebookHashtags);
   const facebook = limitEmojis(fbParts.join('\n\n'), 3);
 
@@ -130,7 +130,7 @@ export function buildCaptions(spec: VisualSpec, options: CaptionOptions = {}): B
   const waGroupParts: string[] = [story, question];
   if (eventLine) waGroupParts.push(eventLine);
   waGroupParts.push(ctaFormula);
-  waGroupParts.push(`🎮 Tester la bêta : ${appUrlGroup}`);
+  waGroupParts.push(`🎮 Jouer : ${appUrlGroup}`);
   if (facebookUrl && facebookUrl.trim().length > 0) {
     waGroupParts.push(`👍 Page Facebook : ${facebookUrl.trim()}`);
   }
@@ -140,7 +140,7 @@ export function buildCaptions(spec: VisualSpec, options: CaptionOptions = {}): B
   // --- 3. CAPTION STATUT WHATSAPP ---
   // 3 lignes, 1 seul lien : la question (et non l'accroche du visuel), l'appel à l'action, le lien suivi
   const statusLine1 = truncateChars(question, 70);
-  const statusLine2 = spec.cta?.text || ctaConfig.label || 'Viens tester la bêta !';
+  const statusLine2 = spec.cta?.text || ctaConfig.label || 'Viens jouer !';
   const whatsappStatus = `${statusLine1}\n${statusLine2}\n${appUrlStatus}`.replace(/#\w+/g, '').trim();
 
   return {

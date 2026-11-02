@@ -1,8 +1,17 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { buildEconomyRuleForChat, buildMoneyRulesBlock, isKoraCashEnabled } from './moneyPolicy';
+import { buildEconomyRuleForChat, buildMoneyRulesBlock, isKoraCashEnabled, sanitizePublicText } from './moneyPolicy';
 
 describe('moneyPolicy - règles « argent » de l\'IA, en un seul endroit', () => {
+  it('retire les mots réservés des textes publics et remplace gratuit', () => {
+    assert.strictEqual(sanitizePublicText('Tente le Double Kora en bêta'), 'Tente le Double Kora');
+    assert.strictEqual(sanitizePublicText('Rejoins la bêta ouverte'), 'Rejoins le jeu');
+    assert.strictEqual(sanitizePublicText('Teste la version démo'), 'Teste le jeu');
+    assert.strictEqual(sanitizePublicText('Essaie une version de test'), 'Essaie le jeu');
+    assert.strictEqual(sanitizePublicText('Jeu 100% gratuit #BêtaTest'), 'Jeu en jetons virtuels');
+    assert.strictEqual(sanitizePublicText('Viens tester tes bluffs, démonstration et alphabet'), 'Viens tester tes bluffs, démonstration et alphabet');
+  });
+
   it('bêta (par défaut) : jetons virtuels uniquement, aucun gain réel', () => {
     assert.strictEqual(isKoraCashEnabled(undefined), false);
     assert.strictEqual(isKoraCashEnabled({}), false);

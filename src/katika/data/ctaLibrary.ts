@@ -31,15 +31,15 @@ export const CTA_LIBRARY: Record<CtaIntent, CtaConfig> = {
   },
   PLAY: {
     intent: 'PLAY',
-    label: 'Viens tester la bêta',
+    label: 'Viens jouer',
     visualVariants: [
-      'Viens tester la bêta',
-      'Accède à la bêta ouverte',
-      'Joue en bêta maintenant',
+      'Viens jouer',
+      'Accède au jeu',
+      'Joue maintenant',
     ],
     captionFormulas: [
-      '🎮 Teste la version bêta en ligne sur PC et mobile :',
-      '🎮 Rejoins la table en bêta ouverte :',
+      '🎮 Joue en ligne sur PC et mobile :',
+      '🎮 Rejoins la table :',
     ],
   },
   COMMENT: {
@@ -77,7 +77,7 @@ export const CTA_LIBRARY: Record<CtaIntent, CtaConfig> = {
       'Suis l’actualité du jeu',
     ],
     captionFormulas: [
-      '🔔 Abonne-toi à la page pour suivre les évolutions de la bêta !',
+      '🔔 Abonne-toi à la page pour suivre les évolutions du jeu !',
       '🔔 Suis la page officielle pour ne manquer aucun événement !',
     ],
   },

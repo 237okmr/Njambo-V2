@@ -426,14 +426,14 @@ Plateforme d'Analytics : Katika Network Engine
               Durée moyenne mesurée par donne : <b>{(kpis.playerBehavior?.gamePacing?.avgPartieDurationSec ?? 0) > 0 ? `${kpis.playerBehavior?.gamePacing?.avgPartieDurationSec}s` : '—'}</b>. 
               Stickiness DAU/MAU : <b>{(kpis.retentionEngagement?.mau ?? 0) > 0 ? `${kpis.retentionEngagement?.stickinessRatio ?? 0}%` : '—'}</b>. 
               Revanche après un Kora : <b>—</b> (mesure en cours de mise en place).
-              Ces chiffres proviennent de la bêta fermée de Njambo Kora et portent sur un nombre limité de joueurs : ils décrivent l'activité observée, sans prévision ni projection de revenus.
+              Ces chiffres proviennent de la phase de lancement progressif de Njambo Kora et portent sur un nombre limité de joueurs : ils décrivent l'activité observée, sans prévision ni projection de revenus.
             </p>
           </div>
 
           {/* Footer Signature */}
           <div className="pt-4 border-t border-slate-800 print:border-slate-300 flex flex-col sm:flex-row items-center justify-between text-[11px] font-mono text-slate-500 print:text-slate-600 gap-2">
             <div>Katika Network Analytics • ID: KATIKA-{Date.now().toString().slice(-8)}</div>
-            <div>Données de la bêta fermée • Source : Katika</div>
+            <div>Données de la phase de lancement progressif • Source : Katika</div>
           </div>
         </div>
       </div>

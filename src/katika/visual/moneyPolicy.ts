@@ -10,10 +10,34 @@ export function isKoraCashEnabled(config?: { koraCashEnabled?: boolean } | null)
   return config?.koraCashEnabled === true;
 }
 
+/** Remplace « gratuit » : Kora Cash existe à côté, seule la formule « en jetons virtuels » reste exacte. */
+export function sanitizeFreeWording(text: string): string {
+  return text.replace(/100\s*%\s*gratuit\b|gratuitement\b|\bgratuit\b/gi, 'en jetons virtuels');
+}
+
+/** Retire d'un texte public les mots réservés à l'équipe : bêta, démo, version test. */
+export function sanitizeReservedWords(text: string): string {
+  return text
+    .replace(/#B[êe]taTest\b/gi, '')
+    .replace(/\s*[•·-]?\s*(?<![\p{L}])en\s+(?:b[êe]ta(?:\s+(?:ouverte|ferm[ée]e))?|d[ée]mo)(?![\p{L}])/giu, '')
+    .replace(/(?<![\p{L}])(?:la|ta|notre|une)\s+(?:version\s+)?(?:b[êe]ta|d[ée]mo)(?:\s+(?:ouverte|ferm[ée]e))?(?![\p{L}])/giu, 'le jeu')
+    .replace(/(?<![\p{L}])(?:la|une)\s+version\s+(?:de\s+)?test\b/giu, 'le jeu')
+    .replace(/(?<![\p{L}])version\s+(?:de\s+)?test\b/giu, 'le jeu')
+    .replace(/(?<![\p{L}])(?:version\s+)?(?:b[êe]ta|d[ée]mo)(?![\p{L}])/giu, '')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/ +([.,])/g, '$1')
+    .trim();
+}
+
+/** Nettoyage complet d'un texte destiné au public. */
+export function sanitizePublicText(text: string): string {
+  return sanitizeReservedWords(sanitizeFreeWording(text));
+}
+
 /** Règle « Économie » du prompt du chat (règle n° 3). */
 export function buildEconomyRuleForChat(koraCashEnabled: boolean): string {
   if (koraCashEnabled) {
-    return "Économie : le mode Kora Cash (mises en argent réel) est ouvert à côté de la bêta en jetons virtuels. Ne jamais promettre ni suggérer un gain, rappeler que ce mode est réservé aux adultes et comporte des risques, ne jamais affirmer une règle légale précise sans source, recommander une validation par un juriste. Les dotations de tournoi en jetons virtuels portent la mention « Jetons virtuels d'amusement — Aucune valeur monétaire réelle ».";
+    return "Économie : le mode Kora Cash (mises en argent réel) est ouvert à côté du jeu en jetons virtuels. Ne jamais promettre ni suggérer un gain, rappeler que ce mode est réservé aux adultes et comporte des risques, ne jamais affirmer une règle légale précise sans source, recommander une validation par un juriste. Les dotations de tournoi en jetons virtuels portent la mention « Jetons virtuels d'amusement — Aucune valeur monétaire réelle ».";
   }
   return "aujourd'hui l'économie est exclusivement en jetons virtuels ; aucune monnaie réelle n'est implémentée. Un modèle à mises réelles avec prélèvement (rake) est envisagé mais non décidé : ne jamais le présenter comme acquis, ne jamais affirmer une règle légale précise sans source, recommander une validation par un juriste. Les dotations de tournoi sont proposées comme options chiffrées en jetons virtuels, avec la mention « Jetons virtuels d'amusement — Aucune valeur monétaire réelle ».";
 }
@@ -21,7 +45,7 @@ export function buildEconomyRuleForChat(koraCashEnabled: boolean): string {
 /** Règle « argent » du prompt de création de visuels et de posts. */
 export function buildMoneyRulesBlock(koraCashEnabled: boolean): string {
   if (koraCashEnabled) {
-    return "- ARGENT RÉEL : le mode Kora Cash est ouvert. Tu peux le mentionner, toujours avec « réservé aux adultes » et « jouer comporte des risques », sans jamais promettre ni suggérer un gain. Pour la bêta et les tournois en jetons virtuels, utiliser uniquement « jetons virtuels », « bêta ouverte », « en bêta ». Ne jamais écrire « 100% gratuit ».";
+    return "- ARGENT RÉEL : le mode Kora Cash est ouvert. Tu peux le mentionner, toujours avec « réservé aux adultes » et « jouer comporte des risques », sans jamais promettre ni suggérer un gain. Pour le jeu et les tournois en jetons virtuels, utiliser uniquement « jetons virtuels ». Ne jamais écrire « 100% gratuit », « bêta », « démo » ni « version test ».";
   }
-  return '- PAS DE GAINS EN MONNAIE RÉELLE : utiliser uniquement « jetons virtuels », « bêta ouverte », « en bêta », « pour le plaisir ». Ne jamais écrire « 100% gratuit » (remplacer par « bêta ouverte » ou « en bêta »).';
+  return '- PAS DE GAINS EN MONNAIE RÉELLE : utiliser uniquement « jetons virtuels », « pour le plaisir ». Ne jamais écrire « 100% gratuit » (remplacer par « en jetons virtuels »), ni « bêta », « démo » ou « version test ».';
 }

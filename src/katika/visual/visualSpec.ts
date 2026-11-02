@@ -190,7 +190,7 @@ export interface VisualPost {
   hashtags?: string[]; // 0 à 3, parmi ALLOWED_POST_HASHTAGS
 }
 
-export const ALLOWED_POST_HASHTAGS = ['#NjamboKora', '#JeuDeCartes', '#Katika', '#Kora', '#BêtaTest'] as const;
+export const ALLOWED_POST_HASHTAGS = ['#NjamboKora', '#JeuDeCartes', '#Katika', '#Kora'] as const;
 
 export interface VisualSpec {
   version: 2;

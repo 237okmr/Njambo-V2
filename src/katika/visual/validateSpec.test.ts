@@ -12,10 +12,10 @@ describe('validateAndRepairSpec Engine', () => {
       pattern: 'NDOP_CHEVRON',
       blocks: [
         { id: 'b1', type: 'BADGE', text: 'NJAMBO KORA', priority: 1 },
-        { id: 'b2', type: 'HOOK', text: 'TOURNOI BÊTA', accentWords: ['TOURNOI'], priority: 1 },
+        { id: 'b2', type: 'HOOK', text: 'TOURNOI KORA', accentWords: ['TOURNOI'], priority: 1 },
         { id: 'b3', type: 'BODY', text: 'Rejoins-nous pour jouer en ligne.', priority: 2 },
       ],
-      cta: { text: 'Viens tester la bêta' },
+      cta: { text: 'Viens jouer' },
       footer: { text: 'njambo-kora.ai.studio', whatsapp: true, app: true },
     };
 
@@ -25,7 +25,27 @@ describe('validateAndRepairSpec Engine', () => {
     assert.strictEqual(needsReview, false);
   });
 
-  it('replaces "gratuit" with "bêta" and logs a warning', () => {
+  it('corrige et signale un mot réservé à l’équipe écrit par l’IA', () => {
+    const { spec, warnings, needsReview } = validateAndRepairSpec({
+      version: 2,
+      format: 'SQUARE',
+      palette: 'EMERALD_GOLD',
+      pattern: 'NDOP_CHEVRON',
+      blocks: [
+        { id: 'b1', type: 'BADGE', text: 'NJAMBO KORA', priority: 1 },
+        { id: 'b2', type: 'HOOK', text: 'TOURNOI KORA EN BÊTA', priority: 1 },
+      ],
+      cta: { text: 'Viens tester la démo' },
+      footer: { text: 'njambo-kora.ai.studio', whatsapp: true, app: true },
+    } as VisualSpec);
+    assert.strictEqual(needsReview, true);
+    assert.strictEqual(warnings.some((w) => w.includes('Relis la phrase')), true);
+    const publicText = JSON.stringify([spec?.blocks, spec?.cta, spec?.post]).toLowerCase();
+    assert.strictEqual(publicText.includes('bêta'), false);
+    assert.strictEqual(publicText.includes('démo'), false);
+  });
+
+  it('replaces "gratuit" with "en jetons virtuels" and logs a warning', () => {
     const inputSpec: VisualSpec = {
       version: 2,
       format: 'STORY',
@@ -45,7 +65,7 @@ describe('validateAndRepairSpec Engine', () => {
 
     const hook = spec?.blocks.find((b) => b.type === 'HOOK') as any;
     assert.strictEqual(hook.text.toUpperCase().includes('GRATUIT'), false);
-    assert.strictEqual(hook.text.toLowerCase().includes('bêta'), true);
+    assert.strictEqual(hook.text.toLowerCase().includes('jetons virtuels'), true);
   });
 
   it('sanitizes illegal card ranks (As, Roi, Dame, Valet, 2, 10♠)', () => {

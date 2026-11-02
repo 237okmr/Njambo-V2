@@ -1,5 +1,6 @@
 import { getSocialLinks } from '../services/copilotSettingsService';
 import { NJAMBO_WHATSAPP_GROUP_URL } from '../../utils/communityLinks';
+import { sanitizePublicText } from '../visual/moneyPolicy';
 
 export const NJAMBO_APP_URL = 'https://njambo-kora.ai.studio';
 export const NJAMBO_DOMAIN = 'njambo-kora.ai.studio';
@@ -408,29 +409,29 @@ export const CROSS_PROMO_RULES: Record<SocialPlatform, CrossPromoRule> = {
     primaryLinkType: 'WHATSAPP',
     secondaryLinkType: 'APP',
     primaryLabel: '💬 Rejoins notre groupe WhatsApp officiel :',
-    secondaryLabel: '🎮 Teste la version bêta en ligne :',
+    secondaryLabel: '🎮 Joue en ligne :',
   },
   WHATSAPP: {
     primaryLinkType: 'APP',
     secondaryLinkType: 'FACEBOOK',
-    primaryLabel: '👉 Teste la bêta en ligne :',
+    primaryLabel: '👉 Joue en ligne :',
     secondaryLabel: '📘 Suis notre page Facebook officielle :',
   },
   INSTAGRAM: {
     primaryLinkType: 'APP',
     secondaryLinkType: 'WHATSAPP',
-    primaryLabel: '🎮 Lien pour tester la bêta en bio (@njambokora) ou via :',
+    primaryLabel: '🎮 Lien pour jouer en bio (@njambokora) ou via :',
     secondaryLabel: '💬 Communauté WhatsApp officielle :',
   },
   TWITTER: {
     primaryLinkType: 'APP',
     secondaryLinkType: 'NONE',
-    primaryLabel: '🎮 Joue en bêta :',
+    primaryLabel: '🎮 Joue en ligne :',
   },
   TIKTOK: {
     primaryLinkType: 'APP',
     secondaryLinkType: 'NONE',
-    primaryLabel: 'Joue en bêta sur le lien en bio ! 🎮',
+    primaryLabel: 'Joue sur le lien en bio ! 🎮',
   },
 };
 
@@ -442,7 +443,7 @@ export function getWhatsAppStatusCaption(
   links?: { appUrl?: string; whatsappUrl?: string; facebookUrl?: string }
 ): string {
   if (data.whatsAppStatus && data.whatsAppStatus.trim().length > 0) {
-    return data.whatsAppStatus.replace(/gratuitement|100% gratuit/gi, 'en bêta');
+    return sanitizePublicText(data.whatsAppStatus);
   }
   const resolvedLinks = links || getSocialLinks();
   const theme = data.theme || 'COMMUNITY_QUESTION';
@@ -452,13 +453,13 @@ export function getWhatsAppStatusCaption(
   const isTournament = theme === 'TOURNAMENT_ANNOUNCEMENT';
   const rawHeadline = data.headline || 'Njambo Kora';
   const headline = rawHeadline.length > 50 ? rawHeadline.substring(0, 47) + '...' : rawHeadline;
-  const cta = data.ctaText || 'Viens tester la bêta';
+  const cta = data.ctaText || 'Viens jouer';
 
   const line1 = `🃏 *${headline}*`;
   const line2 = isTournament
     ? `🏆 Tournoi Njambo Kora (Jetons virtuels d'amusement)`
     : `👉 ${cta}`;
-  const line3 = `🎮 Teste la bêta en ligne : ${trackedAppUrl}`;
+  const line3 = `🎮 Joue en ligne : ${trackedAppUrl}`;
 
   return `${line1}\n${line2}\n${line3}`;
 }
@@ -474,7 +475,7 @@ export function getFormattedCaptionForPlatform(
 ): string {
   // 1. Si un texte spécifique pour cette plateforme est déjà défini, on le retourne directement après nettoyage
   if (data.platformCaptions && data.platformCaptions[platform]) {
-    return data.platformCaptions[platform]!.replace(/gratuitement|100% gratuit/gi, 'en bêta');
+    return sanitizePublicText(data.platformCaptions[platform]!);
   }
 
   const resolvedLinks = links || getSocialLinks();
@@ -510,7 +511,7 @@ export function getFormattedCaptionForPlatform(
   switch (platform) {
     case 'WHATSAPP': {
       if (data.whatsAppMessage && data.whatsAppMessage.trim().length > 0) {
-        return data.whatsAppMessage.replace(/gratuitement|100% gratuit/gi, 'en bêta ouverte');
+        return sanitizePublicText(data.whatsAppMessage);
       }
       const trackedAppUrl = buildTrackedAppUrl('WHATSAPP', campaign, 'group', appUrlBase);
 
@@ -539,7 +540,7 @@ export function getFormattedCaptionForPlatform(
         msg += `\n`;
       }
 
-      msg += `👉 *Teste la bêta en ligne :* ${trackedAppUrl}\n`;
+      msg += `👉 *Joue en ligne :* ${trackedAppUrl}\n`;
       if (rawFbUrl) {
         msg += `📘 *Suis notre page Facebook officielle :* ${rawFbUrl}\n`;
       }
@@ -584,7 +585,7 @@ export function getFormattedCaptionForPlatform(
       }
 
       insta += `📌 Enregistre ce post pour ne rien manquer.\n\n`;
-      insta += `🎮 Lien pour tester la bêta en bio (@njambokora) ou via : ${trackedAppUrl}\n`;
+      insta += `🎮 Lien pour jouer en bio (@njambokora) ou via : ${trackedAppUrl}\n`;
       insta += `💬 Communauté WhatsApp disponible via le lien en bio.\n\n`;
       insta += `.\n.\n.\n`;
       const fullTags = Array.from(new Set([
@@ -602,7 +603,7 @@ export function getFormattedCaptionForPlatform(
 
     case 'FACEBOOK': {
       if (data.postCaption && data.postCaption.trim().length > 0) {
-        return data.postCaption.replace(/gratuitement|100% gratuit/gi, 'en bêta ouverte');
+        return sanitizePublicText(data.postCaption);
       }
       const trackedAppUrl = buildTrackedAppUrl('FACEBOOK', campaign, 'social', appUrlBase);
       const rawHook = `🃏 NJAMBO KORA | ${headline}`;
@@ -634,7 +635,7 @@ export function getFormattedCaptionForPlatform(
       // Primary link for Facebook = WhatsApp Group
       fb += `💬 Rejoins notre groupe WhatsApp officiel : ${rawWaUrl}\n`;
       // Secondary link for Facebook = App
-      fb += `🎮 Teste la version bêta en ligne : ${trackedAppUrl}\n\n`;
+      fb += `🎮 Joue en ligne : ${trackedAppUrl}\n\n`;
       fb += customHashtags.slice(0, 4).join(' ');
       return fb;
     }
@@ -643,13 +644,13 @@ export function getFormattedCaptionForPlatform(
       let shortHeadline = headline.length > 70 ? headline.substring(0, 67) + '...' : headline;
       const trackedTwitterUrl = buildTrackedAppUrl('TWITTER', campaign, 'social', appUrlBase);
       if (isPodium && cleanW1Name) {
-        let xText = `🏆 ${shortHeadline}\n\n🥇 ${cleanW1Name}\n${cleanW2Name ? `🥈 ${cleanW2Name}\n` : ''}${cleanW3Name ? `🥉 ${cleanW3Name}\n` : ''}\n🎮 Défie les champions en bêta : ${trackedTwitterUrl}\n${customHashtags.slice(0, 2).join(' ')}`;
+        let xText = `🏆 ${shortHeadline}\n\n🥇 ${cleanW1Name}\n${cleanW2Name ? `🥈 ${cleanW2Name}\n` : ''}${cleanW3Name ? `🥉 ${cleanW3Name}\n` : ''}\n🎮 Défie les champions : ${trackedTwitterUrl}\n${customHashtags.slice(0, 2).join(' ')}`;
         return xText.length > 280 ? xText.substring(0, 275) + '...' : xText;
       }
       let shortText = mainText.length > 100 ? mainText.substring(0, 97) + '...' : mainText;
-      let xText = `🃏 ${shortHeadline}\n\n${shortText}\n\n🎮 Joue en bêta : ${trackedTwitterUrl}\n${customHashtags.slice(0, 3).join(' ')}`;
+      let xText = `🃏 ${shortHeadline}\n\n${shortText}\n\n🎮 Joue en ligne : ${trackedTwitterUrl}\n${customHashtags.slice(0, 3).join(' ')}`;
       if (xText.length > 280) {
-        xText = `🃏 ${shortHeadline}\n\n🎮 Joue au Njambo Kora en bêta : ${trackedTwitterUrl}\n${customHashtags.slice(0, 2).join(' ')}`;
+        xText = `🃏 ${shortHeadline}\n\n🎮 Joue au Njambo Kora : ${trackedTwitterUrl}\n${customHashtags.slice(0, 2).join(' ')}`;
       }
       return xText;
     }
@@ -661,25 +662,25 @@ export function getFormattedCaptionForPlatform(
         if (cleanW2Name) tiktok += `🥈 ${cleanW2Name}\n`;
         if (cleanW3Name) tiktok += `🥉 ${cleanW3Name}\n\n`;
         tiktok += `Tu penses pouvoir les détrôner ? Dis-le en commentaire ! 👇💬\n`;
-        tiktok += `Joue en bêta sur le lien en bio ! 🎮\n\n`;
+        tiktok += `Joue sur le lien en bio ! 🎮\n\n`;
         tiktok += `#fyp #njambokora #gaming #champions #cameroun #jeuxdecartes`;
         return tiktok;
       } else if (isPuzzle) {
         let tiktok = `🃏 ${headline} 💥\n\n`;
         tiktok += `Tu aurais joué quelle carte toi ? Dis-le moi en com 👇💬\n\n`;
-        tiktok += `Joue en bêta sur le lien en bio ! 🎮\n\n`;
+        tiktok += `Joue sur le lien en bio ! 🎮\n\n`;
         tiktok += `#fyp #foryou #njambokora #gaming #jeuxdecartes #camerountiktok #237 #doublekora #gamingafrica`;
         return tiktok;
       } else if (isTournament) {
         let tiktok = `🏆 Grand Tournoi Njambo Kora annoncé ! 💥\n\n`;
         tiktok += `${headline}\n`;
-        tiktok += `Inscriptions ouvertes en bêta sur le lien en bio ! 🎮\n\n`;
+        tiktok += `Inscriptions ouvertes sur le lien en bio ! 🎮\n\n`;
         tiktok += `#fyp #tournoi #njambokora #esport #cameroun #gaming`;
         return tiktok;
       } else {
         let tiktok = `🃏 ${headline} 💥\n\n`;
         tiktok += `${mainText.slice(0, 100)}\n\n`;
-        tiktok += `Rejoins la table en bêta sur le lien en bio ! 🎮\n\n`;
+        tiktok += `Rejoins la table sur le lien en bio ! 🎮\n\n`;
         tiktok += `#fyp #njambokora #gaming #cameroun #jeuxdecartes`;
         return tiktok;
       }

@@ -128,7 +128,7 @@ export const PRESET_DEFS: PresetDef[] = [
         palette: 'EMERALD_GOLD',
         pattern: 'NDOP_CHEVRON',
         blocks,
-        cta: { text: 'Viens tester la bêta', intent: 'PLAY' },
+        cta: { text: 'Viens jouer', intent: 'PLAY' },
         footer: { text: 'njambo-kora.ai.studio', app: true, whatsapp: true },
         meta: { presetId: 'UPDATE_ANNOUNCEMENT', source: 'PRESET' },
       };
@@ -601,7 +601,7 @@ export const PRESET_DEFS: PresetDef[] = [
         palette: 'ROYAL_SAPPHIRE',
         pattern: 'MINIMAL',
         blocks,
-        cta: { text: 'Viens tester la bêta', intent: 'PLAY' },
+        cta: { text: 'Viens jouer', intent: 'PLAY' },
         footer: { text: 'njambo-kora.ai.studio', app: true, whatsapp: true },
         meta: { presetId: 'TIP_RULE', source: 'PRESET' },
       };

@@ -64,7 +64,7 @@ Tu transformes le brief de l'administrateur en ${VARIANTS_COUNT} VARIANTES de vi
 # POST D'ACCOMPAGNEMENT (champs story, question, hashtags) : il COMPLÈTE le visuel, il ne le répète pas
 - story : 1 à 3 phrases courtes (40 mots maximum). Voix d'Hokuto : un pote humble qui lance un défi, tutoiement, argot urbain léger. Raconte le contexte ou le moment. Ne recopie ni l'accroche ni le texte du visuel.
 - question : 12 mots maximum, qui fait réagir (pronostic, vote A ou B, défi, ou « tag un pote qui… »). Les 3 variantes ont 3 questions de types différents.
-- hashtags : 0 à 3 parmi #NjamboKora, #JeuDeCartes, #Katika, #Kora, #BêtaTest.
+- hashtags : 0 à 3 parmi #NjamboKora, #JeuDeCartes, #Katika, #Kora.
 - Jamais de revendication du type « premier jeu camerounais », jamais de promesse de gain.
 
 # RÈGLES DE SÉCURITÉ ET CONFORMITÉ KATIKA

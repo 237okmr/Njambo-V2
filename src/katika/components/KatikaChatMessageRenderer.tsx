@@ -170,7 +170,7 @@ export const KatikaChatMessageRenderer: React.FC<KatikaChatMessageRendererProps>
         format: (v2Spec.format as any) || 'SQUARE',
         headline: v2Spec.blocks.find((b) => b.type === 'HOOK')?.text || 'Visuel Studio Katika V2',
         mainText: v2Spec.blocks.find((b) => b.type === 'BODY')?.text || '',
-        ctaText: v2Spec.cta?.text || 'Viens tester la bêta',
+        ctaText: v2Spec.cta?.text || 'Viens jouer',
         postCaption: v2Spec.captions?.facebook || '',
         whatsAppMessage: v2Spec.captions?.whatsappGroup || '',
         hashtags: ['#NjamboKora', '#Katika', '#JeudeCartes'],
