@@ -7,6 +7,17 @@ import { PARAM_BY_KEY, clampParamValue } from '../engine/engineParams';
 import { pushService, buildGameUrl } from '../pushService';
 import { APP_VERSION } from '../../src/version';
 import { verifyFirebaseIdToken } from '../firebaseAdmin';
+import { randomBytes } from 'crypto';
+import { CashLedgerError } from '../cash/cashTypes';
+import type { CashTableBook } from '../cash/cashTables';
+import { getCashTablesAccess, getLiveCashTableBook, hasCashTableConsent } from '../cash/cashTableStore';
+import { CashTableSettings, buyInRangeFor, isValidCapacity, validateBuyIn, validateRebuy } from '../cash/cashTableRules';
+
+export interface CashTableRuntime {
+  book: CashTableBook;
+  getAccess: () => Promise<{ open: boolean; settings: CashTableSettings }>;
+  hasConsent: (uid: string) => Promise<boolean>;
+}
 import { saveKoraMoment } from './koraMomentStore';
 import { recordMultiplayerPartie } from './gameRecordStore';
 import { recordPresenceSeen } from './presenceDaily';
@@ -25,6 +36,7 @@ export interface ConnectedClient {
   lastPing: number;
   isAuthenticated?: boolean;
   authUid?: string;
+  authProvider?: string;
   isAuthenticating?: boolean;
   isProvisional?: boolean;
   messageQueue?: string[];
@@ -89,6 +101,13 @@ export class RoomManager {
    * clears bot bet increase timers, deletes room state & room object, and clears room tokens.
    */
   public static destroyRoom(roomCode: string, reason?: string): void {
+    // Table Kora Cash fermée en cours de route : personne ne perd ce que le registre connaît, la partie en cours est annulée.
+    const closingRoom = this.rooms.get(roomCode);
+    if (closingRoom?.cash) {
+      Object.entries(closingRoom.cash.seats).forEach(([uid, seat]) => {
+        if (seat.open) this.closeCashSeat(closingRoom, uid, seat.settled, { keepCapitalShown: true });
+      });
+    }
     const state = this.roomStates.get(roomCode);
     if (state) {
       ServerGameEngine.clearAllTimers(state);
@@ -453,6 +472,11 @@ export class RoomManager {
 
     for (const snapshot of restored) {
       const room = snapshot.room;
+      // Une table Kora Cash ne revient jamais d'un redémarrage : son argent reste en table, Katika le rend (voir cashTables.ts).
+      if (room.cash) {
+        void deleteRoomSnapshot(room.id);
+        continue;
+      }
       room.restoredAt = now;
       room.rev = (room.rev || 0) + 1;
 
@@ -600,7 +624,23 @@ export class RoomManager {
         },
         onPartieResult: (result: PartieResult, r: MultiplayerRoom) => {
           this.handleNewPartieResult(result, r);
-          void recordMultiplayerPartie(result, r);
+          // Table Kora Cash : le résultat va au registre, jamais aux statistiques ni au palmarès.
+          if (r.cash) {
+            this.settleCashPartie(result, r);
+          } else {
+            void recordMultiplayerPartie(result, r);
+          }
+        },
+        onCashBeforeNextPartie: (r: MultiplayerRoom) => this.releaseBrokeCashSeats(r),
+        onCashSeatReleased: (playerId: string, r: MultiplayerRoom) => {
+          const seat = r.cash?.seats[playerId];
+          const rp = (r.players || []).find((p) => p.id === playerId);
+          if (seat?.open && rp) {
+            const amount = r.gameState?.players?.find((p) => p.id === playerId)?.capital ?? rp.capital;
+            this.closeCashSeat(r, playerId, amount);
+            rp.leftRoom = true;
+            this.pushTableEmote(r, `💰 ${rp.name}, absent, récupère ${amount} FCFA dans Kora Cash.`, '💰');
+          }
         },
         onKoraMoment: (moment) => {
           void saveKoraMoment(moment);
@@ -1018,6 +1058,7 @@ export class RoomManager {
 
         client.isAuthenticated = true;
         client.authUid = verifiedUid;
+        client.authProvider = result.signInProvider;
         this.lastSecurityAuditBySocket.delete(client.socket);
         this.clients.set(verifiedUid, client);
 
@@ -1344,6 +1385,14 @@ export class RoomManager {
           this.handleRespondDirectInvite(client, msg);
           break;
 
+        case 'CASH_TABLE_OPEN':
+          void this.handleCashTableOpen(client, msg);
+          break;
+
+        case 'CASH_TABLE_REBUY':
+          void this.handleCashTableRebuy(client, msg);
+          break;
+
         case 'QUICK_MATCH_REQUEST':
           this.handleQuickMatchRequest(client, msg);
           break;
@@ -1357,6 +1406,550 @@ export class RoomManager {
       }
     } catch (err) {
       console.error('[RoomManager] Failed to handle message:', err);
+    }
+  }
+
+  // ── Tables Kora Cash ──────────────────────────────────────────────────────────────────────────────────────────
+  // Le capital d'une table Cash est de l'argent : tout siège passe par le livre de compte, à l'entrée comme à la sortie.
+  // Le serveur ne croit que l'identité Google vérifiée sur cette connexion, jamais ce que le client déclare.
+
+  private static cashRuntime: CashTableRuntime | null = null;
+  private static pendingCashEntries = new Set<string>();
+
+  private static getCashRuntime(): CashTableRuntime {
+    if (!this.cashRuntime) {
+      this.cashRuntime = { book: getLiveCashTableBook(), getAccess: getCashTablesAccess, hasConsent: hasCashTableConsent };
+    }
+    return this.cashRuntime;
+  }
+
+  public static setCashTableRuntimeForTest(runtime: CashTableRuntime | null): void {
+    this.cashRuntime = runtime;
+  }
+
+  private static findOpenCashSeatRoom(uid: string): MultiplayerRoom | null {
+    for (const room of this.rooms.values()) {
+      if (room.cash?.seats[uid]?.open) return room;
+    }
+    return null;
+  }
+
+  /** Code de la table où ce joueur a encore un siège Cash ouvert. */
+  public static getCashSeatRoomCode(uid: string): string | null {
+    return this.findOpenCashSeatRoom(uid)?.id ?? null;
+  }
+
+  public static isCashTableLive(tableId: string): boolean {
+    for (const room of this.rooms.values()) {
+      if (room.cash?.tableId === tableId) return true;
+    }
+    return false;
+  }
+
+  /** Tables Cash en cours, pour le suivi Katika. */
+  public static listCashTables() {
+    const tables: {
+      roomCode: string;
+      tableId: string;
+      status: string;
+      bet: number;
+      isPublic: boolean;
+      rakePercent: number;
+      players: { name: string; capital: number; connected: boolean }[];
+    }[] = [];
+    for (const room of this.rooms.values()) {
+      if (!room.cash || room.cash.closed) continue;
+      const seats = room.cash.seats;
+      tables.push({
+        roomCode: room.id,
+        tableId: room.cash.tableId,
+        status: room.status,
+        bet: room.baseBet,
+        isPublic: room.isPublic !== false,
+        rakePercent: room.cash.rakePercent,
+        players: (room.players || [])
+          .filter((p) => seats[p.id]?.open)
+          .map((p) => ({ name: p.name, capital: p.capital, connected: p.connected !== false })),
+      });
+    }
+    return tables;
+  }
+
+  private static sendCashError(client: ConnectedClient, error: string, activeGameRoomCode?: string): void {
+    this.sendMessage(client.socket, {
+      type: 'ERROR',
+      errorCode: activeGameRoomCode ? 'ACTIVE_GAME_IN_PROGRESS' : 'JOIN_REFUSED',
+      error,
+      ...(activeGameRoomCode ? { activeGameRoomCode } : {}),
+    });
+  }
+
+  private static isVerifiedGooglePlayer(client: ConnectedClient): boolean {
+    return Boolean(client.isAuthenticated && client.authUid === client.playerId && client.authProvider === 'google.com');
+  }
+
+  private static async handleCashTableOpen(client: ConnectedClient, msg: ClientMessage): Promise<void> {
+    if (!this.isVerifiedGooglePlayer(client)) {
+      this.sendCashError(client, 'Un compte Google est requis pour jouer à une table Kora Cash.');
+      return;
+    }
+    const uid = client.playerId;
+    if (this.pendingCashEntries.has(uid)) {
+      this.sendCashError(client, 'Ta demande précédente est encore en cours.');
+      return;
+    }
+    this.pendingCashEntries.add(uid);
+    try {
+      await this.openCashSeat(client, uid, msg);
+    } catch (err) {
+      console.error('[KoraCash] Entrée à une table impossible.', err instanceof Error ? err.message : String(err));
+      this.sendCashError(client, err instanceof CashLedgerError ? err.message : 'Entrée à la table impossible pour le moment.');
+    } finally {
+      this.pendingCashEntries.delete(uid);
+    }
+  }
+
+  private static async openCashSeat(client: ConnectedClient, uid: string, msg: ClientMessage): Promise<void> {
+    const request = msg.cashTable;
+    if (!request) return;
+    const runtime = this.getCashRuntime();
+
+    const { open, settings } = await runtime.getAccess();
+    if (!open) {
+      this.sendCashError(client, 'Les tables Kora Cash sont fermées pour le moment.');
+      return;
+    }
+    if (this.engineConfig.isMaintenanceMode) {
+      this.sendCashError(client, 'Accès restreint : ' + this.engineConfig.maintenanceNotice);
+      return;
+    }
+    const sanction = this.getActivePlayerSanction(uid);
+    if (sanction && (sanction.status === 'BANNED' || sanction.sanctionType === 'TEMP_BAN' || sanction.sanctionType === 'PERM_BAN')) {
+      this.sendCashError(client, `Accès refusé par le Fair-Play : ${sanction.bannedReason || 'sanction active'}.`);
+      return;
+    }
+    if (!(await runtime.hasConsent(uid))) {
+      this.sendCashError(client, 'Confirme d’abord que tu as 18 ans et que tu joues de l’argent réel.');
+      return;
+    }
+
+    const playerName = msg.playerName?.trim() || 'Joueur';
+    if (playerName.toLowerCase() === 'katika') {
+      this.sendCashError(client, "Le pseudonyme 'Katika' est réservé à l'administration.");
+      return;
+    }
+
+    const seatedRoom = this.findOpenCashSeatRoom(uid);
+    if (seatedRoom) {
+      this.sendCashError(client, `Tu as déjà une table Kora Cash en cours (${seatedRoom.id}). Retournes-y ou quitte-la d'abord.`, seatedRoom.id);
+      return;
+    }
+    if (!msg.confirmLeaveCurrent) {
+      const activeGame = this.getActiveGameForPlayer(uid);
+      if (activeGame) {
+        this.sendCashError(client, `Tu as une partie en cours (salon ${activeGame.roomCode}). Retournes-y ou quitte-la explicitement.`, activeGame.roomCode);
+        return;
+      }
+    }
+
+    // Quelle table : un code précis, un salon public du niveau, ou une table à ouvrir.
+    let target: MultiplayerRoom | null = null;
+    let bet: number;
+    let capacity = 2;
+    let isPublic = request.isPublic !== false;
+    if (request.roomCode) {
+      target = this.rooms.get(String(request.roomCode).toUpperCase()) ?? null;
+      if (!target || !target.cash || target.cash.closed || target.status !== 'LOBBY') {
+        this.sendCashError(client, 'Cette table Kora Cash n’existe pas ou a déjà commencé.');
+        return;
+      }
+      if (target.bannedPlayerIds?.includes(uid)) {
+        this.sendCashError(client, 'Tu as été expulsé de cette table.');
+        return;
+      }
+      if ((target.players || []).length >= target.maxPlayers) {
+        this.sendCashError(client, 'Cette table est déjà complète.');
+        return;
+      }
+      bet = target.baseBet;
+    } else {
+      if (!settings.betLevels.includes(request.betLevel as number)) {
+        this.sendCashError(client, 'Ce niveau de mise n’est pas proposé.');
+        return;
+      }
+      if (!isValidCapacity(request.capacity)) {
+        this.sendCashError(client, 'Une table se joue à 2, 3 ou 4 joueurs.');
+        return;
+      }
+      bet = request.betLevel as number;
+      capacity = request.capacity;
+      if (isPublic) {
+        target = this.findPublicCashTable(bet, capacity);
+      }
+      if (!target && this.engineConfig.allowNewRooms === false) {
+        this.sendCashError(client, "L'ouverture de nouvelles tables est temporairement suspendue par l'administration Katika.");
+        return;
+      }
+    }
+
+    const range = target
+      ? { min: target.cash!.minBuyIn, max: target.baseBet * target.cash!.maxBuyInMultiple }
+      : buyInRangeFor(bet, settings);
+    const buyInError = validateBuyIn(request.buyIn, range);
+    if (buyInError) {
+      this.sendCashError(client, buyInError);
+      return;
+    }
+    const buyIn = request.buyIn;
+    const tableId = target ? target.cash!.tableId : randomBytes(8).toString('hex');
+    const targetCode = target ? target.id : this.generateFreeRoomCode();
+
+    await runtime.book.buyIn({ tableId, uid, amount: buyIn, betLevel: bet, roomCode: targetCode });
+
+    // L'argent est en table. Si la connexion ou la place ont disparu pendant l'écriture, il repart aussitôt.
+    const refund = async (message: string) => {
+      await runtime.book.cashOut({ tableId, uid, target: buyIn });
+      if (client.socket.readyState === WebSocket.OPEN) this.sendCashError(client, message);
+    };
+    if (client.socket.readyState !== WebSocket.OPEN) {
+      await refund('Connexion perdue : ton entrée t’a été rendue.');
+      return;
+    }
+
+    let room: MultiplayerRoom;
+    if (target) {
+      const current = this.rooms.get(targetCode);
+      if (!current || current.cash?.tableId !== tableId || current.status !== 'LOBBY' || (current.players || []).length >= current.maxPlayers) {
+        await refund('La table vient de se remplir : ton entrée t’a été rendue. Réessaie.');
+        return;
+      }
+      this.removePlayerFromOtherRooms(uid, targetCode);
+      room = current;
+      room.players.push(this.buildCashPlayer(client, msg, playerName, buyIn, false));
+    } else {
+      this.removePlayerFromOtherRooms(uid);
+      const code = this.rooms.has(targetCode) ? this.generateFreeRoomCode() : targetCode;
+      room = this.buildCashRoom(client, msg, playerName, { code, tableId, bet, capacity, isPublic, buyIn, settings });
+      this.rooms.set(code, room);
+    }
+    room.cash!.seats[uid] = { settled: buyIn, buyInTotal: buyIn, open: true };
+
+    this.setRoomPlayerToken(room.id, uid, client.reconnectToken);
+    client.roomCode = room.id;
+    room.updatedAt = Date.now();
+
+    this.sendMessage(client.socket, {
+      type: 'ROOM_JOINED',
+      room: maskOpponentCards(room, uid),
+      reconnectToken: client.reconnectToken,
+      protocolVersion: this.CURRENT_PROTOCOL_VERSION,
+      serverVersion: this.SERVER_VERSION,
+      isProtocolCompatible: true,
+      updateRecommended: false,
+    });
+    this.broadcastRoomState(room.id);
+    this.evaluateAutoStart(room.id);
+  }
+
+  private static findPublicCashTable(bet: number, capacity: number): MultiplayerRoom | null {
+    for (const room of this.rooms.values()) {
+      if (
+        room.cash &&
+        !room.cash.closed &&
+        room.isPublic !== false &&
+        room.status === 'LOBBY' &&
+        room.baseBet === bet &&
+        room.maxPlayers === capacity &&
+        (room.players || []).length < room.maxPlayers
+      ) {
+        return room;
+      }
+    }
+    return null;
+  }
+
+  private static generateFreeRoomCode(): string {
+    let code = '';
+    do {
+      code = Math.random().toString(36).substring(2, 6).toUpperCase();
+    } while (code.length < 4 || this.rooms.has(code));
+    return code;
+  }
+
+  private static buildCashPlayer(client: ConnectedClient, msg: ClientMessage, name: string, buyIn: number, isHost: boolean): RoomPlayer {
+    return {
+      id: client.playerId,
+      name,
+      isHost,
+      isHuman: true,
+      avatarSeed: msg.avatarSeed || 'avatar_cash',
+      score: buyIn,
+      capital: buyIn,
+      isEliminated: false,
+      isSpectator: false,
+      isPendingIntegration: false,
+      hand: [],
+      tricksWonInRound: 0,
+      isReady: true,
+      connected: true,
+      lastSeen: Date.now(),
+    };
+  }
+
+  private static buildCashRoom(
+    client: ConnectedClient,
+    msg: ClientMessage,
+    playerName: string,
+    p: { code: string; tableId: string; bet: number; capacity: number; isPublic: boolean; buyIn: number; settings: CashTableSettings }
+  ): MultiplayerRoom {
+    const range = buyInRangeFor(p.bet, p.settings);
+    const now = Date.now();
+    return {
+      id: p.code,
+      hostId: client.playerId,
+      originalHostId: client.playerId,
+      hostName: playerName,
+      isPublic: p.isPublic,
+      requireGoogleAuth: true,
+      status: 'LOBBY',
+      fillWithBots: false,
+      maxPlayers: p.capacity,
+      baseBet: p.bet,
+      initialBaseBet: p.bet,
+      initialCapital: range.min,
+      enableDoubleKora: true,
+      enableUnder21: true,
+      turnTimerSeconds: clampParamValue(PARAM_BY_KEY.turnTimerSeconds, this.engineConfig.turnTimerSeconds) as number,
+      afkAction: 'auto_play',
+      disconnectGraceSeconds: Number(this.engineConfig.playerGraceSeconds),
+      players: [this.buildCashPlayer(client, msg, playerName, p.buyIn, true)],
+      gameState: null,
+      mancheNumber: 1,
+      protocolVersion: this.CURRENT_PROTOCOL_VERSION,
+      serverVersion: this.SERVER_VERSION,
+      createdAt: now,
+      updatedAt: now,
+      lastSeenAt: now,
+      cash: {
+        tableId: p.tableId,
+        environment: 'DEMO',
+        rakePercent: p.settings.rakePercent,
+        minBuyIn: range.min,
+        maxBuyInMultiple: p.settings.maxBuyInMultiple,
+        betLevel: p.bet,
+        seats: {},
+      },
+    };
+  }
+
+  /** Rend son capital à un joueur et ferme son siège. L'écriture part en file : un résultat déjà en attente passe avant. */
+  private static closeCashSeat(room: MultiplayerRoom, uid: string, target: number, options?: { keepCapitalShown?: boolean; closedBy?: string }): void {
+    const seat = room.cash?.seats[uid];
+    if (!room.cash || !seat?.open) return;
+    seat.open = false;
+    seat.settled = target;
+    void this.getCashRuntime()
+      .book.cashOut({ tableId: room.cash.tableId, uid, target: () => target + (seat.lateRebuy ?? 0), closedBy: options?.closedBy })
+      .catch((err) => console.error('[KoraCash] Sortie de table impossible.', err instanceof Error ? err.message : String(err)));
+    if (options?.keepCapitalShown) return;
+    const rp = (room.players || []).find((p) => p.id === uid);
+    const gp = room.gameState?.players?.find((p) => p.id === uid);
+    [rp, gp].forEach((p) => {
+      if (!p) return;
+      p.capital = 0;
+      p.score = 0;
+      p.isEliminated = true;
+    });
+  }
+
+  /** Inscrit au registre le capital de chacun après une partie. Rejouer le même résultat n'écrit rien de plus. */
+  private static settleCashPartie(result: PartieResult, room: MultiplayerRoom): void {
+    if (!room.cash) return;
+    const { tableId, seats } = room.cash;
+    const book = this.getCashRuntime().book;
+    const tag = `m${result.mancheNumber}p${result.partieCount}`;
+    Object.entries(seats).forEach(([uid, seat]) => {
+      if (!seat.open) return;
+      const gp = room.gameState?.players?.find((p) => p.id === uid);
+      const rp = (room.players || []).find((p) => p.id === uid);
+      const capital = gp?.capital ?? rp?.capital;
+      if (typeof capital !== 'number') return;
+      seat.settled = capital;
+      void book.settle({ tableId, uid, target: capital, tag });
+    });
+    room.cash.lastRake = result.rake ?? 0;
+    void book.recordPartie({ tableId, resultId: `${tableId}_${tag}`, rake: result.rake ?? 0, bet: result.baseBet });
+  }
+
+  /** Juste avant la partie suivante : qui ne peut plus miser récupère ce qu'il lui reste et quitte la table. */
+  private static releaseBrokeCashSeats(room: MultiplayerRoom): void {
+    if (!room.cash) return;
+    Object.entries(room.cash.seats).forEach(([uid, seat]) => {
+      if (!seat.open) return;
+      const rp = (room.players || []).find((p) => p.id === uid);
+      if (!rp || (!rp.isEliminated && rp.capital >= room.baseBet)) return;
+      const amount = rp.capital;
+      this.closeCashSeat(room, uid, amount);
+      rp.leftRoom = true;
+      this.pushTableEmote(room, `💰 ${rp.name} quitte la table avec ${amount} FCFA.`, '💰');
+    });
+  }
+
+  private static pushTableEmote(room: MultiplayerRoom, text: string, emoji: string): void {
+    const emote: EmoteMessage = {
+      id: 'em_' + Math.random().toString(36).substring(2, 9),
+      playerId: 'system',
+      playerName: 'Table',
+      text,
+      emoji,
+      timestamp: Date.now(),
+      isBot: true,
+    };
+    room.activeEmotes = [...(room.activeEmotes || []), emote].slice(-5);
+  }
+
+  /**
+   * Filet de sécurité, passé à chaque diffusion : un siège ouvert sans joueur à la table est remboursé, quel que soit le
+   * chemin qui l'a retiré ; une table arrivée en fin de manche se termine et rend tout le capital.
+   */
+  private static reconcileCashTable(room: MultiplayerRoom): void {
+    if (!room.cash) return;
+    Object.entries(room.cash.seats).forEach(([uid, seat]) => {
+      if (seat.open && !(room.players || []).some((p) => p.id === uid)) {
+        this.closeCashSeat(room, uid, seat.settled);
+      }
+    });
+    if (room.status !== 'MANCHE_OVER' || room.cash.closed) return;
+    room.cash.closed = true;
+    room.roundEndAutoAdvanceAt = null;
+    // Un pot encore en jeu : la partie n'a pas de résultat, chacun repart avec ce que le registre connaît déjà.
+    const partieVoided = (room.gameState?.pot ?? 0) > 0;
+    Object.entries(room.cash.seats).forEach(([uid, seat]) => {
+      if (!seat.open) return;
+      const gp = room.gameState?.players?.find((p) => p.id === uid);
+      const rp = (room.players || []).find((p) => p.id === uid);
+      const target = partieVoided ? seat.settled : (gp?.capital ?? rp?.capital ?? seat.settled);
+      this.closeCashSeat(room, uid, target, { keepCapitalShown: true });
+    });
+    this.pushTableEmote(room, '💰 Table terminée : le capital de chacun est revenu dans Kora Cash.', '💰');
+  }
+
+  /** Sortie volontaire pendant une partie (forfait avec la pénalité habituelle) ou entre deux parties (tout le capital). */
+  private static leaveCashTable(room: MultiplayerRoom, roomCode: string, uid: string, state: ActiveRoomState): void {
+    const onChange = (updatedRoom: MultiplayerRoom) => {
+      this.broadcastRoomState(updatedRoom.id);
+      this.evaluateAutoStart(updatedRoom.id);
+    };
+    if (!room.cash?.seats[uid]?.open) {
+      this.broadcastRoomState(roomCode);
+      return;
+    }
+    if (room.status === 'PLAYING') {
+      const before = (room.players || []).find((p) => p.id === uid);
+      if (before && !before.isForfeit && !before.isEliminated) {
+        ServerGameEngine.forfeitPlayer(room, uid, onChange, state, true, { notify: false, freezeSeat: true });
+      }
+    }
+    const rp = (room.players || []).find((p) => p.id === uid);
+    const gp = room.gameState?.players?.find((p) => p.id === uid);
+    const seat = room.cash.seats[uid];
+    if (seat?.open) {
+      const amount = gp?.capital ?? rp?.capital ?? seat.settled;
+      this.closeCashSeat(room, uid, amount);
+      if (rp) {
+        this.pushTableEmote(room, `💰 ${rp.name} quitte la table avec ${amount} FCFA.`, '💰');
+      }
+    }
+    if (rp) {
+      rp.leftRoom = true;
+      rp.connected = false;
+      rp.hand = [];
+    }
+    if (gp) {
+      gp.leftRoom = true;
+      gp.connected = false;
+    }
+    if (room.hostId === uid) {
+      const nextHost = (room.players || []).find((p) => p.isHuman && p.connected && !p.isEliminated && !p.isForfeit && p.id !== uid);
+      if (nextHost) {
+        room.hostId = nextHost.id;
+        room.hostName = nextHost.name;
+        nextHost.isHost = true;
+      }
+    }
+    room.updatedAt = Date.now();
+
+    // Entre deux parties, s'il ne reste qu'un joueur, inutile de faire attendre la fin du compte à rebours.
+    const stillSeated = Object.entries(room.cash.seats).filter(([id, s]) => {
+      const p = (room.players || []).find((x) => x.id === id);
+      return s.open && p && !p.isEliminated && p.capital >= room.baseBet;
+    });
+    if (room.status === 'PARTIE_OVER' && stillSeated.length <= 1) {
+      ServerGameEngine.advanceToNextPartie(room, onChange, state);
+      return;
+    }
+    this.broadcastRoomState(roomCode);
+  }
+
+  private static async handleCashTableRebuy(client: ConnectedClient, msg: ClientMessage): Promise<void> {
+    const uid = client.playerId;
+    const room = client.roomCode ? this.rooms.get(client.roomCode) : undefined;
+    if (!room?.cash || !this.isVerifiedGooglePlayer(client)) return;
+    if (this.pendingCashEntries.has(uid)) {
+      this.sendCashError(client, 'Ta demande précédente est encore en cours.');
+      return;
+    }
+    this.pendingCashEntries.add(uid);
+    try {
+      const runtime = this.getCashRuntime();
+      const { open } = await runtime.getAccess();
+      if (!open) {
+        this.sendCashError(client, 'Les tables Kora Cash sont fermées : la recave n’est plus possible.');
+        return;
+      }
+      const seat = room.cash.seats[uid];
+      const rp = (room.players || []).find((p) => p.id === uid);
+      if (!seat?.open || !rp || room.status !== 'PARTIE_OVER' || room.cash.closed) {
+        this.sendCashError(client, 'La recave se fait entre deux parties.');
+        return;
+      }
+      const amount = msg.cashAmount as number;
+      const error = validateRebuy({ amount, capital: rp.capital, bet: room.baseBet, maxBuyInMultiple: room.cash.maxBuyInMultiple });
+      if (error) {
+        this.sendCashError(client, error);
+        return;
+      }
+      await runtime.book.buyIn({
+        tableId: room.cash.tableId,
+        uid,
+        amount,
+        betLevel: room.cash.betLevel,
+        roomCode: room.id,
+        onApplied: () => {
+          seat.buyInTotal += amount;
+          if (!seat.open) {
+            seat.lateRebuy = (seat.lateRebuy ?? 0) + amount;
+            return;
+          }
+          seat.settled += amount;
+          const player = (room.players || []).find((p) => p.id === uid);
+          const gp = room.gameState?.players?.find((p) => p.id === uid);
+          [player, gp].forEach((p) => {
+            if (!p) return;
+            p.capital += amount;
+            p.score = p.capital;
+            if (p.capital >= room.baseBet) p.isEliminated = false;
+          });
+          if (player) this.pushTableEmote(room, `💰 ${player.name} recave de ${amount} FCFA.`, '💰');
+        },
+      });
+      room.updatedAt = Date.now();
+      if (this.rooms.has(room.id)) this.broadcastRoomState(room.id);
+    } catch (err) {
+      console.error('[KoraCash] Recave impossible.', err instanceof Error ? err.message : String(err));
+      this.sendCashError(client, err instanceof CashLedgerError ? err.message : 'Recave impossible pour le moment.');
+    } finally {
+      this.pendingCashEntries.delete(uid);
     }
   }
 
@@ -1670,6 +2263,20 @@ export class RoomManager {
     }
 
     const room = this.rooms.get(roomCode)!;
+
+    // Table Kora Cash : pas d'observateur ni d'entrée par code ici. Seul le titulaire vérifié d'un siège ouvert revient.
+    if (room.cash) {
+      const isSeatOwner = Boolean(client.isAuthenticated && client.authUid && room.cash.seats[client.authUid]?.open);
+      if (!isSeatOwner) {
+        this.sendMessage(client.socket, {
+          type: 'ERROR',
+          errorCode: 'JOIN_REFUSED',
+          error: 'Cette table se rejoint depuis Kora Cash, avec ton compte Google.',
+        });
+        return;
+      }
+    }
+
     client.roomCode = roomCode;
 
     // Version Handshake & Protocol Negotiation
@@ -2362,7 +2969,7 @@ export class RoomManager {
     if (!room) return;
     const state = this.getOrCreateActiveState(roomCode, room);
 
-    if (!room.isPublic || (room.status !== 'LOBBY' && room.status !== 'MANCHE_OVER')) {
+    if (!room.isPublic || room.cash?.closed || (room.status !== 'LOBBY' && room.status !== 'MANCHE_OVER')) {
       this.cancelAutoStart(roomCode);
       return;
     }
@@ -2474,6 +3081,15 @@ export class RoomManager {
     }
     client.roomCode = targetRoomCode;
     const room = this.rooms.get(targetRoomCode)!;
+
+    if (room.cash && room.status !== 'LOBBY') {
+      this.sendMessage(client.socket, {
+        type: 'ERROR',
+        errorCode: 'GENERIC',
+        error: 'Cette table est terminée : ton capital est revenu dans Kora Cash.',
+      });
+      return;
+    }
 
     if (room.status === 'MANCHE_OVER') {
       room.players = (room.players || []).filter((p) => !p.leftRoom);
@@ -2716,6 +3332,7 @@ export class RoomManager {
 
     const player = (room.players || []).find((p) => p.id === client.playerId);
     if (!player || !player.isHuman) return;
+    if (room.cash) return; // jamais de bot face à de l'argent
 
     if (player.isHost) {
       if (room.originalHostId && client.playerId !== room.originalHostId) {
@@ -2819,7 +3436,10 @@ export class RoomManager {
 
     // Règle du relais : tant qu'un humain est absent, la partie suivante n'est PAS lancée en avance.
     // On laisse courir le compte à rebours de fin de partie : c'est la dernière chance de retour de l'absent.
-    const seatedHumans = room.players.filter((p) => p.isHuman && !p.isEliminated && !p.isSpectator);
+    // Table Kora Cash : le joueur à court garde son siège jusqu'à la fin du compte à rebours : il peut encore recaver.
+    const seatedHumans = room.players.filter(
+      (p) => p.isHuman && !p.isSpectator && (room.cash ? Boolean(room.cash.seats[p.id]?.open) : !p.isEliminated)
+    );
     const allReady =
       seatedHumans.length > 0 &&
       !ServerGameEngine.hasAbsentHuman(room) &&
@@ -2846,6 +3466,13 @@ export class RoomManager {
     this.tickRoom(client.roomCode);
     const room = this.rooms.get(client.roomCode);
     if (!room) return;
+
+    // Table Kora Cash : personne ne peut couper le temps de recave d'un joueur à court.
+    if (room.cash) {
+      const cashTable = room.cash;
+      const someoneCanRebuy = (room.players || []).some((p) => cashTable.seats[p.id]?.open && p.capital < room.baseBet);
+      if (someoneCanRebuy) return;
+    }
 
     // L'hôte peut toujours forcer le lancement. Si l'hôte est absent depuis assez longtemps, tout autre
     // joueur assis (non spectateur) peut le faire à sa place, pour éviter qu'une table reste bloquée.
@@ -2953,6 +3580,7 @@ export class RoomManager {
   private static handleUpdateSettings(client: ConnectedClient, msg: ClientMessage): void {
     if (!client.roomCode || !this.rooms.has(client.roomCode) || !msg.settings) return;
     const room = this.rooms.get(client.roomCode)!;
+    if (room.cash) return; // réglages fixés à l'ouverture de la table
 
     if (room.hostId !== client.playerId) {
       this.sendMessage(client.socket, {
@@ -3037,6 +3665,11 @@ export class RoomManager {
       }
     }
 
+    if (room.cash && isExplicit && (room.status === 'PLAYING' || room.status === 'PARTIE_OVER')) {
+      this.leaveCashTable(room, roomCode, playerId, this.getOrCreateActiveState(roomCode, room));
+      return;
+    }
+
     if (room.status === 'PLAYING') {
       const state = this.getOrCreateActiveState(roomCode, room);
       
@@ -3049,7 +3682,7 @@ export class RoomManager {
         // Règle du relais : quitter la table = même règle que l'absence. Le siège est conservé, un relais joue
         // des cartes neutres jusqu'à la fin de la partie, le joueur peut revenir à tout moment.
         this.relayLeavingPlayer(room, roomCode, playerId, state);
-      } else {
+      } else if (!room.cash) {
         // When a player leaves, hot-swap their seat with an AI bot so the table stays at 4 players,
         // no ghost player with an empty hand is left, and the game never hangs at 0s.
         ServerGameEngine.replacePlayerWithBot(
@@ -3268,6 +3901,16 @@ export class RoomManager {
 
     const player = (room.players || []).find((p) => p.id === client.playerId);
     if (!player || !player.isHuman || player.isEliminated || player.isForfeit) return;
+
+    // Table Kora Cash : la mise ne monte qu'à l'unanimité, donc jamais pendant qu'un joueur est absent et ne peut pas voter.
+    if (room.cash && ServerGameEngine.hasAbsentHuman(room)) {
+      this.sendMessage(client.socket, {
+        type: 'ERROR',
+        errorCode: 'GENERIC',
+        error: 'La mise ne peut pas monter tant qu’un joueur est absent : il doit pouvoir voter.',
+      });
+      return;
+    }
 
     // Bet increase proposals can ONLY be made between parties (PARTIE_OVER or LOBBY)
     if (room.gameState && room.gameState.phase === 'PLAYING') {
@@ -3653,6 +4296,7 @@ export class RoomManager {
     const roomCode = client.roomCode || msg.roomCode;
     if (!roomCode || !this.rooms.has(roomCode)) return;
     const room = this.rooms.get(roomCode)!;
+    if (room.cash) return; // pas d'intégration en cours de jeu : l'entrée passe par le registre
 
     const humanPlayers = (room.players || []).filter((p) => p.isHuman && !p.isSpectator);
     if (humanPlayers.length >= 4) {
@@ -4011,6 +4655,7 @@ export class RoomManager {
     if (!client.roomCode || !this.rooms.has(client.roomCode)) return;
     const room = this.rooms.get(client.roomCode)!;
     if (room.status !== 'PLAYING' || !room.gameState) return;
+    if (room.cash) return; // à une table Cash, on sort entre deux parties ou par forfait
 
     const player = (room.players || []).find((p) => p.id === client.playerId);
     if (!player || !player.isHuman || player.isEliminated || player.isForfeit) return;
@@ -4146,6 +4791,7 @@ export class RoomManager {
       if (
         room.status === 'LOBBY' &&
         room.isPublic !== false &&
+        !room.cash &&
         !room.fillWithBots &&
         !room.botFillReminderSent &&
         (room.players || []).filter((p) => !p.isSpectator).length < room.maxPlayers
@@ -4311,12 +4957,13 @@ export class RoomManager {
 
     // Synchronize room.players with room.gameState.players for atomic data consistency
     syncRoomPlayersWithGameState(room);
+    this.reconcileCashTable(room);
 
     // Sauvegarde de la table pour la restaurer si le serveur redémarre (débit limité, voir roomSnapshotStore).
     // this.snapshotsEnabled n'est activé que par le vrai processus serveur (server.ts), jamais pendant les
     // tests : ceux-ci exercent broadcastRoomState massivement et ne doivent jamais toucher Firestore.
     // Les tables purement en attente sans aucun humain connecté ne valent pas la peine d'être sauvegardées.
-    if (this.snapshotsEnabled && (room.status !== 'LOBBY' || (room.players || []).some((p) => p.isHuman && p.connected))) {
+    if (this.snapshotsEnabled && !room.cash && (room.status !== 'LOBBY' || (room.players || []).some((p) => p.isHuman && p.connected))) {
       scheduleRoomSnapshot(roomCode, room);
     }
 
@@ -4746,6 +5393,22 @@ export class RoomManager {
 
     const player = room.players[playerIndex];
 
+    // Table Kora Cash : expulser = rendre le capital, sans bot à la place.
+    if (room.cash?.seats[playerId]?.open && (room.status === 'PLAYING' || room.status === 'PARTIE_OVER')) {
+      const state = this.getOrCreateActiveState(roomCode, room);
+      this.leaveCashTable(room, roomCode, playerId, state);
+      const kicked = this.clients.get(playerId);
+      if (kicked && kicked.socket.readyState === WebSocket.OPEN) {
+        this.sendMessage(kicked.socket, {
+          type: 'ERROR',
+          errorCode: 'BANNED',
+          error: 'Tu as été expulsé de la table par le Katika Master. Ton capital est revenu dans Kora Cash.',
+        });
+        kicked.socket.close();
+      }
+      return true;
+    }
+
     // Disconnect their client if active
     const client = this.clients.get(playerId);
     if (client && client.socket.readyState === WebSocket.OPEN) {
@@ -4810,6 +5473,7 @@ export class RoomManager {
   public static adminResetRound(roomCode: string): boolean {
     const room = this.rooms.get(roomCode);
     if (!room) return false;
+    if (room.cash) return false; // une table Cash se ferme (capital rendu), elle ne se relance pas
 
     this.roomStates.delete(roomCode);
     room.status = 'LOBBY';
@@ -4912,6 +5576,7 @@ export class RoomManager {
       if (!room || !room.id || room.id === 'TEST_CLI' || !room.players || room.players.length === 0) {
         return;
       }
+      if (room.cash) return; // les salons Cash se trouvent depuis Kora Cash, jamais dans la liste des tables gratuites
 
       // Only return public rooms in LOBBY or PLAYING (within reasonable limits)
       if (room.isPublic !== false) {
@@ -5477,6 +6142,7 @@ export class RoomManager {
     for (const room of this.rooms.values()) {
       if (
         room.isPublic !== false &&
+        !room.cash &&
         room.status === 'LOBBY' &&
         (room.players || []).length < room.maxPlayers &&
         room.baseBet >= requestedBet / toleranceRatio &&

@@ -25,6 +25,7 @@ import { EmotePickerPopover } from './components/EmotePickerPopover';
 import { RulesModal } from './components/RulesModal';
 import { GameRulesScreen, RulesTabType } from './components/rules/GameRulesScreen';
 import { EndRoundModal } from './components/EndRoundModal';
+import { CashTableEndPanel } from './components/CashTableEndPanel';
 import { GameSetupModal } from './components/GameSetupModal';
 import { InstallPwaModal } from './components/InstallPwaModal';
 import { HomeScreen } from './components/HomeScreen';
@@ -220,6 +221,12 @@ function GameApp() {
       const currentUserUid = auth.currentUser?.uid;
 
       for (const result of results) {
+        // Table Kora Cash : le résultat est au registre du serveur, il ne touche ni aux statistiques ni au palmarès.
+        if (result.cash) {
+          ackedIds.push(result.id);
+          continue;
+        }
+
         const localParticipant = result.participants.find(
           (p) => p.playerId === localPlayerId || (currentUserUid && p.playerId === currentUserUid)
         );
@@ -380,6 +387,7 @@ function GameApp() {
     handleCreateRoom,
     handleJoinRoom,
     handleQuickMatch,
+    handleOpenCashTable,
     handleStartMultiplayerGame,
     handleToggleReady,
     handlePlayMultiplayerCard,
@@ -2221,6 +2229,7 @@ function GameApp() {
       {/* Top Header / Status Bar (Game Mode) */}
       {currentScreen === 'GAME' && (
         <GameHeader
+          isCashTable={isOnlineActive && Boolean(multiplayerRoom?.cash)}
           currentScreen={currentScreen}
           isOnlineActive={isOnlineActive}
           isMultiplayerMode={isMultiplayerMode}
@@ -2271,6 +2280,17 @@ function GameApp() {
       <main id="main-content" className="flex-1 flex flex-col overflow-hidden relative">
         {currentScreen === 'HOME' ? (
           <HomeScreen
+            onOpenCashTable={(request) => handleOpenCashTable(request, localPlayerName)}
+            onResumeCashTable={(roomCode) => {
+              void handleJoinRoom(roomCode, localPlayerName).then((res) => {
+                if (!res.success) {
+                  triggerToast(res.error || 'Retour à la table impossible.');
+                  return;
+                }
+                const current = wsService.getCurrentRoom();
+                if (current && current.status !== 'LOBBY') setCurrentScreen('GAME');
+              });
+            }}
             savedSessions={savedSessions}
             activeSessionId={activeSessionId}
             pendingInvitesCount={incomingInvitations.length}
@@ -2963,6 +2983,17 @@ function GameApp() {
       {/* End Round / End Manche Modal - ONLY rendered when in GAME screen */}
       {currentScreen === 'GAME' && (
         <EndRoundModal
+          cashPanel={
+            isOnlineActive && multiplayerRoom?.cash ? (
+              <CashTableEndPanel
+                cash={multiplayerRoom.cash}
+                seatOpen={multiplayerRoom.cash.seats[localPlayerId]?.open === true}
+                bet={multiplayerRoom.baseBet}
+                capital={multiplayerRoom.players.find((p) => p.id === localPlayerId)?.capital ?? 0}
+                onRebuy={(amount) => wsService.rebuyCashTable(amount)}
+              />
+            ) : undefined
+          }
           gameState={activeGameState}
           phase={isOnlineActive ? mpPhase : undefined}
           onNextPartie={handleGeneralNextPartie}

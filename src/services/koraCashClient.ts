@@ -106,6 +106,36 @@ export async function fetchPendingDeposits(): Promise<PendingDeposit[]> {
     .filter((d: PendingDeposit) => d.id !== '' && Number.isFinite(d.amount));
 }
 
+export interface CashTablesView {
+  enabled: boolean;
+  betLevels: number[];
+  minBuyInMultiple: number;
+  maxBuyInMultiple: number;
+  rakePercent: number;
+  consented: boolean;
+  /** Code de la table où le joueur a encore un siège, s'il en a une. */
+  myTableCode: string | null;
+}
+
+/** Les tables sont-elles ouvertes, à quels niveaux et à quelle commission. Fermé au moindre doute. */
+export async function fetchCashTables(): Promise<CashTablesView> {
+  const data = await cashRequest<any>('/api/cash/tables', 'Lecture des tables impossible.');
+  return {
+    enabled: data.enabled === true,
+    betLevels: Array.isArray(data.betLevels) ? data.betLevels.map(Number).filter(Number.isFinite) : [],
+    minBuyInMultiple: Number(data.minBuyInMultiple) || 0,
+    maxBuyInMultiple: Number(data.maxBuyInMultiple) || 0,
+    rakePercent: Number(data.rakePercent) || 0,
+    consented: data.consented === true,
+    myTableCode: typeof data.myTableCode === 'string' ? data.myTableCode : null,
+  };
+}
+
+/** Enregistre la confirmation « 18 ans et argent réel » : le serveur en garde la preuve. */
+export async function acceptCashTableTerms(): Promise<void> {
+  await cashRequest('/api/cash/tables/consent', 'Enregistrement impossible.', { method: 'POST' });
+}
+
 export interface WithdrawalSettingsView {
   enabled: boolean;
   feePercent: number;

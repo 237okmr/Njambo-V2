@@ -12,6 +12,8 @@ import { KoraCashPublicStatus, resolveEntryState, formatFcfa } from '../services
 import { useKoraCashWallet } from '../services/koraCashWalletStore';
 
 interface HomeScreenProps {
+  onOpenCashTable?: React.ComponentProps<typeof KoraCashModal>['onOpenCashTable'];
+  onResumeCashTable?: (roomCode: string) => void;
   savedSessions?: SavedManche[];
   activeSessionId?: string | null;
   savedSessionsCount?: number;
@@ -137,6 +139,8 @@ const PrimaryButtonShimmer: React.FC = () => (
 );
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
+  onOpenCashTable,
+  onResumeCashTable,
   savedSessions = [],
   activeSessionId = null,
   savedSessionsCount = 0,
@@ -595,7 +599,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       </main>
 
       {isKoraCashOpen && koraCashStatus && koraCashEntry !== 'COMING_SOON' && (
-        <KoraCashModal environment={koraCashStatus.environment} depositMode={koraCashStatus.depositMode} onClose={() => setIsKoraCashOpen(false)} />
+        <KoraCashModal environment={koraCashStatus.environment} depositMode={koraCashStatus.depositMode} onOpenCashTable={onOpenCashTable} onResumeCashTable={onResumeCashTable} onClose={() => setIsKoraCashOpen(false)} />
       )}
 
       {/* Panneau du bas : choix du mode de jeu */}

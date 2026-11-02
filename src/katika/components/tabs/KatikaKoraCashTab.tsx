@@ -20,6 +20,7 @@ import { ProviderKeysPanel } from '../../cash/ProviderKeysPanel';
 import { KatikaDemoCleanupCard } from '../../cash/KatikaDemoCleanupCard';
 import { KatikaCampayDepositsCard } from '../../cash/KatikaCampayDepositsCard';
 import { KatikaWithdrawalsCard } from '../../cash/KatikaWithdrawalsCard';
+import { KatikaCashTablesCard } from '../../cash/KatikaCashTablesCard';
 
 const SUB_SECTIONS: { id: KoraCashSubSection; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: 'GENERAL', label: 'Général', icon: Power },
@@ -265,9 +266,10 @@ export const KatikaKoraCashTab: React.FC = () => {
         {activeSection === 'GENERAL' && renderGeneral()}
         {activeSection === 'PROVIDERS' && <ProviderKeysPanel />}
         {activeSection === 'DEPOSITS_WITHDRAWALS' && <KatikaWithdrawalsCard />}
+        {(activeSection === 'TABLES' || activeSection === 'RAKE') && <KatikaCashTablesCard />}
         {activeSection === 'WALLETS_TRANSACTIONS' && <KatikaCampayDepositsCard />}
         {activeSection === 'WALLETS_TRANSACTIONS' && <KatikaDemoCleanupCard />}
-        {activeSection !== 'GENERAL' && activeSection !== 'PROVIDERS' && renderPlaceholder(activeSection)}
+        {activeSection !== 'GENERAL' && activeSection !== 'PROVIDERS' && activeSection !== 'TABLES' && activeSection !== 'RAKE' && renderPlaceholder(activeSection)}
       </div>
     </div>
   );

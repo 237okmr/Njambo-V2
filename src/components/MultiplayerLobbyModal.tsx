@@ -400,8 +400,12 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
 
         {/* Room Game Rules Badges */}
         <div className="flex flex-wrap items-center justify-between gap-1.5 p-2 rounded-xl bg-slate-950/60 border border-slate-800 text-xs">
-          <span className="text-slate-400">Mise: <b className="text-amber-300">{room.baseBet} pts</b></span>
-          <span className="text-slate-400">Capital: <b className="text-amber-300">{room.initialCapital} pts</b></span>
+          <span className="text-slate-400">Mise: <b className="text-amber-300">{room.baseBet} {room.cash ? 'FCFA' : 'pts'}</b></span>
+          {room.cash ? (
+            <span className="text-slate-400">Commission: <b className="text-amber-300">{room.cash.rakePercent} % du pot gagné</b></span>
+          ) : (
+            <span className="text-slate-400">Capital: <b className="text-amber-300">{room.initialCapital} pts</b></span>
+          )}
           <span className="text-amber-300 font-bold flex items-center gap-1">
             <Timer className="w-3 h-3 text-amber-400" />
             {currentTimer > 0 ? `${currentTimer}s` : '∞'}
@@ -476,7 +480,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
               </div>
 
               <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto flex-wrap">
-                {onUpdateSettings && (
+                {onUpdateSettings && !room.cash && (
                   <>
                     <button
                       type="button"
@@ -507,7 +511,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                 <button
                   type="button"
                   onClick={() => onToggleFillWithBots(!room.fillWithBots)}
-                  className={`px-2 py-0.5 rounded text-xs font-bold border transition ${
+                  className={`${room.cash ? 'hidden ' : ''}px-2 py-0.5 rounded text-xs font-bold border transition ${
                     room.fillWithBots
                       ? 'bg-slate-500/20 text-slate-300 border-slate-500/40 font-black'
                       : 'bg-slate-900 text-slate-400 border-slate-800'
@@ -653,7 +657,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
             </div>
 
             {/* Guest vote button to fill with bots and start */}
-            {onVoteStartWithBots && (
+            {onVoteStartWithBots && !room.cash && (
               <button
                 type="button"
                 onClick={onVoteStartWithBots}

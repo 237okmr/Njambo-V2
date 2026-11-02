@@ -1811,7 +1811,8 @@ class WebSocketService {
         return (
           parsed.type === 'JOIN_ROOM' ||
           parsed.type === 'CREATE_ROOM' ||
-          parsed.type === 'QUICK_MATCH_REQUEST'
+          parsed.type === 'QUICK_MATCH_REQUEST' ||
+          parsed.type === 'CASH_TABLE_OPEN'
         );
       } catch {
         return false;
@@ -1833,6 +1834,37 @@ class WebSocketService {
       }
       setInRoomStatus(false);
     }
+  }
+
+  /** Entrée à une table Kora Cash : le serveur vérifie le compte Google, les bornes et le solde, puis renvoie ROOM_JOINED. */
+  public async openCashTable(
+    request: { betLevel?: number; capacity?: number; buyIn: number; isPublic?: boolean; roomCode?: string },
+    playerName: string,
+    confirmLeaveCurrent?: boolean
+  ): Promise<void> {
+    await this.connect();
+    const identityReady = await this.ensureGoogleIdentityReady();
+    if (!identityReady) {
+      this.notifyError('Ton compte Google n\'est pas encore reconnecté. Patiente quelques secondes puis réessaie.');
+      return;
+    }
+    this.pendingJoinCancelled = false;
+    this.userExplicitlyLeft = false;
+    this.forgottenRoomCode = null;
+    this.forgetRoomIfFinishedOnJoin = false;
+    this.lastAcceptedState = null;
+    this.send({
+      type: 'CASH_TABLE_OPEN',
+      playerId: this.getLocalPlayerId(),
+      playerName,
+      avatarSeed: localStorage.getItem('njambo_avatar_seed') || 'avatar_1',
+      confirmLeaveCurrent,
+      cashTable: request,
+    } as any);
+  }
+
+  public rebuyCashTable(amount: number): void {
+    this.send({ type: 'CASH_TABLE_REBUY', playerId: this.getLocalPlayerId(), cashAmount: amount } as any);
   }
 
   public ackPartieResults(resultIds: string[]): void {

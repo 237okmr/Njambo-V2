@@ -51,6 +51,8 @@ export interface BuildPartieResultParams {
   createdAt?: number;
   /** Autorise des jetons détruits (plus aucun humain, reste d'une division entière). */
   allowBurned?: boolean;
+  /** Table Kora Cash : l'écart entre entrées et sorties est la commission, pas des jetons détruits. */
+  cash?: boolean;
 }
 
 export interface BuildPartieResultOutput {
@@ -79,7 +81,7 @@ export function buildPartieResult(params: BuildPartieResultParams): BuildPartieR
   if (burned < 0) {
     invariantOk = false;
     invariantError = `Jetons créés : ${-burned} (sorties ${totalOut} > entrées ${totalIn}).`;
-  } else if (burned > 0 && !params.allowBurned) {
+  } else if (burned > 0 && !params.allowBurned && !params.cash) {
     invariantOk = false;
     invariantError = `Jetons détruits non attendus : ${burned} (entrées ${totalIn}, sorties ${totalOut}).`;
   }
@@ -94,9 +96,10 @@ export function buildPartieResult(params: BuildPartieResultParams): BuildPartieR
     winType: params.winType,
     endReason: params.endReason,
     participants,
-    burned: Math.max(0, burned),
+    burned: params.cash ? 0 : Math.max(0, burned),
     mancheOver: Boolean(params.mancheOver),
     createdAt: params.createdAt ?? Date.now(),
+    ...(params.cash ? { cash: true, rake: Math.max(0, burned) } : {}),
   };
 
   return { result, invariantOk, invariantError };

@@ -30,6 +30,8 @@ export interface ClientMessage {
     | 'SEND_DIRECT_INVITE'
     | 'RESPOND_DIRECT_INVITE'
     | 'QUICK_MATCH_REQUEST'
+    | 'CASH_TABLE_OPEN'
+    | 'CASH_TABLE_REBUY'
     | 'REQUEST_INTEGRATION'
     | 'RESPOND_INTEGRATION_VOTE'
     | 'PROPOSE_CAPACITY_EXTENSION'
@@ -57,6 +59,16 @@ export interface ClientMessage {
   newMaxPlayers?: number;
   friendUserIds?: string[];
   statusPresence?: 'ONLINE_IDLE' | 'IN_SOLO' | 'IN_LOBBY' | 'IN_GAME' | 'OFFLINE';
+  /** Entrée à une table Kora Cash : un salon public du niveau choisi, une table privée à créer, ou un code. */
+  cashTable?: {
+    betLevel?: number;
+    capacity?: number;
+    buyIn: number;
+    isPublic?: boolean;
+    roomCode?: string;
+  };
+  /** Recave à une table Kora Cash, en FCFA. */
+  cashAmount?: number;
   settings?: {
     fillWithBots: boolean;
     maxPlayers: number;

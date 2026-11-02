@@ -49,6 +49,17 @@ import { maskPhone } from './server/cash/phoneBookRules';
 import { getKoraCashConfig, updateKoraCashConfig } from './server/cash/cashConfigStore';
 import { parseConfigPatch, toPublicStatus } from './server/cash/cashConfigRules';
 import { getWallet } from './server/cash/walletLedger';
+import {
+  getCashTableSettings,
+  getCashTablesAccess,
+  getLiveCashTableBook,
+  hasCashTableConsent,
+  listOpenCashSeats,
+  listRecentCashParties,
+  recordCashTableConsent,
+  updateCashTableSettings,
+} from './server/cash/cashTableStore';
+import { parseCashTableSettingsPatch } from './server/cash/cashTableRules';
 import { setWalletChangeListener } from './server/cash/walletEvents';
 import { listPendingDeposits, listRecentCampayDeposits } from './server/cash/depositStore';
 import { previewDemoCleanup, applyDemoCleanup } from './server/cash/demoCleanup';
@@ -1067,6 +1078,42 @@ async function startServer() {
   app.get('/api/cash/campay/webhook', campayWebhookHandler);
   app.post('/api/cash/campay/webhook', campayWebhookHandler);
 
+  // Kora Cash — ce que la fenêtre du joueur doit savoir des tables : ouvertes ou non, niveaux, commission, sa table en cours.
+  app.get('/api/cash/tables', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const player = await requireGooglePlayer(req, res);
+    if (!player) return;
+    try {
+      const { open, settings } = await getCashTablesAccess();
+      res.json({
+        success: true,
+        enabled: open,
+        betLevels: settings.betLevels,
+        minBuyInMultiple: settings.minBuyInMultiple,
+        maxBuyInMultiple: settings.maxBuyInMultiple,
+        rakePercent: settings.rakePercent,
+        consented: await hasCashTableConsent(player.uid),
+        myTableCode: RoomManager.getCashSeatRoomCode(player.uid),
+      });
+    } catch (err) {
+      console.error('[KoraCash] Lecture des tables impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Lecture des tables impossible.' });
+    }
+  });
+
+  // Kora Cash — confirmation « 18 ans et argent réel » : la preuve est conservée côté serveur.
+  app.post('/api/cash/tables/consent', async (req, res) => {
+    const player = await requireGooglePlayer(req, res);
+    if (!player) return;
+    try {
+      await recordCashTableConsent(player.uid);
+      res.json({ success: true });
+    } catch (err) {
+      console.error('[KoraCash] Confirmation des tables non enregistrée.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Enregistrement impossible.' });
+    }
+  });
+
   // Kora Cash — le retrait n'est ouvert qu'en démo, avec Campay actif : le serveur reste seul juge.
   async function isWithdrawalOpen(): Promise<boolean> {
     const [cfg, settings] = await Promise.all([getKoraCashConfig(), getWithdrawalSettings()]);
@@ -1801,6 +1848,56 @@ async function startServer() {
     } catch (err) {
       console.error('[KoraCash] Lecture de la file des retraits impossible.', err instanceof Error ? err.message : String(err));
       res.status(500).json({ success: false, error: 'Lecture des retraits impossible.' });
+    }
+  });
+
+  // Tables Cash : réglages, tables en cours, sièges dont la table a disparu, commission des dernières parties.
+  app.get('/api/katika/cash/tables', async (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const [settings, seats, parties] = await Promise.all([getCashTableSettings(), listOpenCashSeats(), listRecentCashParties()]);
+      res.json({
+        success: true,
+        settings,
+        tables: RoomManager.listCashTables(),
+        strandedSeats: seats
+          .filter((s) => !RoomManager.isCashTableLive(s.tableId))
+          .map((s) => ({ tableId: s.tableId, uid: s.uid, roomCode: s.roomCode, betLevel: s.betLevel, buyInTotal: s.buyInTotal, openedAt: s.openedAt })),
+        recentRake: { total: parties.reduce((sum, p) => sum + p.rake, 0), parties: parties.length },
+      });
+    } catch (err) {
+      console.error('[KoraCash] Lecture du suivi des tables impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Lecture des tables impossible.' });
+    }
+  });
+
+  app.post('/api/katika/cash/table-settings', express.json(), async (req, res) => {
+    try {
+      const parsed = parseCashTableSettingsPatch(req.body, await getCashTableSettings());
+      if (!parsed.ok || !parsed.patch) {
+        return res.status(400).json({ success: false, error: parsed.error || 'Corps de requête invalide.' });
+      }
+      const settings = await updateCashTableSettings(parsed.patch, (req as any).katikaUser?.email as string | undefined);
+      res.json({ success: true, settings });
+    } catch (err) {
+      console.error('[KoraCash] Enregistrement des réglages des tables impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Enregistrement des réglages impossible.' });
+    }
+  });
+
+  // Rend l'argent d'un siège dont la table n'existe plus. Le montant vient du registre, jamais de la requête.
+  app.post('/api/katika/cash/table-seats/:tableId/:uid/refund', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const { tableId, uid } = req.params;
+    if (RoomManager.isCashTableLive(tableId)) {
+      return res.status(409).json({ success: false, error: 'Cette table est encore en cours : ferme-la d’abord, le capital sera rendu automatiquement.' });
+    }
+    try {
+      const amount = await getLiveCashTableBook().adminRefund({ tableId, uid, actor: String((req as any).katikaUser?.email || 'katika') });
+      res.json({ success: true, amount });
+    } catch (err) {
+      console.error('[KoraCash] Remboursement de siège impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: err instanceof CashLedgerError ? err.message : 'Remboursement impossible.' });
     }
   });
 

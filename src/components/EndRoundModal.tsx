@@ -86,6 +86,8 @@ interface EndRoundModalProps {
   canRequestIntegration?: boolean;
   prorataCapitalEstimate?: number;
   isPendingIntegration?: boolean;
+  /** Table Kora Cash : capital, commission et recave. En fin de table, il remplace le bouton de nouvelle manche. */
+  cashPanel?: React.ReactNode;
 }
 
 export const EndRoundModal: React.FC<EndRoundModalProps> = ({
@@ -129,6 +131,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
   canRequestIntegration = false,
   prorataCapitalEstimate = 0,
   isPendingIntegration = false,
+  cashPanel,
 }) => {
   const currentPhase = propPhase || gameState?.phase;
   if (currentPhase !== 'PARTIE_OVER' && currentPhase !== 'MANCHE_OVER') {
@@ -988,7 +991,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
                 <span>Partie suivante</span>
               </button>
             )
-          ) : isOnlineMultiplayer ? (
+          ) : cashPanel ? null : isOnlineMultiplayer ? (
             isHost ? (
               <button
                 id="btn-new-manche-primary"
@@ -1039,6 +1042,8 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
               <span>Recommencer une Manche</span>
             </button>
           )}
+
+          {cashPanel}
 
           {/* Rehausser + Partager : côte à côte ; une proposition de mise en cours prend toute la largeur */}
           <div className="flex flex-wrap gap-1.5">

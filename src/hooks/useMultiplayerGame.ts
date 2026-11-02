@@ -372,6 +372,38 @@ export function useMultiplayerGame() {
     }
   }, []);
 
+  // Entrée à une table Kora Cash : on attend la table renvoyée par le serveur, ou son refus.
+  const handleOpenCashTable = useCallback(
+    async (
+      request: { betLevel?: number; capacity?: number; buyIn: number; isPublic?: boolean; roomCode?: string },
+      playerName: string
+    ) => {
+      setLocalPlayerName(playerName);
+      return new Promise<{ success: boolean; error?: string }>((resolve) => {
+        const finish = (result: { success: boolean; error?: string }) => {
+          unsubRoom();
+          unsubError();
+          clearTimeout(timeout);
+          resolve(result);
+        };
+        const unsubRoom = wsService.onRoomUpdate((updated) => {
+          if (updated?.cash && updated.players.some((p) => p.id === wsService.getLocalPlayerId())) {
+            setIsMultiplayerMode(true);
+            setShowMultiplayerHub(false);
+            setShowMultiplayerLobby(true);
+            finish({ success: true });
+          }
+        });
+        const unsubError = wsService.onError((err) => finish({ success: false, error: err }));
+        const timeout = setTimeout(() => {
+          finish({ success: false, error: 'Connexion impossible. Vérifie ton réseau puis réessaie.' });
+        }, getPublicParamNumber('clientTableActionTimeoutSeconds') * 1000);
+        wsService.openCashTable(request, playerName).catch((err: any) => finish({ success: false, error: err.message }));
+      });
+    },
+    []
+  );
+
   const handleForfeitMultiplayerGame = useCallback(() => {
     wsService.leaveRoom();
     setMultiplayerRoom(null);
@@ -500,6 +532,7 @@ export function useMultiplayerGame() {
     handleCreateRoom,
     handleJoinRoom,
     handleQuickMatch,
+    handleOpenCashTable,
     handleCancelPendingJoin,
     handleStartMultiplayerGame,
     handleToggleReady,

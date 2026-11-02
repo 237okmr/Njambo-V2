@@ -452,6 +452,10 @@ export interface PartieResult {
   participants: PartieParticipantResult[];
   burned: number; // jetons détruits (0 dans le cas normal)
   mancheOver: boolean;
+  /** Table Kora Cash : ce résultat porte sur de l'argent, il n'alimente ni les statistiques ni le palmarès. */
+  cash?: boolean;
+  /** Table Kora Cash : commission prélevée sur le pot de cette partie, en FCFA. */
+  rake?: number;
   createdAt: number;
 }
 
@@ -600,8 +604,34 @@ export interface RoomFilters {
   searchQuery?: string;
 }
 
+/** Siège d'une table Kora Cash, vu du serveur et des joueurs de la table. */
+export interface CashTableSeat {
+  /** Capital déjà transmis au registre : ce que le joueur récupère si la partie en cours est annulée. */
+  settled: number;
+  buyInTotal: number;
+  open: boolean;
+  /** Recave inscrite au registre alors que le siège venait de se fermer : la sortie en attente la rend aussi. */
+  lateRebuy?: number;
+}
+
+/** Présent uniquement sur une table Kora Cash : capital en FCFA, aucun bot, entrée et sortie passent par le registre. */
+export interface CashTableInfo {
+  tableId: string;
+  environment: 'DEMO';
+  rakePercent: number;
+  minBuyIn: number;
+  maxBuyInMultiple: number;
+  /** Mise du niveau choisi à l'ouverture. La mise de la table peut monter ensuite par vote unanime. */
+  betLevel: number;
+  seats: Record<string, CashTableSeat>;
+  lastRake?: number;
+  /** Table terminée : tout le capital est rendu, plus aucune partie ne peut y commencer. */
+  closed?: boolean;
+}
+
 export interface MultiplayerRoom {
   id: string; // e.g. "K8T4"
+  cash?: CashTableInfo;
   hostId: string;
   originalHostId?: string;
   hostName: string;

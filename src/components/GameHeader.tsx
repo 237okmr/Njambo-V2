@@ -27,6 +27,8 @@ import { PlayerAvatar } from './profile/PlayerAvatar';
 import { HeaderProfileButton } from './profile/HeaderProfileButton';
 
 interface GameHeaderProps {
+  /** Table Kora Cash : les montants affichés sont de l'argent, en FCFA. */
+  isCashTable?: boolean;
   currentScreen: 'HOME' | 'GAME';
   isOnlineActive: boolean;
   isMultiplayerMode: boolean;
@@ -60,6 +62,7 @@ interface GameHeaderProps {
 }
 
 export const GameHeader: React.FC<GameHeaderProps> = ({
+  isCashTable = false,
   currentScreen,
   isOnlineActive,
   isMultiplayerMode,
@@ -188,6 +191,12 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
             </div>
 
             <div className="h-3 w-px bg-slate-800" />
+
+            {isCashTable && (
+              <span id="cash-table-badge" className="px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[11px] font-black whitespace-nowrap">
+                FCFA
+              </span>
+            )}
 
             {/* Mobile Pot Counter (<1024px) */}
             <div className="flex items-center gap-1 lg:hidden">

@@ -72,6 +72,10 @@ export interface ActiveRoomState {
   onPartieCompleted?: (room: MultiplayerRoom) => void;
   partieResults?: PartieResult[];
   onPartieResult?: (result: PartieResult, room: MultiplayerRoom) => void;
+  /** Table Kora Cash : juste avant la partie suivante, pour rendre leur capital à ceux qui ne peuvent plus miser. */
+  onCashBeforeNextPartie?: (room: MultiplayerRoom) => void;
+  /** Table Kora Cash : siège libéré après une absence prolongée. Pas de bot ici : le joueur récupère son capital. */
+  onCashSeatReleased?: (playerId: string, room: MultiplayerRoom) => void;
   /** Appelé quand une partie se termine par un Kora ou un Double Kora réussi (fiche anonyme, sans mise ni nom). */
   onKoraMoment?: (moment: KoraMoment) => void;
 }
@@ -308,17 +312,19 @@ export class ServerGameEngine {
 
     const gamePlayers: Player[] = currentPlayers.map((p, idx) => {
       const actualHand = hands[idx];
-      const newCapital = Math.max(0, initialCapital - baseBet);
+      // Table Kora Cash : chacun commence avec ce qu'il a réellement apporté, jamais avec un capital commun.
+      const startCapital = room.cash ? p.capital : initialCapital;
+      const newCapital = Math.max(0, startCapital - baseBet);
       pot += baseBet;
 
       p.hand = actualHand;
       p.capital = newCapital;
-      p.score = initialCapital;
+      p.score = startCapital;
 
       return {
         id: p.id,
         name: p.name,
-        score: initialCapital,
+        score: startCapital,
         capital: newCapital,
         isEliminated: false,
         hand: actualHand,
@@ -541,7 +547,7 @@ export class ServerGameEngine {
       pot: gs.pot,
       baseBet: gs.baseBet,
       multiplier: 1,
-      rakePct: 0,
+      rakePct: room.cash?.rakePercent ?? 0,
     });
     const netPot = payout.winnerReceived;
 
@@ -559,7 +565,8 @@ export class ServerGameEngine {
     });
     gs.pot = 0;
 
-    if (nonEliminatedCount <= 1 && lastStandingPlayer) {
+    // Table Kora Cash : le perdant garde le temps de la fin de partie pour recaver ; advanceToNextPartie tranche ensuite.
+    if (nonEliminatedCount <= 1 && lastStandingPlayer && !room.cash) {
       gs.phase = 'MANCHE_OVER';
       room.status = 'MANCHE_OVER';
       gs.mancheWinnerIndex = (gs.players || []).findIndex((p) => p.id === (lastStandingPlayer as Player).id);
@@ -823,7 +830,8 @@ export class ServerGameEngine {
    */
   private static computeRelaySplit(
     gs: NonNullable<MultiplayerRoom['gameState']>,
-    winnerIndex: number
+    winnerIndex: number,
+    rakePct: number = 0
   ): {
     shares: number[];
     grossById: Record<string, number>;
@@ -847,7 +855,7 @@ export class ServerGameEngine {
     });
     if (receiverIndexes.length === 0) return null;
 
-    const pot = gs.pot;
+    const pot = gs.pot - (rakePct > 0 ? Math.floor((gs.pot * rakePct) / 100) : 0);
     const each = Math.floor(pot / receiverIndexes.length);
     const remainder = pot - each * receiverIndexes.length;
     const shares: number[] = players.map(() => 0);
@@ -943,6 +951,7 @@ export class ServerGameEngine {
       participants,
       mancheOver: isMancheOver,
       allowBurned: params.allowBurned,
+      cash: Boolean(room.cash),
     });
 
     if (!invariantOk && invariantError) {
@@ -1007,7 +1016,7 @@ export class ServerGameEngine {
 
     // RÈGLE DU RELAIS : un siège tenu par le relais (joueur absent) ne peut pas remporter le pot.
     // Le pot est alors partagé à parts égales entre les joueurs présents, sans bonus Kora.
-    const relaySplit = this.computeRelaySplit(gs, partieWinnerIndex);
+    const relaySplit = this.computeRelaySplit(gs, partieWinnerIndex, room.cash?.rakePercent ?? 0);
     if (relaySplit) {
       winType = 'STANDARD';
       multiplier = 1;
@@ -1078,7 +1087,7 @@ export class ServerGameEngine {
           pot: gs.pot,
           baseBet: gs.baseBet,
           multiplier,
-          rakePct: 0,
+          rakePct: room.cash?.rakePercent ?? 0,
         });
     const netWon = payout.winnerReceived;
 
@@ -1129,7 +1138,8 @@ export class ServerGameEngine {
     gs.pot = 0;
 
     // Check if Manche Over (only 1 player remaining with chips)
-    if (nonEliminatedCount <= 1 && lastStandingPlayer) {
+    // Table Kora Cash : le perdant garde le temps de la fin de partie pour recaver ; advanceToNextPartie tranche ensuite.
+    if (nonEliminatedCount <= 1 && lastStandingPlayer && !room.cash) {
       gs.phase = 'MANCHE_OVER';
       room.status = 'MANCHE_OVER';
       gs.mancheWinnerIndex = (gs.players || []).findIndex((p) => p.id === (lastStandingPlayer as Player).id);
@@ -1198,6 +1208,8 @@ export class ServerGameEngine {
     if (!gs || room.status === 'MANCHE_OVER') {
       return;
     }
+
+    activeRoomState.onCashBeforeNextPartie?.(room);
 
     // Integrate pending human players if any (e.g. accepted during the previous partie)
     const pendingHumans = (room.players || []).filter((p) => p.isPendingIntegration && !p.isEliminated);
@@ -1364,6 +1376,11 @@ export class ServerGameEngine {
     // table), et redevient disponible pour un observateur via le flux d'intégration existant. Le joueur
     // libéré en est informé (alerte SEAT_RELEASED) et peut redemander à intégrer une table plus tard.
     seatsToRelease.forEach((playerId) => {
+      if (room.cash) {
+        activeRoomState.onCashSeatReleased?.(playerId, room);
+        activeRoomState.onPlayerAlert?.(playerId, room, { kind: 'SEAT_RELEASED' });
+        return;
+      }
       // replacePlayerWithBot bascule le siège en bot (isHuman: false) sur room.players ET gs.players,
       // conserve le capital et le nom (« ... (Bot) »), et gère proprement les minuteurs en cours.
       // Le siège redevient alors disponible pour un observateur via le flux d'intégration existant
@@ -1495,7 +1512,7 @@ export class ServerGameEngine {
 
     // Automatic Stake Escalation (Anti-stagnation) - strictly disabled in multiplayer unless explicitly authorized
     const engineConfig = this.getConfig(activeRoomState);
-    if (engineConfig.enableMultiplayerAutoBetEscalation === true && engineConfig.enableAutoBetEscalation !== false && nextPartieCount > 1) {
+    if (!room.cash && engineConfig.enableMultiplayerAutoBetEscalation === true && engineConfig.enableAutoBetEscalation !== false && nextPartieCount > 1) {
       const interval = engineConfig.autoBetEscalationInterval || 5;
       if ((nextPartieCount - 1) % interval === 0) {
         const initialBet = room.initialBaseBet || gs.initialBaseBet || room.baseBet || 10;
@@ -2229,7 +2246,8 @@ export class ServerGameEngine {
 
       const cfg = this.getConfig(activeRoomState);
       const rawPot = gs.pot;
-      const rakeAmount = 0; // cfg.globalRakePct > 0 ? Math.floor((rawPot * cfg.globalRakePct) / 100) : 0; (Désactivé en mode virtuel)
+      const cashRakePct = room.cash?.rakePercent ?? 0;
+      const rakeAmount = cashRakePct > 0 ? Math.floor((rawPot * cashRakePct) / 100) : 0; // cfg.globalRakePct > 0 ? Math.floor((rawPot * cfg.globalRakePct) / 100) : 0; (Désactivé en mode virtuel)
       const potWon = rawPot - rakeAmount;
       lastWinner.capital += potWon;
       lastWinner.score = lastWinner.capital;
@@ -2248,7 +2266,8 @@ export class ServerGameEngine {
         p.score = p.capital;
       });
 
-      const isMancheOver = nonEliminatedCount <= 1;
+      // Table Kora Cash : pas de fin de manche ici, le perdant peut recaver ; advanceToNextPartie tranche ensuite.
+      const isMancheOver = nonEliminatedCount <= 1 && !room.cash;
       const winType: PartieWinType = (rp && rp.isHuman && remainingActiveInPartie.length === 1) ? 'FORFEIT' : 'STANDARD';
 
       gs.phase = isMancheOver ? 'MANCHE_OVER' : 'PARTIE_OVER';
@@ -2424,7 +2443,7 @@ export class ServerGameEngine {
         pot: gs.pot,
         baseBet: gs.baseBet,
         multiplier: 1,
-        rakePct: 0,
+        rakePct: room.cash?.rakePercent ?? 0,
       });
 
       let nonEliminatedCount = 0;
@@ -2441,7 +2460,8 @@ export class ServerGameEngine {
       const potWon = payout.winnerReceived;
       gs.pot = 0;
 
-      const isMancheOver = nonEliminatedCount <= 1;
+      // Table Kora Cash : pas de fin de manche ici, le perdant peut recaver ; advanceToNextPartie tranche ensuite.
+      const isMancheOver = nonEliminatedCount <= 1 && !room.cash;
       gs.phase = isMancheOver ? 'MANCHE_OVER' : 'PARTIE_OVER';
       room.status = isMancheOver ? 'MANCHE_OVER' : 'PARTIE_OVER';
       gs.partieWinnerIndex = winnerIndex;
@@ -2729,6 +2749,9 @@ export class ServerGameEngine {
   ): boolean {
     const gs = room.gameState;
     if (!gs) return false;
+
+    // Table Kora Cash : pas de victoire réclamée, le relais finit la partie et le résultat suit la règle commune.
+    if (room.cash) return false;
 
     // Check that player is an active human in room
     const playerIndex = (gs.players || []).findIndex((p) => p.id === playerId);

@@ -10,12 +10,15 @@ import {
   fetchPendingDeposits,
   fetchPhones,
   fetchWithdrawalSettings,
+  fetchCashTables,
   CashPhone,
+  CashTablesView,
   KoraCashWallet,
   PendingDeposit,
   WithdrawalSettingsView,
 } from '../services/koraCashClient';
 import { KoraCashPhonesPanel, KoraCashWithdrawPanel } from './KoraCashWithdrawPanels';
+import { CashTableRequest, KoraCashTablesPanel } from './KoraCashTablesPanel';
 import { refreshKoraCashWallet, setKoraCashWallet, useKoraCashWallet } from '../services/koraCashWalletStore';
 import { wsService } from '../services/websocketService';
 import { getPublicParamNumber } from '../services/publicConfig';
@@ -32,6 +35,8 @@ interface KoraCashModalProps {
   environment: KoraCashEnvironment;
   depositMode?: KoraCashDepositMode;
   onClose: () => void;
+  onOpenCashTable?: (request: CashTableRequest) => Promise<{ success: boolean; error?: string }>;
+  onResumeCashTable?: (roomCode: string) => void;
 }
 
 // Paiements que le joueur a déclarés annulés : on arrête de les suivre sur cet appareil. Le serveur garde sa vérité :
@@ -57,13 +62,21 @@ function writeDismissed(ids: string[]): void {
   }
 }
 
-export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depositMode = 'SIMULATED', onClose }) => {
+export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depositMode = 'SIMULATED', onClose, onOpenCashTable, onResumeCashTable }) => {
   const { isLoggedIn, loginWithGoogle } = usePlayerProfile();
   // Retrait : les onglets n'apparaissent que si le serveur dit qu'il est ouvert.
   const [withdrawalSettings, setWithdrawalSettings] = useState<WithdrawalSettingsView | null>(null);
   const [phones, setPhones] = useState<CashPhone[]>([]);
-  const [activeTab, setActiveTab] = useState<'deposit' | 'withdraw' | 'phones'>('deposit');
+  const [activeTab, setActiveTab] = useState<'deposit' | 'withdraw' | 'phones' | 'tables'>('deposit');
+  const [cashTables, setCashTables] = useState<CashTablesView | null>(null);
   const canWithdraw = withdrawalSettings?.enabled === true;
+  const canPlayTables = cashTables?.enabled === true && Boolean(onOpenCashTable) && Boolean(onResumeCashTable);
+  const tabs: readonly (readonly ['deposit' | 'withdraw' | 'phones' | 'tables', string])[] = [
+    ['deposit', 'Déposer'],
+    ...(canWithdraw ? ([['withdraw', 'Retirer'], ['phones', canPlayTables ? 'Numéros' : 'Mes numéros']] as const) : []),
+    ...(canPlayTables ? ([['tables', 'Tables']] as const) : []),
+  ];
+  const hasTabs = tabs.length > 1;
   const ui = getDepositUi(environment, depositMode, canWithdraw);
 
   const loadPhones = useCallback(async () => {
@@ -83,6 +96,13 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
       })
       .catch(() => {
         if (!cancelled) setWithdrawalSettings(null);
+      });
+    fetchCashTables()
+      .then((view) => {
+        if (!cancelled) setCashTables(view);
+      })
+      .catch(() => {
+        if (!cancelled) setCashTables(null);
       });
     void loadPhones();
     return () => {
@@ -414,15 +434,15 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
                 </div>
               )}
 
-              {canWithdraw && withdrawalSettings && (
-                <div role="tablist" aria-label="Kora Cash" className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-slate-950/90 border border-slate-800">
-                  {(
-                    [
-                      ['deposit', 'Déposer'],
-                      ['withdraw', 'Retirer'],
-                      ['phones', 'Mes numéros'],
-                    ] as const
-                  ).map(([id, label]) => (
+              {hasTabs && (
+                <div
+                  role="tablist"
+                  aria-label="Kora Cash"
+                  className={`grid gap-1 p-1 rounded-xl bg-slate-950/90 border border-slate-800 ${
+                    tabs.length === 4 ? 'grid-cols-4' : tabs.length === 3 ? 'grid-cols-3' : 'grid-cols-2'
+                  }`}
+                >
+                  {tabs.map(([id, label]) => (
                     <button
                       key={id}
                       type="button"
@@ -450,7 +470,24 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
                 <KoraCashPhonesPanel phones={phones} maxPhones={withdrawalSettings.maxPhones} onPhonesChange={setPhones} />
               )}
 
-              {ui.canDeposit && (!canWithdraw || activeTab === 'deposit') && (
+              {canPlayTables && cashTables && activeTab === 'tables' && onOpenCashTable && onResumeCashTable && (
+                <KoraCashTablesPanel
+                  view={cashTables}
+                  available={wallet?.available ?? 0}
+                  onViewChange={setCashTables}
+                  onOpenTable={async (request) => {
+                    const result = await onOpenCashTable(request);
+                    if (result.success) onClose();
+                    return result;
+                  }}
+                  onResumeTable={(roomCode) => {
+                    onResumeCashTable(roomCode);
+                    onClose();
+                  }}
+                />
+              )}
+
+              {ui.canDeposit && (!hasTabs || activeTab === 'deposit') && (
                 <div className="flex flex-col gap-2.5 p-3 rounded-2xl bg-slate-950/60 border border-slate-800">
                   <span className="text-[11px] font-black text-slate-200">Montant à recharger</span>
                   <div className="grid grid-cols-4 gap-2">
