@@ -63,7 +63,7 @@ export const AI_DIFFICULTIES_INFO: Record<AIDifficulty, AIDifficultyInfo> = {
     id: 'EASY',
     name: 'Facile',
     subtitle: 'Initié',
-    description: 'Adversaires d’initiation : heuristiques simples, sans suivi des cartes ni plan Kora, avec 25 % de coups aléatoires.',
+    description: 'Adversaires débutants : ils jouent simplement, ne comptent pas les cartes et font parfois des erreurs.',
     icon: '🌱',
     badgeBg: 'bg-emerald-900/60 text-emerald-300 border-emerald-700/60',
   },
@@ -71,7 +71,7 @@ export const AI_DIFFICULTIES_INFO: Record<AIDifficulty, AIDifficultyInfo> = {
     id: 'NORMAL',
     name: 'Normal',
     subtitle: 'Stratège',
-    description: 'Adversaires vigilants : heuristiques épurées, suivi des cartes maîtresses, protection des 10 sans erreurs volontaires.',
+    description: 'Adversaires attentifs : ils suivent les cartes maîtresses et protègent leurs 10.',
     icon: '⚔️',
     badgeBg: 'bg-amber-900/60 text-amber-300 border-amber-700/60',
   },
@@ -79,7 +79,7 @@ export const AI_DIFFICULTIES_INFO: Record<AIDifficulty, AIDifficultyInfo> = {
     id: 'EXPERT',
     name: 'Expert',
     subtitle: 'Maître',
-    description: 'Adversaires compétitifs : simulation de fins de partie en Monte Carlo léger, jeu mesuré et prudent sur le Kora, suivi des cartes et des vides adverses.',
+    description: 'Adversaires redoutables : ils anticipent la fin de partie, comptent les cartes et restent prudents sur le Kora.',
     icon: '👑',
     badgeBg: 'bg-rose-900/60 text-rose-300 border-rose-700/60',
   },
@@ -87,7 +87,7 @@ export const AI_DIFFICULTIES_INFO: Record<AIDifficulty, AIDifficultyInfo> = {
     id: 'GRAND_MASTER',
     name: 'Grand Katika',
     subtitle: 'Légende Infaillible',
-    description: 'Adversaires d’élite : même qualité de calcul qu’Expert mais recherche activement le Kora et le Double Kora, rendant les pots plus risqués et spectaculaires.',
+    description: 'Adversaires d’élite : aussi forts qu’en Expert, ils cherchent en plus le Kora et le Double Kora. Les pots sont plus risqués.',
     icon: '⚡',
     badgeBg: 'bg-purple-900/60 text-purple-300 border-purple-700/60',
   },
@@ -95,7 +95,7 @@ export const AI_DIFFICULTIES_INFO: Record<AIDifficulty, AIDifficultyInfo> = {
 
 export type AIStrategy =
   | 'CONSERVATIVE' // Prudent / Économie des maîtresses pour la main 5
-  | 'TRICK_4_CONTROL' // Cible Main 4 / Prendre le contrôle de l'entame de la dernière main
+  | 'TRICK_4_CONTROL' // Cible tour 4 / Prendre le contrôle de l'entame de la dernière main
   | 'PURGER' // Purgeur / Vidage des cartes faibles isolées (singletons)
   | 'AGGRESSIVE_LEADER' // Pression / Épuisement des 10 adverses
   | 'DYNAMIC' // Adaptatif selon le tirage de cartes
@@ -119,14 +119,14 @@ export const AI_STRATEGIES_INFO: Record<AIStrategy, AIStrategyInfo> = {
   CONSERVATIVE: {
     id: 'CONSERVATIVE',
     name: 'Prudent',
-    description: 'Conserve ses meilleures cartes pour la 5ème et dernière main.',
+    description: 'Conserve ses meilleures cartes pour le 5ᵉ et dernier tour.',
     icon: '🛡️',
     badgeBg: 'bg-blue-900/60 text-blue-300 border-blue-700/60',
   },
   TRICK_4_CONTROL: {
     id: 'TRICK_4_CONTROL',
-    name: 'Cible Main 4',
-    description: 'Cherche à gagner la 4ème main pour imposer son entame à la main 5.',
+    name: 'Cible tour 4',
+    description: 'Cherche à gagner le 4ᵉ tour pour entamer le 5ᵉ.',
     icon: '🎯',
     badgeBg: 'bg-amber-900/60 text-amber-300 border-amber-700/60',
   },
@@ -161,28 +161,28 @@ export const AI_STRATEGIES_INFO: Record<AIStrategy, AIStrategyInfo> = {
   BLUFFER: {
     id: 'BLUFFER',
     name: 'Caméléon',
-    description: 'Masque ses cartes maîtresses dans les premières mains pour surprendre.',
+    description: 'Masque ses cartes maîtresses dans les premiers tours pour surprendre.',
     icon: '🎭',
     badgeBg: 'bg-pink-900/60 text-pink-300 border-pink-700/60',
   },
   GATEKEEPER: {
     id: 'GATEKEEPER',
     name: 'Gardien',
-    description: 'Cherche à bloquer le joueur en tête de table à la Main 4.',
+    description: 'Cherche à bloquer le joueur en tête au 4ᵉ tour.',
     icon: '🧱',
     badgeBg: 'bg-rose-900/60 text-rose-300 border-rose-700/60',
   },
   POSITIONAL_MASTER: {
     id: 'POSITIONAL_MASTER',
     name: 'Maître de Position',
-    description: 'Adapte ses cartes selon sa position d’entame ou de réponse dans la main.',
+    description: 'Adapte ses cartes selon sa position d’entame ou de réponse dans le tour.',
     icon: '⚖️',
     badgeBg: 'bg-indigo-900/60 text-indigo-300 border-indigo-700/60',
   },
   KORA_HUNTER: {
     id: 'KORA_HUNTER',
     name: 'Chasseur Kora',
-    description: 'Conserve un 3 pour remporter le 5e pli et cherche l’entame au 4e pli pour réussir un Kora ou Double Kora.',
+    description: 'Conserve un 3 pour remporter le 5ᵉ tour et cherche l’entame au 4ᵉ pour réussir un Kora ou un Double Kora.',
     icon: '👑',
     badgeBg: 'bg-yellow-900/60 text-yellow-300 border-yellow-700/60',
   },

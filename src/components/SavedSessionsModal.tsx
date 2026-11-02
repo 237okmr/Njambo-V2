@@ -83,7 +83,7 @@ export const SavedSessionsModal: React.FC<SavedSessionsModalProps> = ({
             </div>
             <div className="min-w-0 flex-1">
               <h2 className="text-base sm:text-xl font-black text-amber-300 leading-tight truncate">
-                Gestion des Manches
+                Gestion des manches
               </h2>
               <p className="text-xs text-slate-400 line-clamp-1 sm:line-clamp-none">
                 Sauvegarde tes parties, charge ou bascule entre tes manches.
@@ -110,7 +110,7 @@ export const SavedSessionsModal: React.FC<SavedSessionsModalProps> = ({
               className="flex-1 py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs transition flex items-center justify-center gap-1.5 shadow"
             >
               <Save className="w-4 h-4" />
-              <span>Sauvegarder la Manche actuelle</span>
+              <span>Sauvegarder la manche actuelle</span>
             </button>
           ) : (
             <div className="flex-1 flex items-center gap-1.5 bg-slate-950 p-1.5 rounded-xl border border-amber-500/50">
@@ -150,7 +150,7 @@ export const SavedSessionsModal: React.FC<SavedSessionsModalProps> = ({
             className="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-xs transition flex items-center justify-center gap-1.5"
           >
             <Plus className="w-4 h-4 text-emerald-400" />
-            <span>Nouvelle Manche</span>
+            <span>Nouvelle manche</span>
           </button>
         </div>
 
@@ -160,10 +160,10 @@ export const SavedSessionsModal: React.FC<SavedSessionsModalProps> = ({
             <div className="py-8 text-center bg-slate-950/40 rounded-xl border border-dashed border-slate-800 flex flex-col items-center justify-center gap-2">
               <FolderOpen className="w-8 h-8 text-slate-600" />
               <p className="text-xs text-slate-400 font-medium">
-                Aucune Manche enregistrée pour le moment.
+                Aucune manche enregistrée pour le moment.
               </p>
               <p className="text-xs text-slate-500">
-                La Manche en cours est sauvegardée automatiquement au fil du jeu.
+                La manche en cours est sauvegardée automatiquement au fil du jeu.
               </p>
             </div>
           ) : (
@@ -223,7 +223,7 @@ export const SavedSessionsModal: React.FC<SavedSessionsModalProps> = ({
                       <div className="flex items-center gap-1 shrink-0">
                         <button
                           type="button"
-                          title="Renommer cette Manche"
+                          title="Renommer cette manche"
                           onClick={() => handleStartRename(session)}
                           className="p-1 text-slate-400 hover:text-amber-300 rounded hover:bg-slate-800 transition"
                         >
@@ -231,7 +231,7 @@ export const SavedSessionsModal: React.FC<SavedSessionsModalProps> = ({
                         </button>
                         <button
                           type="button"
-                          title="Supprimer cette Manche"
+                          title="Supprimer cette manche"
                           onClick={() => onDeleteSession(session.id)}
                           className="p-1 text-slate-400 hover:text-rose-400 rounded hover:bg-slate-800 transition"
                         >
@@ -274,7 +274,7 @@ export const SavedSessionsModal: React.FC<SavedSessionsModalProps> = ({
                       className="w-full py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold text-xs transition flex items-center justify-center gap-1.5"
                     >
                       <Play className="w-3.5 h-3.5 fill-amber-300" />
-                      <span>Reprendre cette Manche</span>
+                      <span>Reprendre cette manche</span>
                     </button>
                   )}
                 </div>
@@ -285,7 +285,7 @@ export const SavedSessionsModal: React.FC<SavedSessionsModalProps> = ({
 
         {/* Footer info */}
         <div className="text-xs text-slate-400 text-center border-t border-slate-800 pt-2.5">
-          Toutes les sauvegardes sont conservées localement dans ton navigateur.
+          Ces sauvegardes restent sur cet appareil.
         </div>
       </motion.div>
     </div>

@@ -93,7 +93,7 @@ export const AvatarPickerBottomSheet: React.FC<AvatarPickerBottomSheetProps> = (
                     referrerPolicy="no-referrer"
                   />
                   <div className="text-left truncate">
-                    <p className="text-xs font-bold text-white">Utiliser ma Photo Google</p>
+                    <p className="text-xs font-bold text-white">Utiliser ma photo Google</p>
                     <p className="text-xs text-slate-400">Photo de profil du compte lié</p>
                   </div>
                 </div>

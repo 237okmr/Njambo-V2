@@ -81,11 +81,11 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
                 Académie Njambo Kora
               </span>
               <span className="hidden sm:inline text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase tracking-wider">
-                Guide Officiel
+                Guide officiel
               </span>
             </div>
             <span className="text-xs text-slate-400 font-medium hidden xs:block">
-              Maîtrisez les 31 cartes, l'art du Kora et les stratégies de table
+              Maîtrise les 31 cartes, l'art du Kora et les stratégies de table
             </span>
           </div>
         </div>
@@ -110,10 +110,10 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
         <div className="grid grid-cols-5 gap-1 sm:gap-2 max-w-4xl mx-auto p-1 bg-slate-950/80 rounded-2xl border border-slate-800/80">
           {[
             { id: 'express', label: 'Express', fullLabel: 'En 30 secondes', icon: Zap, color: 'text-amber-400' },
-            { id: 'kora', label: 'Kora', fullLabel: 'Kora & Victoires', icon: Crown, color: 'text-slate-400' },
-            { id: 'deck', label: '31 Cartes', fullLabel: 'Les 31 Cartes', icon: Layers, color: 'text-emerald-400' },
-            { id: 'strategy', label: 'Tours', fullLabel: 'Déroulement & Tours', icon: ShieldCheck, color: 'text-slate-400' },
-            { id: 'official', label: 'Règles', fullLabel: 'Règlement Complet', icon: BookOpen, color: 'text-slate-300' },
+            { id: 'kora', label: 'Kora', fullLabel: 'Kora et victoires', icon: Crown, color: 'text-slate-400' },
+            { id: 'deck', label: '31 cartes', fullLabel: 'Les 31 cartes', icon: Layers, color: 'text-emerald-400' },
+            { id: 'strategy', label: 'Tours', fullLabel: 'Déroulement et tours', icon: ShieldCheck, color: 'text-slate-400' },
+            { id: 'official', label: 'Règles', fullLabel: 'Règlement complet', icon: BookOpen, color: 'text-slate-300' },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -160,7 +160,7 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
                   </div>
                   <div>
                     <h2 className="text-base sm:text-lg font-black text-amber-300">
-                      Le But Suprême : Gagner le 5ᵉ tour !
+                      Le but : gagner le 5ᵉ tour !
                     </h2>
                     <p className="text-xs text-slate-400">
                       Chaque joueur reçoit exactement 5 cartes. Il n'y a que 5 tours par partie.
@@ -204,7 +204,7 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
                 <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col gap-1.5">
                   <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs">
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>Obligation de Couleur</span>
+                    <span>Obligation de couleur</span>
                   </div>
                   <p className="text-xs text-slate-300 leading-snug">
                     Tu dois obligatoirement fournir la couleur de la 1ère carte posée si tu en as en main.
@@ -214,7 +214,7 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
                 <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col gap-1.5">
                   <div className="flex items-center gap-2 text-amber-400 font-bold text-xs">
                     <Sparkles className="w-4 h-4" />
-                    <span>Pas d'Atout de Coupe</span>
+                    <span>Pas d'atout de coupe</span>
                   </div>
                   <p className="text-xs text-slate-300 leading-snug">
                     Si tu n'as pas la couleur demandée, tu défausses une autre carte. Une défausse ne gagne jamais le tour.
@@ -224,7 +224,7 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
                 <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col gap-1.5">
                   <div className="flex items-center gap-2 text-slate-400 font-bold text-xs">
                     <Crown className="w-4 h-4" />
-                    <span>Le Kora Mystique</span>
+                    <span>Le Kora mystique</span>
                   </div>
                   <p className="text-xs text-slate-300 leading-snug">
                     Gagner le 5ᵉ tour avec un <strong>3</strong> (la plus faible carte) réalise un <strong>Kora</strong> et double les gains !
@@ -269,7 +269,7 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
                 <div className="mt-3 p-3 rounded-xl bg-slate-950/40 border border-slate-500/30 text-xs text-slate-200 flex items-center gap-2">
                   <Flame className="w-4 h-4 text-slate-400 shrink-0" />
                   <span>
-                    <strong>Sanction financière :</strong> Tous les perdants versent au vainqueur le double de la mise de base de la manche !
+                    <strong>Sanction :</strong> Tous les perdants versent au vainqueur le double de la mise de base de la manche !
                   </span>
                 </div>
               </div>
@@ -333,12 +333,12 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
               exit={{ opacity: 0, y: -8 }}
               className="space-y-4"
             >
-              {/* Composition 31 Cartes */}
+              {/* Composition 31 cartes */}
               <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl">
                 <div className="flex items-center justify-between gap-2 mb-3">
                   <div>
                     <h3 className="text-base sm:text-lg font-black text-emerald-300">
-                      La Structure des 31 Cartes
+                      La structure des 31 cartes
                     </h3>
                     <p className="text-xs text-slate-400">
                       Un jeu unique hérité de la tradition africaine
@@ -430,7 +430,7 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
                   </div>
                   <div>
                     <h3 className="text-base sm:text-lg font-black text-slate-300">
-                      Règles de Table & Conduite du Tour
+                      Règles de table et conduite du tour
                     </h3>
                     <p className="text-xs text-slate-400">
                       Comment se décide le vainqueur de chaque tour
@@ -440,7 +440,7 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
 
                 <div className="space-y-2.5 text-xs sm:text-sm text-slate-300 leading-relaxed">
                   <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
-                    <strong className="text-white block mb-1">1. L'Entame (La Couleur Demandée)</strong>
+                    <strong className="text-white block mb-1">1. L'entame (la couleur demandée)</strong>
                     Le premier joueur à jouer pose la carte de son choix au centre. La couleur de cette carte devient la <strong>couleur directrice du tour</strong>.
                   </div>
 
@@ -450,7 +450,7 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
                   </div>
 
                   <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
-                    <strong className="text-white block mb-1">3. La Défausse</strong>
+                    <strong className="text-white block mb-1">3. La défausse</strong>
                     Si un joueur ne possède aucune carte de la couleur demandée, il est libre de jouer n'importe quelle autre carte. Cette carte est une <em>défausse</em> et ne peut en aucun cas remporter le tour, même s'il s'agit d'un 10.
                   </div>
 
@@ -465,7 +465,7 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
               <div className="p-4 rounded-xl bg-amber-950/30 border border-amber-500/40 space-y-2">
                 <div className="flex items-center gap-2 text-amber-300 font-bold text-xs">
                   <Sparkles className="w-4 h-4 text-amber-400" />
-                  <span>Astuce de Maître : Préparer son Kora</span>
+                  <span>Astuce de maître : préparer son Kora</span>
                 </div>
                 <p className="text-xs text-slate-300 leading-relaxed">
                   Pour placer un Kora avec un 3 au 5ᵉ tour, observe attentivement les défausses des tours 1 à 4. Tu dois être certain qu'aucun adversaire n'a conservé une carte supérieure à la tienne dans cette couleur pour le dernier tour !
@@ -490,7 +490,7 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
                   </div>
                   <div>
                     <h3 className="text-base sm:text-lg font-black text-amber-300">
-                      Règlement Officiel de la Manche
+                      Règlement officiel de la manche
                     </h3>
                     <p className="text-xs text-slate-400">
                       Règles de compétition, élimination et gestion des jetons
@@ -501,7 +501,7 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
                 <div className="space-y-3 text-slate-300 leading-relaxed">
                   <div>
                     <h4 className="font-bold text-white text-xs uppercase tracking-wider mb-1">
-                      Partie vs Manche
+                      Partie et manche
                     </h4>
                     <p>
                       Une <strong>Partie</strong> correspond au jeu des 5 tours avec les 5 cartes distribuées. Une <strong>Manche</strong> est une compétition complète constituée de plusieurs parties consécutives jusqu'à ce qu'un joueur élimine tous ses adversaires.
@@ -510,7 +510,7 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
 
                   <div>
                     <h4 className="font-bold text-white text-xs uppercase tracking-wider mb-1">
-                      Mises et Pot Commun
+                      Mises et pot commun
                     </h4>
                     <p>
                       Au début de chaque partie, chaque joueur encore en lice verse la mise de base (ex: 50 jetons) dans le pot central. Le vainqueur du 5ᵉ tour remporte l'intégralité du pot.
@@ -519,7 +519,7 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
 
                   <div>
                     <h4 className="font-bold text-white text-xs uppercase tracking-wider mb-1">
-                      Rôle du Donneur
+                      Rôle du donneur
                     </h4>
                     <p>
                       Le donneur est le joueur qui distribue les cartes. Le joueur qui a remporté la partie précédente devient automatiquement le donneur de la partie suivante. Le joueur à sa gauche joue en premier.
@@ -528,10 +528,10 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
 
                   <div>
                     <h4 className="font-bold text-white text-xs uppercase tracking-wider mb-1">
-                      Élimination & Victoire Finale
+                      Élimination et victoire finale
                     </h4>
                     <p>
-                      Dès qu'un joueur n'a plus assez de jetons pour couvrir la mise obligatoire au début d'une partie, il est éliminé de la table. Le dernier joueur possédant des jetons est sacré <strong>Grand Vainqueur de la Manche</strong>.
+                      Dès qu'un joueur n'a plus assez de jetons pour couvrir la mise obligatoire au début d'une partie, il est éliminé de la table. Le dernier joueur possédant des jetons est sacré <strong>grand vainqueur de la manche</strong>.
                     </p>
                   </div>
                 </div>

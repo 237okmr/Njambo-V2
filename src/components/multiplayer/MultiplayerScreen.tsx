@@ -96,7 +96,7 @@ export interface MultiplayerScreenProps {
     fillWithBots: boolean;
     maxPlayers?: number;
     baseBet: number;
-    initialCapital : number;
+    initialCapital: number;
     enableDoubleKora: boolean;
     enableUnder21: boolean;
     turnTimerSeconds?: number;
@@ -606,7 +606,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
         try {
           const res = await onQuickMatch({
             baseBet: quickMatchBet,
-            initialCapital : 100,
+            initialCapital: 100,
           });
           if (!res.success) {
             if (res.errorCode === 'ACTIVE_GAME_IN_PROGRESS' && res.activeGameRoomCode) {
@@ -620,7 +620,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   try {
                     const retryRes = await onQuickMatch({
                       baseBet: quickMatchBet,
-                      initialCapital : 100,
+                      initialCapital: 100,
                     }, true);
                     if (!retryRes.success) {
                       setHubErrorMsg(retryRes.error || 'La recherche n\'a pas abouti. Réessaie.');
@@ -915,7 +915,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
         playerName: playerName.trim(),
         fillWithBots: false,
         baseBet: 10,
-        initialCapital : 100,
+        initialCapital: 100,
         turnTimerSeconds: getPublicParamNumber('turnTimerSeconds'),
         enableDoubleKora: true,
         enableUnder21: true,

@@ -39,7 +39,7 @@ export const UpdateNotificationBanner: React.FC<UpdateNotificationBannerProps> =
               </span>
               <span className="text-xs font-bold text-slate-900/80 truncate">
                 {isGameActive
-                  ? 'Finissez le tour ou appliquez maintenant'
+                  ? 'Finis le tour ou mets à jour maintenant'
                   : 'Nouvelle version disponible'}
               </span>
             </div>

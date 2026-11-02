@@ -45,7 +45,7 @@ export interface GameSetupModalProps {
   onStartGame: (
     opponentCount: number,
     baseBet: number,
-    initialCapital : number,
+    initialCapital: number,
     enableDoubleKora: boolean,
     enableUnder21: boolean,
     showBotPersonalityIcons: boolean,
@@ -56,7 +56,7 @@ export interface GameSetupModalProps {
   onSaveAndStartNewGame?: (
     opponentCount: number,
     baseBet: number,
-    initialCapital : number,
+    initialCapital: number,
     enableDoubleKora: boolean,
     enableUnder21: boolean,
     showBotPersonalityIcons: boolean,

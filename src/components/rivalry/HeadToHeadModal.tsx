@@ -97,10 +97,10 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
               </div>
               <div className="flex flex-col">
                 <h2 className="text-sm sm:text-base font-black text-white tracking-wide">
-                  Face-à-Face & Rivalité
+                  Face-à-face et rivalité
                 </h2>
                 <span className="text-xs text-slate-400">
-                  Statistiques & Historique direct
+                  Statistiques et historique
                 </span>
               </div>
             </div>
@@ -165,8 +165,8 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                           <Flame className="w-2.5 h-2.5 text-amber-400" />
                           <span>
                             {stats.currentStreak.winner === 'player'
-                              ? `Série: +${stats.currentStreak.count} Toi`
-                              : `Série: +${stats.currentStreak.count} ${opponent.name}`}
+                              ? `Série : +${stats.currentStreak.count} Toi`
+                              : `Série : +${stats.currentStreak.count} ${opponent.name}`}
                           </span>
                         </div>
                       )}
@@ -231,7 +231,7 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                   <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800 flex flex-col gap-1">
                     <div className="flex items-center gap-1.5 text-slate-400">
                       <Coins className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                      <span className="text-xs font-bold uppercase tracking-wider">Bilan Jetons</span>
+                      <span className="text-xs font-bold uppercase tracking-wider">Bilan en jetons</span>
                     </div>
                     <span
                       className={`text-base sm:text-lg font-mono font-black ${
@@ -271,7 +271,7 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                   <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800 flex flex-col gap-1">
                     <div className="flex items-center gap-1.5 text-slate-400">
                       <TrendingUp className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <span className="text-xs font-bold uppercase tracking-wider">Moyenne de Plis</span>
+                      <span className="text-xs font-bold uppercase tracking-wider">Moyenne de tours</span>
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-xs font-black text-emerald-400 font-mono">
@@ -282,14 +282,14 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                         {stats?.opponentAvgTricks || 0}
                       </span>
                     </div>
-                    <span className="text-xs text-slate-400">Prises de cartes par partie</span>
+                    <span className="text-xs text-slate-400">Tours gagnés par partie</span>
                   </div>
 
                   {/* Ratio / Mastery */}
                   <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800 flex flex-col gap-1">
                     <div className="flex items-center gap-1.5 text-slate-400">
                       <Trophy className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                      <span className="text-xs font-bold uppercase tracking-wider">Taux de Réussite</span>
+                      <span className="text-xs font-bold uppercase tracking-wider">Taux de réussite</span>
                     </div>
                     <span className="text-base sm:text-lg font-mono font-black text-amber-300">
                       {stats?.winRate || 0}%
@@ -395,7 +395,7 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                     <div className="py-6 px-4 rounded-xl bg-slate-950/40 border border-slate-800 text-center flex flex-col items-center gap-1">
                       <span className="text-xs text-slate-300 font-bold">Pas encore d'historique</span>
                       <span className="text-xs text-slate-500">
-                        Jouez une partie multijoueur ensemble pour alimenter vos statistiques de face-à-face.
+                        Joue une partie multijoueur avec ce joueur pour voir vos statistiques de face-à-face.
                       </span>
                     </div>
                   )}

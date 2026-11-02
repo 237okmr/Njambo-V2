@@ -46,7 +46,7 @@ export const SoloPauseOverlay: React.FC<SoloPauseOverlayProps> = ({
               <span>Partie en pause</span>
             </h2>
             <p className="text-xs sm:text-sm text-slate-400 font-medium max-w-xs mx-auto leading-relaxed">
-              La partie est en pause.
+              Reprends quand tu veux.
             </p>
           </div>
 
@@ -58,16 +58,16 @@ export const SoloPauseOverlay: React.FC<SoloPauseOverlayProps> = ({
             </div>
             <div className="w-px h-7 bg-slate-700/60" />
             <div className="flex flex-col items-center gap-0.5">
-              <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">Pli</span>
+              <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">Tour</span>
               <span className="font-extrabold text-slate-200 text-sm">
                 {gameState.currentTrickNumber || 1} / 5
               </span>
             </div>
             <div className="w-px h-7 bg-slate-700/60" />
             <div className="flex flex-col items-center gap-0.5">
-              <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">Tour</span>
+              <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">À jouer</span>
               <span className={`font-extrabold text-sm ${isHumanTurn ? 'text-emerald-400' : 'text-slate-300'}`}>
-                {isHumanTurn ? 'À toi' : currentTurnPlayer?.name || 'IA'}
+                {isHumanTurn ? 'À toi' : currentTurnPlayer?.name || \'Bot\'}
               </span>
             </div>
           </div>

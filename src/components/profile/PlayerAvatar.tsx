@@ -88,7 +88,7 @@ export const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
 
       {showStatusDot && (
         <span
-          title={isOnline ? 'Synchronisé Google (Cloud)' : 'Mode Invité (Local)'}
+          title={isOnline ? 'Sauvegardé avec Google' : 'Mode invité'}
           className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-slate-950 ${
             isOnline
               ? 'bg-emerald-400 shadow-[0_0_5px_rgba(52,211,153,0.8)]'

@@ -235,7 +235,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
         setActionSuccessMessage(`${player.displayName} a été ajouté à tes contacts !`);
       }
     } catch (e: any) {
-      setActionSuccessMessage(e?.message || 'Erreur lors de l’envoi de la demande.');
+      setActionSuccessMessage(e?.message || 'La demande n\'a pas pu être envoyée. Réessaie.');
     }
     setTimeout(() => setActionSuccessMessage(null), 3000);
   };
@@ -246,7 +246,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
       navigator.share({ title: 'Palmarès Njambo Kora', text }).catch(() => {});
     } else {
       navigator.clipboard.writeText(text);
-      setActionSuccessMessage('Lien du Palmarès copié dans le presse-papier !');
+      setActionSuccessMessage('Lien du Palmarès copié.');
       setTimeout(() => setActionSuccessMessage(null), 3000);
     }
   };
@@ -324,7 +324,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
             <span className="text-xs font-bold text-amber-300/90">points</span>
           </span>
           <span className="text-xs text-slate-500 whitespace-nowrap uppercase tracking-wider font-bold">
-            Score Maîtrise
+            Score de Maîtrise
           </span>
         </div>
         <div className="flex items-center justify-center gap-1 flex-wrap text-xs font-mono">
@@ -363,7 +363,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
             {sign}{fortune.toLocaleString('fr-FR')} jetons
           </span>
           <span className="text-xs text-slate-500 whitespace-nowrap mt-0.5">
-            Gains: {gains} jetons · Pertes: {pertes} jetons
+            Gains : {gains} jetons · Pertes : {pertes} jetons
           </span>
           <span className="text-xs text-slate-600 font-bold tracking-wider mt-0.5 uppercase">
             🌐 Multijoueur
@@ -452,7 +452,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
             {sign}{fortune.toLocaleString('fr-FR')} jetons
           </span>
           <span className="text-xs text-slate-500 mt-0.5">
-            Gains: {gains} jetons · Pertes: {pertes} jetons
+            Gains : {gains} jetons · Pertes : {pertes} jetons
           </span>
           <span className="text-xs text-slate-600 font-bold uppercase mt-0.5">
             🌐 Multijoueur
@@ -604,7 +604,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Pseudo, titre, code NK, ou formules (ex: fortune > 100)..."
+              placeholder="Pseudo, titre, code ami ou formule (ex. : fortune > 100)"
               className="w-full h-10 pl-10 pr-10 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-amber-500/50 transition-colors shadow-inner"
             />
             {searchQuery && (
@@ -707,7 +707,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                   className="px-2 py-1 rounded-full text-xs font-bold border border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 transition-all duration-200 shrink-0 flex items-center gap-1 shadow-sm cursor-pointer ml-1"
                 >
                   <X className="w-3 h-3" />
-                  <span>Réinit</span>
+                  <span>Réinitialiser</span>
                 </button>
               )}
             </div>
@@ -745,16 +745,8 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
 
             {/* Quick compact summary pills when not expanded */}
             {!showMasteryHelp && (
-              <div className="px-3 pb-2 pt-0 flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs font-mono text-slate-300">
-                <span className="px-1.5 py-0.5 rounded bg-slate-900/90 border border-slate-800 shrink-0">
-                  <strong className="text-amber-400">Manche 10</strong> / <strong className="text-amber-400">Partie 1</strong>
-                </span>
-                <span className="px-1.5 py-0.5 rounded bg-slate-900/90 border border-slate-800 shrink-0">
-                  <strong className="text-amber-400">Kora 5</strong> / <strong className="text-slate-400">Double 15</strong>
-                </span>
-                <span className="px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300 shrink-0">
-                  Multi ×1 | Solo Exp/GM ×0,4 | Norm ×0,2 | Fac ×0,05
-                </span>
+              <div className="px-3 pb-2 pt-0 text-xs text-slate-300">
+                <span>Gagne des points à chaque manche et partie. Le multijoueur rapporte le plus.</span>
               </div>
             )}
 
@@ -762,7 +754,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
             {showMasteryHelp && (
               <div className="p-3 pt-0 border-t border-amber-500/15 space-y-2 text-xs text-slate-400">
                 <p className="leading-relaxed text-slate-300 text-xs">
-                  <strong>Barème officiel du Score de Maîtrise v2 :</strong> Points de base calculés pour chaque réalisation, puis ajustés par le coefficient du mode de jeu (plafond solo : 30 points/jour).
+                  <strong>Barème du score de Maîtrise :</strong> Points de base calculés pour chaque réalisation, puis ajustés par le coefficient du mode de jeu (plafond solo : 30 points/jour).
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 font-mono text-xs">
                   <div className="p-1.5 rounded bg-slate-900/90 border border-slate-800 text-slate-300">
@@ -772,14 +764,14 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                     <span className="text-amber-400 font-bold">1 point</span> Partie gagnée
                   </div>
                   <div className="p-1.5 rounded bg-slate-900/90 border border-slate-800 text-slate-300">
-                    <span className="text-amber-400 font-bold">5 points</span> Kora Simple
+                    <span className="text-amber-400 font-bold">5 points</span> Kora simple
                   </div>
                   <div className="p-1.5 rounded bg-slate-500/15 border border-slate-500/30 text-slate-300">
                     <span className="font-bold text-slate-400">15 points</span> Double Kora 💎
                   </div>
                 </div>
                 <div className="p-2 rounded bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300">
-                  <strong>Coefficients de mode :</strong> Multijoueur ×1,0 | Solo Expert/Grand Maître ×0,4 | Solo Normal ×0,2 | Solo Facile ×0,05.
+                  <strong>Coefficients de mode :</strong> Multijoueur ×1,0 | Solo Expert et Grand Katika ×0,4 | Solo Normal ×0,2 | Solo Facile ×0,05.
                 </div>
               </div>
             )}
@@ -791,7 +783,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
           <div className="p-3 sm:p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-start gap-2.5 text-xs text-amber-300">
             <Info className="w-4 h-4 mt-0.5 shrink-0 text-amber-400" />
             <div className="space-y-0.5">
-              <span className="font-bold">Seuil d'éligibilité requis</span>
+              <span className="font-bold">Parties minimum requises</span>
               <p className="text-xs text-slate-400 leading-relaxed">
                 Seuls les compétiteurs ayant disputé au moins <strong className="text-amber-400">10 parties</strong> figurent dans ce classement pour garantir des taux de réussite représentatifs.
               </p>
@@ -884,7 +876,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
             {searchQuery.trim() || selectedModeFilter !== 'ALL'
               ? `Résultats (${filteredEntries.length})`
               : entries.length >= 3
-              ? 'Poursuivants & Compétiteurs'
+              ? 'Poursuivants et compétiteurs'
               : 'Classement des joueurs'}
           </h3>
 
@@ -1118,7 +1110,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                     {selectedPlayer.title.badge} {selectedPlayer.title.title}
                   </span>
                   <div className="text-xs text-slate-400 font-mono mt-0.5">
-                    Code Ami : {selectedPlayer.friendCode}
+                    Code ami : {selectedPlayer.friendCode}
                   </div>
                 </div>
               </div>
@@ -1126,7 +1118,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
               {/* Stats Grid */}
               <div className="grid grid-cols-3 gap-2 p-3 rounded-xl bg-slate-950 border border-slate-800 text-center">
                 <div>
-                  <div className="text-xs font-bold text-slate-400">Score Maîtrise</div>
+                  <div className="text-xs font-bold text-slate-400">Score de Maîtrise</div>
                   <div className="text-sm font-black text-amber-400 font-mono">
                     {selectedPlayer.masteryScore ?? 0} points
                   </div>
@@ -1150,7 +1142,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
               {/* Details for Fortune in Inspect modal */}
               {selectedPlayer.fortune !== undefined && (
                 <div className="text-xs text-slate-500 text-center -mt-2">
-                  Bénéfice net Multijoueur • Gains: {selectedPlayer.multiplayerGains || 0} jetons · Pertes: {selectedPlayer.multiplayerPertes || 0} jetons
+                  Bénéfice net Multijoueur • Gains : {selectedPlayer.multiplayerGains || 0} jetons · Pertes : {selectedPlayer.multiplayerPertes || 0} jetons
                 </div>
               )}
 
@@ -1180,7 +1172,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                   className="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 text-xs font-black flex items-center justify-center gap-1.5 cursor-pointer shadow transition"
                 >
                   <Swords className="w-3.5 h-3.5 text-amber-400" />
-                  <span>⚔️ Face-à-Face & Rivalité</span>
+                  <span>⚔️ Face-à-face et rivalité</span>
                 </button>
 
                 <div className="grid grid-cols-2 gap-2">

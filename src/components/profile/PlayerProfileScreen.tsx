@@ -247,7 +247,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
             <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>
-                Partie en cours {isMultiplayer ? `(Multi ${gamePlayerCount}J)` : '(Solo vs IA)'}
+                Partie en cours {isMultiplayer ? `(Multi ${gamePlayerCount}J)` : '(solo)'}
               </span>
             </div>
           ) : undefined
@@ -304,7 +304,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   <div
                     onClick={() => setShowAvatarSheet(true)}
                     className="cursor-pointer group relative rounded-full"
-                    title="Changer d'avatar (Ouvrir le tiroir)"
+                    title="Changer d'avatar"
                   >
                     <PlayerAvatar
                       avatarId={safeProfile.avatarId}
@@ -322,7 +322,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     type="button"
                     onClick={() => setShowAvatarSheet(true)}
                     className="text-xs font-bold text-amber-300 hover:text-amber-200 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 px-3 py-1 rounded-full flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-xs"
-                    title="Ouvrir le tiroir des avatars"
+                    title="Choisir un avatar"
                   >
                     <Sparkles className="w-3 h-3 text-amber-400" />
                     <span>Changer d'avatar</span>
@@ -625,10 +625,10 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
 
               {/* 6 Core Metrics Grid */}
               <div className="grid grid-cols-2 gap-3">
-                {/* 1. Parties Jouées (Distinction Manche / Partie) */}
+                {/* 1. Parties jouées (Distinction Manche / Partie) */}
                 <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 space-y-1 shadow-sm">
                   <div className="flex items-center justify-between text-slate-400">
-                    <span className="text-xs font-bold uppercase tracking-wider">Parties Jouées</span>
+                    <span className="text-xs font-bold uppercase tracking-wider">Parties jouées</span>
                     <Layers className="w-4 h-4 text-slate-400" />
                   </div>
                   <div className="text-2xl sm:text-3xl font-black text-white font-mono">
@@ -702,14 +702,14 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
               <ProfileDetailsSection title="Détail du score de Maîtrise">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
                   <div className="p-2 bg-slate-950/60 rounded-xl border border-slate-800/80">
-                    <span className="text-xs uppercase font-bold text-slate-400 block">Manches Multi</span>
+                    <span className="text-xs uppercase font-bold text-slate-400 block">Manches multijoueur</span>
                     <span className="text-sm font-black text-amber-300 font-mono">
                       {safeStats.multiplayerManchesWon || 0}
                     </span>
                     <span className="text-xs text-slate-500 block">+10 points par manche</span>
                   </div>
                   <div className="p-2 bg-slate-950/60 rounded-xl border border-slate-800/80">
-                    <span className="text-xs uppercase font-bold text-slate-400 block">Manches Solo</span>
+                    <span className="text-xs uppercase font-bold text-slate-400 block">Manches solo</span>
                     <span className="text-sm font-black text-amber-300 font-mono">
                       {safeStats.soloManchesWon || (safeStats.soloManchesWonHard || 0) + (safeStats.soloManchesWonNormal || 0) + (safeStats.soloManchesWonEasy || 0)}
                     </span>
@@ -734,10 +734,10 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
 
               <ProfileDetailsSection title="Records">
                 <div className="grid grid-cols-2 gap-3">
-                {/* 5. Plus Gros Pot Remporté */}
+                {/* 5. Plus gros pot Remporté */}
                 <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 space-y-1 shadow-sm">
                   <div className="flex items-center justify-between text-amber-300">
-                    <span className="text-xs font-bold uppercase tracking-wider">Plus Gros Pot</span>
+                    <span className="text-xs font-bold uppercase tracking-wider">Plus gros pot</span>
                     <Flame className="w-4 h-4 text-amber-400" />
                   </div>
                   <div className="text-2xl sm:text-3xl font-black text-amber-300 font-mono">
@@ -794,8 +794,8 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                       </div>
                     </div>
                     <div className="text-xs text-slate-500 pt-1.5 border-t border-slate-900 flex justify-between">
-                      <span>Solo: {safeStats.soloGamesWon}/{safeStats.soloGamesPlayed}</span>
-                      <span>Multi: {safeStats.multiplayerGamesWon}/{safeStats.multiplayerGamesPlayed}</span>
+                      <span>Solo : {safeStats.soloGamesWon}/{safeStats.soloGamesPlayed}</span>
+                      <span>Multi : {safeStats.multiplayerGamesWon}/{safeStats.multiplayerGamesPlayed}</span>
                     </div>
                   </div>
 
@@ -821,7 +821,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                       </div>
                     </div>
                     <div className="text-xs text-slate-500 pt-1.5 border-t border-slate-900">
-                      Total: <span className="text-amber-400 font-bold">{safeStats.koraCount || 0}</span> Koras au total
+                      Total : <span className="text-amber-400 font-bold">{safeStats.koraCount || 0}</span> Koras au total
                     </div>
                   </div>
 
@@ -897,7 +897,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
 
                   <div className="flex items-center justify-between p-3 bg-slate-950 rounded-xl border border-slate-800">
                     <div className="space-y-0.5">
-                      <span className="text-xs font-bold text-white">Trois 7 consécutifs</span>
+                      <span className="text-xs font-bold text-white">Trois 7</span>
                       <p className="text-xs text-slate-400">Combinaison légendaire du jeu</p>
                     </div>
                     <span className="text-base font-black text-amber-400 font-mono">

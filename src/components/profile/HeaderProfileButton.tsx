@@ -49,7 +49,7 @@ export const HeaderProfileButton: React.FC<HeaderProfileButtonProps> = ({
   showStatusDot = true,
   id,
   title,
-  ariaLabel = 'Mon Profil & Palmarès',
+  ariaLabel = 'Mon profil et palmarès',
   className,
   profile: propProfile,
   isLoggedIn: propIsLoggedIn,
@@ -69,10 +69,10 @@ export const HeaderProfileButton: React.FC<HeaderProfileButtonProps> = ({
   const elementId = id || defaultId;
 
   const defaultTitle = isPill
-    ? 'Mon Profil & Palmarès'
+    ? 'Mon profil et palmarès'
     : safeIsLoggedIn
-    ? `Connecté: ${safeProfile?.displayName || 'Joueur'}`
-    : 'Mon Profil (Invité)';
+    ? `Connecté : ${safeProfile?.displayName || 'Joueur'}`
+    : 'Mon profil (invité)';
   const elementTitle = title || defaultTitle;
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
