@@ -52,7 +52,7 @@ export const RoomFilterBottomSheet: React.FC<RoomFilterBottomSheetProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sliders className="w-5 h-5 text-amber-400" />
-              <h3 className="text-base font-black text-white">Filtres Avancés des Salons</h3>
+              <h3 className="text-base font-black text-white">Filtres avancés</h3>
             </div>
             <button
               type="button"
@@ -66,7 +66,7 @@ export const RoomFilterBottomSheet: React.FC<RoomFilterBottomSheetProps> = ({
           {/* 1. Niveau de mise en Jetons (🪙) */}
           <div className="flex flex-col gap-2">
             <span className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <Coins className="w-3.5 h-3.5 text-amber-400" /> Niveau de Mise (Jetons)
+              <Coins className="w-3.5 h-3.5 text-amber-400" /> Niveau de mise (jetons)
             </span>
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -78,7 +78,7 @@ export const RoomFilterBottomSheet: React.FC<RoomFilterBottomSheetProps> = ({
                     : 'bg-slate-950 text-slate-300 border-slate-800 hover:bg-slate-800'
                 }`}
               >
-                Toutes les Mises
+                Toutes les mises
               </button>
               <button
                 type="button"
@@ -119,7 +119,7 @@ export const RoomFilterBottomSheet: React.FC<RoomFilterBottomSheetProps> = ({
           {/* 2. Capacité de Joueurs */}
           <div className="flex flex-col gap-2">
             <span className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <Users className="w-3.5 h-3.5 text-slate-400" /> Capacité de la Table
+              <Users className="w-3.5 h-3.5 text-slate-400" /> Capacité de la table
             </span>
             <div className="grid grid-cols-4 gap-1.5">
               {(['ALL', 2, 3, 4] as const).map((cap) => (
@@ -142,13 +142,13 @@ export const RoomFilterBottomSheet: React.FC<RoomFilterBottomSheetProps> = ({
           {/* 3. Variantes Spécifiques */}
           <div className="flex flex-col gap-2 pt-2 border-t border-slate-800">
             <span className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> Variantes Requises
+              <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> Variantes requises
             </span>
             <div className="flex flex-col gap-2">
               <label className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer">
                 <div className="flex flex-col">
                   <span className="text-xs font-bold text-white">Double Kora (×4)</span>
-                  <span className="text-xs text-slate-400">Multiplier les gains lors d'un Kora</span>
+                  <span className="text-xs text-slate-400">Multiplie les gains lors d'un Kora</span>
                 </div>
                 <input
                   type="checkbox"

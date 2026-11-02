@@ -6,7 +6,7 @@ export function getJoinProgressMessage(elapsedSeconds: number): string {
     return 'Connexion à la table en cours…';
   }
   if (elapsedSeconds < 30) {
-    return "Le serveur met un peu plus de temps que d'habitude…";
+    return "La connexion prend un peu plus de temps que d'habitude…";
   }
   return 'Toujours en cours. Tu peux annuler.';
 }

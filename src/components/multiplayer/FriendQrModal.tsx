@@ -50,7 +50,7 @@ export const FriendQrModal: React.FC<FriendQrModalProps> = ({
     const waUrl = activeRoomCode
       ? FriendService.getWhatsAppShareUrl(activeRoomCode, playerName)
       : `https://wa.me/?text=${encodeURIComponent(
-          `🃏 Ajoute-moi sur Njambo Kora !\nMon Code Ami est : ${friendCode}\nRejoins-moi ici : ${qrValue}`
+          `🃏 Ajoute-moi sur Njambo Kora !\nMon code ami est : ${friendCode}\nRejoins-moi ici : ${qrValue}`
         )}`;
     window.open(waUrl, '_blank');
   };
@@ -72,7 +72,7 @@ export const FriendQrModal: React.FC<FriendQrModalProps> = ({
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-2">
               <QrCode className="w-5 h-5 text-amber-400" />
-              <h3 className="text-base font-black text-white">Mon Code & QR Code</h3>
+              <h3 className="text-base font-black text-white">Mon code et QR code</h3>
             </div>
             <button
               type="button"
@@ -86,7 +86,7 @@ export const FriendQrModal: React.FC<FriendQrModalProps> = ({
           {/* Friend Code Display Card */}
           <div className="w-full p-3.5 rounded-2xl bg-gradient-to-br from-amber-500/20 via-slate-950 to-slate-950 border border-amber-500/40 flex items-center justify-between gap-2">
             <div className="flex flex-col text-left">
-              <span className="text-xs font-black uppercase tracking-wider text-amber-400">Mon Code Ami Unique</span>
+              <span className="text-xs font-black uppercase tracking-wider text-amber-400">Mon code ami</span>
               <span className="text-xl font-black text-white font-mono tracking-wider">{friendCode}</span>
             </div>
             <button
@@ -111,7 +111,7 @@ export const FriendQrModal: React.FC<FriendQrModalProps> = ({
             />
           </div>
           <span className="text-xs text-slate-400 -mt-1">
-            Faites scanner ce QR Code par un ami avec son appareil photo
+            Fais scanner ce QR code par un ami avec son appareil photo
           </span>
 
           {/* Actions : WhatsApp Direct & Partager */}
@@ -131,7 +131,7 @@ export const FriendQrModal: React.FC<FriendQrModalProps> = ({
               className="w-full h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center gap-2 border border-slate-700 cursor-pointer"
             >
               {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5" />}
-              <span>{copiedLink ? 'Lien copié dans le presse-papier' : 'Copier le lien universel'}</span>
+              <span>{copiedLink ? 'Lien copié' : 'Copier le lien'}</span>
             </button>
           </div>
         </motion.div>

@@ -469,8 +469,8 @@ export class FriendService {
       options?.baseBet !== undefined ? `Mise : ${options.baseBet}🪙` : null,
       options?.fillWithBots !== undefined
         ? options.fillWithBots
-          ? '🤖 Mode Mixte'
-          : '👥 100% Humains'
+          ? '🤖 Mode mixte'
+          : '👥 100 % humains'
         : null,
     ]
       .filter(Boolean)
