@@ -178,7 +178,7 @@ export const NotificationHistoryScreen: React.FC<NotificationHistoryScreenProps>
       exit={{ x: '100%' }}
       transition={{ type: 'spring', damping: 25, stiffness: 200 }}
       id="notification-history-fullscreen"
-      className="fixed inset-0 z-[80] bg-slate-950 text-slate-100 flex flex-col overflow-hidden"
+      className="fixed inset-0 z-[80] bg-slate-950 text-slate-100 flex flex-col overflow-hidden comfort-ui"
     >
       <NativeScreenHeader
         id="native-notifications-header"

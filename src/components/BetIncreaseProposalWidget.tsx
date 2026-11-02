@@ -17,6 +17,8 @@ interface BetIncreaseProposalWidgetProps {
   compact?: boolean;
   /** Bouton court pour une grille à deux colonnes (fin de manche) */
   tile?: boolean;
+  /** Table Kora Cash : la mise est en FCFA. */
+  isCashTable?: boolean;
 }
 
 export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps> = ({
@@ -30,6 +32,7 @@ export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps>
   className = '',
   compact = false,
   tile = false,
+  isCashTable = false,
 }) => {
   const [showProposeModal, setShowProposeModal] = useState(false);
   const [customAmount, setCustomAmount] = useState<number>(() => currentBaseBet * 2);
@@ -115,7 +118,7 @@ export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps>
               </span>
               <div className="flex flex-col min-w-0">
                 <span className="text-xs text-slate-200 font-bold leading-tight flex items-center gap-1 truncate">
-                  Hausse : <strong className="text-amber-300 font-mono font-black text-xs">{proposal.proposedBet} 🪙</strong>
+                  Hausse : <strong className="text-amber-300 font-mono font-black text-xs">{proposal.proposedBet} {isCashTable ? 'FCFA' : '🪙'}</strong>
                 </span>
                 <span className="text-xs text-slate-400 font-normal truncate">
                   {isLocalProposer ? 'Ta proposition' : `Par ${proposal.proposerName}`} ({agreedCount}/{totalRequired} OK)
@@ -272,7 +275,7 @@ export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps>
 
             {/* Right side: Stake Pill with dynamic values and Arrow */}
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-400/15 border border-slate-400/35 group-hover:border-slate-400/60 group-hover:bg-slate-400/25 transition-all text-slate-300 font-mono text-xs font-bold shrink-0 shadow-xs">
-              <span>{currentBaseBet} 🪙 ➔ ×2</span>
+              <span>{currentBaseBet} {isCashTable ? 'FCFA' : '🪙'} ➔ ×2</span>
               <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0 group-hover:translate-x-0.5 transition-transform" />
             </div>
           </button>

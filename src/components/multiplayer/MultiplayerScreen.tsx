@@ -1290,7 +1290,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
       exit={{ x: '100%' }}
       transition={{ type: 'spring', damping: 25, stiffness: 200 }}
       id="multiplayer-native-screen"
-      className="fixed inset-x-0 top-0 bottom-[var(--app-bottom-nav,0px)] z-[65] bg-slate-950 text-slate-100 flex flex-col font-sans select-none overflow-hidden"
+      className="fixed inset-x-0 top-0 bottom-[var(--app-bottom-nav,0px)] z-[65] bg-slate-950 text-slate-100 flex flex-col font-sans select-none overflow-hidden comfort-ui"
     >
       {/* ========================================================================= */}
       {/* 1. TOP UNIFIED HEADER BAR (Option A Back button + Sound Toggle)           */}
@@ -1309,7 +1309,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
           room
             ? `${connectedHumansCount}/${roomMaxCapacity} joueurs${
                 spectators.length > 0 ? ` · ${spectators.length} obs` : ''
-              } · ${room.baseBet} Jetons 🪙`
+              } · ${room.baseBet} ${room.cash ? 'FCFA' : 'jetons'}`
             : 'Njambo Kora en Direct'
         }
         onToggleSound={room ? undefined : onToggleSound}
@@ -1616,7 +1616,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   </div>
                   <div className="flex items-center gap-2 text-xs text-slate-400 mt-1 flex-wrap">
                     <span>
-                      Mise : <strong className="text-amber-400">{room.baseBet} {room.cash ? 'FCFA' : '🪙'}</strong>
+                      Mise : <strong className="text-amber-400">{room.baseBet} {room.cash ? 'FCFA' : 'jetons'}</strong>
                     </span>
                     <span>·</span>
                     {room.cash ? (
@@ -1625,7 +1625,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                       </span>
                     ) : (
                       <span>
-                        Capital : <strong className="text-amber-300">{room.initialCapital || 100} 🪙</strong>
+                        Capital : <strong className="text-amber-300">{room.initialCapital || 100} jetons</strong>
                       </span>
                     )}
                     <span>·</span>
@@ -2278,18 +2278,6 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   </div>
                 </div>
 
-                {hubErrorMsg && (
-                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-bold flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4 shrink-0" />
-                      <span>{hubErrorMsg}</span>
-                    </div>
-                    <button type="button" onClick={() => setHubErrorMsg(null)} className="text-rose-400 hover:text-white p-1">
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                )}
-
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
@@ -2387,7 +2375,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                             }`}
                           >
                             <span>{bet}</span>
-                            <span className="text-xs opacity-80">🪙</span>
+                            <span className="text-xs opacity-80">jetons</span>
                           </button>
                         ))}
                       </div>
@@ -2433,7 +2421,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                         className="w-full h-10 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-300 text-slate-950 text-xs font-black flex items-center justify-center gap-2 shadow-md shadow-amber-500/20 transition active:scale-98 cursor-pointer"
                       >
                         <Play className="w-3.5 h-3.5 fill-slate-950" />
-                        <span>Lancer la Recherche ({quickMatchBet} Jetons 🪙)</span>
+                        <span>Lancer la Recherche ({quickMatchBet} jetons)</span>
                       </button>
                     )}
 
@@ -2618,7 +2606,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                               >
                                 {!r.fillWithBots ? '👥 Humains' : '🤖 Mixte'}
                               </span>
-                              <span className="text-xs font-black text-amber-400">Mise: {r.baseBet} 🪙</span>
+                              <span className="text-xs font-black text-amber-400">Mise: {r.baseBet} jetons</span>
                             </div>
                           </div>
 
@@ -2635,7 +2623,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                                 {canReplaceBot && (
                                   <>
                                     <span>·</span>
-                                    <span className="text-amber-300 font-bold">Relais: {r.prorataCapitalEstimate} 🪙</span>
+                                    <span className="text-amber-300 font-bold">Relais: {r.prorataCapitalEstimate} jetons</span>
                                   </>
                                 )}
                                 {Boolean(r.spectatorsCount) && (
@@ -2649,7 +2637,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                               <>
                                 <span>{Math.min(r.maxPlayers, r.playersCount)}/{r.maxPlayers} Joueurs</span>
                                 <span>·</span>
-                                <span>Capital: <strong className="text-slate-300 font-bold">{r.initialCapital || 100} 🪙</strong></span>
+                                <span>Capital: <strong className="text-slate-300 font-bold">{r.initialCapital || 100} jetons</strong></span>
                               </>
                             )}
                             {r.enableDoubleKora && <span>· <span className="text-emerald-400 font-bold">Double Kora</span></span>}
@@ -2686,7 +2674,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                             ) : isPlaying && canReplaceBot ? (
                               <>
                                 <UserPlus className="w-3.5 h-3.5" />
-                                <span>Prendre la place d'un robot ({r.prorataCapitalEstimate} 🪙)</span>
+                                <span>Prendre la place d'un robot ({r.prorataCapitalEstimate} jetons)</span>
                               </>
                             ) : isPlaying ? (
                               <>
@@ -2774,7 +2762,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                           <div className="flex flex-col">
                             <span className="text-xs font-black text-white">{inv.fromUserName} te défie !</span>
                             <span className="text-xs text-slate-400">
-                              Table #{inv.roomCode} · {inv.baseBet} Jetons 🪙
+                              Table #{inv.roomCode} · {inv.baseBet} jetons
                             </span>
                           </div>
                         </div>
@@ -3686,7 +3674,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                           : 'bg-slate-950 text-slate-300 border border-slate-800 hover:bg-slate-800'
                       }`}
                     >
-                      {bet} 🪙
+                      {bet} jetons
                     </button>
                   ))}
                 </div>
@@ -3712,7 +3700,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                           : 'bg-slate-950 text-slate-300 border border-slate-800 hover:bg-slate-800'
                       }`}
                     >
-                      {cap} 🪙
+                      {cap} jetons
                     </button>
                   ))}
                 </div>
@@ -3827,7 +3815,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   </div>
 
                   <span className="px-3 py-1 rounded-xl bg-slate-950/15 border border-slate-950/20 text-slate-950 font-black text-xs flex items-center gap-1 shrink-0 shadow-inner">
-                    {baseBet} 🪙
+                    {baseBet} jetons
                   </span>
                 </button>
               )}

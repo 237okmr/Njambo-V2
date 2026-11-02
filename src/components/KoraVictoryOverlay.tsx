@@ -11,6 +11,8 @@ interface KoraVictoryOverlayProps {
   winType: PartieWinType;
   pot: number;
   baseBet: number;
+  /** Table Kora Cash : les montants sont en FCFA. */
+  isCashTable?: boolean;
   players: Player[];
   onContinue: () => void;
 }
@@ -22,9 +24,11 @@ export const KoraVictoryOverlay: React.FC<KoraVictoryOverlayProps> = ({
   winType,
   pot,
   baseBet,
+  isCashTable = false,
   players,
   onContinue,
 }) => {
+  const unit = isCashTable ? 'FCFA' : 'jetons';
   const isSpecialWin = show && Boolean(winType) && winType !== 'STANDARD';
 
   useEffect(() => {
@@ -90,7 +94,7 @@ export const KoraVictoryOverlay: React.FC<KoraVictoryOverlayProps> = ({
           btnBg: 'bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 text-white shadow-purple-500/30',
           description: 'A terrassé tous ses adversaires en remportant le 4ᵉ et le 5ᵉ tour décisif avec des "3" (Double Kora) !',
           tagText: 'MISES X4',
-          penaltyText: `${baseBet * 4} pts / j.`,
+          penaltyText: `${baseBet * 4} ${unit} / joueur`,
         };
       case 'THREE_SEVENS':
         return {
@@ -104,7 +108,7 @@ export const KoraVictoryOverlay: React.FC<KoraVictoryOverlayProps> = ({
           btnBg: 'bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-slate-950 shadow-yellow-500/30',
           description: 'A obtenu 3x Septs dès la distribution initiale et gagne immédiatement la manche !',
           tagText: '777 CUMULÉ',
-          penaltyText: 'Victoire Cash',
+          penaltyText: 'Victoire directe',
         };
       case 'UNDER_21':
         return {
@@ -118,7 +122,7 @@ export const KoraVictoryOverlay: React.FC<KoraVictoryOverlayProps> = ({
           btnBg: 'bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-300 hover:to-teal-400 text-slate-950 shadow-emerald-500/30',
           description: 'A reçu une main initiale dont le total des cartes est ≤ 21, remportant la partie instantanément !',
           tagText: 'MAIN ≤ 21',
-          penaltyText: 'Cash Direct',
+          penaltyText: 'Gain direct',
         };
       case 'FORFEIT':
         return {
@@ -147,7 +151,7 @@ export const KoraVictoryOverlay: React.FC<KoraVictoryOverlayProps> = ({
           btnBg: 'bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 shadow-amber-500/30',
           description: 'A accompli l\'exploit du Kora en remportant le 5ᵉ et dernier tour décisif avec un "3" !',
           tagText: 'MISES X2',
-          penaltyText: `${baseBet * 2} pts / j.`,
+          penaltyText: `${baseBet * 2} ${unit} / joueur`,
         };
     }
   })();
@@ -212,7 +216,7 @@ export const KoraVictoryOverlay: React.FC<KoraVictoryOverlayProps> = ({
               <span className="text-[10px] font-bold uppercase text-slate-400">Pot Récolté</span>
               <span className="text-sm sm:text-lg font-black text-amber-400 flex items-center gap-1 mt-0.5 justify-center">
                 <Coins className="w-4 h-4 text-amber-400 shrink-0" />
-                <span className="truncate">+{pot} pts</span>
+                <span className="truncate">+{pot} {unit}</span>
               </span>
             </div>
 

@@ -89,7 +89,7 @@ export const RoomFilterBottomSheet: React.FC<RoomFilterBottomSheetProps> = ({
                     : 'bg-slate-950 text-slate-300 border-slate-800 hover:bg-slate-800'
                 }`}
               >
-                Petites (10 - 25 🪙)
+                Petites (10 - 25 jetons)
               </button>
               <button
                 type="button"
@@ -100,7 +100,7 @@ export const RoomFilterBottomSheet: React.FC<RoomFilterBottomSheetProps> = ({
                     : 'bg-slate-950 text-slate-300 border-slate-800 hover:bg-slate-800'
                 }`}
               >
-                Moyennes (50 🪙)
+                Moyennes (50 jetons)
               </button>
               <button
                 type="button"
@@ -111,7 +111,7 @@ export const RoomFilterBottomSheet: React.FC<RoomFilterBottomSheetProps> = ({
                     : 'bg-slate-950 text-slate-300 border-slate-800 hover:bg-slate-800'
                 }`}
               >
-                Grosses (100+ 🪙)
+                Grosses (100+ jetons)
               </button>
             </div>
           </div>

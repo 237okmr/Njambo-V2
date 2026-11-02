@@ -347,7 +347,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
   return (
     <div
       id="solo-game-setup-screen"
-      className="fixed inset-0 z-[70] bg-slate-950 text-slate-100 flex flex-col font-sans select-none overflow-hidden animate-in fade-in duration-200"
+      className="fixed inset-0 z-[70] bg-slate-950 text-slate-100 flex flex-col font-sans select-none overflow-hidden animate-in fade-in duration-200 comfort-ui"
     >
       {/* Ambient background glows */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-48 bg-gradient-to-b from-amber-500/10 via-emerald-500/5 to-transparent blur-3xl pointer-events-none" />
@@ -535,7 +535,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
                           : 'bg-white/[0.03] hover:bg-white/[0.06] border-white/[0.06] text-slate-300'
                       }`}
                     >
-                      {val} 🪙
+                      {val} jetons
                     </button>
                   ))}
                 </div>
@@ -566,7 +566,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
                           : 'bg-white/[0.03] hover:bg-white/[0.06] border-white/[0.06] text-slate-300'
                       }`}
                     >
-                      {val} 🪙
+                      {val} jetons
                     </button>
                   ))}
                 </div>
@@ -879,8 +879,8 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
 
               {/* Ligne contextuelle discrète pour l'économie */}
               <div className="flex items-center justify-between text-xs text-slate-400 px-1 pt-1 border-t border-white/[0.04]">
-                <span>Pot partie : <strong className="text-white font-mono">{regularTrickPot} 🪙</strong> ({totalPlayers}J)</span>
-                <span className="text-amber-300 font-medium">Pot Kora : <strong className="font-mono">{koraPot} 🪙</strong> (×2)</span>
+                <span>Pot partie : <strong className="text-white font-mono">{regularTrickPot} jetons</strong> ({totalPlayers}J)</span>
+                <span className="text-amber-300 font-medium">Pot Kora : <strong className="font-mono">{koraPot} jetons</strong> (×2)</span>
               </div>
             </section>
           </div>
@@ -897,9 +897,9 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
               {opponentOptions.find((o) => o.count === selectedCount)?.name} ({selectedCount + 1}J)
             </span>
             <span>·</span>
-            <span>Mise: <strong className="font-mono text-amber-400">{selectedBet} 🪙</strong></span>
+            <span>Mise: <strong className="font-mono text-amber-400">{selectedBet} jetons</strong></span>
             <span>·</span>
-            <span>Capital: <strong className="font-mono text-amber-300">{selectedCapital} 🪙</strong></span>
+            <span>Capital: <strong className="font-mono text-amber-300">{selectedCapital} jetons</strong></span>
             <span>·</span>
             <span className="text-amber-300 font-semibold">{difficultyOptions.find((d) => d.id === selectedDifficulty)?.label}</span>
           </div>

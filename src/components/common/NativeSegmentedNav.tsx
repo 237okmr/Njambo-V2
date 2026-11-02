@@ -57,7 +57,7 @@ export function NativeSegmentedNav<T extends string = string>({
               type="button"
               id={`tab-btn-${tab.id}`}
               onClick={() => onChange(tab.id)}
-              className={`h-9 sm:h-10 ${tabs.length >= 5 ? "px-0.5 text-[11px] sm:text-xs" : "px-1 text-xs"} sm:px-2 rounded-lg font-bold transition-all duration-150 flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer select-none relative ${
+              className={`h-11 ${tabs.length >= 5 ? "px-0.5 text-[11px] sm:text-xs" : "px-1 text-xs"} sm:px-2 rounded-lg font-bold transition-all duration-150 flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer select-none relative ${
                 isActive
                   ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-black'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'

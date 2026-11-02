@@ -240,7 +240,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   return (
     <div
       id="home-screen"
-      className="h-[calc(100dvh-var(--app-bottom-nav,0px))] w-full bg-gradient-to-b from-[#0b0805] via-[#080604] to-[#050403] text-slate-100 flex flex-col justify-between relative overflow-y-auto overflow-x-hidden font-sans select-none p-3 sm:p-4 no-scrollbar"
+      className="h-[calc(100dvh-var(--app-bottom-nav,0px))] w-full bg-gradient-to-b from-[#0b0805] via-[#080604] to-[#050403] text-slate-100 flex flex-col justify-between relative comfort-ui overflow-y-auto overflow-x-hidden font-sans select-none p-3 sm:p-4 no-scrollbar"
     >
       {/* Lueur ambrée unique, qui respire lentement derrière le titre (piste "Braise sous les cendres") */}
       <div className="home-glow absolute top-[30%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 sm:w-96 sm:h-96 rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.55)_0%,rgba(217,119,6,0.22)_45%,rgba(217,119,6,0)_72%)] pointer-events-none" />
@@ -415,7 +415,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                     </span>
                   </div>
                   <span className="text-xs font-semibold text-slate-300 truncate">
-                    {activeMultiplayerRoom.players?.length || 4} Joueurs · Mise : {activeMultiplayerRoom.baseBet || 10} 🪙
+                    {activeMultiplayerRoom.players?.length || 4} Joueurs · Mise : {activeMultiplayerRoom.baseBet || 10} jetons
                   </span>
                 </div>
               </div>
@@ -445,7 +445,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 Reprendre
               </span>
               <span className="relative z-10 text-xs font-bold text-slate-900/80 truncate max-w-full">
-                Partie {activeSession.gameState.partieCount || 1} · Tour {activeSession.gameState.currentTrickNumber || 1}/5 · Pot: {activeSession.gameState.pot || 0} pts
+                Partie {activeSession.gameState.partieCount || 1} · Tour {activeSession.gameState.currentTrickNumber || 1}/5 · Pot : {activeSession.gameState.pot || 0} jetons
               </span>
             </motion.button>
           )}

@@ -299,6 +299,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
             <div className="w-full max-w-md">
               <BetIncreaseProposalWidget
                 currentBaseBet={activeGameState.baseBet || 10}
+                isCashTable={isCashTable}
                 proposal={betIncreaseProposal}
                 players={multiplayerPlayers}
                 localPlayerId={localPlayerId}

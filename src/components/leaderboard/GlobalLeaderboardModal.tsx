@@ -270,7 +270,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
       return (
         <div className="flex flex-col items-center gap-0.5">
           <span className={`font-mono font-black text-sm sm:text-base ${colorClass}`}>
-            {sign}{fortune.toLocaleString('fr-FR')} 🪙
+            {sign}{fortune.toLocaleString('fr-FR')} jetons
           </span>
           <span className="text-xs text-slate-500 whitespace-nowrap">
             G:{gains} · P:{pertes}
@@ -286,7 +286,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
       return (
         <div className="flex flex-col items-center gap-1">
           <span className="font-mono font-black text-sm sm:text-base text-amber-400">
-            {player.koraCount + player.doubleKoraCount * 2} pts
+            {player.koraCount + player.doubleKoraCount * 2} Koras
           </span>
           <div className="flex gap-0.5 flex-wrap justify-center max-w-[80px]">
             <span className="px-1 py-0.2 rounded bg-amber-500/10 text-amber-400 text-xs font-black border border-amber-500/20 whitespace-nowrap">
@@ -321,7 +321,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
           <span className="font-mono font-black text-sm sm:text-base text-amber-400 flex items-center gap-1">
             <span className="text-xs">⭐</span>
             <span>{mastery.toLocaleString('fr-FR')}</span>
-            <span className="text-xs font-bold text-amber-300/90">pts</span>
+            <span className="text-xs font-bold text-amber-300/90">points</span>
           </span>
           <span className="text-xs text-slate-500 whitespace-nowrap uppercase tracking-wider font-bold">
             Score Maîtrise
@@ -360,10 +360,10 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
       return (
         <div className="flex flex-col items-center">
           <span className={`font-mono font-black text-xs ${colorClass}`}>
-            {sign}{fortune.toLocaleString('fr-FR')} 🪙
+            {sign}{fortune.toLocaleString('fr-FR')} jetons
           </span>
           <span className="text-xs text-slate-500 whitespace-nowrap mt-0.5">
-            Gains: {gains} 🪙 · Pertes: {pertes} 🪙
+            Gains: {gains} jetons · Pertes: {pertes} jetons
           </span>
           <span className="text-xs text-slate-600 font-bold tracking-wider mt-0.5 uppercase">
             🌐 Multijoueur
@@ -377,7 +377,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
       return (
         <div className="flex flex-col items-center gap-1">
           <span className="font-mono font-black text-xs text-amber-400">
-            {totalPoints} pts
+            {totalPoints} Koras
           </span>
           <div className="flex gap-1 flex-wrap justify-center max-w-[120px]">
             <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded bg-amber-500/10 text-amber-400 text-xs font-bold border border-amber-500/20 whitespace-nowrap">
@@ -410,7 +410,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
       <div className="flex flex-col items-center gap-1">
         <span className="font-mono font-black text-xs sm:text-sm text-amber-400 flex items-center gap-1">
           <span>⭐</span>
-          <span>{mastery.toLocaleString('fr-FR')} pts</span>
+          <span>{mastery.toLocaleString('fr-FR')} points</span>
         </span>
         <div className="flex flex-col items-center gap-0.5 text-xs">
           {(player.manchesWon !== undefined && player.manchesWon > 0) && (
@@ -449,10 +449,10 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
       return (
         <div className="text-right shrink-0 flex flex-col items-end">
           <span className={`font-mono font-black text-xs sm:text-sm ${colorClass}`}>
-            {sign}{fortune.toLocaleString('fr-FR')} 🪙
+            {sign}{fortune.toLocaleString('fr-FR')} jetons
           </span>
           <span className="text-xs text-slate-500 mt-0.5">
-            Gains: {gains} 🪙 · Pertes: {pertes} 🪙
+            Gains: {gains} jetons · Pertes: {pertes} jetons
           </span>
           <span className="text-xs text-slate-600 font-bold uppercase mt-0.5">
             🌐 Multijoueur
@@ -466,7 +466,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
       return (
         <div className="text-right shrink-0 flex flex-col items-end gap-1">
           <span className="font-mono font-black text-xs sm:text-sm text-amber-400">
-            {totalPoints} pts
+            {totalPoints} Koras
           </span>
           <div className="flex gap-1.5 flex-wrap justify-end">
             <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 text-xs font-bold border border-amber-500/20 whitespace-nowrap">
@@ -499,7 +499,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
       <div className="text-right shrink-0 flex flex-col items-end gap-1">
         <div className="text-xs sm:text-sm font-black font-mono text-amber-400 flex items-center gap-1">
           <span className="text-xs">⭐</span>
-          <span>{mastery.toLocaleString('fr-FR')} pts</span>
+          <span>{mastery.toLocaleString('fr-FR')} points</span>
         </div>
         <div className="flex flex-col items-end gap-0.5 text-xs">
           <div className="flex items-center gap-1.5 text-slate-400">
@@ -519,7 +519,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
 
   const categoryTabs: SegmentTab<LeaderboardCategory>[] = useMemo(
     () => [
-      { id: 'WINS', label: 'Classement', shortLabel: 'Classement', icon: Trophy },
+      { id: 'WINS', label: 'Classement', shortLabel: 'Score', icon: Trophy },
       { id: 'WIN_RATE', label: 'Ratio %', shortLabel: 'Ratio', icon: Percent },
       { id: 'KORAS', label: 'Koras', shortLabel: 'Koras', icon: Flame },
       { id: 'CHIPS', label: 'Fortune', shortLabel: 'Fortune', icon: Coins },
@@ -536,7 +536,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
       exit={{ x: '100%' }}
       transition={{ type: 'spring', damping: 25, stiffness: 200 }}
       id="global-leaderboard-screen"
-      className="fixed inset-x-0 top-0 bottom-[var(--app-bottom-nav,0px)] z-[70] bg-slate-950 text-slate-100 flex flex-col font-sans select-none overflow-hidden"
+      className="fixed inset-x-0 top-0 bottom-[var(--app-bottom-nav,0px)] z-[70] bg-slate-950 text-slate-100 flex flex-col font-sans select-none overflow-hidden comfort-ui"
     >
       {/* NATIVE HEADER */}
       <NativeScreenHeader
@@ -762,20 +762,20 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
             {showMasteryHelp && (
               <div className="p-3 pt-0 border-t border-amber-500/15 space-y-2 text-xs text-slate-400">
                 <p className="leading-relaxed text-slate-300 text-xs">
-                  <strong>Barème officiel du Score de Maîtrise v2 :</strong> Points de base calculés pour chaque réalisation, puis ajustés par le coefficient du mode de jeu (plafond solo : 30 pts/jour).
+                  <strong>Barème officiel du Score de Maîtrise v2 :</strong> Points de base calculés pour chaque réalisation, puis ajustés par le coefficient du mode de jeu (plafond solo : 30 points/jour).
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 font-mono text-xs">
                   <div className="p-1.5 rounded bg-slate-900/90 border border-slate-800 text-slate-300">
-                    <span className="text-amber-400 font-bold">10 pts</span> Manche gagnée
+                    <span className="text-amber-400 font-bold">10 points</span> Manche gagnée
                   </div>
                   <div className="p-1.5 rounded bg-slate-900/90 border border-slate-800 text-slate-300">
-                    <span className="text-amber-400 font-bold">1 pt</span> Partie gagnée
+                    <span className="text-amber-400 font-bold">1 point</span> Partie gagnée
                   </div>
                   <div className="p-1.5 rounded bg-slate-900/90 border border-slate-800 text-slate-300">
-                    <span className="text-amber-400 font-bold">5 pts</span> Kora Simple
+                    <span className="text-amber-400 font-bold">5 points</span> Kora Simple
                   </div>
                   <div className="p-1.5 rounded bg-slate-500/15 border border-slate-500/30 text-slate-300">
-                    <span className="font-bold text-slate-400">15 pts</span> Double Kora 💎
+                    <span className="font-bold text-slate-400">15 points</span> Double Kora 💎
                   </div>
                 </div>
                 <div className="p-2 rounded bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300">
@@ -1007,7 +1007,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                       <span>Écart :</span>
                       <span className="text-amber-400 font-bold font-mono">
                         +{userRank.pointsToNextRank.toLocaleString('fr-FR')}
-                        {activeCategory === 'CHIPS' ? ' 🪙' : activeCategory === 'WINS' ? ' pts' : activeCategory === 'KORAS' ? ' Koras' : '%'}
+                        {activeCategory === 'CHIPS' ? ' jetons' : activeCategory === 'WINS' ? ' points' : activeCategory === 'KORAS' ? ' Koras' : '%'}
                       </span>
                       <span className="text-slate-500">pour dépasser</span>
                       <span className="text-slate-200 font-bold truncate max-w-[90px]" title={userRank.nextPlayerName}>
@@ -1057,11 +1057,11 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                     : 'text-amber-400'
                 }`}>
                   {activeCategory === 'CHIPS'
-                    ? `${(profile?.stats?.fortune || 0) > 0 ? '+' : ''}${(profile?.stats?.fortune || 0).toLocaleString('fr-FR')} 🪙`
+                    ? `${(profile?.stats?.fortune || 0) > 0 ? '+' : ''}${(profile?.stats?.fortune || 0).toLocaleString('fr-FR')} jetons`
                     : activeCategory === 'WINS'
-                    ? `${profile?.stats?.masteryScore || 0} pts`
+                    ? `${profile?.stats?.masteryScore || 0} points`
                     : activeCategory === 'KORAS'
-                    ? `${(profile?.stats?.koraCount || 0) + (profile?.stats?.doubleKoraCount || 0) * 2} pts`
+                    ? `${(profile?.stats?.koraCount || 0) + (profile?.stats?.doubleKoraCount || 0) * 2} points`
                     : `${profile?.stats?.winRate || 0}%`
                   }
                 </div>
@@ -1128,7 +1128,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                 <div>
                   <div className="text-xs font-bold text-slate-400">Score Maîtrise</div>
                   <div className="text-sm font-black text-amber-400 font-mono">
-                    {selectedPlayer.masteryScore ?? 0} pts
+                    {selectedPlayer.masteryScore ?? 0} points
                   </div>
                 </div>
                 <div>
@@ -1142,7 +1142,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                   <div className={`text-sm font-black font-mono ${
                     (selectedPlayer.fortune || 0) > 0 ? 'text-emerald-400' : (selectedPlayer.fortune || 0) < 0 ? 'text-rose-400' : 'text-slate-400'
                   }`}>
-                    {(selectedPlayer.fortune || 0) > 0 ? '+' : ''}{(selectedPlayer.fortune || 0).toLocaleString('fr-FR')} 🪙
+                    {(selectedPlayer.fortune || 0) > 0 ? '+' : ''}{(selectedPlayer.fortune || 0).toLocaleString('fr-FR')} jetons
                   </div>
                 </div>
               </div>
@@ -1150,7 +1150,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
               {/* Details for Fortune in Inspect modal */}
               {selectedPlayer.fortune !== undefined && (
                 <div className="text-xs text-slate-500 text-center -mt-2">
-                  Bénéfice net Multijoueur • Gains: {selectedPlayer.multiplayerGains || 0} 🪙 · Pertes: {selectedPlayer.multiplayerPertes || 0} 🪙
+                  Bénéfice net Multijoueur • Gains: {selectedPlayer.multiplayerGains || 0} jetons · Pertes: {selectedPlayer.multiplayerPertes || 0} jetons
                 </div>
               )}
 

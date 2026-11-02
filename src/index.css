@@ -366,6 +366,61 @@ body,
   color: #f1f5f9;
 }
 
+/*
+ * Lisibilité sur téléphone, hors table de jeu : texte courant à 14 px, mentions à 12 px, zones à toucher de 44 px.
+ * La classe comfort-ui n'est posée que sur les écrans hors partie. Sur grand écran, les tailles d'origine restent.
+ */
+@media (max-width: 639.98px) {
+  .comfort-ui p.text-xs,
+  .comfort-ui li.text-xs,
+  .comfort-ui label.text-xs,
+  .comfort-ui h3.text-xs,
+  .comfort-ui h4.text-xs,
+  .comfort-ui button.text-xs,
+  .comfort-ui a.text-xs,
+  .comfort-ui input.text-xs,
+  .comfort-ui textarea.text-xs,
+  .comfort-ui select.text-xs {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+
+  .comfort-ui .text-\[9px\],
+  .comfort-ui .text-\[10px\],
+  .comfort-ui .text-\[11px\],
+  .comfort-ui nav button,
+  .comfort-ui nav button.text-xs {
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
+  .comfort-ui .uppercase.tracking-wider {
+    text-transform: none;
+    letter-spacing: normal;
+  }
+
+  .comfort-ui button:not(.underline):not([role='switch']),
+  .comfort-ui a[href],
+  .comfort-ui input:not([type='checkbox']):not([type='radio']),
+  .comfort-ui select {
+    min-height: 2.75rem;
+  }
+
+  /* Boutons-icônes : carrés de 44 px. */
+  .comfort-ui button[class*='w-7'][class*='h-7'],
+  .comfort-ui button[class*='w-8'][class*='h-8'],
+  .comfort-ui button[class*='w-9'][class*='h-9'],
+  .comfort-ui button.p-1,
+  .comfort-ui button.p-1\.5,
+  .comfort-ui button.p-2 {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
 /* Hauteur réservée à la barre de navigation du bas : posée par BottomNavBar tant qu'elle est affichée. */
 html.has-bottom-nav {
   --app-bottom-nav: calc(3.5rem + env(safe-area-inset-bottom));

@@ -154,7 +154,7 @@ export const KoraCashScreen: React.FC<KoraCashScreenProps> = ({ onClose, onOpenC
       exit={{ x: '100%' }}
       transition={{ type: 'spring', damping: 25, stiffness: 200 }}
       id="kora-cash-screen"
-      className="fixed inset-x-0 top-0 bottom-[var(--app-bottom-nav,0px)] z-[70] bg-slate-950 text-slate-100 flex flex-col overflow-hidden"
+      className="fixed inset-x-0 top-0 bottom-[var(--app-bottom-nav,0px)] z-[70] bg-slate-950 text-slate-100 flex flex-col overflow-hidden comfort-ui"
     >
       <NativeScreenHeader
         id="kora-cash-header"

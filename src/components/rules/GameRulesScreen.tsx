@@ -60,7 +60,7 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
       exit={{ opacity: 0, x: 20 }}
       transition={{ duration: 0.25 }}
       id="game-rules-screen"
-      className="fixed inset-0 z-[70] bg-slate-950 text-slate-100 flex flex-col font-sans select-none overflow-hidden"
+      className="fixed inset-0 z-[70] bg-slate-950 text-slate-100 flex flex-col font-sans select-none overflow-hidden comfort-ui"
     >
       {/* Top Header Bar */}
       <header className="h-14 sm:h-16 px-3 sm:px-6 bg-slate-900/90 border-b border-white/10 backdrop-blur-md flex items-center justify-between shrink-0 z-10">

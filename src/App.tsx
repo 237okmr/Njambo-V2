@@ -3064,6 +3064,7 @@ function GameApp() {
           winType={activeGameState.partieWinType || 'KORA'}
           pot={activeGameState.pot}
           baseBet={activeGameState.baseBet}
+          isCashTable={isOnlineActive && Boolean(multiplayerRoom?.cash)}
           players={activeGameState.players}
           onContinue={isOnlineActive ? () => setMpShowKoraOverlay(false) : dismissKoraVictoryOverlay}
         />

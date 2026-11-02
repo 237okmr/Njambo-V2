@@ -499,7 +499,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
               </div>
             </div>
             <span className="font-mono font-black text-sm sm:text-base text-amber-400 shrink-0 ml-2">
-              +{Number(earnedPoints.total.toFixed(2))} pts
+              +{Number(earnedPoints.total.toFixed(2))} points
             </span>
           </motion.div>
         )}
@@ -1050,6 +1050,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
             {!isMancheOver && onProposeBetIncrease && onRespondBetIncrease && onCancelBetIncrease && (
               <BetIncreaseProposalWidget
                 currentBaseBet={baseBet}
+                isCashTable={Boolean(cashPanel)}
                 proposal={betIncreaseProposal}
                 players={isOnlineMultiplayer ? (roomPlayers || []) : (players?.map((p, idx) => ({
                   ...p,

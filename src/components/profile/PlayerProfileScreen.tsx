@@ -233,7 +233,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
       exit={{ x: '100%' }}
       transition={{ type: 'spring', damping: 25, stiffness: 200 }}
       id="player-profile-fullscreen"
-      className="fixed inset-x-0 top-0 bottom-[var(--app-bottom-nav,0px)] z-[70] bg-slate-950 text-slate-100 flex flex-col overflow-hidden"
+      className="fixed inset-x-0 top-0 bottom-[var(--app-bottom-nav,0px)] z-[70] bg-slate-950 text-slate-100 flex flex-col overflow-hidden comfort-ui"
     >
       {/* 1. TOP UNIFIED NATIVE APP BAR */}
       <NativeScreenHeader
@@ -525,9 +525,9 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-amber-500/20 text-amber-300">
                       <GoogleIcon className="w-5 h-5" />
                     </div>
-                    <div className="truncate">
+                    <div className="min-w-0">
                       <p className="text-xs font-bold text-white">Sauvegarder avec Google</p>
-                      <p className="text-xs text-slate-400 truncate">Garde tes victoires et tes trophées, même sur un autre téléphone</p>
+                      <p className="text-xs text-slate-400">Garde tes victoires et tes trophées, même sur un autre téléphone</p>
                     </div>
                   </div>
                   <ArrowRight className="w-4 h-4 shrink-0 text-amber-300" />
@@ -613,7 +613,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   </div>
                   <div className="text-right">
                     <div className="text-2xl sm:text-3xl font-black text-amber-400 font-mono">
-                      {(safeStats.masteryScore || 0).toLocaleString()} <span className="text-xs font-bold text-amber-200">pts</span>
+                      {(safeStats.masteryScore || 0).toLocaleString()} <span className="text-xs font-bold text-amber-200">points</span>
                     </div>
                     <span className="text-xs text-slate-400">Total accumulé</span>
                   </div>
@@ -741,7 +741,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     <Flame className="w-4 h-4 text-amber-400" />
                   </div>
                   <div className="text-2xl sm:text-3xl font-black text-amber-300 font-mono">
-                    {(safeStats.biggestPotWon || 0).toLocaleString()} <span className="text-xs font-bold text-slate-400">pts</span>
+                    {(safeStats.biggestPotWon || 0).toLocaleString()} <span className="text-xs font-bold text-slate-400">jetons</span>
                   </div>
                   <div className="text-xs text-slate-400 pt-1">
                     Record en une seule partie
@@ -1045,12 +1045,12 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                 {(
                   [
                     { id: 'ALL', label: 'Toutes' },
-                    { id: 'MANCHES', label: 'Manches 🏆' },
-                    { id: 'DONNES', label: 'Parties 🎴' },
+                    { id: 'MANCHES', label: 'Manches' },
+                    { id: 'DONNES', label: 'Parties' },
                     { id: 'SOLO', label: 'Solo' },
                     { id: 'MULTIPLAYER', label: 'Multi' },
                     { id: 'WINS', label: 'Gains' },
-                    { id: 'KORAS', label: 'Koras 👑' },
+                    { id: 'KORAS', label: 'Koras' },
                   ] as Array<{ id: HistoryFilter; label: string }>
                 ).map((f) => (
                   <button
@@ -1211,8 +1211,8 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                               }`}
                             >
                               {item.masteryPointsAwarded > 0
-                                ? `+${Number(item.masteryPointsAwarded.toFixed(2))} pts de maîtrise`
-                                : 'Plafond solo atteint : 0 pt'}
+                                ? `+${Number(item.masteryPointsAwarded.toFixed(2))} points de Maîtrise`
+                                : 'Plafond solo atteint : 0 point'}
                             </span>
                           )}
                         </div>
