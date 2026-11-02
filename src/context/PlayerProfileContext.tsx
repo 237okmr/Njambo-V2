@@ -3,12 +3,14 @@ import React, {
   useContext,
   useState,
   useEffect,
+  useLayoutEffect,
   useCallback,
   useMemo,
   ReactNode,
 } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../lib/firebase';
+import { setLocalPlayerName } from '../services/identity';
 import {
   PlayerProfile,
   PlayerStats,
@@ -182,6 +184,11 @@ export const PlayerProfileProvider: React.FC<{ children: ReactNode }> = ({ child
     });
     return () => unsub();
   }, [profile.isGuest]);
+
+  // Le nom envoyé aux tables suit toujours le pseudo du profil, y compris au premier lancement après une mise à jour.
+  useLayoutEffect(() => {
+    if (profile.displayName) setLocalPlayerName(profile.displayName);
+  }, [profile.displayName]);
 
   // Silent background stats consolidation to prevent desynchronization (Lot 3 Recommendation 2)
   useEffect(() => {

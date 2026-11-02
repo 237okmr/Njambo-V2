@@ -60,7 +60,7 @@ import {
   PresenceStatus,
 } from '../../types';
 import { triggerHaptic, sounds } from '../../utils/sound';
-import { getLocalPlayerName, setLocalPlayerName } from '../../services/identity';
+import { getLocalPlayerName } from '../../services/identity';
 import { FriendService } from '../../services/friendService';
 import { notificationNavigation } from '../../services/notificationNavigation';
 import { webSocketService } from '../../services/websocketService';
@@ -188,13 +188,13 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
   // Dedicated Modals
   const [showJoinCodeModal, setShowJoinCodeModal] = useState<boolean>(false);
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
-  const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
   const [showAddFriendModal, setShowAddFriendModal] = useState<boolean>(false);
   const [showFilterBottomSheet, setShowFilterBottomSheet] = useState<boolean>(false);
   const [showQrModal, setShowQrModal] = useState<boolean>(false);
 
   // Player identity & Code Input
-  const [playerName, setPlayerNameState] = useState<string>(() => getLocalPlayerName());
+  // Le pseudo se modifie uniquement dans le profil : c'est le même à table, au Palmarès et sur tous les appareils.
+  const playerName = profile?.displayName || getLocalPlayerName();
   const [roomCodeInput, setRoomCodeInput] = useState<string>(() => {
     try {
       const params = new URLSearchParams(window.location.search);
@@ -392,8 +392,6 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
           setShowJoinCodeModal(false);
         } else if (showCreateModal) {
           setShowCreateModal(false);
-        } else if (showSettingsModal) {
-          setShowSettingsModal(false);
         } else if (showAddFriendModal) {
           setShowAddFriendModal(false);
         } else if (showFilterBottomSheet) {
@@ -414,7 +412,6 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
     showAuthRequirementModal,
     showJoinCodeModal,
     showCreateModal,
-    showSettingsModal,
     showAddFriendModal,
     showFilterBottomSheet,
     showQrModal,
@@ -1142,7 +1139,6 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
     showAuthRequirementModal ||
     showJoinCodeModal ||
     showCreateModal ||
-    showSettingsModal ||
     showAddFriendModal ||
     showFilterBottomSheet ||
     showQrModal;
@@ -1154,8 +1150,6 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
       setShowJoinCodeModal(false);
     } else if (showCreateModal) {
       setShowCreateModal(false);
-    } else if (showSettingsModal) {
-      setShowSettingsModal(false);
     } else if (showAddFriendModal) {
       setShowAddFriendModal(false);
     } else if (showFilterBottomSheet) {
@@ -1371,10 +1365,10 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
               <button
                 type="button"
                 id="btn-multiplayer-settings"
-                onClick={() => setShowSettingsModal(true)}
+                onClick={onOpenAccountSettings}
                 className="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 flex items-center justify-center transition active:scale-95 cursor-pointer shadow-sm shrink-0"
-                title="Paramètres de jeu"
-                aria-label="Paramètres"
+                title="Réglages du compte"
+                aria-label="Réglages"
               >
                 <Settings className="w-4 h-4" />
               </button>
@@ -3819,77 +3813,6 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   </span>
                 </button>
               )}
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* ========================================================================= */}
-      {/* MODAL 3 : PARAMÈTRES MULTIJOUEUR                                          */}
-      {/* ========================================================================= */}
-      <AnimatePresence>
-        {showSettingsModal && (
-          <div className="fixed inset-0 z-[70] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-4 sm:p-5 shadow-2xl flex flex-col gap-4 max-h-[90vh] overflow-y-auto"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Settings className="w-5 h-5 text-amber-400" />
-                  <h3 className="text-base font-black text-white">Paramètres</h3>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowSettingsModal(false)}
-                  className="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Pseudo modification */}
-              <div className="flex flex-col gap-1.5">
-                <span className="text-xs text-slate-400 font-bold">Mon Pseudo de Joueur</span>
-                <input
-                  type="text"
-                  maxLength={20}
-                  value={playerName}
-                  onChange={(e) => {
-                    setPlayerNameState(e.target.value);
-                    if (e.target.value.trim().toLowerCase() !== 'katika') {
-                      setLocalPlayerName(e.target.value);
-                    }
-                  }}
-                  className="h-10 px-3 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-bold focus:outline-none focus:border-amber-400"
-                />
-              </div>
-
-              {/* Notifications, son, aide : réunis dans les réglages du compte */}
-              {onOpenAccountSettings && (
-                <button
-                  type="button"
-                  id="btn-multiplayer-account-settings"
-                  onClick={() => {
-                    setShowSettingsModal(false);
-                    onOpenAccountSettings();
-                  }}
-                  className="w-full min-h-11 px-3 rounded-xl bg-slate-950 border border-slate-700/80 hover:border-amber-500/50 text-amber-300 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
-                >
-                  <Settings className="w-4 h-4 text-amber-400" />
-                  <span>Notifications, son et aide</span>
-                </button>
-              )}
-
-              <button
-                type="button"
-                onClick={() => setShowSettingsModal(false)}
-                className="w-full h-10 rounded-xl bg-slate-800 text-slate-200 font-black text-xs hover:bg-slate-700 cursor-pointer"
-              >
-                Fermer
-              </button>
             </motion.div>
           </div>
         )}
