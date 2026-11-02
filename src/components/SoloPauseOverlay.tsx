@@ -67,7 +67,7 @@ export const SoloPauseOverlay: React.FC<SoloPauseOverlayProps> = ({
             <div className="flex flex-col items-center gap-0.5">
               <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">À jouer</span>
               <span className={`font-extrabold text-sm ${isHumanTurn ? 'text-emerald-400' : 'text-slate-300'}`}>
-                {isHumanTurn ? 'À toi' : currentTurnPlayer?.name || \'Bot\'}
+                {isHumanTurn ? 'À toi' : currentTurnPlayer?.name || 'Bot'}
               </span>
             </div>
           </div>
