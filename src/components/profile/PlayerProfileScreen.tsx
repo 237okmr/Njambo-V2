@@ -727,7 +727,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     <span className="text-sm font-black text-amber-300 font-mono">
                       {safeStats.koraCount || 0} / {safeStats.doubleKoraCount || 0}
                     </span>
-                    <span className="text-xs text-slate-500 block">+5 et +20 points</span>
+                    <span className="text-xs text-slate-500 block">+5 et +15 points</span>
                   </div>
                 </div>
               </ProfileDetailsSection>
