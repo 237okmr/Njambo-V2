@@ -34,7 +34,7 @@ export const RoomFilterBottomSheet: React.FC<RoomFilterBottomSheetProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[75] bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="fixed inset-0 z-[75] bg-slate-950/85 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
         {/* Backdrop click */}
         <div className="absolute inset-0" onClick={onClose} />
 

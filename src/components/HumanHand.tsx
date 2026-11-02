@@ -3,7 +3,7 @@ import { Card, Suit, SUITS_INFO, InstantWinReveal, EmoteMessage, Player, Trick }
 import { isCardPlayable } from '../utils/deck';
 import { triggerHaptic, sounds } from '../utils/sound';
 import { getPlayedCardsInRound, getDynamicBossValue } from '../utils/ai';
-import { CheckCircle2, ArrowUpCircle, ChevronUp, Sparkles, Loader2, Crown, Flame, Ban, Flag, ShieldAlert, X, Eye, Trophy, Coins, Radio } from 'lucide-react';
+import { CheckCircle2, ArrowUpCircle, ChevronUp, Sparkles, Loader2, Crown, Flame, Ban, Flag, ShieldAlert, Eye, Trophy, Coins, Radio } from 'lucide-react';
 import { motion, PanInfo, AnimatePresence } from 'motion/react';
 import { EmotePickerPopover } from './EmotePickerPopover';
 import { QuickContextualReaction } from './QuickContextualReaction';
@@ -682,7 +682,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
       {/* Confirmation Modal for Fold Round */}
       <AnimatePresence>
         {showFoldConfirm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 backdrop-blur-sm p-4 animate-in fade-in duration-200">
             <motion.div
               initial={{ scale: 0.92, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -694,12 +694,6 @@ export const HumanHand: React.FC<HumanHandProps> = ({
                   <ShieldAlert className="w-5 h-5 text-amber-400" />
                   <span>Passer cette partie ?</span>
                 </div>
-                <button
-                  onClick={() => setShowFoldConfirm(false)}
-                  className="text-slate-400 hover:text-slate-200 p-1 rounded-lg hover:bg-slate-800"
-                >
-                  <X className="w-5 h-5" />
-                </button>
               </div>
 
               <div className="py-4 space-y-3 text-xs sm:text-sm text-slate-300">

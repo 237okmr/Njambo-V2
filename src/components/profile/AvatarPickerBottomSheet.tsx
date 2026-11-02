@@ -33,7 +33,7 @@ export const AvatarPickerBottomSheet: React.FC<AvatarPickerBottomSheetProps> = (
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[80] bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 select-none">
+      <div className="fixed inset-0 z-[80] bg-slate-950/85 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 select-none">
         {/* Backdrop click */}
         <div className="absolute inset-0" onClick={onClose} />
 

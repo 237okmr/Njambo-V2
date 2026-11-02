@@ -58,7 +58,7 @@ export const QuitConfirmationModal: React.FC<QuitConfirmationModalProps> = ({
   return (
     <div
       id="quit-confirmation-modal-backdrop"
-      className="fixed inset-0 z-[60] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+      className="fixed inset-0 z-[60] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
       onClick={onClose}
     >
       <motion.div

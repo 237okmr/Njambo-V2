@@ -26,7 +26,7 @@ export const SoloPauseOverlay: React.FC<SoloPauseOverlayProps> = ({
     <AnimatePresence>
       <div
         id="solo-pause-overlay"
-        className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6 bg-slate-950/85 backdrop-blur-md animate-fade-in"
+        className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6 bg-slate-950/85 backdrop-blur-sm animate-fade-in"
       >
         <motion.div
           initial={{ scale: 0.92, opacity: 0, y: 20 }}

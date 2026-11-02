@@ -305,7 +305,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
         {isPauseModalOpen && (
           <div
             id="pause-menu-backdrop"
-            className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3.5 sm:p-4 overflow-y-auto"
+            className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3.5 sm:p-4 overflow-y-auto"
             onClick={(e) => {
               if (e.target === e.currentTarget) {
                 setIsPauseModalOpen(false);

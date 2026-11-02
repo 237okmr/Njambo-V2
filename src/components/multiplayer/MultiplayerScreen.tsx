@@ -3428,7 +3428,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
       {/* ========================================================================= */}
       <AnimatePresence>
         {showJoinCodeModal && (
-          <div className="fixed inset-0 z-[70] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="fixed inset-0 z-[70] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -3515,7 +3515,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
       {/* ========================================================================= */}
       <AnimatePresence>
         {showCreateModal && (
-          <div className="fixed inset-0 z-[70] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-2.5 sm:p-4">
+          <div className="fixed inset-0 z-[70] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-2.5 sm:p-4">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -3862,7 +3862,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
       {/* ========================================================================= */}
       <AnimatePresence>
         {showSettingsModal && (
-          <div className="fixed inset-0 z-[70] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="fixed inset-0 z-[70] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -3937,7 +3937,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
       {/* ========================================================================= */}
       <AnimatePresence>
         {showAddFriendModal && (
-          <div className="fixed inset-0 z-[70] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="fixed inset-0 z-[70] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -4198,7 +4198,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
       {/* ========================================================================= */}
       <AnimatePresence>
         {showAuthRequirementModal && (
-          <div className="fixed inset-0 z-[80] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[80] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -4247,7 +4247,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
       {/* ========================================================================= */}
       <AnimatePresence>
         {activeGameConflict && (
-          <div className="fixed inset-0 z-[100] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+          <div className="fixed inset-0 z-[100] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
             <motion.div
               initial={{ scale: 0.95, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}

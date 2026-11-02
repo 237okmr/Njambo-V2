@@ -78,7 +78,7 @@ export const InstallPwaModal: React.FC<InstallPwaModalProps> = ({
     <AnimatePresence>
       <div
         id="install-pwa-modal"
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm overflow-y-auto"
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
@@ -216,15 +216,6 @@ export const InstallPwaModal: React.FC<InstallPwaModalProps> = ({
           )}
 
           {/* Footer Action */}
-          <div className="mt-5 flex justify-end">
-            <button
-              type="button"
-              onClick={onClose}
-              className="py-2 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold transition cursor-pointer"
-            >
-              Fermer
-            </button>
-          </div>
         </motion.div>
       </div>
     </AnimatePresence>

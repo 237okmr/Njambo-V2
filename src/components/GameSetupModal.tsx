@@ -3,9 +3,7 @@ import {
   Users,
   Coins,
   Sparkles,
-  ArrowLeft,
-  X,
-  Play,
+  ArrowLeft,  Play,
   RotateCcw,
   Save,
   AlertTriangle,
@@ -400,16 +398,6 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
                 <span className="hidden sm:inline">Cloud Actif</span>
               </div>
             )}
-            <button
-              type="button"
-              id="btn-close-setup-screen"
-              onClick={onClose}
-              className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700/80 flex items-center justify-center transition active:scale-95 cursor-pointer shadow-sm shrink-0"
-              aria-label="Fermer la configuration"
-              title="Fermer"
-            >
-              <X className="w-4 h-4" />
-            </button>
           </div>
         }
       />
@@ -987,7 +975,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[80] bg-slate-950/80 backdrop-blur-md p-4 flex items-center justify-center"
+            className="fixed inset-0 z-[80] bg-slate-950/85 backdrop-blur-sm p-4 flex items-center justify-center"
           >
             <motion.div
               initial={{ scale: 0.96, opacity: 0 }}

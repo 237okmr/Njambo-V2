@@ -541,19 +541,6 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
         </AnimatePresence>
       </main>
 
-      {/* Bottom Floating Bar */}
-      <footer className="p-3 sm:p-4 bg-slate-900/90 border-t border-slate-800 backdrop-blur-md shrink-0 flex items-center justify-between max-w-3xl mx-auto w-full">
-        <span className="text-xs text-slate-500 font-medium">
-          Njambo Kora · 31 Cartes Traditionnelles
-        </span>
-        <button
-          type="button"
-          onClick={onClose}
-          className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 transition active:scale-95 cursor-pointer shadow-sm"
-        >
-          Fermer le Guide
-        </button>
-      </footer>
     </motion.div>
   );
 };
