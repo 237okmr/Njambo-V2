@@ -195,6 +195,7 @@ function GameApp() {
   const [showSavedSessionsModal, setShowSavedSessionsModal] = useState<boolean>(false);
   const [showTestModeModal, setShowTestModeModal] = useState<boolean>(false);
   const [showQuitModal, setShowQuitModal] = useState<boolean>(false);
+  const [showHomeModeSheet, setShowHomeModeSheet] = useState<boolean>(false);
   const { notify } = useNotify();
   const [useDiamondLayout, setUseDiamondLayout] = useState<boolean>(() => {
     return localStorage.getItem('njambo_diamond_layout') === 'true';
@@ -503,6 +504,11 @@ function GameApp() {
         window.history.pushState({ screen: currentScreen, active: true }, '');
         return;
       }
+      if (showHomeModeSheet) {
+        setShowHomeModeSheet(false);
+        window.history.pushState({ screen: currentScreen, active: true }, '');
+        return;
+      }
       if (showRulesModal) {
         setShowRulesModal(false);
         window.history.pushState({ screen: currentScreen, active: true }, '');
@@ -584,6 +590,7 @@ function GameApp() {
   }, [
     currentScreen,
     showQuitModal,
+    showHomeModeSheet,
     showRulesModal,
     showSavedSessionsModal,
     showSetupModal,
@@ -632,6 +639,10 @@ function GameApp() {
           setShowQuitModal(false);
           return;
         }
+        if (showHomeModeSheet) {
+          setShowHomeModeSheet(false);
+          return;
+        }
         if (showRulesModal) {
           setShowRulesModal(false);
           return;
@@ -674,6 +685,7 @@ function GameApp() {
   }, [
     currentScreen,
     showQuitModal,
+    showHomeModeSheet,
     showRulesModal,
     showSavedSessionsModal,
     showSetupModal,
@@ -2256,6 +2268,9 @@ function GameApp() {
               setCurrentScreen('GAME');
             }}
             onLeaveMultiplayer={() => handleLeaveMultiplayer(false)}
+            isModeSheetOpen={showHomeModeSheet}
+            onOpenModeSheet={() => setShowHomeModeSheet(true)}
+            onCloseModeSheet={() => setShowHomeModeSheet(false)}
             onResumeSession={(sId) => {
               ensureLeaveMultiplayerBeforeSolo();
               loadSession(sId);

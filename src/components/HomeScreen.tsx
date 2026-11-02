@@ -1,6 +1,6 @@
 import React from 'react';
-import { Play, Globe, BookOpen, FolderOpen, Zap, Sparkles, Volume2, VolumeX, Smartphone, HelpCircle, ChevronRight, Trophy, Wallet } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Play, Globe, BookOpen, FolderOpen, Zap, Sparkles, Volume2, VolumeX, Smartphone, HelpCircle, ChevronRight, Trophy, Wallet, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import { SavedManche } from '../types';
 import { APP_VERSION } from '../version';
 import { usePlayerProfile } from '../context/PlayerProfileContext';
@@ -38,28 +38,12 @@ interface HomeScreenProps {
   activeMultiplayerRoom?: any;
   onResumeMultiplayer?: () => void;
   onLeaveMultiplayer?: () => void;
+  isModeSheetOpen?: boolean;
+  onOpenModeSheet?: () => void;
+  onCloseModeSheet?: () => void;
 }
 
 // --- Bespoke Animated Contextual Flat Icons ---
-const AnimatedResumeCardsIcon: React.FC = () => (
-  <div className="w-5 h-5 relative flex items-center justify-center select-none">
-    {/* Back card */}
-    <div className="w-3.5 h-4 rounded-[3px] bg-emerald-500/30 border border-emerald-400/50 -rotate-12 absolute -translate-x-1" />
-    {/* Front card with continuous idle shuffle oscillation */}
-    <motion.div
-      animate={{ rotate: [-4, 8, -4] }}
-      transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
-      className="w-3.5 h-4.5 rounded-[3px] bg-emerald-500/60 border border-emerald-300 absolute flex items-center justify-center shadow-sm"
-    >
-      <span className="text-[7px] text-emerald-100 font-black">♠</span>
-    </motion.div>
-    {/* Small resume play indicator */}
-    <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 text-slate-950 flex items-center justify-center text-[6px] font-black shadow-sm">
-      ▶
-    </div>
-  </div>
-);
-
 const AnimatedDealingDeckIcon: React.FC = () => (
   <div className="w-5 h-5 relative flex items-center justify-center select-none">
     {/* Deck stack base */}
@@ -140,6 +124,18 @@ const AnimatedCrownPalmaresIcon: React.FC = () => (
   </div>
 );
 
+// Bouton principal de l'accueil (« Jouer » ou « Reprendre ») : plein, doré, avec un reflet animé.
+const PRIMARY_BUTTON_CLASSES =
+  'relative overflow-hidden w-full min-h-16 py-3 px-4 rounded-2xl bg-gradient-to-r from-amber-300 via-amber-500 to-amber-600 hover:from-amber-200 hover:to-amber-500 text-slate-950 ring-1 ring-amber-300/70 shadow-lg shadow-amber-500/30 flex flex-col items-center justify-center gap-0.5 transition-all duration-200 cursor-pointer';
+
+const PrimaryButtonShimmer: React.FC = () => (
+  <motion.div
+    animate={{ x: ['-120%', '240%'] }}
+    transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut', repeatDelay: 2 }}
+    className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12 pointer-events-none"
+  />
+);
+
 export const HomeScreen: React.FC<HomeScreenProps> = ({
   savedSessions = [],
   activeSessionId = null,
@@ -167,6 +163,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   activeMultiplayerRoom,
   onResumeMultiplayer,
   onLeaveMultiplayer,
+  isModeSheetOpen = false,
+  onOpenModeSheet,
+  onCloseModeSheet,
 }) => {
   const { profile, currentTitle, isLoggedIn } = usePlayerProfile();
 
@@ -192,6 +191,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const activeSession =
     (activeSessionId ? sessionsList.find((s) => s.id === activeSessionId) : null) ||
     (sessionsList.length > 0 ? sessionsList[0] : null);
+  const hasResumableSession = Boolean(activeSession && activeSession.gameState);
 
   const handleStartGame = onStartSolo || onStartNewGame || (() => {});
   const handleMultiplayer = onOpenMultiplayer || onOpenMultiplayerHub || (() => {});
@@ -476,7 +476,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             onClick={() => setIsKoraCashOpen(true)}
             className={`relative overflow-hidden w-full py-2.5 px-3.5 rounded-xl bg-slate-900/90 backdrop-blur-md text-slate-100 font-bold border border-amber-500/60 shadow-md flex items-center justify-between transition-all duration-200 group ${
               koraCashEntry === 'COMING_SOON'
-                ? 'opacity-60 cursor-default'
+                ? 'order-last opacity-60 cursor-default'
                 : 'hover:bg-slate-850 hover:border-amber-400 cursor-pointer shadow-amber-950/30'
             }`}
           >
@@ -511,8 +511,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </motion.button>
           )}
 
-          {/* 2. Resume Active Session (Conditionnel) - Couleur signature : Émeraude */}
-          {activeSession && activeSession.gameState && (
+          {/* 2. Bouton principal : « Reprendre » si une partie est en cours */}
+          {hasResumableSession && (
             <motion.button
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -521,139 +521,47 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               type="button"
               id="btn-home-resume"
               onClick={handleResume}
-              className="relative overflow-hidden w-full py-2.5 px-3.5 rounded-xl bg-slate-900/95 backdrop-blur-md hover:bg-slate-850 text-slate-100 font-black border border-emerald-500/60 hover:border-emerald-400 shadow-lg shadow-emerald-950/50 flex items-center justify-between transition-all duration-200 cursor-pointer group"
+              className={PRIMARY_BUTTON_CLASSES}
             >
-              {/* Luminous Shimmer beam (Émeraude) */}
-              <motion.div
-                animate={{ x: ['-120%', '240%'] }}
-                transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut', repeatDelay: 2 }}
-                className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-emerald-400/20 to-transparent skew-x-12 pointer-events-none"
-              />
-
-              <div className="flex items-center gap-2.5 text-left min-w-0 relative z-10">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center text-emerald-400 shrink-0 shadow-[0_0_12px_rgba(16,185,129,0.35)] group-hover:scale-105 transition">
-                  <AnimatedResumeCardsIcon />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="leading-tight text-xs sm:text-sm font-black truncate text-white">
-                    Reprendre la Partie
-                  </span>
-                  <span className="text-[10px] font-semibold text-emerald-300/80 truncate">
-                    Partie {activeSession.gameState.partieCount || 1} · Main {activeSession.gameState.currentTrickNumber || 1}/5 · Pot: {activeSession.gameState.pot || 0} pts
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1 bg-emerald-500/20 text-emerald-200 border border-emerald-400/40 px-2.5 py-1 rounded-lg shrink-0 ml-2 group-hover:bg-emerald-500/30 group-hover:text-emerald-100 transition relative z-10">
-                <span className="text-[11px] font-black">Reprendre</span>
-                <motion.span
-                  animate={{ x: [0, 3, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-                  className="text-[11px] font-black"
-                >
-                  →
-                </motion.span>
-              </div>
+              <PrimaryButtonShimmer />
+              <span className="relative z-10 flex items-center gap-2 text-base sm:text-lg font-black">
+                <Play className="w-5 h-5 fill-slate-950" />
+                Reprendre
+              </span>
+              <span className="relative z-10 text-[11px] font-bold text-slate-900/80 truncate max-w-full">
+                Partie {activeSession.gameState.partieCount || 1} · Main {activeSession.gameState.currentTrickNumber || 1}/5 · Pot: {activeSession.gameState.pot || 0} pts
+              </span>
             </motion.button>
           )}
 
-          {/* 3. Primary Action: Mode Solo - Couleur signature : Rubis / Rose Ardent */}
+          {/* 3. « Jouer » : ouvre le choix du mode. Bouton principal, sauf si une partie est à reprendre. */}
           <motion.button
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
             whileTap={{ scale: 0.98 }}
             type="button"
-            id="btn-home-new-game"
-            onClick={handleStartGame}
-            className="relative overflow-hidden w-full py-3 px-3.5 rounded-xl bg-slate-900/95 backdrop-blur-md hover:bg-slate-850 text-slate-100 font-black border border-rose-500/60 hover:border-rose-400 shadow-lg shadow-rose-950/40 flex items-center justify-between transition-all duration-200 cursor-pointer group"
+            id="btn-home-play"
+            onClick={onOpenModeSheet}
+            className={
+              hasResumableSession
+                ? 'relative w-full py-3 px-3.5 rounded-xl bg-slate-900/95 backdrop-blur-md text-amber-200 font-black text-sm border border-amber-500/60 hover:border-amber-400 shadow-lg flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer'
+                : PRIMARY_BUTTON_CLASSES
+            }
           >
-            {/* Luminous Shimmer beam (Rubis / Rose) */}
-            <motion.div
-              animate={{ x: ['-120%', '240%'] }}
-              transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut', repeatDelay: 2.5 }}
-              className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-rose-400/20 to-transparent skew-x-12 pointer-events-none"
-            />
-
-            <div className="flex items-center gap-3 text-left relative z-10">
-              <div className="w-8 h-8 rounded-lg bg-rose-500/20 border border-rose-400/50 flex items-center justify-center text-rose-400 shrink-0 shadow-[0_0_12px_rgba(244,63,94,0.35)] group-hover:scale-105 transition">
-                <AnimatedDealingDeckIcon />
-              </div>
-              <span className="leading-tight text-xs sm:text-sm font-black text-white group-hover:text-rose-200 transition">
-                Partie solo
+            {!hasResumableSession && <PrimaryButtonShimmer />}
+            <span className={`relative z-10 flex items-center gap-2 font-black ${hasResumableSession ? 'text-sm' : 'text-base sm:text-lg'}`}>
+              <Play className={hasResumableSession ? 'w-4 h-4 fill-amber-300 text-amber-300' : 'w-5 h-5 fill-slate-950'} />
+              Jouer
+            </span>
+            {pendingInvitesCount > 0 && (
+              <span className="absolute top-1.5 right-2 z-10 min-w-5 h-5 px-1 rounded-full bg-rose-600 text-white font-black text-[11px] flex items-center justify-center shadow-md">
+                {pendingInvitesCount}
               </span>
-            </div>
-
-            <div className="flex items-center gap-1 bg-rose-500/20 text-rose-300 border border-rose-400/40 px-2.5 py-1 rounded-lg shrink-0 group-hover:bg-rose-500/30 group-hover:text-rose-200 transition relative z-10">
-              <span className="text-[11px] font-black">Jouer</span>
-              <motion.span
-                animate={{ x: [0, 3, 0] }}
-                transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut', delay: 0.2 }}
-                className="text-[11px] font-black"
-              >
-                →
-              </motion.span>
-            </div>
+            )}
           </motion.button>
 
-          {/* 4. Multiplayer Action - Couleur signature : Cyan / Bleu Électrique */}
-          <motion.button
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            whileTap={{ scale: 0.98 }}
-            type="button"
-            id="btn-home-multiplayer"
-            onClick={handleMultiplayer}
-            className="relative overflow-hidden w-full py-3 px-3.5 rounded-xl bg-slate-900/90 backdrop-blur-md hover:bg-slate-850 text-slate-100 font-bold border border-cyan-500/60 hover:border-cyan-400 shadow-lg shadow-black/40 flex items-center justify-between transition-all duration-200 cursor-pointer group"
-          >
-            {/* Luminous Shimmer beam (Cyan) */}
-            <motion.div
-              animate={{ x: ['-120%', '240%'] }}
-              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', repeatDelay: 3 }}
-              className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent skew-x-12 pointer-events-none"
-            />
-
-            <div className="flex items-center gap-3 text-left min-w-0 relative z-10">
-              <div className="relative shrink-0">
-                <div className="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center text-cyan-400 shrink-0 shadow-[0_0_12px_rgba(6,182,212,0.35)] group-hover:scale-105 transition">
-                  <AnimatedConnectedTableIcon />
-                </div>
-                {pendingInvitesCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white font-black text-[9px] flex items-center justify-center animate-bounce shadow-md">
-                    {pendingInvitesCount}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="leading-tight text-xs sm:text-sm font-extrabold text-white truncate group-hover:text-cyan-200 transition">
-                  Multijoueur
-                </span>
-                {pendingInvitesCount > 0 ? (
-                  <span className="text-[8px] font-black px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 uppercase tracking-wider animate-pulse shrink-0">
-                    {pendingInvitesCount} Invité !
-                  </span>
-                ) : (
-                  <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 uppercase tracking-wider shrink-0 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                    Direct
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-1 text-[11px] font-bold text-slate-400 group-hover:text-cyan-300 transition shrink-0 relative z-10">
-              <span>Entrer</span>
-              <motion.span
-                animate={{ x: [0, 3, 0] }}
-                transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut', delay: 0.4 }}
-              >
-                →
-              </motion.span>
-            </div>
-          </motion.button>
-
-          {/* 5. Palmarès Action - Couleur signature : Violet Néon / Améthyste */}
+          {/* 4. Palmarès Action - Couleur signature : Violet Néon / Améthyste */}
           {onOpenLeaderboard && (
             <motion.button
               initial={{ opacity: 0, y: 8 }}
@@ -665,13 +573,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               onClick={onOpenLeaderboard}
               className="relative overflow-hidden w-full py-2.5 px-3.5 rounded-xl bg-slate-900/90 backdrop-blur-md hover:bg-slate-850 text-slate-100 font-bold border border-purple-500/60 hover:border-purple-400 shadow-md flex items-center justify-between transition-all duration-200 cursor-pointer group"
             >
-              {/* Luminous Shimmer beam (Violet Néon) */}
-              <motion.div
-                animate={{ x: ['-120%', '240%'] }}
-                transition={{ duration: 4.2, repeat: Infinity, ease: 'easeInOut', repeatDelay: 3 }}
-                className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-purple-400/20 to-transparent skew-x-12 pointer-events-none"
-              />
-
               <div className="flex items-center gap-3 text-left min-w-0 relative z-10">
                 <div className="w-8 h-8 rounded-lg bg-purple-500/20 border border-purple-400/50 flex items-center justify-center text-purple-400 shrink-0 shadow-[0_0_12px_rgba(168,85,247,0.35)] group-hover:scale-105 transition">
                   <AnimatedCrownPalmaresIcon />
@@ -688,12 +589,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
               <div className="flex items-center gap-1 text-[11px] font-bold text-slate-400 group-hover:text-purple-300 transition shrink-0 relative z-10">
                 <span>Voir</span>
-                <motion.span
-                  animate={{ x: [0, 3, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }}
-                >
-                  →
-                </motion.span>
+                <span>→</span>
               </div>
             </motion.button>
           )}
@@ -703,6 +599,96 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       {isKoraCashOpen && koraCashStatus && koraCashEntry !== 'COMING_SOON' && (
         <KoraCashModal environment={koraCashStatus.environment} depositMode={koraCashStatus.depositMode} onClose={() => setIsKoraCashOpen(false)} />
       )}
+
+      {/* Panneau du bas : choix du mode de jeu */}
+      <AnimatePresence>
+        {isModeSheetOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] bg-slate-950/70 flex items-end sm:items-center justify-center"
+            onClick={onCloseModeSheet}
+          >
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 26, stiffness: 300 }}
+              id="home-mode-sheet"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="home-mode-sheet-title"
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md bg-slate-900 border-t sm:border border-slate-800 rounded-t-3xl sm:rounded-3xl p-4 pb-6 sm:p-5 shadow-2xl flex flex-col gap-3"
+            >
+              <div className="flex items-center justify-between">
+                <h2 id="home-mode-sheet-title" className="text-base font-black text-white">Choisis ton mode</h2>
+                <button
+                  type="button"
+                  onClick={onCloseModeSheet}
+                  aria-label="Fermer"
+                  className="w-9 h-9 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <button
+                type="button"
+                id="btn-home-new-game"
+                onClick={() => {
+                  onCloseModeSheet?.();
+                  handleStartGame();
+                }}
+                className="w-full py-3 px-3.5 rounded-xl bg-slate-950/60 text-slate-100 border border-rose-500/60 hover:border-rose-400 flex items-center justify-between gap-3 transition cursor-pointer active:scale-[0.98] group"
+              >
+                <span className="flex items-center gap-3 min-w-0 text-left">
+                  <span className="w-9 h-9 rounded-lg bg-rose-500/20 border border-rose-400/50 flex items-center justify-center shrink-0">
+                    <AnimatedDealingDeckIcon />
+                  </span>
+                  <span className="flex flex-col min-w-0">
+                    <span className="text-sm font-black text-white group-hover:text-rose-200 transition">Partie solo</span>
+                    <span className="text-xs text-slate-400">Contre 1 à 3 bots</span>
+                  </span>
+                </span>
+                <ChevronRight className="w-4 h-4 text-rose-300 shrink-0" />
+              </button>
+
+              <button
+                type="button"
+                id="btn-home-multiplayer"
+                onClick={() => {
+                  onCloseModeSheet?.();
+                  handleMultiplayer();
+                }}
+                className="w-full py-3 px-3.5 rounded-xl bg-slate-950/60 text-slate-100 border border-cyan-500/60 hover:border-cyan-400 flex items-center justify-between gap-3 transition cursor-pointer active:scale-[0.98] group"
+              >
+                <span className="flex items-center gap-3 min-w-0 text-left">
+                  <span className="relative w-9 h-9 rounded-lg bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center shrink-0">
+                    <AnimatedConnectedTableIcon />
+                    {pendingInvitesCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-0.5 rounded-full bg-rose-600 text-white font-black text-[10px] flex items-center justify-center shadow-md">
+                        {pendingInvitesCount}
+                      </span>
+                    )}
+                  </span>
+                  <span className="flex flex-col min-w-0">
+                    <span className="flex items-center gap-1.5">
+                      <span className="text-sm font-black text-white group-hover:text-cyan-200 transition">Multijoueur</span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 uppercase tracking-wider shrink-0">
+                        Direct
+                      </span>
+                    </span>
+                    <span className="text-xs text-slate-400">Avec de vrais joueurs</span>
+                  </span>
+                </span>
+                <ChevronRight className="w-4 h-4 text-cyan-300 shrink-0" />
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Bottom Navigation Dock (Thumb-friendly & Streamlined) */}
       <footer className="relative z-10 max-w-md mx-auto w-full shrink-0 pt-2 pb-1 flex flex-col gap-2">

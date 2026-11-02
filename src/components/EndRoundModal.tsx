@@ -25,7 +25,6 @@ import {
   Ban,
   Swords,
   Share2,
-  ShieldCheck,
   Cloud,
   Eye,
   Users,
@@ -844,69 +843,6 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
             </div>
           )}
 
-          {/* Bet Increase Proposal Widget in EndRoundModal */}
-          {!isMancheOver && onProposeBetIncrease && onRespondBetIncrease && onCancelBetIncrease && (
-            <div className={`w-full ${betIncreaseProposal ? '' : 'short:hidden'}`}>
-              <BetIncreaseProposalWidget
-                currentBaseBet={baseBet}
-                proposal={betIncreaseProposal}
-                players={isOnlineMultiplayer ? (roomPlayers || []) : (players?.map((p, idx) => ({
-                  ...p,
-                  isHost: idx === 0,
-                  avatarSeed: p.avatarSeed || "",
-                  score: p.score || 0,
-                  capital: p.capital || 0,
-                  isEliminated: p.isEliminated || false,
-                  hand: p.hand || [],
-                  tricksWonInRound: p.tricksWonInRound || 0,
-                })) || [])}
-                localPlayerId={localPlayerId || 'human'}
-                onPropose={onProposeBetIncrease}
-                onRespond={onRespondBetIncrease}
-                onCancel={onCancelBetIncrease}
-                compact={false}
-              />
-            </div>
-          )}
-
-          {/* Google Auth Conversion Card for Guest Players (Solo & Casual) */}
-          {!isLoggedIn && (
-            <div className="w-full p-2.5 sm:p-3 rounded-2xl bg-gradient-to-r from-amber-950/40 via-slate-900 to-amber-950/30 border border-amber-500/30 flex items-center justify-between gap-2.5 shadow-sm">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center shrink-0">
-                  <ShieldCheck className="w-4 h-4 text-amber-400" />
-                </div>
-                <div className="flex flex-col min-w-0 text-left">
-                  <span className="text-xs font-bold text-white truncate">
-                    {isHumanWinner ? 'Enregistrez cette victoire !' : 'Sauvegardez votre progression'}
-                  </span>
-                  <span className="text-[10px] text-slate-300 truncate">
-                    {isHumanWinner
-                      ? 'Liez Google pour inscrire vos trophées au Palmarès'
-                      : 'Conservez vos jetons et statistiques sur le Cloud'}
-                  </span>
-                </div>
-              </div>
-              <button
-                type="button"
-                id="btn-end-round-google-sync"
-                disabled={isAuthLoading}
-                onClick={handleGoogleSignIn}
-                className="h-8 px-3 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow transition active:scale-95 cursor-pointer shrink-0 disabled:opacity-50"
-              >
-                <GoogleIcon className="w-3.5 h-3.5" />
-                <span>{isAuthLoading ? '...' : 'Lier Google'}</span>
-              </button>
-            </div>
-          )}
-
-          {authSuccess && (
-            <div className="w-full p-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center justify-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <span>Victoire et stats synchronisées sur votre compte Google !</span>
-            </div>
-          )}
-
           {/* Primary Action Button */}
           {isHumanEliminated && !isSpectator && !isOnlineMultiplayer ? (
             <button
@@ -1046,10 +982,10 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
                 id="btn-next-partie"
                 type="button"
                 onClick={onNextPartie}
-                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-slate-950 font-black text-sm shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 cursor-pointer ring-1 ring-amber-400/60 btn-juicy"
+                className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-slate-950 font-black text-base shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 cursor-pointer ring-1 ring-amber-400/60 btn-juicy"
               >
-                <PlayCircle className="w-4 h-4" />
-                <span>Partie Suivante</span>
+                <PlayCircle className="w-5 h-5" />
+                <span>Partie suivante</span>
               </button>
             )
           ) : isOnlineMultiplayer ? (
@@ -1104,18 +1040,43 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
             </button>
           )}
 
-          {/* Optional Share Action */}
-          {onShareMatch && (
-            <button
-              type="button"
-              onClick={onShareMatch}
-              className="w-full py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
-              title="Partager le résultat"
-            >
-              <Share2 className="w-4 h-4 text-amber-400" />
-              <span>Partager le résultat</span>
-            </button>
-          )}
+          {/* Rehausser + Partager : côte à côte ; une proposition de mise en cours prend toute la largeur */}
+          <div className="flex flex-wrap gap-1.5">
+            {!isMancheOver && onProposeBetIncrease && onRespondBetIncrease && onCancelBetIncrease && (
+              <BetIncreaseProposalWidget
+                currentBaseBet={baseBet}
+                proposal={betIncreaseProposal}
+                players={isOnlineMultiplayer ? (roomPlayers || []) : (players?.map((p, idx) => ({
+                  ...p,
+                  isHost: idx === 0,
+                  avatarSeed: p.avatarSeed || "",
+                  score: p.score || 0,
+                  capital: p.capital || 0,
+                  isEliminated: p.isEliminated || false,
+                  hand: p.hand || [],
+                  tricksWonInRound: p.tricksWonInRound || 0,
+                })) || [])}
+                localPlayerId={localPlayerId || 'human'}
+                onPropose={onProposeBetIncrease}
+                onRespond={onRespondBetIncrease}
+                onCancel={onCancelBetIncrease}
+                tile
+                className={`${betIncreaseProposal ? 'basis-full' : 'flex-1 basis-0'} empty:hidden`}
+              />
+            )}
+
+            {onShareMatch && (
+              <button
+                type="button"
+                onClick={onShareMatch}
+                className="flex-1 basis-0 min-w-0 min-h-10 py-2 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                title="Partager le résultat"
+              >
+                <Share2 className="w-4 h-4 text-amber-400 shrink-0" />
+                <span className="truncate">Partager</span>
+              </button>
+            )}
+          </div>
 
           {/* Secondary Actions Row */}
           <div className="grid grid-cols-2 gap-1.5">
@@ -1165,6 +1126,28 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
               </button>
             ) : null}
           </div>
+
+          {/* Rappel Google discret pour les invités (Solo & Casual) */}
+          {!isLoggedIn && (
+            <button
+              type="button"
+              id="btn-end-round-google-sync"
+              disabled={isAuthLoading}
+              onClick={handleGoogleSignIn}
+              className="self-center min-h-9 px-2 text-xs font-semibold text-slate-300 hover:text-white underline underline-offset-2 flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+              title={isHumanWinner ? 'Inscrire cette victoire au Palmarès avec Google' : 'Conserver vos jetons et statistiques avec Google'}
+            >
+              <GoogleIcon className="w-3.5 h-3.5" />
+              <span>{isAuthLoading ? '...' : 'Sauvegarder avec Google'}</span>
+            </button>
+          )}
+
+          {authSuccess && (
+            <div className="w-full p-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center justify-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <span>Victoire et stats synchronisées sur votre compte Google !</span>
+            </div>
+          )}
         </div>
       </motion.div>
     </div>

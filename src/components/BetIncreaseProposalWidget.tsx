@@ -15,6 +15,8 @@ interface BetIncreaseProposalWidgetProps {
   onCancel: () => void;
   className?: string;
   compact?: boolean;
+  /** Bouton court pour une grille à deux colonnes (fin de manche) */
+  tile?: boolean;
 }
 
 export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps> = ({
@@ -27,6 +29,7 @@ export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps>
   onCancel,
   className = '',
   compact = false,
+  tile = false,
 }) => {
   const [showProposeModal, setShowProposeModal] = useState(false);
   const [customAmount, setCustomAmount] = useState<number>(() => currentBaseBet * 2);
@@ -186,7 +189,18 @@ export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps>
 
       {/* CASE 2: No active proposal -> Consistent Full-Width Banner or Compact Pill */}
       {!proposal && canIncrease && (
-        compact ? (
+        tile ? (
+          <button
+            type="button"
+            id="btn-trigger-bet-increase"
+            onClick={handleOpenModal}
+            className="w-full h-full min-h-10 py-2 px-2 rounded-xl bg-cyan-950/70 hover:bg-cyan-900 text-cyan-200 border border-cyan-500/50 font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+            title="Proposer d'augmenter la mise pour les prochaines donnes de la manche"
+          >
+            <Zap className="w-4 h-4 text-cyan-300 fill-cyan-400 shrink-0" />
+            <span className="truncate">Rehausser</span>
+          </button>
+        ) : compact ? (
           <button
             type="button"
             onClick={handleOpenModal}
