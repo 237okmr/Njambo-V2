@@ -66,7 +66,7 @@ export const SoloPauseOverlay: React.FC<SoloPauseOverlayProps> = ({
             <div className="w-px h-7 bg-slate-700/60" />
             <div className="flex flex-col items-center gap-0.5">
               <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Tour</span>
-              <span className={`font-extrabold text-sm ${isHumanTurn ? 'text-emerald-400' : 'text-cyan-300'}`}>
+              <span className={`font-extrabold text-sm ${isHumanTurn ? 'text-emerald-400' : 'text-slate-300'}`}>
                 {isHumanTurn ? 'À toi' : currentTurnPlayer?.name || 'IA'}
               </span>
             </div>
@@ -81,7 +81,7 @@ export const SoloPauseOverlay: React.FC<SoloPauseOverlayProps> = ({
                 triggerHaptic('success');
                 onResume();
               }}
-              className="w-full h-12 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 active:scale-[0.98] text-slate-950 font-black text-sm tracking-wide shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 cursor-pointer transition"
+              className="w-full h-12 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-500 hover:from-emerald-400 hover:to-emerald-400 active:scale-[0.98] text-slate-950 font-black text-sm tracking-wide shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 cursor-pointer transition"
             >
               <Play className="w-4 h-4 fill-slate-950" />
               <span>Reprendre la partie</span>

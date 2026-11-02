@@ -35,9 +35,9 @@ export const SpeechBubble: React.FC<SpeechBubbleProps> = ({
         }
       : authorType === 'remote'
       ? {
-          badge: 'bg-cyan-950 text-cyan-300 border-cyan-500/60 shadow-cyan-950/40',
-          border: 'border-cyan-400/60 shadow-cyan-950/50',
-          arrowBorder: 'border-cyan-400/60',
+          badge: 'bg-slate-950 text-slate-300 border-slate-500/60 shadow-slate-950/40',
+          border: 'border-slate-400/60 shadow-slate-950/50',
+          arrowBorder: 'border-slate-400/60',
           icon: '🌐',
         }
       : {

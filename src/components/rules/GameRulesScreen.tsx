@@ -110,9 +110,9 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
         <div className="grid grid-cols-5 gap-1 sm:gap-2 max-w-4xl mx-auto p-1 bg-slate-950/80 rounded-2xl border border-slate-800/80">
           {[
             { id: 'express', label: 'Express', fullLabel: 'En 30 secondes', icon: Zap, color: 'text-amber-400' },
-            { id: 'kora', label: 'Kora', fullLabel: 'Kora & Victoires', icon: Crown, color: 'text-purple-400' },
+            { id: 'kora', label: 'Kora', fullLabel: 'Kora & Victoires', icon: Crown, color: 'text-slate-400' },
             { id: 'deck', label: '31 Cartes', fullLabel: 'Les 31 Cartes', icon: Layers, color: 'text-emerald-400' },
-            { id: 'strategy', label: 'Tours', fullLabel: 'Déroulement & Tours', icon: ShieldCheck, color: 'text-cyan-400' },
+            { id: 'strategy', label: 'Tours', fullLabel: 'Déroulement & Tours', icon: ShieldCheck, color: 'text-slate-400' },
             { id: 'official', label: 'Règles', fullLabel: 'Règlement Complet', icon: BookOpen, color: 'text-slate-300' },
           ].map((tab) => {
             const Icon = tab.icon;
@@ -222,7 +222,7 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col gap-1.5">
-                  <div className="flex items-center gap-2 text-purple-400 font-bold text-xs">
+                  <div className="flex items-center gap-2 text-slate-400 font-bold text-xs">
                     <Crown className="w-4 h-4" />
                     <span>Le Kora Mystique</span>
                   </div>
@@ -243,22 +243,22 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
               className="space-y-4"
             >
               {/* KORA Card */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-purple-950/50 via-slate-900 to-slate-950 border border-purple-500/50 shadow-xl">
+              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-950/50 via-slate-900 to-slate-950 border border-slate-500/50 shadow-xl">
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-10 h-10 rounded-xl bg-purple-500 text-white flex items-center justify-center font-black text-lg shadow-md shadow-purple-500/30">
+                    <div className="w-10 h-10 rounded-xl bg-slate-500 text-white flex items-center justify-center font-black text-lg shadow-md shadow-slate-500/30">
                       👑
                     </div>
                     <div>
-                      <h3 className="text-base sm:text-lg font-black text-purple-300">
+                      <h3 className="text-base sm:text-lg font-black text-slate-300">
                         Le Kora (Victoire ×2)
                       </h3>
-                      <p className="text-xs text-purple-200/70">
+                      <p className="text-xs text-slate-200/70">
                         Le coup de maître le plus emblématique du jeu
                       </p>
                     </div>
                   </div>
-                  <span className="text-xs font-black px-2.5 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40">
+                  <span className="text-xs font-black px-2.5 py-1 rounded-full bg-slate-500/20 text-slate-300 border border-slate-500/40">
                     Mise × 2
                   </span>
                 </div>
@@ -266,8 +266,8 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
                   Le Kora se produit lorsqu'un joueur remporte le <strong>5ᵉ et dernier tour</strong> en jouant une carte de valeur <strong>3</strong>.
                   Puisque le 3 est la carte la plus basse de chaque couleur, remporter le dernier tour avec signifie que tous les adversaires n'avaient plus de cartes de cette couleur ou ont dû défausser plus bas.
                 </p>
-                <div className="mt-3 p-3 rounded-xl bg-purple-950/40 border border-purple-500/30 text-xs text-purple-200 flex items-center gap-2">
-                  <Flame className="w-4 h-4 text-purple-400 shrink-0" />
+                <div className="mt-3 p-3 rounded-xl bg-slate-950/40 border border-slate-500/30 text-xs text-slate-200 flex items-center gap-2">
+                  <Flame className="w-4 h-4 text-slate-400 shrink-0" />
                   <span>
                     <strong>Sanction financière :</strong> Tous les perdants versent au vainqueur le double de la mise de base de la manche !
                   </span>
@@ -303,7 +303,7 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
               {/* Victoires Instantanées à la Donne */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col gap-2">
-                  <div className="flex items-center gap-2 text-cyan-300 font-bold text-sm">
+                  <div className="flex items-center gap-2 text-slate-300 font-bold text-sm">
                     <span>🃏</span>
                     <span>Les Trois "7"</span>
                   </div>
@@ -425,11 +425,11 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
               {/* Règle de jeu détaillée */}
               <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center text-cyan-400 font-bold">
+                  <div className="w-8 h-8 rounded-lg bg-slate-500/20 flex items-center justify-center text-slate-400 font-bold">
                     ⚔️
                   </div>
                   <div>
-                    <h3 className="text-base sm:text-lg font-black text-cyan-300">
+                    <h3 className="text-base sm:text-lg font-black text-slate-300">
                       Règles de Table & Conduite du Tour
                     </h3>
                     <p className="text-xs text-slate-400">

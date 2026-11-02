@@ -281,7 +281,7 @@ export const MultiplayerHubModal: React.FC<MultiplayerHubModalProps> = ({
             <div className="p-2.5 bg-slate-950/60 rounded-2xl border border-slate-800 flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-extrabold uppercase text-amber-400 flex items-center gap-1">
-                  <Users className="w-3.5 h-3.5 text-blue-400" />
+                  <Users className="w-3.5 h-3.5 text-slate-400" />
                   <span>Remplissage</span>
                 </span>
                 <span className="text-[11px] font-extrabold uppercase text-amber-400 flex items-center gap-1">
@@ -380,15 +380,15 @@ export const MultiplayerHubModal: React.FC<MultiplayerHubModalProps> = ({
                 onClick={() => setEnableDoubleKora(!enableDoubleKora)}
                 className={`p-2 rounded-xl border flex items-center justify-between cursor-pointer transition ${
                   enableDoubleKora
-                    ? 'bg-purple-950/40 border-purple-500/50 text-purple-200'
+                    ? 'bg-slate-950/40 border-slate-500/50 text-slate-200'
                     : 'bg-slate-950/60 border-slate-800 text-slate-500'
                 }`}
               >
                 <div className="flex items-center gap-1.5 text-xs font-bold">
-                  <Zap className="w-3.5 h-3.5 text-purple-400" />
+                  <Zap className="w-3.5 h-3.5 text-slate-400" />
                   <span>Double Kora</span>
                 </div>
-                <span className="text-[10px] font-black px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300">×4</span>
+                <span className="text-[10px] font-black px-1.5 py-0.2 rounded bg-slate-500/20 text-slate-300">×4</span>
               </div>
 
               <div

@@ -142,8 +142,8 @@ export const DealingStreamAnimation: React.FC<DealingStreamAnimationProps> = ({
               className="absolute flex items-center justify-center"
             >
               {/* Stack of face-down mini cards */}
-              <div className="relative w-10 h-14 bg-gradient-to-br from-indigo-900 to-slate-900 rounded-lg border-2 border-amber-400/90 shadow-xl flex items-center justify-center">
-                <div className="w-7 h-10 border border-indigo-400/40 rounded flex items-center justify-center bg-indigo-950/80">
+              <div className="relative w-10 h-14 bg-gradient-to-br from-slate-900 to-slate-900 rounded-lg border-2 border-amber-400/90 shadow-xl flex items-center justify-center">
+                <div className="w-7 h-10 border border-slate-400/40 rounded flex items-center justify-center bg-slate-950/80">
                   <span className="text-[10px] font-black text-amber-300">🂠</span>
                 </div>
                 {/* Visual badge showing packet size (+3 or +2) */}

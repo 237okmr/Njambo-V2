@@ -160,7 +160,7 @@ export const EmotePickerPopover: React.FC<EmotePickerPopoverProps> = ({
                       : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
-                  <MessageSquare className="w-3 h-3 text-cyan-400" />
+                  <MessageSquare className="w-3 h-3 text-slate-400" />
                   <span>Table Njambo</span>
                 </button>
               </div>
@@ -176,7 +176,7 @@ export const EmotePickerPopover: React.FC<EmotePickerPopoverProps> = ({
                         setIsOpen(false);
                         onProposeBetIncrease();
                       }}
-                      className="w-full p-2 rounded-lg bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 text-amber-300 border border-amber-500/40 flex items-center justify-between font-bold text-xs transition cursor-pointer group shadow-sm active:scale-[0.98]"
+                      className="w-full p-2 rounded-lg bg-gradient-to-r from-amber-500/20 to-amber-500/20 hover:from-amber-500/30 hover:to-amber-500/30 text-amber-300 border border-amber-500/40 flex items-center justify-between font-bold text-xs transition cursor-pointer group shadow-sm active:scale-[0.98]"
                     >
                       <div className="flex items-center gap-1.5">
                         <Zap className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
@@ -219,7 +219,7 @@ export const EmotePickerPopover: React.FC<EmotePickerPopoverProps> = ({
                       className="w-full text-left px-3 py-2 rounded-lg bg-slate-900/85 hover:bg-amber-950/40 active:bg-amber-950/60 text-slate-200 hover:text-amber-200 border border-slate-800/90 hover:border-amber-500/40 transition flex items-center justify-between group active:scale-[0.98] cursor-pointer"
                     >
                       <span className="font-semibold text-xs truncate">{phrase}</span>
-                      <span className="text-[10px] text-cyan-400/70 group-hover:text-cyan-400 font-medium shrink-0 ml-2">
+                      <span className="text-[10px] text-slate-400/70 group-hover:text-slate-400 font-medium shrink-0 ml-2">
                         Dire →
                       </span>
                     </button>

@@ -158,7 +158,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
             {/* Breadcrumbs */}
             <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] tracking-tight min-w-0">
               {isOnlineActive ? (
-                <span className="text-cyan-400 font-semibold flex items-center gap-1 shrink-0">
+                <span className="text-slate-400 font-semibold flex items-center gap-1 shrink-0">
                   <span className="hidden xs:inline">🌐 Multi</span>
                   <span className="xs:hidden">🌐</span>
                 </span>
@@ -204,9 +204,9 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
             >
               <div className="relative flex items-center justify-center w-5 h-4 shrink-0">
                 {/* Layered micro-chips in stack */}
-                <div className="absolute top-2 w-3.5 h-1.5 rounded-full bg-gradient-to-r from-amber-600 via-yellow-400 to-amber-700 border border-amber-300/80 shadow-xs" />
-                <div className="absolute top-1 w-3.5 h-1.5 rounded-full bg-gradient-to-r from-amber-500 via-yellow-300 to-amber-600 border border-amber-200/90 shadow-xs" />
-                <div className="absolute top-0 w-3.5 h-1.5 rounded-full bg-gradient-to-r from-yellow-400 via-amber-200 to-yellow-500 border border-yellow-100 shadow-sm animate-pulse" />
+                <div className="absolute top-2 w-3.5 h-1.5 rounded-full bg-gradient-to-r from-amber-600 via-amber-400 to-amber-700 border border-amber-300/80 shadow-xs" />
+                <div className="absolute top-1 w-3.5 h-1.5 rounded-full bg-gradient-to-r from-amber-500 via-amber-300 to-amber-600 border border-amber-200/90 shadow-xs" />
+                <div className="absolute top-0 w-3.5 h-1.5 rounded-full bg-gradient-to-r from-amber-400 via-amber-200 to-amber-500 border border-amber-100 shadow-sm animate-pulse" />
               </div>
               <div className="flex flex-col leading-none">
                 <span className="text-[9px] uppercase tracking-wider text-emerald-300/80 font-bold">Pot</span>
@@ -501,7 +501,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                       }}
                       className="w-full min-h-[44px] flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-800/70 transition text-left cursor-pointer"
                     >
-                      <HelpCircle className="w-4 h-4 text-purple-400 shrink-0" />
+                      <HelpCircle className="w-4 h-4 text-slate-400 shrink-0" />
                       <div>
                         <span className="font-semibold text-xs text-slate-100 block">Règles du jeu</span>
                         <span className="text-[10px] text-slate-400">Ordre des cartes, Kora et calcul du pot</span>
@@ -575,9 +575,9 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                       className="w-full min-h-[44px] flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-800/70 transition text-left cursor-pointer"
                     >
                       {isFullscreen ? (
-                        <Minimize2 className="w-4 h-4 text-cyan-400 shrink-0" />
+                        <Minimize2 className="w-4 h-4 text-slate-400 shrink-0" />
                       ) : (
-                        <Maximize2 className="w-4 h-4 text-cyan-400 shrink-0" />
+                        <Maximize2 className="w-4 h-4 text-slate-400 shrink-0" />
                       )}
                       <div>
                         <span className="font-semibold text-xs text-slate-100 block">
@@ -619,7 +619,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                         className="w-full min-h-[44px] flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-800/70 transition text-left cursor-pointer"
                       >
                         <div className="flex items-center gap-3">
-                          <Save className="w-4 h-4 text-blue-400 shrink-0" />
+                          <Save className="w-4 h-4 text-slate-400 shrink-0" />
                           <div>
                             <span className="font-semibold text-xs text-slate-100 block">
                               {justSaved ? 'Manche sauvegardée !' : 'Sauvegarder la manche'}

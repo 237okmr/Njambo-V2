@@ -606,7 +606,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                 className={`w-full p-3.5 rounded-2xl border flex items-center justify-between gap-3 text-left transition-all duration-150 cursor-pointer active:scale-[0.99] shadow-sm ${
                   isLoggedIn
                     ? 'bg-emerald-500/10 border-emerald-500/30 hover:bg-emerald-500/15'
-                    : 'bg-gradient-to-r from-amber-500/15 via-yellow-500/10 to-amber-500/5 border-amber-500/30 hover:border-amber-400/50'
+                    : 'bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-amber-500/5 border-amber-500/30 hover:border-amber-400/50'
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
@@ -786,7 +786,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                             referrerPolicy="no-referrer"
                           />
                         ) : (
-                          <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center text-3xl shadow-lg border-2 border-emerald-400">
+                          <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-3xl shadow-lg border-2 border-emerald-400">
                             👑
                           </div>
                         )}
@@ -848,7 +848,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     </div>
 
                     <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-1.5 shadow-sm">
-                      <div className="w-8 h-8 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-xl bg-slate-500/10 text-slate-400 flex items-center justify-center">
                         <Smartphone className="w-4 h-4" />
                       </div>
                       <h4 className="text-xs font-bold text-white">Multi-Appareils</h4>
@@ -906,7 +906,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   {/* Hero CTA Card */}
                   <div className="bg-gradient-to-br from-slate-900 via-amber-950/20 to-slate-950 border border-amber-500/30 rounded-2xl p-5 sm:p-7 shadow-2xl relative overflow-hidden space-y-5 text-center">
                     <div className="absolute -top-16 -left-16 w-44 h-44 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-                    <div className="absolute -bottom-16 -right-16 w-44 h-44 bg-yellow-500/10 rounded-full blur-3xl pointer-events-none" />
+                    <div className="absolute -bottom-16 -right-16 w-44 h-44 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
                     {/* Badge */}
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold">
@@ -981,7 +981,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     </div>
 
                     <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-1.5 shadow-sm">
-                      <div className="w-8 h-8 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-xl bg-slate-500/10 text-slate-400 flex items-center justify-center">
                         <Smartphone className="w-4 h-4" />
                       </div>
                       <h4 className="text-xs font-bold text-white">Multi-Appareils</h4>
@@ -1193,7 +1193,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   </div>
                   <div className="p-2 bg-slate-950/60 rounded-xl border border-slate-800/80">
                     <span className="text-[10px] uppercase font-bold text-slate-400 block">Koras / Dbl</span>
-                    <span className="text-sm font-black text-yellow-300 font-mono">
+                    <span className="text-sm font-black text-amber-300 font-mono">
                       {safeStats.koraCount || 0} / {safeStats.doubleKoraCount || 0}
                     </span>
                     <span className="text-[9px] text-slate-500 block">(+5 / +20 pts)</span>
@@ -1259,16 +1259,16 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                 </div>
 
                 {/* 4. Double Koras */}
-                <div className="bg-slate-900/80 border border-yellow-500/40 rounded-2xl p-4 space-y-1 shadow-sm">
-                  <div className="flex items-center justify-between text-yellow-300">
+                <div className="bg-slate-900/80 border border-amber-500/40 rounded-2xl p-4 space-y-1 shadow-sm">
+                  <div className="flex items-center justify-between text-amber-300">
                     <span className="text-xs font-bold uppercase tracking-wider">Double Koras</span>
-                    <Zap className="w-4 h-4 text-yellow-300" />
+                    <Zap className="w-4 h-4 text-amber-300" />
                   </div>
-                  <div className="text-2xl sm:text-3xl font-black text-yellow-300 font-mono">
+                  <div className="text-2xl sm:text-3xl font-black text-amber-300 font-mono">
                     {safeStats.doubleKoraCount || 0}
                   </div>
                   <div className="text-[11px] text-slate-400 pt-1">
-                    Multiplicateur pot : <strong className="text-yellow-300 font-bold">x4</strong>
+                    Multiplicateur pot : <strong className="text-amber-300 font-bold">x4</strong>
                   </div>
                   <div className="text-[10px] text-slate-500 pt-0.5 border-t border-slate-800/80">
                     Coups suprêmes (Double Kora)
@@ -1294,11 +1294,11 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
 
                 {/* 6. Moyenne de Tours par donne */}
                 <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 space-y-1 shadow-sm">
-                  <div className="flex items-center justify-between text-sky-400">
+                  <div className="flex items-center justify-between text-slate-400">
                     <span className="text-xs font-bold uppercase tracking-wider">Moyenne Tours</span>
-                    <Award className="w-4 h-4 text-sky-400" />
+                    <Award className="w-4 h-4 text-slate-400" />
                   </div>
-                  <div className="text-2xl sm:text-3xl font-black text-sky-400 font-mono">
+                  <div className="text-2xl sm:text-3xl font-black text-slate-400 font-mono">
                     {avgTricks} <span className="text-xs font-bold text-slate-400">/ 5</span>
                   </div>
                   <div className="text-[11px] text-slate-400 pt-1">
@@ -1519,14 +1519,14 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
 
                     <div className="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden p-0.5 border border-slate-700">
                       <div
-                        className="h-full bg-gradient-to-r from-amber-500 to-yellow-400 rounded-full transition-all duration-500"
+                        className="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all duration-500"
                         style={{ width: `${progressPercent}%` }}
                       />
                     </div>
                   </div>
                 ) : (
                   <div className="text-xs text-amber-300 font-semibold flex items-center gap-1.5 pt-1">
-                    <Crown className="w-4 h-4 text-yellow-400" />
+                    <Crown className="w-4 h-4 text-amber-400" />
                     Tu as atteint le rang suprême de Légende Kora !
                   </div>
                 )}
@@ -1713,17 +1713,17 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                                 </span>
                               )}
                               {item.winType === 'DOUBLE_KORA' && (
-                                <span className="text-[10px] px-1.5 py-0.2 rounded font-bold bg-yellow-500/20 text-yellow-300 border border-yellow-500/40">
+                                <span className="text-[10px] px-1.5 py-0.2 rounded font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
                                   ⚡ DOUBLE KORA
                                 </span>
                               )}
                               {item.winType === 'UNDER_21' && (
-                                <span className="text-[10px] px-1.5 py-0.2 rounded font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                                <span className="text-[10px] px-1.5 py-0.2 rounded font-bold bg-slate-500/20 text-slate-300 border border-slate-500/30">
                                   🎯 Moins de 21
                                 </span>
                               )}
                               {item.winType === 'THREE_SEVENS' && (
-                                <span className="text-[10px] px-1.5 py-0.2 rounded font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                                <span className="text-[10px] px-1.5 py-0.2 rounded font-bold bg-slate-500/20 text-slate-300 border border-slate-500/30">
                                   🎴 Trois 7
                                 </span>
                               )}

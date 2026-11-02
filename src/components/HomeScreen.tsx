@@ -207,9 +207,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   // 1. Left branding block for NativeScreenHeader (le grand titre NJAMBO KORA est juste en dessous)
   const leftContent = (
     <div className="flex items-center gap-2 shrink-0">
-      <div className="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-black text-xs shadow-sm">
-        🎴
-      </div>
+      <img src="/icon-192.svg" alt="Njambo Kora" className="w-7 h-7 rounded-lg shadow-sm" />
     </div>
   );
 
@@ -437,20 +435,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="w-full flex flex-col gap-1.5 p-2 rounded-xl bg-gradient-to-r from-blue-900/40 via-indigo-900/40 to-sky-900/40 border border-blue-500/30"
+              className="w-full flex flex-col gap-1.5 p-2 rounded-xl bg-slate-900/90 border border-slate-700"
             >
               <div className="flex items-center gap-2.5 text-left min-w-0 px-2 pt-1">
-                <div className="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-300 font-black text-sm shrink-0 animate-pulse">
+                <div className="w-8 h-8 rounded-lg bg-slate-500/20 border border-slate-400/30 flex items-center justify-center text-slate-300 font-black text-sm shrink-0 animate-pulse">
                   🌐
                 </div>
                 <div className="flex flex-col min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="leading-tight text-xs sm:text-sm font-black truncate text-blue-100">Table en direct : {activeMultiplayerRoom.id}</span>
-                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-blue-600/60 text-white border border-blue-400/40 shrink-0">
+                    <span className="leading-tight text-xs sm:text-sm font-black truncate text-slate-100">Table en direct : {activeMultiplayerRoom.id}</span>
+                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-600/60 text-white border border-emerald-400/40 shrink-0">
                       En cours
                     </span>
                   </div>
-                  <span className="text-[10px] font-semibold text-blue-200/80 truncate">
+                  <span className="text-[10px] font-semibold text-slate-300 truncate">
                     {activeMultiplayerRoom.players?.length || 4} Joueurs · Mise : {activeMultiplayerRoom.baseBet || 10} 🪙
                   </span>
                 </div>
@@ -474,10 +472,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             disabled={koraCashEntry === 'COMING_SOON'}
             aria-disabled={koraCashEntry === 'COMING_SOON'}
             onClick={() => setIsKoraCashOpen(true)}
-            className={`relative overflow-hidden w-full py-2.5 px-3.5 rounded-xl bg-slate-900/90 backdrop-blur-md text-slate-100 font-bold border border-amber-500/60 shadow-md flex items-center justify-between transition-all duration-200 group ${
+            className={`relative overflow-hidden w-full py-2.5 px-3.5 rounded-xl bg-slate-900/90 backdrop-blur-md text-slate-100 font-bold border border-slate-700 shadow-md flex items-center justify-between transition-all duration-200 group ${
               koraCashEntry === 'COMING_SOON'
                 ? 'order-last opacity-60 cursor-default'
-                : 'hover:bg-slate-850 hover:border-amber-400 cursor-pointer shadow-amber-950/30'
+                : 'hover:bg-slate-800 hover:border-slate-500 cursor-pointer'
             }`}
           >
             {koraCashEntry !== 'COMING_SOON' && (
@@ -571,7 +569,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               type="button"
               id="btn-home-leaderboard"
               onClick={onOpenLeaderboard}
-              className="relative overflow-hidden w-full py-2.5 px-3.5 rounded-xl bg-slate-900/90 backdrop-blur-md hover:bg-slate-850 text-slate-100 font-bold border border-purple-500/60 hover:border-purple-400 shadow-md flex items-center justify-between transition-all duration-200 cursor-pointer group"
+              className="relative overflow-hidden w-full py-2.5 px-3.5 rounded-xl bg-slate-900/90 backdrop-blur-md hover:bg-slate-800 text-slate-100 font-bold border border-slate-700 hover:border-slate-500 shadow-md flex items-center justify-between transition-all duration-200 cursor-pointer group"
             >
               <div className="flex items-center gap-3 text-left min-w-0 relative z-10">
                 <div className="w-8 h-8 rounded-lg bg-purple-500/20 border border-purple-400/50 flex items-center justify-center text-purple-400 shrink-0 shadow-[0_0_12px_rgba(168,85,247,0.35)] group-hover:scale-105 transition">
@@ -641,7 +639,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   onCloseModeSheet?.();
                   handleStartGame();
                 }}
-                className="w-full py-3 px-3.5 rounded-xl bg-slate-950/60 text-slate-100 border border-rose-500/60 hover:border-rose-400 flex items-center justify-between gap-3 transition cursor-pointer active:scale-[0.98] group"
+                className="w-full py-3 px-3.5 rounded-xl bg-slate-950/60 text-slate-100 border border-slate-700 hover:border-slate-500 flex items-center justify-between gap-3 transition cursor-pointer active:scale-[0.98] group"
               >
                 <span className="flex items-center gap-3 min-w-0 text-left">
                   <span className="w-9 h-9 rounded-lg bg-rose-500/20 border border-rose-400/50 flex items-center justify-center shrink-0">
@@ -662,7 +660,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   onCloseModeSheet?.();
                   handleMultiplayer();
                 }}
-                className="w-full py-3 px-3.5 rounded-xl bg-slate-950/60 text-slate-100 border border-cyan-500/60 hover:border-cyan-400 flex items-center justify-between gap-3 transition cursor-pointer active:scale-[0.98] group"
+                className="w-full py-3 px-3.5 rounded-xl bg-slate-950/60 text-slate-100 border border-slate-700 hover:border-slate-500 flex items-center justify-between gap-3 transition cursor-pointer active:scale-[0.98] group"
               >
                 <span className="flex items-center gap-3 min-w-0 text-left">
                   <span className="relative w-9 h-9 rounded-lg bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center shrink-0">
@@ -761,7 +759,7 @@ const AbandonMultiplayerControl: React.FC<{
         type="button"
         id="btn-home-resume-multiplayer"
         onClick={onResumeMultiplayer}
-        className="flex-1 py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow cursor-pointer transition active:scale-95"
+        className="flex-1 py-2 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow cursor-pointer transition active:scale-95"
       >
         Rejoindre
       </button>

@@ -176,13 +176,13 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                 : isInstantWinner
                 ? instantWinReveal?.winType === 'UNDER_21'
                   ? 'bg-emerald-950/80 border-2 border-emerald-400 ring-2 ring-emerald-400/60 shadow-lg shadow-emerald-500/30'
-                  : 'bg-amber-950/80 border-2 border-yellow-400 ring-2 ring-yellow-400/60 shadow-lg shadow-yellow-500/30'
+                  : 'bg-amber-950/80 border-2 border-amber-400 ring-2 ring-amber-400/60 shadow-lg shadow-amber-500/30'
                 : isCurrentTurn
                 ? 'bg-gradient-to-r from-amber-950/60 via-slate-900/90 to-slate-950 border-2 border-amber-400 ring-2 ring-amber-400/40 shadow-[0_0_18px_rgba(245,158,11,0.3)]'
                 : isLocalPlayer
                 ? 'bg-amber-950/20 border border-amber-500/40 shadow-sm'
                 : isOnlineRemoteHuman
-                ? 'bg-indigo-950/40 border border-indigo-500/30'
+                ? 'bg-slate-950/40 border border-slate-500/30'
                 : 'bg-slate-950/50 border border-slate-800/80'
             }`}
           >
@@ -201,13 +201,13 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                         : isInstantWinner
                         ? instantWinReveal?.winType === 'UNDER_21'
                           ? 'bg-emerald-400 text-slate-950 ring-2 ring-emerald-300'
-                          : 'bg-yellow-400 text-slate-950 ring-2 ring-yellow-300'
+                          : 'bg-amber-400 text-slate-950 ring-2 ring-amber-300'
                         : isCurrentTurn
                         ? 'bg-amber-500 text-slate-950 ring-2 ring-amber-300 ring-offset-1 ring-offset-slate-900 animate-pulse'
                         : isLocalPlayer
                         ? 'bg-amber-500 text-slate-950 border border-amber-400/60 shadow-amber-500/20'
                         : isOnlineRemoteHuman
-                        ? 'bg-indigo-600 text-indigo-100 border border-indigo-400/50'
+                        ? 'bg-slate-600 text-slate-100 border border-slate-400/50'
                         : 'bg-slate-800 text-slate-200 border border-slate-700'
                     }`}
                   >
@@ -222,7 +222,7 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                     ) : isLocalPlayer ? (
                       <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-950 font-bold" />
                     ) : isOnlineRemoteHuman ? (
-                      <Globe className="w-3.5 h-3.5 text-indigo-200" />
+                      <Globe className="w-3.5 h-3.5 text-slate-200" />
                     ) : (
                       <span>{iaIndexNumber}</span>
                     )}
@@ -244,11 +244,11 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                           : isEliminated
                           ? 'text-rose-400 line-through'
                           : isInstantWinner
-                          ? 'text-yellow-300 font-black'
+                          ? 'text-amber-300 font-black'
                           : isLocalPlayer
                           ? 'text-amber-300 font-extrabold'
                           : isOnlineRemoteHuman
-                          ? 'text-indigo-300 font-bold'
+                          ? 'text-slate-300 font-bold'
                           : 'text-slate-100'
                       }`}
                       title={player.name}
@@ -266,7 +266,7 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                         className={`text-[8px] font-black px-1.5 py-0.2 rounded shadow uppercase animate-pulse ${
                           instantWinReveal?.winType === 'UNDER_21'
                             ? 'bg-emerald-400 text-slate-950'
-                            : 'bg-yellow-400 text-slate-950'
+                            : 'bg-amber-400 text-slate-950'
                         }`}
                       >
                         {instantWinReveal?.winType === 'UNDER_21' ? '≤ 21 pts' : '3x 7'}
@@ -278,12 +278,12 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                       </span>
                     )}
                     {!isEliminated && !isForfeit && isLead && (
-                      <span className="text-[8px] font-black px-1 py-0.2 bg-blue-500/20 text-blue-300 rounded border border-blue-500/30">
+                      <span className="text-[8px] font-black px-1 py-0.2 bg-slate-500/20 text-slate-300 rounded border border-slate-500/30">
                         E
                       </span>
                     )}
                     {isOnlineRemoteHuman && !isEliminated && !isForfeit && !isDisconnected && (
-                      <span className="text-[8px] font-bold px-1 py-0.2 bg-indigo-500/20 text-indigo-300 rounded border border-indigo-500/30 hidden xs:inline">
+                      <span className="text-[8px] font-bold px-1 py-0.2 bg-slate-500/20 text-slate-300 rounded border border-slate-500/30 hidden xs:inline">
                         En ligne
                       </span>
                     )}
@@ -451,7 +451,7 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                           item.wasWinner
                             ? 'bg-gradient-to-b from-amber-50 to-amber-100/95 border-2 border-amber-300 ring-2 ring-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.65)] font-black z-10'
                             : item.isCurrent
-                            ? 'bg-blue-50/90 border-blue-400 ring-1 ring-blue-400 shadow-md'
+                            ? 'bg-slate-50/90 border-slate-400 ring-1 ring-slate-400 shadow-md'
                             : 'bg-white border-slate-300 shadow-md'
                         }`}
                       >
@@ -499,7 +499,7 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                             className={`w-7 xs:w-8 sm:w-9 lg:w-8 xl:w-9 h-9 xs:h-10 sm:h-12 lg:h-11 xl:h-12 rounded-lg ${
                               isLocalPlayer
                                 ? 'bg-gradient-to-br from-emerald-800 via-emerald-900 to-slate-950 border-2 border-emerald-400/90 text-emerald-300 shadow-emerald-500/30'
-                                : 'bg-gradient-to-br from-indigo-800 via-indigo-900 to-slate-950 border-2 border-indigo-400/90 text-indigo-300 shadow-indigo-500/30'
+                                : 'bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 border-2 border-slate-400/90 text-slate-300 shadow-slate-500/30'
                             } shadow-md flex items-center justify-center text-[10px] xs:text-xs font-serif select-none transition-all ${
                               isDealing ? 'ring-2 ring-amber-400/60 animate-pulse' : ''
                             }`}

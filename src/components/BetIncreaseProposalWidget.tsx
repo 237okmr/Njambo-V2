@@ -194,26 +194,26 @@ export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps>
             type="button"
             id="btn-trigger-bet-increase"
             onClick={handleOpenModal}
-            className="w-full h-full min-h-10 py-2 px-2 rounded-xl bg-cyan-950/70 hover:bg-cyan-900 text-cyan-200 border border-cyan-500/50 font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+            className="w-full h-full min-h-10 py-2 px-2 rounded-xl bg-slate-950/70 hover:bg-slate-900 text-slate-200 border border-slate-500/50 font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
             title="Proposer d'augmenter la mise pour les prochaines parties de la manche"
           >
-            <Zap className="w-4 h-4 text-cyan-300 fill-cyan-400 shrink-0" />
+            <Zap className="w-4 h-4 text-slate-300 fill-slate-400 shrink-0" />
             <span className="truncate">Rehausser</span>
           </button>
         ) : compact ? (
           <button
             type="button"
             onClick={handleOpenModal}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-950/70 hover:bg-cyan-900 text-cyan-300 border border-cyan-500/50 text-xs font-bold shadow-sm transition-all cursor-pointer active:scale-95 group"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-950/70 hover:bg-slate-900 text-slate-300 border border-slate-500/50 text-xs font-bold shadow-sm transition-all cursor-pointer active:scale-95 group"
             title="Proposer d'augmenter la mise"
           >
             <motion.div
               animate={{
                 scale: [1, 1.2, 1],
                 filter: [
-                  'drop-shadow(0 0 1px rgba(34, 211, 238, 0.4))',
-                  'drop-shadow(0 0 6px rgba(34, 211, 238, 0.9))',
-                  'drop-shadow(0 0 1px rgba(34, 211, 238, 0.4))',
+                  'drop-shadow(0 0 1px rgba(148, 163, 184, 0.4))',
+                  'drop-shadow(0 0 6px rgba(148, 163, 184, 0.9))',
+                  'drop-shadow(0 0 1px rgba(148, 163, 184, 0.4))',
                 ],
               }}
               transition={{
@@ -223,7 +223,7 @@ export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps>
               }}
               className="flex items-center justify-center"
             >
-              <Zap className="w-3.5 h-3.5 text-cyan-400 fill-cyan-400" />
+              <Zap className="w-3.5 h-3.5 text-slate-400 fill-slate-400" />
             </motion.div>
             <span>Monter mise</span>
             <span className="text-[10px] opacity-75 font-mono">({currentBaseBet}➔x2)</span>
@@ -233,20 +233,20 @@ export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps>
             type="button"
             id="btn-trigger-bet-increase"
             onClick={handleOpenModal}
-            className="w-full flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-xl border border-cyan-500/50 bg-gradient-to-r from-cyan-950/80 via-slate-900/95 to-cyan-950/75 hover:from-cyan-900/90 hover:via-slate-800/95 hover:to-cyan-900/85 hover:border-cyan-400/80 transition-all duration-200 cursor-pointer shadow-lg shadow-cyan-950/30 hover:shadow-cyan-500/20 active:scale-[0.99] group text-left min-h-[44px]"
+            className="w-full flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-xl border border-slate-500/50 bg-gradient-to-r from-slate-950/80 via-slate-900/95 to-slate-950/75 hover:from-slate-900/90 hover:via-slate-800/95 hover:to-slate-900/85 hover:border-slate-400/80 transition-all duration-200 cursor-pointer shadow-lg shadow-slate-950/30 hover:shadow-slate-500/20 active:scale-[0.99] group text-left min-h-[44px]"
             title="Proposer d'augmenter la mise pour les prochaines parties de la manche"
           >
             {/* Left side: Animated Icon Medallion + Text */}
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-lg bg-cyan-400/15 border border-cyan-400/35 flex items-center justify-center shrink-0 shadow-inner group-hover:bg-cyan-400/25 transition-colors">
+              <div className="w-8 h-8 rounded-lg bg-slate-400/15 border border-slate-400/35 flex items-center justify-center shrink-0 shadow-inner group-hover:bg-slate-400/25 transition-colors">
                 <motion.div
                   animate={{
                     scale: [1, 1.22, 1],
                     rotate: [0, -4, 4, 0],
                     filter: [
-                      'drop-shadow(0 0 2px rgba(34, 211, 238, 0.4))',
-                      'drop-shadow(0 0 8px rgba(34, 211, 238, 0.95))',
-                      'drop-shadow(0 0 2px rgba(34, 211, 238, 0.4))',
+                      'drop-shadow(0 0 2px rgba(148, 163, 184, 0.4))',
+                      'drop-shadow(0 0 8px rgba(148, 163, 184, 0.95))',
+                      'drop-shadow(0 0 2px rgba(148, 163, 184, 0.4))',
                     ],
                   }}
                   transition={{
@@ -254,26 +254,26 @@ export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps>
                     repeat: Infinity,
                     ease: 'easeInOut',
                   }}
-                  className="flex items-center justify-center text-cyan-300"
+                  className="flex items-center justify-center text-slate-300"
                 >
-                  <Zap className="w-4 h-4 text-cyan-300 fill-cyan-400" />
+                  <Zap className="w-4 h-4 text-slate-300 fill-slate-400" />
                 </motion.div>
               </div>
 
               <div className="flex flex-col min-w-0">
-                <span className="text-xs sm:text-sm font-bold text-cyan-50 group-hover:text-white transition-colors tracking-tight leading-tight">
+                <span className="text-xs sm:text-sm font-bold text-slate-50 group-hover:text-white transition-colors tracking-tight leading-tight">
                   Rehausser la mise
                 </span>
-                <span className="text-[10px] text-cyan-300/75 truncate hidden xs:inline">
+                <span className="text-[10px] text-slate-300/75 truncate hidden xs:inline">
                   Pour les prochaines parties de la manche
                 </span>
               </div>
             </div>
 
             {/* Right side: Stake Pill with dynamic values and Arrow */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-400/15 border border-cyan-400/35 group-hover:border-cyan-400/60 group-hover:bg-cyan-400/25 transition-all text-cyan-300 font-mono text-xs font-bold shrink-0 shadow-xs">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-400/15 border border-slate-400/35 group-hover:border-slate-400/60 group-hover:bg-slate-400/25 transition-all text-slate-300 font-mono text-xs font-bold shrink-0 shadow-xs">
               <span>{currentBaseBet} 🪙 ➔ ×2</span>
-              <ChevronRight className="w-3.5 h-3.5 text-cyan-400 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0 group-hover:translate-x-0.5 transition-transform" />
             </div>
           </button>
         )

@@ -197,7 +197,7 @@ export const ConnectionDiagnosticModal: React.FC<ConnectionDiagnosticModalProps>
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-800 shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-slate-500/15 border border-slate-500/30 flex items-center justify-center text-slate-400 shrink-0">
               <Activity className="w-4.5 h-4.5" />
             </div>
             <div className="min-w-0">
@@ -226,7 +226,7 @@ export const ConnectionDiagnosticModal: React.FC<ConnectionDiagnosticModalProps>
           <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800/80 flex flex-col gap-2.5">
             <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
               <span className="flex items-center gap-1.5 text-slate-300">
-                <Wifi className="w-3.5 h-3.5 text-blue-400" />
+                <Wifi className="w-3.5 h-3.5 text-slate-400" />
                 <span>Connexion Temps Réel</span>
               </span>
               <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border flex items-center gap-1.5 ${socketInfo.badgeBg}`}>
@@ -270,7 +270,7 @@ export const ConnectionDiagnosticModal: React.FC<ConnectionDiagnosticModalProps>
                 <span className="text-slate-400">Type de compte :</span>
                 <span className="font-bold flex items-center gap-1.5">
                   {isGoogleUser ? (
-                    <span className="px-2 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-300 text-[11px] flex items-center gap-1">
+                    <span className="px-2 py-0.5 rounded-full bg-slate-500/15 border border-slate-500/30 text-slate-300 text-[11px] flex items-center gap-1">
                       <GoogleIcon className="w-3 h-3" />
                       <span>Compte Google</span>
                     </span>

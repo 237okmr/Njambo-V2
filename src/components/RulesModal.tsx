@@ -179,8 +179,8 @@ export const RulesModal: React.FC<RulesModalProps> = ({
               {/* 3. Déroulement d'un tour & Obligation de couleur */}
               <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800">
                 <div className="flex items-center gap-2 mb-2">
-                  <CheckCircle2 className="w-4 h-4 text-cyan-400" />
-                  <h3 className="font-extrabold text-cyan-300 text-xs sm:text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-slate-400" />
+                  <h3 className="font-extrabold text-slate-300 text-xs sm:text-sm">
                     Règle du Tour & Obligation de Couleur
                   </h3>
                 </div>
@@ -204,14 +204,14 @@ export const RulesModal: React.FC<RulesModalProps> = ({
 
               {/* 4. Victoires Spéciales & Kora (Grille Visuelle) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <div className="p-2.5 rounded-xl bg-purple-950/30 border border-purple-500/40 flex items-start gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-purple-500 text-white flex items-center justify-center font-black text-xs shrink-0 shadow">
+                <div className="p-2.5 rounded-xl bg-slate-950/30 border border-slate-500/40 flex items-start gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-slate-500 text-white flex items-center justify-center font-black text-xs shrink-0 shadow">
                     👑
                   </div>
                   <div>
                     <div className="flex items-center gap-1.5">
-                      <span className="font-black text-xs text-purple-300">Kora / Double</span>
-                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-purple-500/30 text-purple-200">×2 / ×4</span>
+                      <span className="font-black text-xs text-slate-300">Kora / Double</span>
+                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-500/30 text-slate-200">×2 / ×4</span>
                     </div>
                     <div className="text-[10px] text-slate-300 mt-0.5">
                       Gagner le 5ᵉ tour avec un <strong>3</strong> double la mise de chaque perdant.
@@ -238,9 +238,9 @@ export const RulesModal: React.FC<RulesModalProps> = ({
           ) : (
             /* DETAILED RULES (Streamlined) */
             <div className="space-y-3">
-              <div className="p-3 rounded-xl bg-purple-950/30 border border-purple-500/40 space-y-2">
+              <div className="p-3 rounded-xl bg-slate-950/30 border border-slate-500/40 space-y-2">
                 <h3 className="font-bold text-amber-300 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-purple-400" />
+                  <Sparkles className="w-4 h-4 text-slate-400" />
                   <span>Bonus & Multiplicateurs de Victoire</span>
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
@@ -249,7 +249,7 @@ export const RulesModal: React.FC<RulesModalProps> = ({
                     <p className="text-slate-300 text-[11px] mt-0.5">Remporter le 5ᵉ tour avec un "3". Les perdants paient le double de leur mise.</p>
                   </div>
                   <div className="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
-                    <span className="text-purple-300 font-bold">⚡ DOUBLE KORA (×4) :</span>
+                    <span className="text-slate-300 font-bold">⚡ DOUBLE KORA (×4) :</span>
                     <p className="text-slate-300 text-[11px] mt-0.5">Gagner le 4ᵉ puis le 5ᵉ tour avec un "3". Les perdants paient 4× la mise.</p>
                   </div>
                   <div className="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
@@ -257,7 +257,7 @@ export const RulesModal: React.FC<RulesModalProps> = ({
                     <p className="text-slate-300 text-[11px] mt-0.5">Somme des 5 cartes ≤ 21 dès la distribution = fin de la partie et victoire du pot.</p>
                   </div>
                   <div className="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
-                    <span className="text-yellow-400 font-bold">🃏 LES 3 "7" :</span>
+                    <span className="text-amber-400 font-bold">🃏 LES 3 "7" :</span>
                     <p className="text-slate-300 text-[11px] mt-0.5">Posséder trois 7 dans sa main initiale = victoire instantanée de la partie.</p>
                   </div>
                 </div>

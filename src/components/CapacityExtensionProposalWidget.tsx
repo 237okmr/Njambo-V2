@@ -38,24 +38,24 @@ export const CapacityExtensionProposalWidget: React.FC<CapacityExtensionProposal
         initial={{ opacity: 0, y: -10, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: -10, scale: 0.95 }}
-        className="flex items-center gap-2.5 px-3 py-1.5 rounded-2xl bg-cyan-950/95 border border-cyan-500/80 text-cyan-100 shadow-2xl backdrop-blur-md ring-2 ring-cyan-400/30"
+        className="flex items-center gap-2.5 px-3 py-1.5 rounded-2xl bg-slate-950/95 border border-slate-500/80 text-slate-100 shadow-2xl backdrop-blur-md ring-2 ring-slate-400/30"
       >
-        <div className="p-1.5 rounded-xl bg-cyan-500/20 text-cyan-300 shrink-0">
-          <Users className="w-4 h-4 text-cyan-300 animate-pulse" />
+        <div className="p-1.5 rounded-xl bg-slate-500/20 text-slate-300 shrink-0">
+          <Users className="w-4 h-4 text-slate-300 animate-pulse" />
         </div>
 
         <div className="flex flex-col min-w-0 pr-1">
           <span className="text-xs font-bold leading-tight">
             Étendre la table à {proposal.newMaxPlayers} joueurs ?
           </span>
-          <span className="text-[10px] text-cyan-200/80">
+          <span className="text-[10px] text-slate-200/80">
             Par {proposal.proposerName} ({agreedCount}/{totalEligible} votes)
           </span>
         </div>
 
         <div className="flex items-center gap-1.5 ml-auto shrink-0">
           {isProposer ? (
-            <span className="px-2 py-0.5 rounded-md bg-cyan-900/60 border border-cyan-600/50 text-cyan-300 text-[10px] font-bold">
+            <span className="px-2 py-0.5 rounded-md bg-slate-900/60 border border-slate-600/50 text-slate-300 text-[10px] font-bold">
               Ta proposition
             </span>
           ) : hasAgreed ? (

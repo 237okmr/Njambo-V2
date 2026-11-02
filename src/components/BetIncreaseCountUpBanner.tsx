@@ -100,7 +100,7 @@ export const BetIncreaseCountUpBanner: React.FC<BetIncreaseCountUpBannerProps> =
                 initial={{ scale: 1.15 }}
                 animate={{ scale: 1 }}
                 transition={{ duration: 0.1 }}
-                className="text-3xl sm:text-4xl font-black font-mono text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-300 drop-shadow-[0_2px_10px_rgba(245,158,11,0.6)]"
+                className="text-3xl sm:text-4xl font-black font-mono text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-300 drop-shadow-[0_2px_10px_rgba(245,158,11,0.6)]"
               >
                 {displayValue}
               </motion.span>

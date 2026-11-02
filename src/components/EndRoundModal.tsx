@@ -166,12 +166,12 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
     if (isOnlineMultiplayer) {
       return {
         label: 'Multijoueur',
-        badgeClass: 'bg-cyan-500/20 text-cyan-300 border-cyan-400/50',
+        badgeClass: 'bg-slate-500/20 text-slate-300 border-slate-400/50',
         badgeText: '🌐 MULTIJOUEUR',
-        modalBorder: 'border-cyan-500/60 shadow-cyan-500/30 ring-1 ring-cyan-500/20',
-        bannerGradient: 'from-cyan-950 via-slate-900 to-cyan-950 border-2 border-cyan-400 shadow-cyan-500/30',
-        winnerGlow: 'bg-cyan-400 text-slate-950 ring-4 ring-cyan-400/40',
-        accentText: 'text-cyan-400',
+        modalBorder: 'border-slate-500/60 shadow-slate-500/30 ring-1 ring-slate-500/20',
+        bannerGradient: 'from-slate-950 via-slate-900 to-slate-950 border-2 border-slate-400 shadow-slate-500/30',
+        winnerGlow: 'bg-slate-400 text-slate-950 ring-4 ring-slate-400/40',
+        accentText: 'text-slate-400',
       };
     }
 
@@ -200,12 +200,12 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
       case 'MASTER':
         return {
           label: 'Grand Katika',
-          badgeClass: 'bg-gradient-to-r from-purple-500/25 to-indigo-500/25 text-purple-200 border-purple-400/60 shadow-purple-500/20',
+          badgeClass: 'bg-gradient-to-r from-slate-500/25 to-slate-500/25 text-slate-200 border-slate-400/60 shadow-slate-500/20',
           badgeText: '👑 GRAND KATIKA',
-          modalBorder: 'border-purple-500/60 shadow-purple-500/30 ring-1 ring-purple-500/20',
-          bannerGradient: 'from-purple-950 via-indigo-900 to-purple-950 border-2 border-purple-400 shadow-purple-500/40',
-          winnerGlow: 'bg-purple-400 text-slate-950 ring-4 ring-purple-400/40',
-          accentText: 'text-purple-300',
+          modalBorder: 'border-slate-500/60 shadow-slate-500/30 ring-1 ring-slate-500/20',
+          bannerGradient: 'from-slate-950 via-slate-900 to-slate-950 border-2 border-slate-400 shadow-slate-500/40',
+          winnerGlow: 'bg-slate-400 text-slate-950 ring-4 ring-slate-400/40',
+          accentText: 'text-slate-300',
         };
       case 'NORMAL':
       default:
@@ -236,34 +236,34 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
       switch (partieWinType) {
         case 'DOUBLE_KORA':
           return {
-            badgeClass: 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-black shadow-purple-500/40',
+            badgeClass: 'bg-gradient-to-r from-slate-500 to-slate-500 text-white font-black shadow-slate-500/40',
             badgeText: 'Double Kora (x4)',
-            modalBorder: 'border-purple-500/70 shadow-purple-500/30 ring-1 ring-purple-500/20',
-            bannerGradient: 'from-purple-950 via-indigo-900 to-purple-950 border-2 border-purple-400 shadow-purple-500/30',
-            icon: <Zap className="w-3.5 h-3.5 text-yellow-300 fill-yellow-300" />,
+            modalBorder: 'border-slate-500/70 shadow-slate-500/30 ring-1 ring-slate-500/20',
+            bannerGradient: 'from-slate-950 via-slate-900 to-slate-950 border-2 border-slate-400 shadow-slate-500/30',
+            icon: <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />,
           };
         case 'KORA':
           return {
-            badgeClass: 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black shadow-amber-500/40',
+            badgeClass: 'bg-gradient-to-r from-amber-500 to-amber-500 text-slate-950 font-black shadow-amber-500/40',
             badgeText: 'Kora (x2)',
-            modalBorder: 'border-orange-500/70 shadow-orange-500/30 ring-1 ring-orange-500/20',
-            bannerGradient: 'from-amber-950 via-orange-900 to-amber-950 border-2 border-amber-500 shadow-amber-500/20',
+            modalBorder: 'border-amber-500/70 shadow-amber-500/30 ring-1 ring-amber-500/20',
+            bannerGradient: 'from-amber-950 via-amber-900 to-amber-950 border-2 border-amber-500 shadow-amber-500/20',
             icon: <Flame className="w-3.5 h-3.5 text-slate-950 fill-slate-950" />,
           };
         case 'THREE_SEVENS':
           return {
-            badgeClass: 'bg-gradient-to-r from-yellow-400 to-amber-400 text-slate-950 font-black shadow-yellow-500/40',
+            badgeClass: 'bg-gradient-to-r from-amber-400 to-amber-400 text-slate-950 font-black shadow-amber-500/40',
             badgeText: '777 · Trois Septs',
-            modalBorder: 'border-yellow-400/80 shadow-yellow-500/30 ring-1 ring-yellow-400/20',
-            bannerGradient: 'from-amber-950 via-yellow-900 to-amber-950 border-2 border-yellow-400 shadow-yellow-500/30',
+            modalBorder: 'border-amber-400/80 shadow-amber-500/30 ring-1 ring-amber-400/20',
+            bannerGradient: 'from-amber-950 via-amber-900 to-amber-950 border-2 border-amber-400 shadow-amber-500/30',
             icon: <Sparkles className="w-3.5 h-3.5" />,
           };
         case 'UNDER_21':
           return {
-            badgeClass: 'bg-gradient-to-r from-emerald-400 to-teal-400 text-slate-950 font-black shadow-emerald-500/40',
+            badgeClass: 'bg-gradient-to-r from-emerald-400 to-emerald-400 text-slate-950 font-black shadow-emerald-500/40',
             badgeText: 'Moins de 21 (≤ 21)',
             modalBorder: 'border-emerald-400/80 shadow-emerald-500/30 ring-1 ring-emerald-400/20',
-            bannerGradient: 'from-emerald-950 via-teal-900 to-emerald-950 border-2 border-emerald-400 shadow-emerald-500/30',
+            bannerGradient: 'from-emerald-950 via-emerald-900 to-emerald-950 border-2 border-emerald-400 shadow-emerald-500/30',
             icon: <Sparkles className="w-3.5 h-3.5" />,
           };
         case 'FORFEIT':
@@ -444,7 +444,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
                 Main initiale ≤ 21 · Victoire instantanée
               </span>
             ) : partieWinType === 'THREE_SEVENS' ? (
-              <span className="text-xs text-yellow-300 font-medium">
+              <span className="text-xs text-amber-300 font-medium">
                 3x Septs reçus dès la distribution
               </span>
             ) : (
@@ -479,10 +479,10 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="w-full bg-gradient-to-r from-amber-500/15 via-yellow-500/20 to-amber-500/15 border border-amber-500/40 rounded-xl p-2.5 flex items-center justify-between text-xs shadow-md"
+            className="w-full bg-gradient-to-r from-amber-500/15 via-amber-500/20 to-amber-500/15 border border-amber-500/40 rounded-xl p-2.5 flex items-center justify-between text-xs shadow-md"
           >
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-yellow-500 text-slate-950 font-black flex items-center justify-center text-sm shadow shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-amber-500 text-slate-950 font-black flex items-center justify-center text-sm shadow shrink-0">
                 ⭐
               </div>
               <div className="text-left min-w-0">
@@ -832,8 +832,8 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
                     );
                   })}
                 {(multiplayerPlayers || []).some((p) => (p as RoomPlayer).isSpectator) && (
-                  <span className="text-[10px] text-cyan-300 bg-cyan-950/80 border border-cyan-500/30 px-2 py-0.5 rounded-md flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                  <span className="text-[10px] text-slate-300 bg-slate-950/80 border border-slate-500/30 px-2 py-0.5 rounded-md flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
                     <span>
                       {(multiplayerPlayers || []).filter((p) => (p as RoomPlayer).isSpectator).length} observateur(s)
                     </span>
@@ -885,17 +885,17 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
                       )}
                     </button>
                   ) : (
-                    <div className="w-full py-2.5 px-3 rounded-xl bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 text-xs font-medium text-center flex flex-col items-center justify-center gap-1.5">
+                    <div className="w-full py-2.5 px-3 rounded-xl bg-slate-950/60 border border-slate-500/30 text-slate-300 text-xs font-medium text-center flex flex-col items-center justify-center gap-1.5">
                       <div className="flex items-center justify-center gap-2">
-                        <Eye className="w-4 h-4 shrink-0 text-cyan-400" />
+                        <Eye className="w-4 h-4 shrink-0 text-slate-400" />
                         <span className="font-bold">Match en direct (Spectateur)</span>
                         {roundEndRemainingSeconds !== null && roundEndRemainingSeconds !== undefined && roundEndRemainingSeconds > 0 && (
-                          <span className="text-[11px] bg-cyan-900/80 border border-cyan-400/40 text-cyan-200 px-1.5 py-0.5 rounded font-mono font-bold">
+                          <span className="text-[11px] bg-slate-900/80 border border-slate-400/40 text-slate-200 px-1.5 py-0.5 rounded font-mono font-bold">
                             {roundEndRemainingSeconds}s
                           </span>
                         )}
                       </div>
-                      <span className="text-[11px] text-cyan-300/80">
+                      <span className="text-[11px] text-slate-300/80">
                         {(() => {
                           const seatedHumans = (multiplayerPlayers || []).filter(
                             (p) => !p.isAway && p.isHuman && !(p as RoomPlayer).isSpectator

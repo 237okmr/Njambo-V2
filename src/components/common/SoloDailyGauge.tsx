@@ -29,7 +29,7 @@ export const SoloDailyGauge: React.FC<SoloDailyGaugeProps> = ({ soloDaily, compa
       <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full border border-slate-800 bg-slate-950">
         <div
           className={`h-full rounded-full transition-all duration-500 ${
-            status.reached ? 'bg-rose-400' : 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-300'
+            status.reached ? 'bg-rose-400' : 'bg-gradient-to-r from-amber-500 via-amber-400 to-amber-300'
           }`}
           style={{ width: `${percent}%` }}
         />

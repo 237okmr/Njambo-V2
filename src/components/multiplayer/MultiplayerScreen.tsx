@@ -1311,13 +1311,9 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
         onBack={handleBack}
         backTitle={room ? 'Quitter la table' : 'Retour'}
         title={
-          room ? (
-            `Table #${room.id}`
-          ) : (
-            <span className="hidden min-[400px]:block text-xs sm:text-sm md:text-base font-black tracking-tight uppercase text-white truncate">
-              Multijoueur
-            </span>
-          )
+          <span className="hidden min-[400px]:block text-xs sm:text-sm md:text-base font-black tracking-tight uppercase text-white truncate">
+            {room ? `Table #${room.id}` : 'Multijoueur'}
+          </span>
         }
         subtitle={
           room
@@ -1455,7 +1451,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
 
           {/* Real-time Friend Acceptance Toast Banner in Lobby */}
           {friendAcceptedToast && (
-            <div className="p-3 rounded-2xl bg-gradient-to-r from-emerald-500/25 to-teal-500/25 border border-emerald-500/50 text-emerald-200 flex items-center justify-between gap-3 shadow-lg shadow-emerald-500/10 animate-in fade-in slide-in-from-top duration-300">
+            <div className="p-3 rounded-2xl bg-gradient-to-r from-emerald-500/25 to-emerald-500/25 border border-emerald-500/50 text-emerald-200 flex items-center justify-between gap-3 shadow-lg shadow-emerald-500/10 animate-in fade-in slide-in-from-top duration-300">
               <div className="flex items-center gap-2.5 min-w-0">
                 <PlayerAvatar
                   avatarId={(friendAcceptedToast.avatarId as any) || 'avatar_1'}
@@ -1619,7 +1615,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
           )}
 
           {/* Room Summary Card */}
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-850 border border-slate-800 shadow-xl flex flex-col gap-3">
+          <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-800 shadow-xl flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col items-center justify-center shrink-0">
@@ -1631,7 +1627,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                     <span className="text-sm font-black text-white truncate max-w-[140px]">
                       Table de {room.hostName}
                     </span>
-                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-slate-500/20 text-slate-300 border border-slate-500/30">
                       {room.isPublic !== false ? 'Public' : 'Privé'}
                     </span>
                     {/* Badge 100% Humains vs Mixte */}
@@ -1639,7 +1635,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                       className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${
                         !room.fillWithBots
                           ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                          : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40'
+                          : 'bg-slate-500/20 text-slate-300 border-slate-500/40'
                       }`}
                     >
                       {!room.fillWithBots ? '👥 100% Humains' : '🤖 Mode Mixte'}
@@ -1680,7 +1676,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                         <span>Prendre un siège 🪑</span>
                       </button>
                     ) : (
-                      <span className="h-10 px-3 rounded-xl text-[11px] font-bold bg-cyan-950/80 border border-cyan-500/30 text-cyan-300 flex items-center justify-center gap-1.5">
+                      <span className="h-10 px-3 rounded-xl text-[11px] font-bold bg-slate-950/80 border border-slate-500/30 text-slate-300 flex items-center justify-center gap-1.5">
                         <Eye className="w-3.5 h-3.5" />
                         <span>Observateur</span>
                       </span>
@@ -1839,11 +1835,11 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                     isLongWait
                       ? 'bg-amber-500/30 hover:bg-amber-500/40 text-amber-200 border-amber-500/60 animate-pulse'
                       : !isHost && room.botVotes?.includes(localPlayerId)
-                      ? 'bg-indigo-600/40 text-indigo-200 border-indigo-500/60'
-                      : 'bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border-indigo-500/40'
+                      ? 'bg-slate-600/40 text-slate-200 border-slate-500/60'
+                      : 'bg-slate-500/20 hover:bg-slate-500/30 text-slate-300 border-slate-500/40'
                   }`}
                 >
-                  <Bot className="w-3.5 h-3.5 text-indigo-400" />
+                  <Bot className="w-3.5 h-3.5 text-slate-400" />
                   <span>
                     {isHost
                       ? '+ Remplir avec des Bots'
@@ -1867,7 +1863,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                 </span>
               )}
               {room.enableUnder21 && (
-                <span className="px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-300 font-bold border border-blue-500/30">
+                <span className="px-2 py-0.5 rounded-md bg-slate-500/20 text-slate-300 font-bold border border-slate-500/30">
                   Moins de 21
                 </span>
               )}
@@ -2020,7 +2016,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                         <button
                           type="button"
                           onClick={() => onKickPlayer(p.id)}
-                          className="ml-1 text-slate-500 hover:text-red-400 p-1 rounded-full hover:bg-red-500/10 transition cursor-pointer"
+                          className="ml-1 text-slate-500 hover:text-rose-400 p-1 rounded-full hover:bg-rose-500/10 transition cursor-pointer"
                           title="Expulser ce joueur"
                         >
                           <X className="w-3.5 h-3.5" />
@@ -2036,7 +2032,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   className="p-3 rounded-2xl border border-dashed border-slate-800 bg-slate-900/30 flex items-center justify-between gap-3 text-slate-600"
                 >
                   <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-full border border-dashed border-slate-700 bg-slate-850 flex items-center justify-center text-slate-600 text-xs">
+                    <div className="w-9 h-9 rounded-full border border-dashed border-slate-700 bg-slate-800 flex items-center justify-center text-slate-600 text-xs">
                       👤
                     </div>
                     <div className="flex flex-col">
@@ -2046,7 +2042,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                       </span>
                     </div>
                   </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-850 text-slate-600 border border-slate-800">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-600 border border-slate-800">
                     Libre
                   </span>
                 </div>
@@ -2057,12 +2053,12 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
             {spectators.length > 0 && (
               <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800 flex flex-col gap-2 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-cyan-400 flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-slate-400 flex items-center gap-1.5">
                     <Eye className="w-3.5 h-3.5" />
                     <span>Observateurs en direct ({spectators.length})</span>
                   </span>
                   {isLocalSpectator && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-500/30">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-950 text-slate-300 border border-slate-500/30">
                       Tu es observateur
                     </span>
                   )}
@@ -2075,22 +2071,22 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                         key={`${spec.id}_${idx}`}
                         className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs ${
                           isMe
-                            ? 'bg-cyan-950/80 border border-cyan-500/40 text-cyan-200'
+                            ? 'bg-slate-950/80 border border-slate-500/40 text-slate-200'
                             : 'bg-slate-900 border border-slate-800 text-slate-300'
                         }`}
                       >
-                        <span className="w-2 h-2 rounded-full bg-cyan-400 shrink-0" />
+                        <span className="w-2 h-2 rounded-full bg-slate-400 shrink-0" />
                         <span className="font-semibold truncate max-w-[120px]">
                           {spec.name.replace(/\s*\(Obs\)$/, '')}
                         </span>
                         {isMe && (
-                          <span className="text-[9px] font-black text-cyan-300 uppercase">(Moi)</span>
+                          <span className="text-[9px] font-black text-slate-300 uppercase">(Moi)</span>
                         )}
                         {room.hostId === localPlayerId && !isMe && onKickPlayer && (
                           <button
                             type="button"
                             onClick={() => onKickPlayer(spec.id)}
-                            className="ml-1 text-slate-500 hover:text-red-400 p-0.5 rounded-full hover:bg-red-500/10 transition cursor-pointer"
+                            className="ml-1 text-slate-500 hover:text-rose-400 p-0.5 rounded-full hover:bg-rose-500/10 transition cursor-pointer"
                             title="Expulser cet observateur"
                           >
                             <X className="w-3 h-3" />
@@ -2136,7 +2132,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
         <main className="flex-1 overflow-y-auto no-scrollbar p-3.5 sm:p-6 max-w-lg mx-auto w-full flex flex-col gap-4">
           {/* Real-time Friend Acceptance Toast Banner in Hub */}
           {friendAcceptedToast && (
-            <div className="p-3 rounded-2xl bg-gradient-to-r from-emerald-500/25 to-teal-500/25 border border-emerald-500/50 text-emerald-200 flex items-center justify-between gap-3 shadow-lg shadow-emerald-500/10 animate-in fade-in slide-in-from-top duration-300">
+            <div className="p-3 rounded-2xl bg-gradient-to-r from-emerald-500/25 to-emerald-500/25 border border-emerald-500/50 text-emerald-200 flex items-center justify-between gap-3 shadow-lg shadow-emerald-500/10 animate-in fade-in slide-in-from-top duration-300">
               <div className="flex items-center gap-2.5 min-w-0">
                 <PlayerAvatar
                   avatarId={(friendAcceptedToast.avatarId as any) || 'avatar_1'}
@@ -2552,8 +2548,8 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
               {/* Public Rooms List */}
               {filteredRooms.length === 0 ? (
                 <div className="py-12 px-6 rounded-3xl bg-slate-900/40 border border-slate-800/80 flex flex-col items-center justify-center text-center gap-4 relative overflow-hidden">
-                  <div className="w-16 h-16 rounded-full bg-cyan-500/10 flex items-center justify-center mb-2">
-                    <Globe className="w-8 h-8 text-cyan-400 opacity-80" />
+                  <div className="w-16 h-16 rounded-full bg-slate-500/10 flex items-center justify-center mb-2">
+                    <Globe className="w-8 h-8 text-slate-400 opacity-80" />
                   </div>
                   <div className="flex flex-col gap-1">
                     <h3 className="text-sm font-black text-slate-200">Aucune table disponible</h3>
@@ -2612,8 +2608,8 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                               {/* Status Pill */}
                               {isPlaying ? (
                                 r.status === 'MANCHE_OVER' ? (
-                                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 flex items-center gap-1">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+                                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-500/20 text-slate-300 border border-slate-500/40 flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
                                     Fin de manche
                                   </span>
                                 ) : canReplaceBot ? (
@@ -2622,8 +2618,8 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                                     Place libre
                                   </span>
                                 ) : (
-                                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center gap-1">
-                                    <Eye className="w-2.5 h-2.5 text-cyan-300" />
+                                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-500/20 text-slate-300 border border-slate-500/40 flex items-center gap-1">
+                                    <Eye className="w-2.5 h-2.5 text-slate-300" />
                                     En direct
                                   </span>
                                 )
@@ -2638,7 +2634,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                                 className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${
                                   !r.fillWithBots
                                     ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                                    : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40'
+                                    : 'bg-slate-500/20 text-slate-300 border-slate-500/40'
                                 }`}
                               >
                                 {!r.fillWithBots ? '👥 Humains' : '🤖 Mixte'}
@@ -2666,7 +2662,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                                 {Boolean(r.spectatorsCount) && (
                                   <>
                                     <span>·</span>
-                                    <span className="text-cyan-400">{r.spectatorsCount} spectateur(s)</span>
+                                    <span className="text-slate-400">{r.spectatorsCount} spectateur(s)</span>
                                   </>
                                 )}
                               </>
@@ -2678,7 +2674,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                               </>
                             )}
                             {r.enableDoubleKora && <span>· <span className="text-emerald-400 font-bold">Double Kora</span></span>}
-                            {r.enableUnder21 && <span>· <span className="text-blue-400 font-bold">Moins de 21</span></span>}
+                            {r.enableUnder21 && <span>· <span className="text-slate-400 font-bold">Moins de 21</span></span>}
                           </div>
 
                           {/* Host absent detailed timestamp subtitle */}
@@ -2700,9 +2696,9 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                               isLobbyFull
                                 ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
                                 : isPlaying && canReplaceBot
-                                ? 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 shadow-md shadow-emerald-500/20'
+                                ? 'bg-gradient-to-r from-emerald-500 to-emerald-500 hover:from-emerald-400 hover:to-emerald-400 text-slate-950 shadow-md shadow-emerald-500/20'
                                 : isPlaying
-                                ? 'bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30'
+                                ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-500/30'
                                 : 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20'
                             }`}
                           >
@@ -2987,15 +2983,15 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                         } else if (status === 'IN_LOBBY') {
                           const opps = summary?.opponentNames && summary.opponentNames.length > 0 ? ` avec ${summary.opponentNames.slice(0, 2).join(', ')}` : '';
                           badgeText = `🔵 En Salon${opps} (${currentRoomCode ? `#${currentRoomCode}` : 'Privé'})`;
-                          badgeStyle = 'bg-sky-500/15 text-sky-300 border-sky-500/30';
-                          dotStyle = 'bg-sky-400';
+                          badgeStyle = 'bg-slate-500/15 text-slate-300 border-slate-500/30';
+                          dotStyle = 'bg-slate-400';
                         } else if (status === 'IN_GAME') {
                           const opps = summary?.opponentNames && summary.opponentNames.length > 0
                             ? ` contre ${summary.opponentNames.slice(0, 2).join(', ')}${summary.opponentNames.length > 2 ? ' +' + (summary.opponentNames.length - 2) : ''}`
                             : '';
                           badgeText = `🟣 En jeu${opps} (${currentRoomCode ? `#${currentRoomCode}` : 'En cours'})`;
-                          badgeStyle = 'bg-purple-500/15 text-purple-300 border-purple-500/30 font-extrabold';
-                          dotStyle = 'bg-purple-400';
+                          badgeStyle = 'bg-slate-500/15 text-slate-300 border-slate-500/30 font-extrabold';
+                          dotStyle = 'bg-slate-400';
                         }
 
                         const canJoinRoom = (status === 'IN_LOBBY' || status === 'IN_GAME') && Boolean(currentRoomCode);
@@ -3077,7 +3073,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                                 <button
                                   type="button"
                                   onClick={() => handleChallengeFriend({ id: friendId, name: friendName, avatarSeed: friendAvatar }, 'IN_SOLO')}
-                                  className="h-8 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 text-slate-950 text-xs font-black flex items-center gap-1 shadow-sm transition active:scale-95 cursor-pointer"
+                                  className="h-8 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-500 hover:from-amber-400 text-slate-950 text-xs font-black flex items-center gap-1 shadow-sm transition active:scale-95 cursor-pointer"
                                   title="Inviter directement : Sa partie Solo sera sauvegardée s'il accepte !"
                                 >
                                   <Swords className="w-3.5 h-3.5" />
@@ -3091,7 +3087,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                                   onClick={() => handleJoin(currentRoomCode!)}
                                   className={`h-8 px-3 rounded-xl text-xs font-black flex items-center gap-1 shadow-sm transition active:scale-95 cursor-pointer ${
                                     canReplaceBot
-                                      ? 'bg-gradient-to-r from-teal-400 to-emerald-500 hover:from-teal-300 text-slate-950'
+                                      ? 'bg-gradient-to-r from-emerald-400 to-emerald-500 hover:from-emerald-300 text-slate-950'
                                       : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950'
                                   }`}
                                 >
@@ -3113,7 +3109,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                                 <button
                                   type="button"
                                   onClick={() => handleChallengeFriend({ id: friendId, name: friendName, avatarSeed: friendAvatar }, 'IN_GAME')}
-                                  className="h-8 px-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1 shadow-sm transition active:scale-95 cursor-pointer"
+                                  className="h-8 px-2.5 rounded-xl bg-slate-600 hover:bg-slate-500 text-white text-xs font-bold flex items-center gap-1 shadow-sm transition active:scale-95 cursor-pointer"
                                   title="Table complète : Envoyer une invitation pour la partie suivante"
                                 >
                                   <Mail className="w-3.5 h-3.5" />
@@ -3628,7 +3624,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                     onClick={() => setIsPublicRoom(true)}
                     className={`h-9 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 cursor-pointer transition ${
                       isPublicRoom
-                        ? 'bg-blue-500/20 text-blue-300 border-blue-500/40 shadow-sm'
+                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
                         : 'bg-slate-950 text-slate-400 border-slate-800'
                     }`}
                   >
@@ -3789,7 +3785,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                 <div className="flex items-center justify-between p-2 rounded-xl bg-slate-950/70 border border-slate-800/70">
                   <div className="flex flex-col min-w-0 pr-1">
                     <span className="text-[11px] font-bold text-white truncate">Moins de 21</span>
-                    <span className="text-[9px] text-blue-400 font-bold">≤ 21 victoire</span>
+                    <span className="text-[9px] text-slate-400 font-bold">≤ 21 victoire</span>
                   </div>
                   <button
                     type="button"
@@ -3833,7 +3829,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   id="btn-confirm-create-room"
                   disabled={isLoading}
                   onClick={() => handleCreate()}
-                  className="w-full h-13 sm:h-14 rounded-2xl bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-400 hover:from-emerald-300 hover:via-emerald-400 hover:to-teal-300 text-slate-950 font-black text-xs sm:text-sm tracking-wide transition-all duration-150 active:scale-[0.98] cursor-pointer shadow-[0_6px_25px_-2px_rgba(16,185,129,0.55)] hover:shadow-[0_8px_30px_rgba(16,185,129,0.7)] border-t border-emerald-200/60 border-b-2 border-emerald-700/50 flex items-center justify-between px-4 sm:px-5 disabled:opacity-50 mt-1 group"
+                  className="w-full h-13 sm:h-14 rounded-2xl bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-400 hover:from-emerald-300 hover:via-emerald-400 hover:to-emerald-300 text-slate-950 font-black text-xs sm:text-sm tracking-wide transition-all duration-150 active:scale-[0.98] cursor-pointer shadow-[0_6px_25px_-2px_rgba(16,185,129,0.55)] hover:shadow-[0_8px_30px_rgba(16,185,129,0.7)] border-t border-emerald-200/60 border-b-2 border-emerald-700/50 flex items-center justify-between px-4 sm:px-5 disabled:opacity-50 mt-1 group"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className="w-8 h-8 rounded-xl bg-slate-950/15 flex items-center justify-center shrink-0 group-hover:scale-105 transition">

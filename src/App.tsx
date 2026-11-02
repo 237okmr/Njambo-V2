@@ -2430,12 +2430,12 @@ function GameApp() {
                 {/* Bottom Section: Human Hand / Spectator Console */}
                 <div className="flex flex-col gap-1 shrink-0">
                   {isOnlineSpectator && activeGameState.phase !== 'MANCHE_OVER' ? (
-                    <div id="multiplayer-spectator-panel" className="w-full bg-slate-900 border-t border-cyan-500/30 px-3 sm:px-6 py-3.5 relative flex flex-col items-center justify-center gap-2.5 shadow-2xl z-30 transition-all duration-300 rounded-2xl">
+                    <div id="multiplayer-spectator-panel" className="w-full bg-slate-900 border-t border-slate-500/30 px-3 sm:px-6 py-3.5 relative flex flex-col items-center justify-center gap-2.5 shadow-2xl z-30 transition-all duration-300 rounded-2xl">
                       <div className="flex flex-wrap items-center justify-between w-full gap-2 border-b border-slate-800/80 pb-2">
-                        <div className="flex items-center gap-2 text-cyan-400 font-bold text-xs sm:text-sm tracking-wide">
-                          <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse" />
+                        <div className="flex items-center gap-2 text-slate-400 font-bold text-xs sm:text-sm tracking-wide">
+                          <span className="w-2.5 h-2.5 rounded-full bg-slate-400 animate-pulse" />
                           <span>Mode Spectateur en direct</span>
-                          <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-500/40">
+                          <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-950 text-slate-300 border border-slate-500/40">
                             Table #{multiplayerRoom?.id}
                           </span>
                         </div>
@@ -2528,10 +2528,10 @@ function GameApp() {
                       </div>
                     </div>
                   ) : !isOnlineActive && currentHumanPlayer.isEliminated && activeGameState.phase !== 'MANCHE_OVER' ? (
-                    <div id="spectator-simulation-panel" className="w-full bg-slate-900 border-t border-red-500/30 px-3 sm:px-8 py-4 sm:py-6 relative flex flex-col items-center justify-center gap-3 shadow-2xl z-30 transition-all duration-300 rounded-xl">
+                    <div id="spectator-simulation-panel" className="w-full bg-slate-900 border-t border-rose-500/30 px-3 sm:px-8 py-4 sm:py-6 relative flex flex-col items-center justify-center gap-3 shadow-2xl z-30 transition-all duration-300 rounded-xl">
                       <div className="flex flex-col items-center text-center gap-1.5">
-                        <div className="flex items-center gap-2 text-red-400 font-bold text-xs sm:text-sm tracking-wide uppercase">
-                          <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                        <div className="flex items-center gap-2 text-rose-400 font-bold text-xs sm:text-sm tracking-wide uppercase">
+                          <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
                           Mode Spectateur
                         </div>
                         <p className="text-sm sm:text-base text-slate-100 font-medium">
@@ -2549,7 +2549,7 @@ function GameApp() {
                           sounds.playShuffle();
                           simulateToEnd();
                         }}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg transition-all duration-150 transform active:scale-95"
+                        className="flex items-center gap-2 px-5 py-2.5 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg transition-all duration-150 transform active:scale-95"
                       >
                         <FastForward className="w-4 h-4" />
                         Simuler le reste de la partie
@@ -2669,7 +2669,7 @@ function GameApp() {
                         className={`flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl font-black text-xs transition-all shadow-md flex-1 ${
                           hasDeclaredKoraInPartie
                             ? 'bg-amber-950/80 text-amber-300/80 border border-amber-500/40 cursor-default'
-                            : 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 border border-yellow-200 shadow-amber-500/30 active:scale-95 cursor-pointer animate-pulse'
+                            : 'bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 border border-amber-200 shadow-amber-500/30 active:scale-95 cursor-pointer animate-pulse'
                         }`}
                         title={
                           hasDeclaredKoraInPartie
@@ -2741,7 +2741,7 @@ function GameApp() {
                         </li>
                         <li className="flex items-start gap-2">
                           <span className="text-rose-400 font-bold">•</span>
-                          <span>Toutes les pénalités de fin de partie (<strong className="text-slate-200">Victoire simple</strong>, <strong className="text-amber-300">Kora ×2</strong> ou <strong className="text-orange-400">Double Kora ×4</strong>) restent exigibles et seront reversées au vainqueur.</span>
+                          <span>Toutes les pénalités de fin de partie (<strong className="text-slate-200">Victoire simple</strong>, <strong className="text-amber-300">Kora ×2</strong> ou <strong className="text-amber-400">Double Kora ×4</strong>) restent exigibles et seront reversées au vainqueur.</span>
                         </li>
                         <li className="flex items-start gap-2">
                           <span className="text-emerald-400 font-bold">•</span>

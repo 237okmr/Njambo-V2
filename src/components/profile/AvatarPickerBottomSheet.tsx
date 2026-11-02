@@ -124,7 +124,7 @@ export const AvatarPickerBottomSheet: React.FC<AvatarPickerBottomSheetProps> = (
                   className={`group relative flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-xl border transition-all duration-150 cursor-pointer active:scale-95 ${
                     isSelected
                       ? 'bg-amber-500/20 border-amber-400 shadow-lg ring-2 ring-amber-400/40 scale-[1.02]'
-                      : 'bg-slate-950/80 border-slate-800 hover:border-slate-700 hover:bg-slate-850'
+                      : 'bg-slate-950/80 border-slate-800 hover:border-slate-700 hover:bg-slate-800'
                   }`}
                   title={opt.description}
                 >

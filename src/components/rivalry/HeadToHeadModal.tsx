@@ -178,7 +178,7 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                         <PlayerAvatar
                           avatarId={(opponent.avatarId || opponent.avatarSeed || 'avatar_1') as any}
                           size="md"
-                          className="w-12 h-12 rounded-2xl ring-2 ring-sky-500/40"
+                          className="w-12 h-12 rounded-2xl ring-2 ring-slate-500/40"
                         />
                         {!isLeading && !isTied && totalMatches > 0 && (
                           <span className="absolute -top-2 -right-1 bg-amber-500 text-slate-950 p-1 rounded-full text-[10px] shadow-md">
@@ -189,7 +189,7 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                       <span className="text-xs font-black text-white truncate max-w-[110px]">
                         {opponent.name}
                       </span>
-                      <span className="text-xl sm:text-2xl font-black text-sky-400 font-mono">
+                      <span className="text-xl sm:text-2xl font-black text-slate-400 font-mono">
                         {oppWins}
                       </span>
                       <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
@@ -203,7 +203,7 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                     <div className="flex flex-col gap-1 mt-1">
                       <div className="flex items-center justify-between text-[10px] font-bold">
                         <span className="text-emerald-400">{playerWinPercent}% domination</span>
-                        <span className="text-sky-400">{oppWinPercent}%</span>
+                        <span className="text-slate-400">{oppWinPercent}%</span>
                       </div>
                       <div className="w-full h-2 rounded-full bg-slate-950 overflow-hidden flex">
                         <div
@@ -211,7 +211,7 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                           style={{ width: `${playerWinPercent}%` }}
                         />
                         <div
-                          className="h-full bg-sky-500 transition-all duration-500"
+                          className="h-full bg-slate-500 transition-all duration-500"
                           style={{ width: `${oppWinPercent}%` }}
                         />
                       </div>
@@ -270,7 +270,7 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                   {/* Average Tricks */}
                   <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800 flex flex-col gap-1">
                     <div className="flex items-center gap-1.5 text-slate-400">
-                      <TrendingUp className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                      <TrendingUp className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                       <span className="text-[10px] font-bold uppercase tracking-wider">Moyenne de Plis</span>
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
@@ -278,7 +278,7 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                         {stats?.playerAvgTricks || 0} / partie
                       </span>
                       <span className="text-[10px] text-slate-500">vs</span>
-                      <span className="text-xs font-black text-sky-400 font-mono">
+                      <span className="text-xs font-black text-slate-400 font-mono">
                         {stats?.opponentAvgTricks || 0}
                       </span>
                     </div>
@@ -335,13 +335,13 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                           winBadgeClass = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
                         } else if (m.winType === 'KORA') {
                           winLabel = '⚡ Kora';
-                          winBadgeClass = 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40';
+                          winBadgeClass = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
                         } else if (m.winType === 'THREE_SEVENS') {
                           winLabel = '🃏 3 Septs';
-                          winBadgeClass = 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40';
+                          winBadgeClass = 'bg-slate-500/20 text-slate-300 border-slate-500/40';
                         } else if (m.winType === 'UNDER_21') {
                           winLabel = '🛡️ < 21 Pts';
-                          winBadgeClass = 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40';
+                          winBadgeClass = 'bg-slate-500/20 text-slate-300 border-slate-500/40';
                         }
 
                         return (

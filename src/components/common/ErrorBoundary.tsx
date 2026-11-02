@@ -39,12 +39,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     if (this.state.hasError) {
       const isModal = Boolean(this.props.onClose);
       const content = (
-        <div className="p-6 rounded-2xl bg-slate-900 border border-red-500/40 text-slate-100 max-w-lg w-full mx-auto my-6 shadow-2xl space-y-4 text-center">
-          <div className="w-12 h-12 mx-auto rounded-full bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-400">
+        <div className="p-6 rounded-2xl bg-slate-900 border border-rose-500/40 text-slate-100 max-w-lg w-full mx-auto my-6 shadow-2xl space-y-4 text-center">
+          <div className="w-12 h-12 mx-auto rounded-full bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400">
             <AlertTriangle className="w-6 h-6" />
           </div>
           <div className="space-y-1">
-            <h3 className="text-base font-bold text-red-300">
+            <h3 className="text-base font-bold text-rose-300">
               {this.props.fallbackTitle || 'Une erreur est survenue'}
             </h3>
             <p className="text-xs text-slate-400 leading-relaxed">
@@ -52,7 +52,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 'Impossible de charger ce composant. Tes données locales sont sécurisées.'}
             </p>
             {this.state.error && (
-              <div className="mt-2 p-2 bg-slate-950/80 rounded-lg border border-red-900/50 text-left overflow-x-auto max-h-32 text-[10px] font-mono text-red-300">
+              <div className="mt-2 p-2 bg-slate-950/80 rounded-lg border border-rose-900/50 text-left overflow-x-auto max-h-32 text-[10px] font-mono text-rose-300">
                 <p className="font-bold">{this.state.error.name}: {this.state.error.message}</p>
                 {this.state.error.stack && (
                   <p className="text-slate-500 mt-1 whitespace-pre-wrap">{this.state.error.stack.slice(0, 300)}</p>

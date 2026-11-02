@@ -47,7 +47,7 @@ const DisconnectCountdown: React.FC<{ expiresAt: number }> = ({ expiresAt }) => 
     return () => clearInterval(timer);
   }, [expiresAt]);
 
-  return <span className="text-red-400 font-bold">{timeLeft}s</span>;
+  return <span className="text-rose-400 font-bold">{timeLeft}s</span>;
 };
 
 export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
@@ -322,7 +322,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
 
                     <div className="flex items-center gap-1 shrink-0">
                       {player.connected === false && player.disconnectGraceExpiresAt ? (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/40 flex items-center gap-1">
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1">
                           Déconnecté (<DisconnectCountdown expiresAt={player.disconnectGraceExpiresAt} />)
                         </span>
                       ) : player.isHost ? (
@@ -345,7 +345,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                             triggerHaptic();
                             onKickPlayer(player.id);
                           }}
-                          className="ml-1 text-slate-500 hover:text-red-400 p-1 rounded-lg hover:bg-red-500/10 transition cursor-pointer"
+                          className="ml-1 text-slate-500 hover:text-rose-400 p-1 rounded-lg hover:bg-rose-500/10 transition cursor-pointer"
                           title="Expulser ce joueur"
                         >
                           <X className="w-3.5 h-3.5" />
@@ -364,7 +364,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                 >
                   <div className="w-8 h-8 rounded-full border border-dashed border-slate-700 flex items-center justify-center text-xs shrink-0">
                     {room.fillWithBots ? (
-                      <Users className="w-3.5 h-3.5 text-blue-400/60" />
+                      <Users className="w-3.5 h-3.5 text-slate-400/60" />
                     ) : (
                       <span>{seatIdx + 1}</span>
                     )}
@@ -386,11 +386,11 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
           {spectators.length > 0 && (
             <div className="mt-1 p-2 rounded-xl bg-slate-950/50 border border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
               <span className="flex items-center gap-1.5 text-[11px]">
-                <span className="w-2 h-2 rounded-full bg-blue-400" />
+                <span className="w-2 h-2 rounded-full bg-slate-400" />
                 Spectateurs ({spectators.length}) : {spectators.map((s) => s.name).join(', ')}
               </span>
               {isLocalSpectator && (
-                <span className="text-[10px] text-blue-300 font-bold">
+                <span className="text-[10px] text-slate-300 font-bold">
                   Tu observes ce salon
                 </span>
               )}
@@ -406,13 +406,13 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
             <Timer className="w-3 h-3 text-amber-400" />
             {currentTimer > 0 ? `${currentTimer}s` : '∞'}
           </span>
-          <span className="text-indigo-300 font-semibold flex items-center gap-1" title="Délai avant qu'un relais joue à la place d'un joueur déconnecté">
+          <span className="text-slate-300 font-semibold flex items-center gap-1" title="Délai avant qu'un relais joue à la place d'un joueur déconnecté">
             <span>⏳ Grâce:</span>
-            <b className="text-indigo-200">{getPublicParamNumber('aiRelayGraceSeconds')}s</b>
+            <b className="text-slate-200">{getPublicParamNumber('aiRelayGraceSeconds')}s</b>
           </span>
           {room.enableDoubleKora && (
-            <span className="text-purple-300 font-bold flex items-center gap-0.5">
-              <Zap className="w-3 h-3 text-yellow-300" /> Double Kora
+            <span className="text-slate-300 font-bold flex items-center gap-0.5">
+              <Zap className="w-3 h-3 text-amber-300" /> Double Kora
             </span>
           )}
           {room.enableUnder21 && (
@@ -483,7 +483,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                       onClick={() => onUpdateSettings({ enableDoubleKora: !room.enableDoubleKora })}
                       className={`px-2 py-0.5 rounded text-[10px] font-bold border transition ${
                         room.enableDoubleKora
-                          ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 font-black'
+                          ? 'bg-slate-500/20 text-slate-300 border-slate-500/40 font-black'
                           : 'bg-slate-900 text-slate-500 border-slate-800'
                       }`}
                       title="Double Kora : gain x4 si tours 4 & 5 remportés avec un 3"
@@ -509,7 +509,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                   onClick={() => onToggleFillWithBots(!room.fillWithBots)}
                   className={`px-2 py-0.5 rounded text-[10px] font-bold border transition ${
                     room.fillWithBots
-                      ? 'bg-blue-500/20 text-blue-300 border-blue-500/40 font-black'
+                      ? 'bg-slate-500/20 text-slate-300 border-slate-500/40 font-black'
                       : 'bg-slate-900 text-slate-400 border-slate-800'
                   }`}
                 >
@@ -593,8 +593,8 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                   <span>Prendre place à la table (Siège disponible 🪑)</span>
                 </button>
               ) : (
-                <div className="w-full py-2.5 px-4 rounded-xl bg-cyan-950/80 border border-cyan-500/40 text-cyan-200 text-xs font-bold text-center flex items-center justify-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                <div className="w-full py-2.5 px-4 rounded-xl bg-slate-950/80 border border-slate-500/40 text-slate-200 text-xs font-bold text-center flex items-center justify-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-slate-400 animate-pulse" />
                   <span>Table complète · Tu observes ce salon (Place attribuée dès qu'un joueur quitte)</span>
                 </div>
               )
@@ -657,11 +657,11 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
               <button
                 type="button"
                 onClick={onVoteStartWithBots}
-                className="w-full py-2 px-3 rounded-lg bg-blue-950/60 hover:bg-blue-900/60 border border-blue-600/40 text-blue-200 text-xs font-bold transition flex items-center justify-center gap-1.5"
+                className="w-full py-2 px-3 rounded-lg bg-slate-950/60 hover:bg-slate-900/60 border border-slate-600/40 text-slate-200 text-xs font-bold transition flex items-center justify-center gap-1.5"
               >
                 <span>👥 Voter pour compléter la table avec des virtuels</span>
                 {room.botVotes && room.botVotes.length > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-full bg-blue-500 text-slate-950 font-black text-[10px]">
+                  <span className="px-1.5 py-0.2 rounded-full bg-slate-500 text-slate-950 font-black text-[10px]">
                     {room.botVotes.length}/{Math.ceil(room.players.filter((p) => p.isHuman).length / 2)}
                   </span>
                 )}

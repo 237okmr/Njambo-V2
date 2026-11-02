@@ -110,11 +110,11 @@ export const IntegrationProposalWidget: React.FC<IntegrationProposalWidgetProps>
           initial={{ opacity: 0, y: -10, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -10, scale: 0.95 }}
-          className="flex flex-col gap-1.5 px-3.5 py-2.5 rounded-2xl bg-indigo-950/95 border border-indigo-500/80 text-indigo-100 shadow-2xl backdrop-blur-md ring-2 ring-indigo-400/30"
+          className="flex flex-col gap-1.5 px-3.5 py-2.5 rounded-2xl bg-slate-950/95 border border-slate-500/80 text-slate-100 shadow-2xl backdrop-blur-md ring-2 ring-slate-400/30"
         >
           <div className="flex items-center gap-2.5">
-            <div className="p-1.5 rounded-xl bg-indigo-500/20 text-indigo-300 shrink-0">
-              <UserPlus className="w-4 h-4 text-indigo-300 animate-pulse" />
+            <div className="p-1.5 rounded-xl bg-slate-500/20 text-slate-300 shrink-0">
+              <UserPlus className="w-4 h-4 text-slate-300 animate-pulse" />
             </div>
 
             <div className="flex flex-col min-w-0 flex-1 pr-1">
@@ -122,12 +122,12 @@ export const IntegrationProposalWidget: React.FC<IntegrationProposalWidgetProps>
                 <span className="text-xs font-bold leading-tight truncate">
                   Intégrer <strong className="text-amber-300">{proposal.applicantName}</strong> ?
                 </span>
-                <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-indigo-900 border border-indigo-400/40 text-amber-300 shrink-0 flex items-center gap-1">
+                <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-900 border border-slate-400/40 text-amber-300 shrink-0 flex items-center gap-1">
                   <Clock className="w-2.5 h-2.5 animate-spin" />
                   <span>{remainingSec}s</span>
                 </span>
               </div>
-              <span className="text-[10px] text-indigo-200/80 mt-0.5">
+              <span className="text-[10px] text-slate-200/80 mt-0.5">
                 Capital : {proposal.prorataCapital} 🪙 · {proposal.targetBotNameToReplace ? `Remplace ${proposal.targetBotNameToReplace}` : 'Place libre'} (Majorité : {agreedCount}/{totalEligible})
               </span>
             </div>
@@ -175,9 +175,9 @@ export const IntegrationProposalWidget: React.FC<IntegrationProposalWidgetProps>
           </div>
 
           {/* Progress bar of time remaining */}
-          <div className="w-full bg-indigo-900/60 h-1 rounded-full overflow-hidden">
+          <div className="w-full bg-slate-900/60 h-1 rounded-full overflow-hidden">
             <div
-              className="bg-gradient-to-r from-amber-400 to-indigo-400 h-full transition-all duration-300 ease-linear"
+              className="bg-gradient-to-r from-amber-400 to-slate-400 h-full transition-all duration-300 ease-linear"
               style={{ width: `${Math.max(0, Math.min(100, (remainingMs / 10000) * 100))}%` }}
             />
           </div>

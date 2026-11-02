@@ -163,9 +163,9 @@ const TONE_STYLES: Record<NotificationTone, { box: string; icon: string; title: 
     title: 'text-amber-300',
   },
   private: {
-    box: 'bg-purple-950/95 border-purple-500/50 text-purple-100',
-    icon: 'bg-purple-500/20 text-purple-300',
-    title: 'text-purple-300',
+    box: 'bg-slate-950/95 border-slate-500/50 text-slate-100',
+    icon: 'bg-slate-500/20 text-slate-300',
+    title: 'text-slate-300',
   },
 };
 

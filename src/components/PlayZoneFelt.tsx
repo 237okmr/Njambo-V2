@@ -164,9 +164,9 @@ export const PlayZoneFelt: React.FC<PlayZoneFeltProps> = ({
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="flex items-center gap-1 bg-purple-950 border border-purple-400 px-2.5 py-0.5 rounded-full text-purple-200 text-[10px] sm:text-[11px] font-black shadow-lg animate-pulse"
+            className="flex items-center gap-1 bg-slate-950 border border-slate-400 px-2.5 py-0.5 rounded-full text-slate-200 text-[10px] sm:text-[11px] font-black shadow-lg animate-pulse"
           >
-            <Zap className="w-3.5 h-3.5 text-yellow-300 fill-yellow-300" />
+            <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
             <span className="sm:hidden">⚡ DOUBLE KORA (x4) !</span>
             <span className="hidden sm:inline">⚡ DOUBLE KORA DÉCLENCHÉ (MISES x4) !</span>
           </motion.div>
@@ -174,9 +174,9 @@ export const PlayZoneFelt: React.FC<PlayZoneFeltProps> = ({
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="flex items-center gap-1 bg-purple-950 border border-purple-400 px-2.5 py-0.5 rounded-full text-purple-200 text-[10px] sm:text-[11px] font-bold shadow"
+            className="flex items-center gap-1 bg-slate-950 border border-slate-400 px-2.5 py-0.5 rounded-full text-slate-200 text-[10px] sm:text-[11px] font-bold shadow"
           >
-            <Zap className="w-3.5 h-3.5 text-yellow-300 fill-yellow-300" />
+            <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
             <span className="sm:hidden">⚡ {trick4WinnerWithThreeName.split(' ')[0]} : '3' au Tour 4 → Double Kora possible</span>
             <span className="hidden sm:inline">⚡ {trick4WinnerWithThreeName.split(' ')[0]} a pris le Tour 4 au '3' — Victoire au '3' au Tour 5 = Double Kora (x4) !</span>
           </motion.div>
@@ -291,7 +291,7 @@ export const PlayZoneFelt: React.FC<PlayZoneFeltProps> = ({
                   <div className="absolute inset-0 overflow-hidden pointer-events-none z-20">
                     <div className="w-full h-1 bg-gradient-to-r from-transparent via-rose-500 via-amber-300 to-transparent shadow-[0_0_12px_rgba(244,63,94,0.9)] animate-cut-slash" />
                   </div>
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-rose-600 to-amber-600 text-white px-2 py-0.5 rounded-full text-[8px] sm:text-[9px] font-black uppercase shadow-lg border border-yellow-300 flex items-center gap-1 z-30 animate-cut-badge">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-rose-600 to-amber-600 text-white px-2 py-0.5 rounded-full text-[8px] sm:text-[9px] font-black uppercase shadow-lg border border-amber-300 flex items-center gap-1 z-30 animate-cut-badge">
                     <Scissors className="w-2.5 h-2.5" />
                     <span>COUPÉ !</span>
                   </div>
@@ -323,19 +323,19 @@ export const PlayZoneFelt: React.FC<PlayZoneFeltProps> = ({
             className={`absolute inset-0 z-40 backdrop-blur-md flex flex-col items-center justify-between p-2.5 sm:p-3.5 border-2 text-center shadow-2xl ${
               instantWinReveal.winType === 'UNDER_21'
                 ? 'bg-emerald-950/95 border-emerald-400 shadow-emerald-500/30'
-                : 'bg-amber-950/95 border-yellow-400 shadow-yellow-500/30'
+                : 'bg-amber-950/95 border-amber-400 shadow-amber-500/30'
             }`}
           >
             {/* Header info */}
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-1.5">
                 <div className={`w-6 h-6 rounded-full flex items-center justify-center shadow font-bold ${
-                  instantWinReveal.winType === 'UNDER_21' ? 'bg-emerald-400 text-slate-950' : 'bg-yellow-400 text-slate-950'
+                  instantWinReveal.winType === 'UNDER_21' ? 'bg-emerald-400 text-slate-950' : 'bg-amber-400 text-slate-950'
                 }`}>
                   <Sparkles className="w-3.5 h-3.5" />
                 </div>
                 <span className={`text-xs sm:text-sm font-black uppercase tracking-wide ${
-                  instantWinReveal.winType === 'UNDER_21' ? 'text-emerald-300' : 'text-yellow-300'
+                  instantWinReveal.winType === 'UNDER_21' ? 'text-emerald-300' : 'text-amber-300'
                 }`}>
                   {instantWinReveal.winType === 'UNDER_21' ? '🎯 RÈGLE : MOINS DE 21 (Somme ≤ 21)' : '🃏 RÈGLE : TROIS SEPTS (777)'}
                 </span>
@@ -392,7 +392,7 @@ export const PlayZoneFelt: React.FC<PlayZoneFeltProps> = ({
               {instantWinReveal.winType === 'UNDER_21' ? (
                 <span>Total de la main = <b className="text-emerald-300">{instantWinReveal.scoreOrCount} pts</b> (≤ 21) · Victoire automatique !</span>
               ) : (
-                <span>Contient <b className="text-yellow-300">3x cartes Sept (7)</b> · Victoire automatique !</span>
+                <span>Contient <b className="text-amber-300">3x cartes Sept (7)</b> · Victoire automatique !</span>
               )}
             </div>
           </motion.div>
@@ -441,29 +441,29 @@ export const PlayZoneFelt: React.FC<PlayZoneFeltProps> = ({
             animate={{ scale: 1, opacity: 1, rotate: 0 }}
             exit={{ scale: 0.8, opacity: 0 }}
             transition={{ type: 'spring', damping: 14, stiffness: 220 }}
-            className="absolute inset-0 z-30 bg-amber-950/95 backdrop-blur-sm flex flex-col items-center justify-center p-3 border-2 border-yellow-400 text-center"
+            className="absolute inset-0 z-30 bg-amber-950/95 backdrop-blur-sm flex flex-col items-center justify-center p-3 border-2 border-amber-400 text-center"
           >
             <motion.div
               animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.15, 1] }}
               transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-              className="w-11 h-11 rounded-full bg-yellow-400 text-slate-950 flex items-center justify-center mb-1.5 shadow-xl shadow-yellow-500/50"
+              className="w-11 h-11 rounded-full bg-amber-400 text-slate-950 flex items-center justify-center mb-1.5 shadow-xl shadow-amber-500/50"
             >
               <Sparkles className="w-6 h-6" />
             </motion.div>
-            <div className="text-xl sm:text-2xl font-black tracking-wider text-yellow-300 drop-shadow-[0_2px_10px_rgba(234,179,8,0.8)] uppercase">
+            <div className="text-xl sm:text-2xl font-black tracking-wider text-amber-300 drop-shadow-[0_2px_10px_rgba(234,179,8,0.8)] uppercase">
               TROIS 7 !
             </div>
             
             {winnerName && (
-              <div className="mt-1 flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950/90 border border-yellow-400/80 shadow-md">
-                <Crown className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
-                <span className="text-xs sm:text-sm font-black text-yellow-300">
+              <div className="mt-1 flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950/90 border border-amber-400/80 shadow-md">
+                <Crown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span className="text-xs sm:text-sm font-black text-amber-300">
                   Gagnant : {winnerName}
                 </span>
               </div>
             )}
 
-            <div className="text-[11px] sm:text-xs font-semibold text-yellow-100 mt-1">
+            <div className="text-[11px] sm:text-xs font-semibold text-amber-100 mt-1">
               Trois "7" dans la main · Victoire Instantanée !
             </div>
           </motion.div>

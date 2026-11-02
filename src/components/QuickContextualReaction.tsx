@@ -173,7 +173,7 @@ export const QuickContextualReaction: React.FC<QuickContextualReactionProps> = (
         disabled
           ? 'opacity-50 cursor-not-allowed bg-slate-800 text-slate-500 border border-slate-700'
           : isContextual
-          ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-slate-950 border border-amber-300 shadow-amber-500/20 animate-pulse'
+          ? 'bg-gradient-to-r from-amber-500 via-amber-500 to-amber-600 text-slate-950 border border-amber-300 shadow-amber-500/20 animate-pulse'
           : 'bg-slate-800 hover:bg-amber-950/50 text-amber-300 hover:text-amber-200 border border-amber-500/30 hover:border-amber-400/60'
       }`}
       title={`Réplique rapide 1-tap : ${currentText}`}

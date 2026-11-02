@@ -310,7 +310,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
             <span className="px-1 py-0.2 rounded bg-amber-500/10 text-amber-400 text-[7px] font-black border border-amber-500/20 whitespace-nowrap">
               👑 {player.koraCount} K.
             </span>
-            <span className="px-1 py-0.2 rounded bg-cyan-500/10 text-cyan-400 text-[7px] font-black border border-cyan-500/20 whitespace-nowrap">
+            <span className="px-1 py-0.2 rounded bg-slate-500/10 text-slate-400 text-[7px] font-black border border-slate-500/20 whitespace-nowrap">
               💎 {player.doubleKoraCount} D.
             </span>
           </div>
@@ -401,7 +401,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
             <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded bg-amber-500/10 text-amber-400 text-[8px] font-bold border border-amber-500/20 whitespace-nowrap">
               👑 {player.koraCount} K.
             </span>
-            <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded bg-cyan-500/10 text-cyan-400 text-[8px] font-bold border border-cyan-500/20 whitespace-nowrap">
+            <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded bg-slate-500/10 text-slate-400 text-[8px] font-bold border border-slate-500/20 whitespace-nowrap">
               💎 {player.doubleKoraCount} D.
             </span>
           </div>
@@ -490,7 +490,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
             <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 text-[9px] font-bold border border-amber-500/20 whitespace-nowrap">
               👑 {player.koraCount} Kora
             </span>
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-300 text-[9px] font-bold border border-cyan-500/20 whitespace-nowrap">
+            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-500/10 text-slate-300 text-[9px] font-bold border border-slate-500/20 whitespace-nowrap">
               💎 {player.doubleKoraCount} Double
             </span>
           </div>
@@ -769,7 +769,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                   <strong className="text-amber-400">Manche 10</strong> / <strong className="text-amber-400">Partie 1</strong>
                 </span>
                 <span className="px-1.5 py-0.5 rounded bg-slate-900/90 border border-slate-800 shrink-0">
-                  <strong className="text-amber-400">Kora 5</strong> / <strong className="text-cyan-400">Double 15</strong>
+                  <strong className="text-amber-400">Kora 5</strong> / <strong className="text-slate-400">Double 15</strong>
                 </span>
                 <span className="px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300 shrink-0">
                   Multi ×1 | Solo Exp/GM ×0,4 | Norm ×0,2 | Fac ×0,05
@@ -793,8 +793,8 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                   <div className="p-1.5 rounded bg-slate-900/90 border border-slate-800 text-slate-300">
                     <span className="text-amber-400 font-bold">5 pts</span> Kora Simple
                   </div>
-                  <div className="p-1.5 rounded bg-cyan-500/15 border border-cyan-500/30 text-cyan-300">
-                    <span className="font-bold text-cyan-400">15 pts</span> Double Kora 💎
+                  <div className="p-1.5 rounded bg-slate-500/15 border border-slate-500/30 text-slate-300">
+                    <span className="font-bold text-slate-400">15 pts</span> Double Kora 💎
                   </div>
                 </div>
                 <div className="p-2 rounded bg-amber-500/10 border border-amber-500/20 text-[10px] text-amber-300">
@@ -1008,7 +1008,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
           <div className="max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-3 w-full sm:w-auto min-w-0">
               {/* Grand Rank Visual */}
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black text-lg flex items-center justify-center shadow-lg border border-amber-400 shrink-0">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-amber-500 to-amber-500 text-slate-950 font-black text-lg flex items-center justify-center shadow-lg border border-amber-400 shrink-0">
                 #{userRank.rank}
               </div>
               <div className="flex flex-col min-w-0 flex-1">
@@ -1052,7 +1052,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                 <div className="flex items-center gap-2 mt-1.5 w-full sm:w-64">
                   <div className="flex-1 h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
                     <div
-                      className="h-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-300 rounded-full transition-all duration-500"
+                      className="h-full bg-gradient-to-r from-amber-500 via-amber-400 to-amber-300 rounded-full transition-all duration-500"
                       style={{ width: `${progressPercent}%` }}
                     />
                   </div>
@@ -1227,7 +1227,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                         setSelectedPlayer(null);
                         onClose();
                       }}
-                      className="py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 text-xs font-black flex items-center justify-center gap-1.5 cursor-pointer shadow transition"
+                      className="py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-500 text-slate-950 text-xs font-black flex items-center justify-center gap-1.5 cursor-pointer shadow transition"
                     >
                       <Swords className="w-3.5 h-3.5" />
                       <span>Défier en direct</span>

@@ -103,7 +103,7 @@ export const FlyingChipsEffect: React.FC<FlyingChipsEffectProps> = ({
               delay: p.delay,
               ease: [0.25, 0.1, 0.25, 1],
             }}
-            className="absolute flex items-center justify-center rounded-full bg-gradient-to-tr from-amber-600 via-yellow-400 to-amber-300 border border-yellow-100 shadow-[0_0_12px_rgba(251,191,36,0.8)] text-slate-950 font-black"
+            className="absolute flex items-center justify-center rounded-full bg-gradient-to-tr from-amber-600 via-amber-400 to-amber-300 border border-amber-100 shadow-[0_0_12px_rgba(251,191,36,0.8)] text-slate-950 font-black"
             style={{ width: p.size, height: p.size }}
           >
             <Coins className="w-2.5 h-2.5 text-slate-950" />

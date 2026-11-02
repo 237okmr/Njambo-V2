@@ -289,14 +289,14 @@ export const PushNotificationToggle: React.FC<PushNotificationToggleProps> = ({
             {/* Game Start Alerts */}
             <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between sm:col-span-2">
               <div className="flex items-center gap-2">
-                <BellRing className="w-4 h-4 text-blue-400 shrink-0" />
+                <BellRing className="w-4 h-4 text-slate-400 shrink-0" />
                 <span className="text-slate-200 font-medium">Début de Manche</span>
               </div>
               <input
                 type="checkbox"
                 checked={prefs.gameStartAlerts}
                 onChange={(e) => handleUpdatePref('gameStartAlerts', e.target.checked)}
-                className="w-4 h-4 rounded text-blue-500 accent-blue-500 cursor-pointer"
+                className="w-4 h-4 rounded text-slate-500 accent-slate-500 cursor-pointer"
               />
             </div>
           </div>
@@ -305,14 +305,14 @@ export const PushNotificationToggle: React.FC<PushNotificationToggleProps> = ({
           <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Moon className="w-4 h-4 text-purple-400" />
+                <Moon className="w-4 h-4 text-slate-400" />
                 <span className="text-slate-200 font-semibold">Mode Nuit Silencieux (Ne pas déranger)</span>
               </div>
               <input
                 type="checkbox"
                 checked={prefs.quietHoursEnabled}
                 onChange={(e) => handleUpdatePref('quietHoursEnabled', e.target.checked)}
-                className="w-4 h-4 rounded text-purple-500 accent-purple-500 cursor-pointer"
+                className="w-4 h-4 rounded text-slate-500 accent-slate-500 cursor-pointer"
               />
             </div>
             {prefs.quietHoursEnabled && (

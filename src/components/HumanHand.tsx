@@ -262,7 +262,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
 
             {trickLeader && (trickLeader.tricksWonInRound || 0) > 0 && (
               <div className="bg-slate-800/80 border border-slate-700/70 px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-xs text-slate-300">
-                <Crown className="w-3.5 h-3.5 text-yellow-400" />
+                <Crown className="w-3.5 h-3.5 text-amber-400" />
                 <span className="text-slate-400 font-medium">Meneur:</span>
                 <span className="font-bold text-slate-200">
                   {trickLeader.name}{' '}
@@ -291,9 +291,9 @@ export const HumanHand: React.FC<HumanHandProps> = ({
           </span>
           <div className="flex items-center gap-3 shrink-0">
             <span className="text-rose-400 font-bold">♥ {bossCoeur === 10 ? '10♥' : `${bossCoeur}♥`}</span>
-            <span className="text-orange-400 font-bold">♦ {bossCarreau === 10 ? '10♦' : `${bossCarreau}♦`}</span>
+            <span className="text-amber-400 font-bold">♦ {bossCarreau === 10 ? '10♦' : `${bossCarreau}♦`}</span>
             <span className="text-emerald-400 font-bold">♣ {bossTrefle === 10 ? '10♣' : `${bossTrefle}♣`}</span>
-            <span className="text-sky-400 font-bold">♠ {bossPique === 9 ? '9♠ (Max)' : `${bossPique}♠`}</span>
+            <span className="text-slate-400 font-bold">♠ {bossPique === 9 ? '9♠ (Max)' : `${bossPique}♠`}</span>
           </div>
         </div>
       </footer>
@@ -307,7 +307,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
         isHumanInstantWinner
           ? instantWinReveal?.winType === 'UNDER_21'
             ? 'ring-2 ring-emerald-400/50 bg-emerald-950/30'
-            : 'ring-2 ring-yellow-400/50 bg-amber-950/30'
+            : 'ring-2 ring-amber-400/50 bg-amber-950/30'
           : ''
       }`}
     >
@@ -335,7 +335,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
           <div
             className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full ${
               isDealing
-                ? 'bg-blue-400 animate-ping'
+                ? 'bg-slate-400 animate-ping'
                 : isHumanInstantWinner
                 ? 'bg-amber-400 animate-bounce'
                 : isHumanTurn
@@ -356,7 +356,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
 
         <div className="text-[11px] sm:text-xs text-slate-400 mt-0.5 max-w-[220px]">
           {isDealing ? (
-            <span className="text-blue-300 flex items-center gap-1 font-medium">
+            <span className="text-slate-300 flex items-center gap-1 font-medium">
               <Loader2 className="w-3 h-3 animate-spin" />
               Réception de tes 5 cartes...
             </span>
@@ -598,7 +598,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
               className={`flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl font-black text-xs transition-all shadow-lg shrink-0 lg:hidden ${
                 hasDeclaredKoraInPartie
                   ? 'bg-amber-950/80 text-amber-300/80 border border-amber-500/40 cursor-default'
-                  : 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 border border-yellow-200 shadow-amber-500/30 active:scale-95 cursor-pointer animate-pulse'
+                  : 'bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 border border-amber-200 shadow-amber-500/30 active:scale-95 cursor-pointer animate-pulse'
               }`}
               title={
                 hasDeclaredKoraInPartie
@@ -713,7 +713,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-rose-400 font-bold">•</span>
-                    <span>Toutes les pénalités de fin de partie (<strong className="text-slate-200">Victoire simple</strong>, <strong className="text-amber-300">Kora ×2</strong> ou <strong className="text-orange-400">Double Kora ×4</strong>) restent exigibles et seront reversées au vainqueur.</span>
+                    <span>Toutes les pénalités de fin de partie (<strong className="text-slate-200">Victoire simple</strong>, <strong className="text-amber-300">Kora ×2</strong> ou <strong className="text-amber-400">Double Kora ×4</strong>) restent exigibles et seront reversées au vainqueur.</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-emerald-400 font-bold">•</span>

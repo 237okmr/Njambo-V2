@@ -249,7 +249,7 @@ export const SavedSessionsModal: React.FC<SavedSessionsModalProps> = ({
                     </div>
 
                     <div className="flex items-center gap-1 text-slate-300">
-                      <Users className="w-3 h-3 text-blue-400 shrink-0" />
+                      <Users className="w-3 h-3 text-slate-400 shrink-0" />
                       <span>{activePlayersCount}/{players.length}J</span>
                     </div>
 

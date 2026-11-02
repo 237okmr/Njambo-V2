@@ -119,7 +119,7 @@ export const RoomFilterBottomSheet: React.FC<RoomFilterBottomSheetProps> = ({
           {/* 2. Capacité de Joueurs */}
           <div className="flex flex-col gap-2">
             <span className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <Users className="w-3.5 h-3.5 text-blue-400" /> Capacité de la Table
+              <Users className="w-3.5 h-3.5 text-slate-400" /> Capacité de la Table
             </span>
             <div className="grid grid-cols-4 gap-1.5">
               {(['ALL', 2, 3, 4] as const).map((cap) => (
@@ -129,7 +129,7 @@ export const RoomFilterBottomSheet: React.FC<RoomFilterBottomSheetProps> = ({
                   onClick={() => setLocalFilters((prev) => ({ ...prev, playerCapacity: cap }))}
                   className={`h-9 rounded-xl text-xs font-bold border transition cursor-pointer flex items-center justify-center ${
                     localFilters.playerCapacity === cap
-                      ? 'bg-blue-500 text-white border-blue-400 font-black shadow-sm'
+                      ? 'bg-slate-500 text-white border-slate-400 font-black shadow-sm'
                       : 'bg-slate-950 text-slate-300 border-slate-800 hover:bg-slate-800'
                   }`}
                 >

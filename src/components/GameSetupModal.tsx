@@ -629,7 +629,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
                       className={`py-1.5 sm:py-2 px-1 rounded-lg text-center transition-all duration-150 cursor-pointer flex flex-col items-center justify-center ${
                         isSelected
                           ? isGM
-                            ? 'bg-purple-500 text-white font-black shadow-md shadow-purple-500/30'
+                            ? 'bg-slate-500 text-white font-black shadow-md shadow-slate-500/30'
                             : 'bg-amber-400 text-slate-950 font-black shadow-md shadow-amber-500/20'
                           : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
                       }`}
@@ -641,7 +641,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
                         className={`text-[9px] font-semibold tracking-tight ${
                           isSelected
                             ? isGM
-                              ? 'text-purple-100 font-bold'
+                              ? 'text-slate-100 font-bold'
                               : 'text-slate-950/80 font-bold'
                             : 'text-slate-400'
                         }`}
@@ -824,14 +824,14 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
                   }}
                   className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2 ${
                     showBotPersonalityIcons
-                      ? 'bg-blue-500/10 border-blue-400/50 shadow-sm'
+                      ? 'bg-slate-500/10 border-slate-400/50 shadow-sm'
                       : 'bg-[#0d121c]/90 border-white/[0.07] text-slate-400 hover:border-white/15'
                   }`}
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <div
                       className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
-                        showBotPersonalityIcons ? 'bg-blue-400 text-slate-950 font-black' : 'bg-white/[0.04] text-slate-500'
+                        showBotPersonalityIcons ? 'bg-slate-400 text-slate-950 font-black' : 'bg-white/[0.04] text-slate-500'
                       }`}
                     >
                       <Eye className="w-3.5 h-3.5" />
@@ -848,7 +848,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
 
                   <div
                     className={`w-8 h-4.5 rounded-full p-0.5 transition-colors shrink-0 flex items-center ${
-                      showBotPersonalityIcons ? 'bg-blue-400 justify-end' : 'bg-slate-800 justify-start'
+                      showBotPersonalityIcons ? 'bg-slate-400 justify-end' : 'bg-slate-800 justify-start'
                     }`}
                   >
                     <motion.div layout className="w-3.5 h-3.5 rounded-full bg-slate-950 shadow-sm" />
@@ -947,7 +947,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
                     soloBetIncreaseMode
                   )
                 }
-                className="flex-1 sm:flex-initial py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-300 hover:to-teal-400 text-slate-950 font-black text-xs sm:text-sm shadow-md shadow-emerald-500/20 transition active:scale-[0.98] flex items-center justify-center gap-1.5 cursor-pointer"
+                className="flex-1 sm:flex-initial py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-emerald-400 to-emerald-500 hover:from-emerald-300 hover:to-emerald-400 text-slate-950 font-black text-xs sm:text-sm shadow-md shadow-emerald-500/20 transition active:scale-[0.98] flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Play className="w-3.5 h-3.5 fill-slate-950" />
                 <span>Reprendre (P{currentPartieCount + 1})</span>

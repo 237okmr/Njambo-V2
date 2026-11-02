@@ -75,15 +75,15 @@ export const QuitConfirmationModal: React.FC<QuitConfirmationModalProps> = ({
             /* SPECTATOR ONLY QUIT MODAL - NO SCARY WARNINGS OR CHECKS */
             <>
               <div className="flex items-center gap-3 border-b border-slate-800 pb-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center shadow shrink-0">
-                  <LogOut className="w-5 h-5 text-blue-400" />
+                <div className="w-10 h-10 rounded-xl bg-slate-500/20 text-slate-400 border border-slate-500/30 flex items-center justify-center shadow shrink-0">
+                  <LogOut className="w-5 h-5 text-slate-400" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-base sm:text-lg font-black text-blue-300 leading-tight">
+                  <h2 className="text-base sm:text-lg font-black text-slate-300 leading-tight">
                     Quitter le mode spectateur ?
                   </h2>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-blue-950/60 text-blue-300 border border-blue-800/50">
+                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-950/60 text-slate-300 border border-slate-800/50">
                       Spectateur
                     </span>
                     <span className="text-[10px] text-slate-400">
@@ -114,7 +114,7 @@ export const QuitConfirmationModal: React.FC<QuitConfirmationModalProps> = ({
                       onQuitWithoutSave();
                     }
                   }}
-                  className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-slate-950 font-black text-xs transition flex items-center justify-center gap-2 shadow cursor-pointer"
+                  className="w-full py-2.5 px-4 rounded-xl bg-slate-600 hover:bg-slate-500 text-slate-950 font-black text-xs transition flex items-center justify-center gap-2 shadow cursor-pointer"
                 >
                   <LogOut className="w-4 h-4" />
                   <span>Confirmer la sortie</span>
@@ -160,7 +160,7 @@ export const QuitConfirmationModal: React.FC<QuitConfirmationModalProps> = ({
                 <span>Relais IA & Règles d'abandon</span>
               </div>
               <p>
-                Quitter la table active le <strong className="text-cyan-300">relais automatique par l'IA</strong> de secours pour ne pas bloquer les autres joueurs, puis entraîne un <strong className="text-rose-400">forfait définitif</strong> avec déduction de la mise si la manche se termine.
+                Quitter la table active le <strong className="text-slate-300">relais automatique par l'IA</strong> de secours pour ne pas bloquer les autres joueurs, puis entraîne un <strong className="text-rose-400">forfait définitif</strong> avec déduction de la mise si la manche se termine.
               </p>
             </div>
 
