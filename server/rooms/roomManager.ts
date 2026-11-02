@@ -586,7 +586,7 @@ export class RoomManager {
             if (client && client.socket.readyState === WebSocket.OPEN) {
               this.sendMessage(client.socket, {
                 type: 'NOTIFICATION',
-                notification: '⚠️ Avertissement de stabilité de connexion : vous avez été déclaré forfait pour cette donne suite à une déconnexion prolongée.',
+                notification: '⚠️ Avertissement de stabilité de connexion : vous avez été déclaré forfait pour cette partie suite à une déconnexion prolongée.',
               });
             }
           }
@@ -2880,7 +2880,7 @@ export class RoomManager {
       id: 'em_' + Math.random().toString(36).substring(2, 9),
       playerId: 'system',
       playerName: 'Table',
-      text: `⚡ ${room.hostName || "L'hôte"} a forcé le lancement de la donne suivante.`,
+      text: `⚡ ${room.hostName || "L'hôte"} a forcé le lancement de la partie suivante.`,
       emoji: '⚡',
       timestamp: Date.now(),
       isBot: true,

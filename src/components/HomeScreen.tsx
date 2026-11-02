@@ -300,7 +300,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <span className="text-[10px] sm:text-xs font-bold text-rose-600">♥</span>
           </div>
           <div className="absolute -top-2 -right-2 bg-amber-500 text-slate-950 text-[8px] font-black px-1.5 py-0.5 rounded-full shadow border border-amber-300">
-            Main 1 ★
+            Tour 1 ★
           </div>
         </motion.div>
 
@@ -529,7 +529,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 Reprendre
               </span>
               <span className="relative z-10 text-[11px] font-bold text-slate-900/80 truncate max-w-full">
-                Partie {activeSession.gameState.partieCount || 1} · Main {activeSession.gameState.currentTrickNumber || 1}/5 · Pot: {activeSession.gameState.pot || 0} pts
+                Partie {activeSession.gameState.partieCount || 1} · Tour {activeSession.gameState.currentTrickNumber || 1}/5 · Pot: {activeSession.gameState.pot || 0} pts
               </span>
             </motion.button>
           )}

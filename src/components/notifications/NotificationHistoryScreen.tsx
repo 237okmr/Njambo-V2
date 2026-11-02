@@ -1,9 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { BellOff, CheckCheck, ChevronRight, Info, Swords, Trash2, UserPlus } from 'lucide-react';
+import { BellOff, CheckCheck, ChevronRight, Swords, Trash2, UserPlus } from 'lucide-react';
 import { NativeScreenHeader } from '../common/NativeScreenHeader';
 import { PlayerAvatar } from '../profile/PlayerAvatar';
-import { usePlayerProfile } from '../../context/PlayerProfileContext';
 import { useNotificationHistory } from '../../hooks/useNotificationHistory';
 import {
   HistoryNotification,
@@ -157,7 +156,6 @@ interface NotificationHistoryScreenProps {
  */
 export const NotificationHistoryScreen: React.FC<NotificationHistoryScreenProps> = ({ onClose }) => {
   const items = useNotificationHistory();
-  const { isLoggedIn, loginWithGoogle } = usePlayerProfile();
   const [confirmClear, setConfirmClear] = useState(false);
   const now = Date.now();
   const unread = items.filter((item) => !item.read).length;
@@ -250,26 +248,6 @@ export const NotificationHistoryScreen: React.FC<NotificationHistoryScreenProps>
 
       <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <div className="mx-auto flex w-full max-w-md flex-col gap-2">
-          {!isLoggedIn && (
-            <div className="flex items-start gap-2.5 rounded-2xl border border-sky-500/30 bg-sky-500/10 p-3">
-              <Info className="mt-0.5 h-4 w-4 shrink-0 text-sky-300" aria-hidden="true" />
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold text-sky-100">
-                  Ton historique est gardé sur cet appareil seulement. Connecte-toi avec Google pour recevoir aussi
-                  les demandes d'amis et mieux protéger ton compte.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    void loginWithGoogle();
-                  }}
-                  className="mt-2 h-9 rounded-xl bg-white px-3 text-xs font-black text-slate-900 active:scale-95 cursor-pointer"
-                >
-                  Continuer avec Google
-                </button>
-              </div>
-            </div>
-          )}
 
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-slate-800/80 bg-slate-900/40 px-6 py-12 text-center">

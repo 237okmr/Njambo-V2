@@ -176,7 +176,7 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
                 {/* Timeline des 5 tours */}
                 <div className="mt-4 pt-3 border-t border-slate-800/80">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
-                    Déroulement d'une donne (5 mains) :
+                    Déroulement d'une partie (5 tours) :
                   </span>
                   <div className="grid grid-cols-5 gap-1.5 sm:gap-2 text-center font-mono">
                     {[1, 2, 3, 4].map((tour) => (
@@ -433,7 +433,7 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
                       Règles de Table & Conduite du Tour
                     </h3>
                     <p className="text-xs text-slate-400">
-                      Comment se décide le vainqueur de chaque main
+                      Comment se décide le vainqueur de chaque tour
                     </p>
                   </div>
                 </div>
@@ -504,7 +504,7 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
                       Partie vs Manche
                     </h4>
                     <p>
-                      Une <strong>Partie</strong> (ou Donne) correspond au jeu des 5 tours avec les 5 cartes distribuées. Une <strong>Manche</strong> est une compétition complète constituée de plusieurs parties consécutives jusqu'à ce qu'un joueur élimine tous ses adversaires.
+                      Une <strong>Partie</strong> correspond au jeu des 5 tours avec les 5 cartes distribuées. Une <strong>Manche</strong> est une compétition complète constituée de plusieurs parties consécutives jusqu'à ce qu'un joueur élimine tous ses adversaires.
                     </p>
                   </div>
 

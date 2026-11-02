@@ -382,7 +382,7 @@ export function useSoloGameEngine({
 
           if (newEscalatedBet > currentBet) {
             effectiveBet = newEscalatedBet;
-            sendEmote(`⚡ Escalade automatique ! La mise passe à ${newEscalatedBet} 🪙 (palier donne #${partieNumber}).`, '⚡', -1);
+            sendEmote(`⚡ Escalade automatique ! La mise passe à ${newEscalatedBet} 🪙 (palier partie #${partieNumber}).`, '⚡', -1);
           }
         }
       }

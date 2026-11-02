@@ -282,7 +282,7 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                         {stats?.opponentAvgTricks || 0}
                       </span>
                     </div>
-                    <span className="text-[9px] text-slate-400">Prises de cartes par donne</span>
+                    <span className="text-[9px] text-slate-400">Prises de cartes par partie</span>
                   </div>
 
                   {/* Ratio / Mastery */}

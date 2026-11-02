@@ -1518,7 +1518,7 @@ export class ServerGameEngine {
             id: 'em_' + Math.random().toString(36).substring(2, 9),
             playerId: 'system',
             playerName: 'Table',
-            text: `⚡ Escalade automatique ! La mise passe de ${oldBet} à ${newEscalatedBet} 🪙 (palier donne #${nextPartieCount}).`,
+            text: `⚡ Escalade automatique ! La mise passe de ${oldBet} à ${newEscalatedBet} 🪙 (palier partie #${nextPartieCount}).`,
             emoji: '⚡',
             timestamp: Date.now(),
             isBot: true,

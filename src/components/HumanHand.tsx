@@ -224,15 +224,15 @@ export const HumanHand: React.FC<HumanHandProps> = ({
                   <span className="font-bold text-slate-100 text-xs sm:text-sm truncate">{playerName}</span>
                   <span className="shrink-0 bg-emerald-950/90 text-emerald-300 border border-emerald-700/80 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
                     <Radio className="w-2.5 h-2.5 text-emerald-400 animate-pulse" />
-                    {isForfeit ? 'Forfait (cette donne)' : isEliminated ? 'Éliminé' : 'Spectateur (Donne passée)'}
+                    {isForfeit ? 'Forfait (cette partie)' : isEliminated ? 'Éliminé' : 'Spectateur (Partie passée)'}
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400">
                   {isForfeit
-                    ? 'Forfait pour cette donne (déconnexion). Vous réintégrerez la partie dès la donne suivante si vous restez connecté.'
+                    ? 'Forfait pour cette partie (déconnexion). Vous réintégrerez la table dès la partie suivante si vous restez connecté.'
                     : isEliminated
                     ? 'Éliminé de la manche (Capital insuffisant).'
-                    : 'Observez les tours en cours. Vos cartes seront redistribuées dès la donne suivante.'}
+                    : 'Observez les tours en cours. Vos cartes seront redistribuées dès la partie suivante.'}
                 </p>
               </div>
             </div>
@@ -654,7 +654,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
                 setShowFoldConfirm(true);
               }}
               className="flex items-center justify-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl font-bold text-xs bg-rose-950/80 hover:bg-rose-900 text-rose-200 border border-rose-600/60 transition-all cursor-pointer shadow-md active:scale-95 shrink-0 lg:hidden"
-              title="Passer cette donne (Déclarer Forfait)"
+              title="Passer cette partie (Déclarer Forfait)"
             >
               <Flag className="w-3.5 h-3.5 text-rose-400 shrink-0" />
               <span>Forfait</span>
@@ -692,7 +692,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
               <div className="flex items-center justify-between pb-3 border-b border-slate-800">
                 <div className="flex items-center gap-2 text-amber-400 font-black text-base sm:text-lg">
                   <ShieldAlert className="w-5 h-5 text-amber-400" />
-                  <span>Passer cette donne ?</span>
+                  <span>Passer cette partie ?</span>
                 </div>
                 <button
                   onClick={() => setShowFoldConfirm(false)}
@@ -704,20 +704,20 @@ export const HumanHand: React.FC<HumanHandProps> = ({
 
               <div className="py-4 space-y-3 text-xs sm:text-sm text-slate-300">
                 <p>
-                  En passant cette donne :
+                  En passant cette partie :
                 </p>
                 <ul className="space-y-2 bg-slate-950/60 p-3 rounded-xl border border-slate-800 text-slate-300">
                   <li className="flex items-start gap-2">
                     <span className="text-rose-400 font-bold">•</span>
-                    <span>Votre mise initiale de <strong className="text-amber-400">{baseBet} jetons</strong> est perdue pour cette donne.</span>
+                    <span>Votre mise initiale de <strong className="text-amber-400">{baseBet} jetons</strong> est perdue pour cette partie.</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-rose-400 font-bold">•</span>
-                    <span>Toutes les pénalités de fin de donne (<strong className="text-slate-200">Victoire simple</strong>, <strong className="text-amber-300">Kora ×2</strong> ou <strong className="text-orange-400">Double Kora ×4</strong>) restent exigibles et seront reversées au vainqueur.</span>
+                    <span>Toutes les pénalités de fin de partie (<strong className="text-slate-200">Victoire simple</strong>, <strong className="text-amber-300">Kora ×2</strong> ou <strong className="text-orange-400">Double Kora ×4</strong>) restent exigibles et seront reversées au vainqueur.</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-emerald-400 font-bold">•</span>
-                    <span>Vous restez assis à la table en spectateur et rejouerez automatiquement dès la donne suivante.</span>
+                    <span>Vous restez assis à la table en spectateur et rejouerez automatiquement dès la partie suivante.</span>
                   </li>
                 </ul>
               </div>

@@ -79,7 +79,7 @@ export const AI_DIFFICULTIES_INFO: Record<AIDifficulty, AIDifficultyInfo> = {
     id: 'EXPERT',
     name: 'Expert',
     subtitle: 'Maître',
-    description: 'Adversaires compétitifs : simulation de fins de donne en Monte Carlo léger, jeu mesuré et prudent sur le Kora, suivi des cartes et des vides adverses.',
+    description: 'Adversaires compétitifs : simulation de fins de partie en Monte Carlo léger, jeu mesuré et prudent sur le Kora, suivi des cartes et des vides adverses.',
     icon: '👑',
     badgeBg: 'bg-rose-900/60 text-rose-300 border-rose-700/60',
   },

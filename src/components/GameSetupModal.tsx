@@ -22,7 +22,6 @@ import { sounds, triggerHaptic } from '../utils/sound';
 import { NativeScreenHeader } from './common/NativeScreenHeader';
 import { NativeSegmentedNav, SegmentTab } from './common/NativeSegmentedNav';
 import { usePlayerProfile } from '../context/PlayerProfileContext';
-import { GoogleIcon } from './common/GoogleIcon';
 
 export type SoloSetupTabType = 'partie' | 'rules';
 
@@ -118,26 +117,11 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
   const [showBotPersonalityIcons, setShowBotPersonalityIcons] = useState<boolean>(currentShowBotPersonalityIcons);
   const [enableKoraHunterAlerts, setEnableKoraHunterAlerts] = useState<boolean>(currentEnableKoraHunterAlerts);
   const [showConfirmReset, setShowConfirmReset] = useState<boolean>(false);
-  const [isAuthLoading, setIsAuthLoading] = useState<boolean>(false);
   const [authSuccessMsg, setAuthSuccessMsg] = useState<string | null>(null);
 
   // Player profile & Google Auth
-  const { profile, isLoggedIn, loginWithGoogle } = usePlayerProfile();
+  const { profile, isLoggedIn } = usePlayerProfile();
 
-  const handleGoogleSignIn = async () => {
-    if (isAuthLoading) return;
-    setIsAuthLoading(true);
-    try {
-      await loginWithGoogle();
-      triggerHaptic('success');
-      setAuthSuccessMsg('Compte Google synchronisé avec succès !');
-      setTimeout(() => setAuthSuccessMsg(null), 4000);
-    } catch {
-      triggerHaptic('heavy');
-    } finally {
-      setIsAuthLoading(false);
-    }
-  };
 
   // Systematic reset to Tab 1 ('partie') on open
   useEffect(() => {
@@ -407,19 +391,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
         }
         rightActions={
           <div className="flex items-center gap-2">
-            {!isLoggedIn ? (
-              <button
-                type="button"
-                id="btn-solo-setup-google-login"
-                disabled={isAuthLoading}
-                onClick={handleGoogleSignIn}
-                className="h-8 px-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-sm transition active:scale-95 cursor-pointer disabled:opacity-50 shrink-0"
-                title="Lier votre compte Google pour sauvegarder votre progression"
-              >
-                <GoogleIcon className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{isAuthLoading ? '...' : 'Lier Google'}</span>
-              </button>
-            ) : (
+            {isLoggedIn && (
               <div
                 className="h-8 px-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center gap-1.5 shadow-sm shrink-0"
                 title={`Connecté avec Google (${profile.displayName})`}
@@ -559,14 +531,14 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
                   <span>Enjeux Financiers</span>
                 </span>
                 <span className="text-[11px] font-mono text-slate-400">
-                  Autonomie : <strong className="text-amber-300 font-bold">{Math.round(selectedCapital / selectedBet)}</strong> donnes
+                  Autonomie : <strong className="text-amber-300 font-bold">{Math.round(selectedCapital / selectedBet)}</strong> parties
                 </span>
               </div>
 
               {/* Ligne 1 : Mise par Donne */}
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between text-xs px-0.5">
-                  <span className="text-slate-300 font-medium">Mise par donne</span>
+                  <span className="text-slate-300 font-medium">Mise par partie</span>
                   <span className="text-amber-300 font-bold font-mono text-[11px]">
                     {selectedBet} jetons / joueur
                   </span>
@@ -932,7 +904,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
 
               {/* Ligne contextuelle discrète pour l'économie */}
               <div className="flex items-center justify-between text-[11px] text-slate-400 px-1 pt-1 border-t border-white/[0.04]">
-                <span>Pot donne : <strong className="text-white font-mono">{regularTrickPot} 🪙</strong> ({totalPlayers}J)</span>
+                <span>Pot partie : <strong className="text-white font-mono">{regularTrickPot} 🪙</strong> ({totalPlayers}J)</span>
                 <span className="text-amber-300 font-medium">Pot Kora : <strong className="font-mono">{koraPot} 🪙</strong> (×2)</span>
               </div>
             </section>

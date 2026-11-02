@@ -5,7 +5,7 @@ import { triggerHaptic } from '../utils/sound';
 
 export const NJAMBO_TACTICAL_PHRASES = [
   'Accélérons : augmentons la mise ! ⚡',
-  'Dernière donne pour moi ! ⏳',
+  'Dernière partie pour moi ! ⏳',
   'Finissons-en vite ! 🤝',
   'On double la mise ? 🚀',
   'Jouons plus vite svp ! ⏱️',

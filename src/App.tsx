@@ -2697,7 +2697,7 @@ function GameApp() {
                           setShowSidebarFoldConfirm(true);
                         }}
                         className="flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl font-bold text-xs bg-rose-950/80 hover:bg-rose-900 text-rose-200 border border-rose-600/60 transition-all cursor-pointer shadow-md active:scale-95 flex-1"
-                        title="Passer cette donne (Déclarer Forfait)"
+                        title="Passer cette partie (Déclarer Forfait)"
                       >
                         <Flag className="w-3.5 h-3.5 text-rose-400 shrink-0" />
                         <span>Forfait</span>
@@ -2722,7 +2722,7 @@ function GameApp() {
                     <div className="flex items-center justify-between pb-3 border-b border-slate-800">
                       <div className="flex items-center gap-2 text-amber-400 font-black text-base sm:text-lg">
                         <ShieldAlert className="w-5 h-5 text-amber-400" />
-                        <span>Passer cette donne ?</span>
+                        <span>Passer cette partie ?</span>
                       </div>
                       <button
                         onClick={() => setShowSidebarFoldConfirm(false)}
@@ -2733,19 +2733,19 @@ function GameApp() {
                     </div>
 
                     <div className="py-4 space-y-3 text-xs sm:text-sm text-slate-300">
-                      <p>En passant cette donne :</p>
+                      <p>En passant cette partie :</p>
                       <ul className="space-y-2 bg-slate-950/60 p-3 rounded-xl border border-slate-800 text-slate-300">
                         <li className="flex items-start gap-2">
                           <span className="text-rose-400 font-bold">•</span>
-                          <span>Votre mise initiale de <strong className="text-amber-400">{activeGameState.baseBet || 10} jetons</strong> est perdue pour cette donne.</span>
+                          <span>Votre mise initiale de <strong className="text-amber-400">{activeGameState.baseBet || 10} jetons</strong> est perdue pour cette partie.</span>
                         </li>
                         <li className="flex items-start gap-2">
                           <span className="text-rose-400 font-bold">•</span>
-                          <span>Toutes les pénalités de fin de donne (<strong className="text-slate-200">Victoire simple</strong>, <strong className="text-amber-300">Kora ×2</strong> ou <strong className="text-orange-400">Double Kora ×4</strong>) restent exigibles et seront reversées au vainqueur.</span>
+                          <span>Toutes les pénalités de fin de partie (<strong className="text-slate-200">Victoire simple</strong>, <strong className="text-amber-300">Kora ×2</strong> ou <strong className="text-orange-400">Double Kora ×4</strong>) restent exigibles et seront reversées au vainqueur.</span>
                         </li>
                         <li className="flex items-start gap-2">
                           <span className="text-emerald-400 font-bold">•</span>
-                          <span>Vous restez assis à la table en spectateur et rejouerez automatiquement dès la donne suivante.</span>
+                          <span>Vous restez assis à la table en spectateur et rejouerez automatiquement dès la partie suivante.</span>
                         </li>
                       </ul>
                     </div>

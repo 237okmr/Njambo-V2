@@ -195,7 +195,7 @@ export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps>
             id="btn-trigger-bet-increase"
             onClick={handleOpenModal}
             className="w-full h-full min-h-10 py-2 px-2 rounded-xl bg-cyan-950/70 hover:bg-cyan-900 text-cyan-200 border border-cyan-500/50 font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
-            title="Proposer d'augmenter la mise pour les prochaines donnes de la manche"
+            title="Proposer d'augmenter la mise pour les prochaines parties de la manche"
           >
             <Zap className="w-4 h-4 text-cyan-300 fill-cyan-400 shrink-0" />
             <span className="truncate">Rehausser</span>
@@ -234,7 +234,7 @@ export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps>
             id="btn-trigger-bet-increase"
             onClick={handleOpenModal}
             className="w-full flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-xl border border-cyan-500/50 bg-gradient-to-r from-cyan-950/80 via-slate-900/95 to-cyan-950/75 hover:from-cyan-900/90 hover:via-slate-800/95 hover:to-cyan-900/85 hover:border-cyan-400/80 transition-all duration-200 cursor-pointer shadow-lg shadow-cyan-950/30 hover:shadow-cyan-500/20 active:scale-[0.99] group text-left min-h-[44px]"
-            title="Proposer d'augmenter la mise pour les prochaines donnes de la manche"
+            title="Proposer d'augmenter la mise pour les prochaines parties de la manche"
           >
             {/* Left side: Animated Icon Medallion + Text */}
             <div className="flex items-center gap-2.5 min-w-0">
@@ -265,7 +265,7 @@ export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps>
                   Rehausser la mise
                 </span>
                 <span className="text-[10px] text-cyan-300/75 truncate hidden xs:inline">
-                  Pour les prochaines donnes de la manche
+                  Pour les prochaines parties de la manche
                 </span>
               </div>
             </div>
@@ -296,7 +296,7 @@ export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps>
                   </div>
                   <div>
                     <h3 className="font-bold text-sm text-amber-200">Augmenter la mise</h3>
-                    <p className="text-[11px] text-slate-400">Pour les prochaines donnes de la manche</p>
+                    <p className="text-[11px] text-slate-400">Pour les prochaines parties de la manche</p>
                   </div>
                 </div>
                 <button

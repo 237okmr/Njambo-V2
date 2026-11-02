@@ -258,7 +258,7 @@ export const RulesModal: React.FC<RulesModalProps> = ({
                   </div>
                   <div className="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
                     <span className="text-yellow-400 font-bold">🃏 LES 3 "7" :</span>
-                    <p className="text-slate-300 text-[11px] mt-0.5">Posséder trois 7 dans sa donne initiale = victoire instantanée de la partie.</p>
+                    <p className="text-slate-300 text-[11px] mt-0.5">Posséder trois 7 dans sa main initiale = victoire instantanée de la partie.</p>
                   </div>
                 </div>
               </div>

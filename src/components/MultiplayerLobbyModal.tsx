@@ -498,7 +498,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                           ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-black'
                           : 'bg-slate-900 text-slate-500 border-slate-800'
                       }`}
-                      title="Moins de 21 : victoire instantanée à la donne si somme des 5 cartes ≤ 21"
+                      title="Moins de 21 : victoire instantanée à la distribution si somme des 5 cartes ≤ 21"
                     >
                       ≤ 21
                     </button>

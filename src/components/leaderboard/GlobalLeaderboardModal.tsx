@@ -18,7 +18,6 @@ import {
   Sparkles,
   Info,
   Check,
-  ShieldAlert,
 } from 'lucide-react';
 import {
   LeaderboardCategory,
@@ -442,7 +441,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
           <div className="flex items-center gap-1 px-1.2 py-0.2 rounded bg-slate-800/40 border border-slate-800/50 text-slate-300 whitespace-nowrap">
             <span>🃏</span>
             <span className="font-mono font-bold text-[9px]">{player.partiesWon || player.gamesWon}</span>
-            <span className="text-[7px] opacity-75 font-medium">donnes</span>
+            <span className="text-[7px] opacity-75 font-medium">parties</span>
           </div>
         </div>
       </div>
@@ -528,7 +527,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
               </span>
             )}
             <span className="px-1.5 py-0.5 rounded bg-slate-800/60 border border-slate-700/60 text-slate-300 font-medium">
-              🃏 {player.partiesWon || player.gamesWon} { (player.partiesWon || player.gamesWon) > 1 ? 'donnes' : 'donne' }
+              🃏 {player.partiesWon || player.gamesWon} { (player.partiesWon || player.gamesWon) > 1 ? 'parties' : 'partie' }
             </span>
           </div>
         </div>
@@ -767,7 +766,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
             {!showMasteryHelp && (
               <div className="px-3 pb-2 pt-0 flex items-center gap-1.5 overflow-x-auto no-scrollbar text-[9px] font-mono text-slate-300">
                 <span className="px-1.5 py-0.5 rounded bg-slate-900/90 border border-slate-800 shrink-0">
-                  <strong className="text-amber-400">Manche 10</strong> / <strong className="text-amber-400">Donne 1</strong>
+                  <strong className="text-amber-400">Manche 10</strong> / <strong className="text-amber-400">Partie 1</strong>
                 </span>
                 <span className="px-1.5 py-0.5 rounded bg-slate-900/90 border border-slate-800 shrink-0">
                   <strong className="text-amber-400">Kora 5</strong> / <strong className="text-cyan-400">Double 15</strong>
@@ -789,7 +788,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                     <span className="text-amber-400 font-bold">10 pts</span> Manche gagnée
                   </div>
                   <div className="p-1.5 rounded bg-slate-900/90 border border-slate-800 text-slate-300">
-                    <span className="text-amber-400 font-bold">1 pt</span> Donne gagnée
+                    <span className="text-amber-400 font-bold">1 pt</span> Partie gagnée
                   </div>
                   <div className="p-1.5 rounded bg-slate-900/90 border border-slate-800 text-slate-300">
                     <span className="text-amber-400 font-bold">5 pts</span> Kora Simple
@@ -989,37 +988,19 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
 
       {/* STICKY BOTTOM BAR: Either Official Rank for logged in users OR Certification Callout for guests */}
       {(!isLoggedIn || profile?.isGuest) ? (
-        <footer className="p-3 sm:p-4 border-t border-amber-500/30 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 backdrop-blur-md shrink-0 z-20 shadow-2xl">
-          <div className="max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="flex items-center gap-3 w-full sm:w-auto min-w-0">
-              {/* Badge Invité / Non Classé */}
-              <div className="w-11 h-11 rounded-xl bg-slate-800 border border-amber-500/40 text-amber-400 font-bold text-xs flex flex-col items-center justify-center shrink-0 shadow">
-                <ShieldAlert className="w-5 h-5 text-amber-400" />
-                <span className="text-[8px] font-black uppercase tracking-wider">Invité</span>
-              </div>
-              <div className="flex flex-col min-w-0 flex-1">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-xs font-black text-white">Classement Officiel Mondial</span>
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                    Comptes certifiés Google
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-300 mt-0.5 leading-snug">
-                  Vous jouez en invité avec <strong className="text-amber-400 font-mono font-black">{profile?.stats?.masteryScore || 0} pts</strong>. Certifiez votre compte avec Google pour inscrire officiellement votre score au Palmarès mondial !
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0">
-              <button
-                type="button"
-                onClick={loginWithGoogle}
-                className="w-full sm:w-auto h-10 px-4 rounded-xl bg-gradient-to-r from-white via-slate-100 to-amber-100 hover:from-slate-100 hover:to-white text-slate-950 font-black text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg hover:shadow-xl transition-all shrink-0 border border-white/80 active:scale-95"
-              >
-                <GoogleIcon className="w-4 h-4 shrink-0" />
-                <span>Se certifier avec Google</span>
-              </button>
-            </div>
+        <footer className="px-3 py-2 border-t border-amber-500/30 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 backdrop-blur-md shrink-0 z-20 shadow-2xl">
+          <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
+            <span className="text-xs text-slate-300 min-w-0">
+              Invité : ton score n'est pas classé.
+            </span>
+            <button
+              type="button"
+              onClick={loginWithGoogle}
+              className="h-10 px-3 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-black text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg transition-all shrink-0 active:scale-95"
+            >
+              <GoogleIcon className="w-4 h-4 shrink-0" />
+              <span>Sauvegarder avec Google</span>
+            </button>
           </div>
         </footer>
       ) : userRank ? (
@@ -1170,7 +1151,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-slate-400">Manches / Donnes</div>
+                  <div className="text-xs font-bold text-slate-400">Manches / Parties</div>
                   <div className="text-sm font-black text-slate-200 font-mono">
                     {selectedPlayer.manchesWon ?? 0}m · {selectedPlayer.partiesWon || selectedPlayer.gamesWon}d
                   </div>

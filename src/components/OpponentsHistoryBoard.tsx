@@ -118,7 +118,7 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
               completedPlays.push({
                 card: foundPlay.card,
                 wasWinner,
-                label: `Main ${tIdx + 1}`,
+                label: `Tour ${tIdx + 1}`,
                 isCurrent: false,
               });
             }
@@ -140,7 +140,7 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
             completedPlays.push({
               card: ongoingPlay.card,
               wasWinner: ongoingPlay.isWinningSoFar || false,
-              label: `Main ${completedPlays.length + 1}`,
+              label: `Tour ${completedPlays.length + 1}`,
               isCurrent: true,
             });
           }
@@ -310,7 +310,7 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                     ) : isFolded ? (
                       <span
                         className="text-[8px] font-extrabold px-1.5 py-0.2 bg-rose-500/30 text-rose-300 rounded border border-rose-500/50 flex items-center gap-0.5"
-                        title="A passé cette donne"
+                        title="A passé cette partie"
                       >
                         <span>A passé</span>
                       </span>
@@ -347,7 +347,7 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                       <span className="text-[9px] font-bold text-amber-400 uppercase flex items-center gap-0.5">📡 Hors-ligne</span>
                     ) : !isEliminated ? (
                       <div className="lg:hidden">
-                        <span className="font-bold text-slate-200">{player.tricksWonInRound}</span>/5 main
+                        <span className="font-bold text-slate-200">{player.tricksWonInRound}</span>/5 tours
                         {player.tricksWonInRound > 1 ? 's' : ''}
                       </div>
                     ) : (
@@ -370,7 +370,7 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
               {!isEliminated && !isForfeit && (
                 <div className="hidden lg:flex items-center gap-1 bg-slate-900/90 px-2 py-0.5 rounded-lg border border-slate-700/60 text-[10px]">
                   <span className="font-mono font-black text-amber-400">{player.tricksWonInRound}</span>
-                  <span className="text-slate-400">/ 5 mains</span>
+                  <span className="text-slate-400">/ 5 tours</span>
                 </div>
               )}
             </div>
@@ -442,9 +442,9 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                         key={`played-${player.id}-${pIdx}`}
                         title={`${item.label}: ${item.card.label}${
                           item.wasWinner
-                            ? ' (Main remportée)'
+                            ? ' (Tour remporté)'
                             : item.isCurrent
-                            ? ' (Main en cours)'
+                            ? ' (Tour en cours)'
                             : ''
                         }`}
                         className={`relative w-7 xs:w-8 sm:w-9 lg:w-8 xl:w-9 h-9 xs:h-10 sm:h-12 lg:h-11 xl:h-12 rounded-lg text-slate-950 flex flex-col justify-between p-0.5 sm:p-1 text-[9px] xs:text-[10px] sm:text-xs font-bold border select-none transition-all ${

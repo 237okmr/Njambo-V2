@@ -903,7 +903,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
                           const readyCount = seatedHumans.filter((p) => p.readyForNextPartie).length;
                           return seatedHumans.length > 0 ? `${readyCount}/${seatedHumans.length} joueurs prêts · ` : '';
                         })()}
-                        La donne suivante démarrera automatiquement.
+                        La partie suivante démarrera automatiquement.
                       </span>
                     </div>
                   )}
@@ -931,7 +931,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
                       <>
                         <CheckCircle2 className="w-4 h-4 text-slate-950" />
                         <span>
-                          ✓ Vous êtes prêt {roundEndRemainingSeconds !== null && roundEndRemainingSeconds !== undefined && roundEndRemainingSeconds > 0 ? `· Prochaine donne dans ${roundEndRemainingSeconds}s` : '· En attente'}
+                          ✓ Vous êtes prêt {roundEndRemainingSeconds !== null && roundEndRemainingSeconds !== undefined && roundEndRemainingSeconds > 0 ? `· Prochaine partie dans ${roundEndRemainingSeconds}s` : '· En attente'}
                         </span>
                       </>
                     ) : isTogglingReady ? (

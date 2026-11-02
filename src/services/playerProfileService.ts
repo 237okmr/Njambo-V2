@@ -314,7 +314,7 @@ export function computeEarnedPoints(params: {
   } else {
     // Single Partie
     const partiePts = MASTERY_CONFIG.base.partieWon * mult;
-    breakdown.push({ label: 'Donne remportée', points: partiePts });
+    breakdown.push({ label: 'Partie remportée', points: partiePts });
 
     if (params.winType === 'DOUBLE_KORA') {
       const dblPts = MASTERY_CONFIG.base.doubleKora * mult;

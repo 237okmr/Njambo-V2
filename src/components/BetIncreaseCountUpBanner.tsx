@@ -110,7 +110,7 @@ export const BetIncreaseCountUpBanner: React.FC<BetIncreaseCountUpBannerProps> =
             {/* Subtitle */}
             <div className="flex items-center gap-1 text-[11px] text-amber-200/90 font-medium">
               <Zap className="w-3 h-3 text-amber-400 fill-amber-400" />
-              <span>Unanimité atteinte · Dès la prochaine donne !</span>
+              <span>Unanimité atteinte · Dès la prochaine partie !</span>
             </div>
           </div>
         </motion.div>

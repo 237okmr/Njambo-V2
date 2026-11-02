@@ -619,7 +619,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   </div>
                   <div className="truncate">
                     <p className="text-xs font-bold text-white flex items-center gap-2">
-                      <span>{isLoggedIn ? 'Compte Google Protégé' : 'Liez votre Compte Google'}</span>
+                      <span>{isLoggedIn ? 'Compte Google Protégé' : 'Sauvegarder avec Google'}</span>
                       <span
                         className={`text-[10px] px-2 py-0.2 rounded-full font-bold ${
                           isLoggedIn
@@ -941,7 +941,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                         ) : (
                           <>
                             <GoogleIcon className="w-5 h-5" />
-                            <span>Continuer avec Google</span>
+                            <span>Sauvegarder avec Google</span>
                           </>
                         )}
                       </button>
@@ -1185,11 +1185,11 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     <span className="text-[9px] text-slate-500 block">(1 à 6 pts/m)</span>
                   </div>
                   <div className="p-2 bg-slate-950/60 rounded-xl border border-slate-800/80">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Donnes Gagnées</span>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Parties gagnées</span>
                     <span className="text-sm font-black text-emerald-400 font-mono">
                       {safeStats.partiesWon || safeStats.gamesWon || 0}
                     </span>
-                    <span className="text-[9px] text-slate-500 block">(+1 pt/donne)</span>
+                    <span className="text-[9px] text-slate-500 block">(+1 pt/partie)</span>
                   </div>
                   <div className="p-2 bg-slate-950/60 rounded-xl border border-slate-800/80">
                     <span className="text-[10px] uppercase font-bold text-slate-400 block">Koras / Dbl</span>
@@ -1285,7 +1285,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     {(safeStats.biggestPotWon || 0).toLocaleString()} <span className="text-xs font-bold text-slate-400">pts</span>
                   </div>
                   <div className="text-[11px] text-slate-400 pt-1">
-                    Record en une seule donne
+                    Record en une seule partie
                   </div>
                   <div className="text-[10px] text-slate-500 pt-0.5 border-t border-slate-800/80">
                     Solde actuel : <strong className="text-amber-400 font-mono">{(chips || 1000).toLocaleString()}</strong>
@@ -1302,7 +1302,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     {avgTricks} <span className="text-xs font-bold text-slate-400">/ 5</span>
                   </div>
                   <div className="text-[11px] text-slate-400 pt-1">
-                    Tours remportés par donne
+                    Tours remportés par partie
                   </div>
                   <div className="text-[10px] text-slate-500 pt-0.5 border-t border-slate-800/80">
                     Total : {safeStats.totalTricksWon || 0} tours
@@ -1614,7 +1614,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   [
                     { id: 'ALL', label: 'Toutes' },
                     { id: 'MANCHES', label: 'Manches 🏆' },
-                    { id: 'DONNES', label: 'Donnes 🎴' },
+                    { id: 'DONNES', label: 'Parties 🎴' },
                     { id: 'SOLO', label: 'Solo' },
                     { id: 'MULTIPLAYER', label: 'Multi' },
                     { id: 'WINS', label: 'Gains' },
@@ -1703,7 +1703,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                                 </span>
                               ) : (
                                 <span className="text-[10px] px-2 py-0.5 rounded-full font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">
-                                  Donne #{item.partieNumber}
+                                  Partie #{item.partieNumber}
                                 </span>
                               )}
 
