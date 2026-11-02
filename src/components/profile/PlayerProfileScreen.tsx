@@ -233,7 +233,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
       exit={{ x: '100%' }}
       transition={{ type: 'spring', damping: 25, stiffness: 200 }}
       id="player-profile-fullscreen"
-      className="fixed inset-0 z-[70] bg-slate-950 text-slate-100 flex flex-col overflow-hidden"
+      className="fixed inset-x-0 top-0 bottom-[var(--app-bottom-nav,0px)] z-[70] bg-slate-950 text-slate-100 flex flex-col overflow-hidden"
     >
       {/* 1. TOP UNIFIED NATIVE APP BAR */}
       <NativeScreenHeader
@@ -242,8 +242,6 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
         onBack={handleBackClick}
         backTitle={sourceScreen === 'GAME' ? 'Retourner à la partie en cours' : 'Retourner à l’accueil'}
         title={<span className="hidden min-[360px]:block text-xs sm:text-sm md:text-base font-black tracking-tight uppercase text-white truncate">Profil</span>}
-        onToggleSound={onToggleSound}
-        soundEnabled={soundEnabled}
         contextBadge={
           (isGameActive || sourceScreen === 'GAME') ? (
             <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold">
@@ -256,7 +254,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
         }
         rightActions={
           <div className="flex items-center gap-2">
-            {onOpenLeaderboard && (
+            {sourceScreen === 'GAME' && onOpenLeaderboard && (
               <button
                 type="button"
                 id="btn-profile-header-leaderboard"

@@ -115,7 +115,6 @@ export interface MultiplayerScreenProps {
   onClaimHost?: () => Promise<boolean>;
   onLeaveRoom: () => Promise<void>;
   onKickPlayer?: (playerId: string) => Promise<void>;
-  onOpenLeaderboard?: () => void;
   onOpenAccountSettings?: () => void;
 }
 
@@ -125,7 +124,6 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
   sourceScreen = 'HOME',
   soundEnabled = true,
   onToggleSound,
-  onOpenLeaderboard,
   onOpenAccountSettings,
   room,
   localPlayerId,
@@ -1292,7 +1290,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
       exit={{ x: '100%' }}
       transition={{ type: 'spring', damping: 25, stiffness: 200 }}
       id="multiplayer-native-screen"
-      className="fixed inset-0 z-[65] bg-slate-950 text-slate-100 flex flex-col font-sans select-none overflow-hidden"
+      className="fixed inset-x-0 top-0 bottom-[var(--app-bottom-nav,0px)] z-[65] bg-slate-950 text-slate-100 flex flex-col font-sans select-none overflow-hidden"
     >
       {/* ========================================================================= */}
       {/* 1. TOP UNIFIED HEADER BAR (Option A Back button + Sound Toggle)           */}
@@ -1303,7 +1301,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
         onBack={handleBack}
         backTitle={room ? 'Quitter la table' : 'Retour'}
         title={
-          <span className="hidden min-[400px]:block text-xs sm:text-sm md:text-base font-black tracking-tight uppercase text-white truncate">
+          <span className="block text-xs sm:text-sm md:text-base font-black tracking-tight uppercase text-white truncate">
             {room ? `Table #${room.id}` : 'Multijoueur'}
           </span>
         }
@@ -1314,9 +1312,10 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
               } · ${room.baseBet} Jetons 🪙`
             : 'Njambo Kora en Direct'
         }
-        onToggleSound={onToggleSound}
+        onToggleSound={room ? undefined : onToggleSound}
         soundEnabled={soundEnabled}
         onHome={room ? handleHome : undefined}
+        hideNotificationBell={Boolean(room)}
         contextBadge={
           <span
             className={`text-xs font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 shrink-0 ${
@@ -1369,29 +1368,6 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
             </div>
           ) : (
             <div className="flex items-center gap-1.5 shrink-0">
-              {onOpenLeaderboard && (
-                <button
-                  type="button"
-                  id="btn-multiplayer-header-leaderboard"
-                  onClick={onOpenLeaderboard}
-                  className="h-9 px-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 font-bold text-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-xs shrink-0"
-                  title="Consulter le Palmarès"
-                >
-                  <Trophy className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                  <span className="hidden sm:inline">Palmarès</span>
-                </button>
-              )}
-              {isLoggedIn && (
-                <div
-                  className="h-9 px-2 rounded-xl bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 text-xs font-medium flex items-center gap-1 shrink-0"
-                  title="Connecté avec Google"
-                >
-                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="hidden sm:inline font-bold truncate max-w-[80px]">
-                    {profile?.displayName?.split(' ')[0] || 'Google'}
-                  </span>
-                </div>
-              )}
               <button
                 type="button"
                 id="btn-multiplayer-settings"

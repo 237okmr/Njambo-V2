@@ -536,7 +536,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
       exit={{ x: '100%' }}
       transition={{ type: 'spring', damping: 25, stiffness: 200 }}
       id="global-leaderboard-screen"
-      className="fixed inset-0 z-[70] bg-slate-950 text-slate-100 flex flex-col font-sans select-none overflow-hidden"
+      className="fixed inset-x-0 top-0 bottom-[var(--app-bottom-nav,0px)] z-[70] bg-slate-950 text-slate-100 flex flex-col font-sans select-none overflow-hidden"
     >
       {/* NATIVE HEADER */}
       <NativeScreenHeader
@@ -551,7 +551,6 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
           </div>
         }
         subtitle="Classement et statistiques de la communauté de Njambo Kora"
-        onHome={onClose}
         rightActions={
           <div className="flex items-center gap-1.5">
             <button

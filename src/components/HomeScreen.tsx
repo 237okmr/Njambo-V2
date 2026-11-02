@@ -4,7 +4,6 @@ import { AnimatePresence, motion } from 'motion/react';
 import { SavedManche } from '../types';
 import { APP_VERSION } from '../version';
 import { usePlayerProfile } from '../context/PlayerProfileContext';
-import { HeaderProfileButton } from './profile/HeaderProfileButton';
 import { NativeScreenHeader } from './common/NativeScreenHeader';
 import { fetchKoraCashStatus } from '../services/koraCashClient';
 import { KoraCashPublicStatus, resolveEntryState, formatFcfa } from '../services/koraCashFormat';
@@ -28,8 +27,6 @@ interface HomeScreenProps {
   onOpenSimpleRules?: () => void;
   onOpenTests?: () => void;
   onOpenTestMode?: () => void;
-  onOpenProfile?: () => void;
-  onOpenLeaderboard?: () => void;
   soundEnabled?: boolean;
   onToggleSound?: () => void;
   onOpenInstallModal?: () => void;
@@ -101,28 +98,6 @@ const AnimatedBanknotesIcon: React.FC = () => (
   </div>
 );
 
-const AnimatedCrownPalmaresIcon: React.FC = () => (
-  <div className="w-5 h-5 relative flex items-center justify-center select-none">
-    {/* Crown body breathing */}
-    <motion.div
-      animate={{ scale: [1, 1.1, 1] }}
-      transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
-      className="relative flex items-center justify-center"
-    >
-      <svg className="w-4 h-4 text-purple-400 fill-purple-400" viewBox="0 0 24 24">
-        <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
-      </svg>
-    </motion.div>
-    {/* Sparkling star on crown peak */}
-    <motion.span
-      animate={{ opacity: [0.2, 1, 0.2], rotate: [0, 90, 180], scale: [0.8, 1.25, 0.8] }}
-      transition={{ duration: 2.0, repeat: Infinity, ease: 'easeInOut' }}
-      className="absolute -top-1 -right-0.5 text-[8px] text-purple-200 pointer-events-none select-none font-bold"
-    >
-      ✦
-    </motion.span>
-  </div>
-);
 
 // Bouton principal de l'accueil (« Jouer » ou « Reprendre ») : plein, doré, avec un reflet animé.
 const PRIMARY_BUTTON_CLASSES =
@@ -154,8 +129,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onOpenSimpleRules,
   onOpenTests,
   onOpenTestMode,
-  onOpenProfile,
-  onOpenLeaderboard,
   soundEnabled,
   onToggleSound,
   onOpenInstallModal,
@@ -214,13 +187,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   // 2. Right action controls aligned with unified header tokens (rounded-xl, h-9)
   const rightActions = (
     <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-      {/* Profile Pill Button: Modern & Sleek Ring Capsule */}
-      {onOpenProfile && (
-        <HeaderProfileButton
-          variant="pill"
-          onClick={onOpenProfile}
-        />
-      )}
 
       {/* Académie & Règles Quick Button */}
       {onOpenRules && (
@@ -274,7 +240,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   return (
     <div
       id="home-screen"
-      className="min-h-[100dvh] h-[100dvh] w-full bg-gradient-to-b from-[#0b0805] via-[#080604] to-[#050403] text-slate-100 flex flex-col justify-between relative overflow-y-auto overflow-x-hidden font-sans select-none p-3 sm:p-4 no-scrollbar"
+      className="h-[calc(100dvh-var(--app-bottom-nav,0px))] w-full bg-gradient-to-b from-[#0b0805] via-[#080604] to-[#050403] text-slate-100 flex flex-col justify-between relative overflow-y-auto overflow-x-hidden font-sans select-none p-3 sm:p-4 no-scrollbar"
     >
       {/* Lueur ambrée unique, qui respire lentement derrière le titre (piste "Braise sous les cendres") */}
       <div className="home-glow absolute top-[30%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 sm:w-96 sm:h-96 rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.55)_0%,rgba(217,119,6,0.22)_45%,rgba(217,119,6,0)_72%)] pointer-events-none" />
@@ -460,7 +426,58 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </motion.div>
           )}
 
-          {/* 1. Kora Cash (En premier, visible une fois le statut connu) - Couleur signature : Or Solaire / Ambre */}
+
+          {/* Bouton principal : « Reprendre » si une partie est en cours */}
+          {hasResumableSession && (
+            <motion.button
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              whileTap={{ scale: 0.98 }}
+              type="button"
+              id="btn-home-resume"
+              onClick={handleResume}
+              className={PRIMARY_BUTTON_CLASSES}
+            >
+              <PrimaryButtonShimmer />
+              <span className="relative z-10 flex items-center gap-2 text-base sm:text-lg font-black">
+                <Play className="w-5 h-5 fill-slate-950" />
+                Reprendre
+              </span>
+              <span className="relative z-10 text-xs font-bold text-slate-900/80 truncate max-w-full">
+                Partie {activeSession.gameState.partieCount || 1} · Tour {activeSession.gameState.currentTrickNumber || 1}/5 · Pot: {activeSession.gameState.pot || 0} pts
+              </span>
+            </motion.button>
+          )}
+
+          {/* « Jouer » : ouvre le choix du mode. Bouton principal, sauf si une partie est à reprendre. */}
+          <motion.button
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            whileTap={{ scale: 0.98 }}
+            type="button"
+            id="btn-home-play"
+            onClick={onOpenModeSheet}
+            className={
+              hasResumableSession
+                ? 'relative w-full py-3 px-3.5 rounded-xl bg-slate-900/95 backdrop-blur-md text-amber-200 font-black text-sm border border-amber-500/60 hover:border-amber-400 shadow-lg flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer'
+                : PRIMARY_BUTTON_CLASSES
+            }
+          >
+            {!hasResumableSession && <PrimaryButtonShimmer />}
+            <span className={`relative z-10 flex items-center gap-2 font-black ${hasResumableSession ? 'text-sm' : 'text-base sm:text-lg'}`}>
+              <Play className={hasResumableSession ? 'w-4 h-4 fill-amber-300 text-amber-300' : 'w-5 h-5 fill-slate-950'} />
+              Jouer
+            </span>
+            {pendingInvitesCount > 0 && (
+              <span className="absolute top-1.5 right-2 z-10 min-w-5 h-5 px-1 rounded-full bg-rose-600 text-white font-black text-xs flex items-center justify-center shadow-md">
+                {pendingInvitesCount}
+              </span>
+            )}
+          </motion.button>
+
+          {/* Kora Cash, avec le solde. Couleur signature : Or Solaire / Ambre */}
           {koraCashLoaded && (
           <motion.button
             initial={{ opacity: 0, y: 8 }}
@@ -474,7 +491,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             onClick={onOpenKoraCash}
             className={`relative overflow-hidden w-full py-2.5 px-3.5 rounded-xl bg-slate-900/90 backdrop-blur-md text-slate-100 font-bold border border-slate-700 shadow-md flex items-center justify-between transition-all duration-200 group ${
               koraCashEntry === 'COMING_SOON'
-                ? 'order-last opacity-60 cursor-default'
+                ? 'opacity-60 cursor-default'
                 : 'hover:bg-slate-800 hover:border-slate-500 cursor-pointer'
             }`}
           >
@@ -509,88 +526,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </motion.button>
           )}
 
-          {/* 2. Bouton principal : « Reprendre » si une partie est en cours */}
-          {hasResumableSession && (
-            <motion.button
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              whileTap={{ scale: 0.98 }}
-              type="button"
-              id="btn-home-resume"
-              onClick={handleResume}
-              className={PRIMARY_BUTTON_CLASSES}
-            >
-              <PrimaryButtonShimmer />
-              <span className="relative z-10 flex items-center gap-2 text-base sm:text-lg font-black">
-                <Play className="w-5 h-5 fill-slate-950" />
-                Reprendre
-              </span>
-              <span className="relative z-10 text-xs font-bold text-slate-900/80 truncate max-w-full">
-                Partie {activeSession.gameState.partieCount || 1} · Tour {activeSession.gameState.currentTrickNumber || 1}/5 · Pot: {activeSession.gameState.pot || 0} pts
-              </span>
-            </motion.button>
-          )}
-
-          {/* 3. « Jouer » : ouvre le choix du mode. Bouton principal, sauf si une partie est à reprendre. */}
-          <motion.button
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            whileTap={{ scale: 0.98 }}
-            type="button"
-            id="btn-home-play"
-            onClick={onOpenModeSheet}
-            className={
-              hasResumableSession
-                ? 'relative w-full py-3 px-3.5 rounded-xl bg-slate-900/95 backdrop-blur-md text-amber-200 font-black text-sm border border-amber-500/60 hover:border-amber-400 shadow-lg flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer'
-                : PRIMARY_BUTTON_CLASSES
-            }
-          >
-            {!hasResumableSession && <PrimaryButtonShimmer />}
-            <span className={`relative z-10 flex items-center gap-2 font-black ${hasResumableSession ? 'text-sm' : 'text-base sm:text-lg'}`}>
-              <Play className={hasResumableSession ? 'w-4 h-4 fill-amber-300 text-amber-300' : 'w-5 h-5 fill-slate-950'} />
-              Jouer
-            </span>
-            {pendingInvitesCount > 0 && (
-              <span className="absolute top-1.5 right-2 z-10 min-w-5 h-5 px-1 rounded-full bg-rose-600 text-white font-black text-xs flex items-center justify-center shadow-md">
-                {pendingInvitesCount}
-              </span>
-            )}
-          </motion.button>
-
-          {/* 4. Palmarès Action - Couleur signature : Violet Néon / Améthyste */}
-          {onOpenLeaderboard && (
-            <motion.button
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
-              whileTap={{ scale: 0.98 }}
-              type="button"
-              id="btn-home-leaderboard"
-              onClick={onOpenLeaderboard}
-              className="relative overflow-hidden w-full py-2.5 px-3.5 rounded-xl bg-slate-900/90 backdrop-blur-md hover:bg-slate-800 text-slate-100 font-bold border border-slate-700 hover:border-slate-500 shadow-md flex items-center justify-between transition-all duration-200 cursor-pointer group"
-            >
-              <div className="flex items-center gap-3 text-left min-w-0 relative z-10">
-                <div className="w-8 h-8 rounded-lg bg-purple-500/20 border border-purple-400/50 flex items-center justify-center text-purple-400 shrink-0 shadow-[0_0_12px_rgba(168,85,247,0.35)] group-hover:scale-105 transition">
-                  <AnimatedCrownPalmaresIcon />
-                </div>
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="leading-tight text-xs sm:text-sm font-extrabold text-white truncate group-hover:text-purple-200 transition">
-                    Palmarès
-                  </span>
-                  <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 uppercase tracking-wider shrink-0">
-                    Classement
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1 text-xs font-bold text-slate-400 group-hover:text-purple-300 transition shrink-0 relative z-10">
-                <span>Voir</span>
-                <span>→</span>
-              </div>
-            </motion.button>
-          )}
         </div>
       </main>
 

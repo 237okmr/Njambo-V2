@@ -37,8 +37,6 @@ interface KoraCashScreenProps {
   onClose: () => void;
   onOpenCashTable: (request: CashTableRequest) => Promise<{ success: boolean; error?: string }>;
   onResumeCashTable: (roomCode: string) => void;
-  soundEnabled?: boolean;
-  onToggleSound?: () => void;
 }
 
 const SoonCard: React.FC<{ title: string; text: string }> = ({ title, text }) => (
@@ -64,7 +62,7 @@ const TABS: SegmentTab<KoraCashTab>[] = [
 ];
 
 /** Page Kora Cash : un mode de jeu à part entière, avec son adresse. Le serveur reste seul juge de ce qui est ouvert. */
-export const KoraCashScreen: React.FC<KoraCashScreenProps> = ({ onClose, onOpenCashTable, onResumeCashTable, soundEnabled, onToggleSound }) => {
+export const KoraCashScreen: React.FC<KoraCashScreenProps> = ({ onClose, onOpenCashTable, onResumeCashTable }) => {
   const { isLoggedIn, loginWithGoogle } = usePlayerProfile();
   const [status, setStatus] = useState<KoraCashPublicStatus | null>(null);
   const [statusLoaded, setStatusLoaded] = useState<boolean>(false);
@@ -156,7 +154,7 @@ export const KoraCashScreen: React.FC<KoraCashScreenProps> = ({ onClose, onOpenC
       exit={{ x: '100%' }}
       transition={{ type: 'spring', damping: 25, stiffness: 200 }}
       id="kora-cash-screen"
-      className="fixed inset-0 z-[70] bg-slate-950 text-slate-100 flex flex-col overflow-hidden"
+      className="fixed inset-x-0 top-0 bottom-[var(--app-bottom-nav,0px)] z-[70] bg-slate-950 text-slate-100 flex flex-col overflow-hidden"
     >
       <NativeScreenHeader
         id="kora-cash-header"
@@ -164,8 +162,6 @@ export const KoraCashScreen: React.FC<KoraCashScreenProps> = ({ onClose, onOpenC
         onBack={onClose}
         backTitle="Retourner à l’accueil"
         title="Kora Cash"
-        onToggleSound={onToggleSound}
-        soundEnabled={soundEnabled}
       />
 
       {statusLoaded && entry !== 'COMING_SOON' && (

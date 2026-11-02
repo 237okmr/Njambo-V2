@@ -356,12 +356,19 @@ html,
 body,
 #root,
 .h-dvh.bg-slate-950,
-.fixed.inset-0.bg-slate-950 {
+.fixed.inset-0.bg-slate-950,
+.fixed.inset-x-0.top-0.bg-slate-950 {
   background-color: #020617;
 }
 
-.fixed.inset-0.bg-slate-950 {
+.fixed.inset-0.bg-slate-950,
+.fixed.inset-x-0.top-0.bg-slate-950 {
   color: #f1f5f9;
+}
+
+/* Hauteur réservée à la barre de navigation du bas : posée par BottomNavBar tant qu'elle est affichée. */
+html.has-bottom-nav {
+  --app-bottom-nav: calc(3.5rem + env(safe-area-inset-bottom));
 }
 
 

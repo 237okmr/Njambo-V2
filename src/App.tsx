@@ -51,6 +51,8 @@ import { notificationScreen, useNotificationScreenOpen } from './hooks/useNotifi
 import { NotificationHistoryScreen } from './components/notifications/NotificationHistoryScreen';
 import { PlayerProfileScreen, ProfileTabType } from './components/profile/PlayerProfileScreen';
 import { KoraCashScreen } from './components/KoraCashScreen';
+import { BottomNavBar } from './components/common/BottomNavBar';
+import { activeBottomNavItem, isBottomNavVisible } from './utils/bottomNav';
 import { GlobalLeaderboardModal } from './components/leaderboard/GlobalLeaderboardModal';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { TopNotificationStack } from './components/common/TopNotificationStack';
@@ -2326,8 +2328,6 @@ function GameApp() {
             }}
             onOpenTestMode={() => setShowTestModeModal(true)}
             onOpenTests={() => setShowTestModeModal(true)}
-            onOpenProfile={() => setIsProfileModalOpen(true)}
-            onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
             savedSessionsCount={savedSessions.length}
             hasActiveSavedSession={Boolean(activeSessionId)}
             soundEnabled={soundEnabled}
@@ -3098,7 +3098,6 @@ function GameApp() {
             sourceScreen={currentScreen}
             soundEnabled={soundEnabled}
             onToggleSound={toggleSound}
-            onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
             onOpenAccountSettings={() => {
               setProfileInitialTab('settings');
               setIsProfileModalOpen(true);
@@ -3179,8 +3178,6 @@ function GameApp() {
           <ErrorBoundary>
             <KoraCashScreen
               onClose={() => setIsKoraCashOpen(false)}
-              soundEnabled={soundEnabled}
-              onToggleSound={toggleSound}
               onOpenCashTable={(request) => handleOpenCashTable(request, localPlayerName)}
               onResumeCashTable={(roomCode) => {
                 void handleJoinRoom(roomCode, localPlayerName).then((res) => {
@@ -3196,6 +3193,29 @@ function GameApp() {
           </ErrorBoundary>
         )}
       </AnimatePresence>
+
+      {/* Barre de navigation principale */}
+      <BottomNavBar
+        isVisible={isBottomNavVisible({
+          isOnHomeScreen: currentScreen === 'HOME',
+          isInRoomLobby: showMultiplayerLobby,
+          isSecondaryScreenOpen:
+            showRulesModal ||
+            isNotificationScreenOpen ||
+            showSetupModal ||
+            showSavedSessionsModal ||
+            showTestModeModal ||
+            showInstallModal,
+        })}
+        activeItem={activeBottomNavItem({ leaderboard: isLeaderboardOpen, profile: isProfileModalOpen, koraCash: isKoraCashOpen })}
+        onNavigate={(item) => {
+          setShowHomeModeSheet(false);
+          setShowMultiplayerHub(false);
+          setIsLeaderboardOpen(item === 'leaderboard');
+          setIsProfileModalOpen(item === 'profile');
+          setIsKoraCashOpen(item === 'koraCash');
+        }}
+      />
 
       {/* Écran plein « Notifications » (ouvert par la cloche) */}
       <AnimatePresence>
