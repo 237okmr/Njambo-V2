@@ -15,7 +15,44 @@ import {
   formatPhone,
   quoteWithdrawal,
   withdrawalStatusLabel,
+  cashEnvironmentLabel,
+  cashMovementLabel,
+  defaultKoraCashTab,
+  formatSignedFcfa,
 } from './koraCashFormat';
+
+describe('Kora Cash joueur — page', () => {
+  const tables = { enabled: true, betLevels: [10, 5, 25], minBuyInMultiple: 10, myTableCode: null };
+
+  it('arrive sur Tables si le joueur peut s’asseoir au plus petit niveau, sinon sur Portefeuille', () => {
+    assert.equal(defaultKoraCashTab(tables, 50), 'tables');
+    assert.equal(defaultKoraCashTab(tables, 49), 'wallet');
+  });
+
+  it('arrive sur Tables si le joueur y a un siège, même sans solde libre', () => {
+    assert.equal(defaultKoraCashTab({ ...tables, myTableCode: 'K8T4' }, 0), 'tables');
+  });
+
+  it('arrive sur Portefeuille si les tables sont fermées, sans niveau ou illisibles', () => {
+    assert.equal(defaultKoraCashTab({ ...tables, enabled: false }, 1000), 'wallet');
+    assert.equal(defaultKoraCashTab({ ...tables, betLevels: [] }, 1000), 'wallet');
+    assert.equal(defaultKoraCashTab(null, 1000), 'wallet');
+  });
+
+  it('distingue toujours la démo de l’argent réel', () => {
+    assert.match(cashEnvironmentLabel('DEMO'), /Démo/);
+    assert.equal(cashEnvironmentLabel('LIVE'), 'Argent réel');
+  });
+
+  it('nomme chaque mouvement et signe les montants', () => {
+    assert.equal(cashMovementLabel('DEPOSIT', 25), 'Dépôt');
+    assert.equal(cashMovementLabel('TABLE_SETTLEMENT', 10), 'Partie gagnée');
+    assert.equal(cashMovementLabel('TABLE_SETTLEMENT', -10), 'Partie perdue');
+    assert.equal(cashMovementLabel('INCONNU', 1), 'Mouvement');
+    assert.equal(formatSignedFcfa(25), '+25 FCFA');
+    assert.equal(formatSignedFcfa(-25), '-25 FCFA');
+  });
+});
 
 describe('Kora Cash joueur — format et saisie', () => {
   it('formate les montants avec espace fine insécable', () => {

@@ -48,7 +48,8 @@ import { addPhone, listPhones, removePhone } from './server/cash/phoneBookStore'
 import { maskPhone } from './server/cash/phoneBookRules';
 import { getKoraCashConfig, updateKoraCashConfig } from './server/cash/cashConfigStore';
 import { parseConfigPatch, toPublicStatus } from './server/cash/cashConfigRules';
-import { getWallet } from './server/cash/walletLedger';
+import { getWallet, listPlayerLedger } from './server/cash/walletLedger';
+import { toPublicMovements } from './server/cash/cashHistoryRules';
 import {
   getCashTableSettings,
   getCashTablesAccess,
@@ -989,6 +990,21 @@ async function startServer() {
     } catch (err) {
       console.error('[KoraCash] Lecture du portefeuille impossible.', err);
       res.status(500).json({ success: false, error: 'Lecture du portefeuille impossible.' });
+    }
+  });
+
+  // Kora Cash — historique des mouvements du joueur connecté. Lecture seule, dans le même environnement que le solde.
+  app.get('/api/cash/history', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const player = await requireGooglePlayer(req, res);
+    if (!player) return;
+    try {
+      const cfg = await getKoraCashConfig();
+      const entries = await listPlayerLedger(player.uid, cfg.environment === 'LIVE' ? 'LIVE' : 'DEMO');
+      res.json({ success: true, movements: toPublicMovements(entries) });
+    } catch (err) {
+      console.error('[KoraCash] Lecture de l\'historique impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Lecture de ton historique impossible.' });
     }
   });
 

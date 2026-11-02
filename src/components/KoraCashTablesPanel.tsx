@@ -25,6 +25,7 @@ interface KoraCashTablesPanelProps {
   onViewChange: (next: CashTablesView) => void;
   onOpenTable: (request: CashTableRequest) => Promise<{ success: boolean; error?: string }>;
   onResumeTable: (roomCode: string) => void;
+  onGoToDeposit: () => void;
 }
 
 const chipClass = (active: boolean) =>
@@ -33,7 +34,7 @@ const chipClass = (active: boolean) =>
   }`;
 
 /** Choix d'une table Cash : le serveur reste seul juge des niveaux, des bornes et du solde. */
-export const KoraCashTablesPanel: React.FC<KoraCashTablesPanelProps> = ({ view, available, onViewChange, onOpenTable, onResumeTable }) => {
+export const KoraCashTablesPanel: React.FC<KoraCashTablesPanelProps> = ({ view, available, onViewChange, onOpenTable, onResumeTable, onGoToDeposit }) => {
   const [mode, setMode] = useState<TableMode>('public');
   const [bet, setBet] = useState<number>(view.betLevels[0] ?? 0);
   const [capacity, setCapacity] = useState<number>(2);
@@ -196,7 +197,12 @@ export const KoraCashTablesPanel: React.FC<KoraCashTablesPanelProps> = ({ view, 
       {mode !== 'code' && !canAffordLevel && (
         <p className="flex items-start gap-2 text-xs font-bold text-amber-200">
           <ShieldAlert className="w-4 h-4 shrink-0" />
-          <span>Il te faut au moins {formatFcfa(range.min)} pour cette mise. Ton solde disponible : {formatFcfa(available)}.</span>
+          <span>
+            Il te faut au moins {formatFcfa(range.min)} pour cette mise. Ton solde disponible : {formatFcfa(available)}.{' '}
+            <button type="button" onClick={onGoToDeposit} className="underline underline-offset-2 cursor-pointer">
+              Déposer
+            </button>
+          </span>
         </p>
       )}
 

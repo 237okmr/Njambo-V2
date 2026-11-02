@@ -6,14 +6,12 @@ import { APP_VERSION } from '../version';
 import { usePlayerProfile } from '../context/PlayerProfileContext';
 import { HeaderProfileButton } from './profile/HeaderProfileButton';
 import { NativeScreenHeader } from './common/NativeScreenHeader';
-import { KoraCashModal } from './KoraCashModal';
 import { fetchKoraCashStatus } from '../services/koraCashClient';
 import { KoraCashPublicStatus, resolveEntryState, formatFcfa } from '../services/koraCashFormat';
 import { useKoraCashWallet } from '../services/koraCashWalletStore';
 
 interface HomeScreenProps {
-  onOpenCashTable?: React.ComponentProps<typeof KoraCashModal>['onOpenCashTable'];
-  onResumeCashTable?: (roomCode: string) => void;
+  onOpenKoraCash?: () => void;
   savedSessions?: SavedManche[];
   activeSessionId?: string | null;
   savedSessionsCount?: number;
@@ -139,8 +137,7 @@ const PrimaryButtonShimmer: React.FC = () => (
 );
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
-  onOpenCashTable,
-  onResumeCashTable,
+  onOpenKoraCash,
   savedSessions = [],
   activeSessionId = null,
   savedSessionsCount = 0,
@@ -176,7 +173,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   // Kora Cash : statut public lu une fois à l'ouverture du menu (activé ou non, démo ou réel).
   const [koraCashStatus, setKoraCashStatus] = React.useState<KoraCashPublicStatus | null>(null);
   const [koraCashLoaded, setKoraCashLoaded] = React.useState<boolean>(false);
-  const [isKoraCashOpen, setIsKoraCashOpen] = React.useState<boolean>(false);
   React.useEffect(() => {
     let cancelled = false;
     fetchKoraCashStatus().then((status) => {
@@ -475,7 +471,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             id="btn-home-kora-cash"
             disabled={koraCashEntry === 'COMING_SOON'}
             aria-disabled={koraCashEntry === 'COMING_SOON'}
-            onClick={() => setIsKoraCashOpen(true)}
+            onClick={onOpenKoraCash}
             className={`relative overflow-hidden w-full py-2.5 px-3.5 rounded-xl bg-slate-900/90 backdrop-blur-md text-slate-100 font-bold border border-slate-700 shadow-md flex items-center justify-between transition-all duration-200 group ${
               koraCashEntry === 'COMING_SOON'
                 ? 'order-last opacity-60 cursor-default'
@@ -598,10 +594,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </div>
       </main>
 
-      {isKoraCashOpen && koraCashStatus && koraCashEntry !== 'COMING_SOON' && (
-        <KoraCashModal environment={koraCashStatus.environment} depositMode={koraCashStatus.depositMode} onOpenCashTable={onOpenCashTable} onResumeCashTable={onResumeCashTable} onClose={() => setIsKoraCashOpen(false)} />
-      )}
-
       {/* Panneau du bas : choix du mode de jeu */}
       <AnimatePresence>
         {isModeSheetOpen && (
@@ -687,6 +679,34 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 </span>
                 <ChevronRight className="w-4 h-4 text-cyan-300 shrink-0" />
               </button>
+
+              {koraCashLoaded && koraCashEntry !== 'COMING_SOON' && (
+                <button
+                  type="button"
+                  id="btn-home-mode-kora-cash"
+                  onClick={() => {
+                    onCloseModeSheet?.();
+                    onOpenKoraCash?.();
+                  }}
+                  className="w-full py-3 px-3.5 rounded-xl bg-slate-950/60 text-slate-100 border border-slate-700 hover:border-slate-500 flex items-center justify-between gap-3 transition cursor-pointer active:scale-[0.98] group"
+                >
+                  <span className="flex items-center gap-3 min-w-0 text-left">
+                    <span className="w-9 h-9 rounded-lg bg-amber-500/20 border border-amber-400/50 flex items-center justify-center shrink-0">
+                      <AnimatedBanknotesIcon />
+                    </span>
+                    <span className="flex flex-col min-w-0">
+                      <span className="flex items-center gap-1.5">
+                        <span className="text-sm font-black text-white group-hover:text-amber-200 transition">Kora Cash</span>
+                        <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase tracking-wider shrink-0">
+                          {koraCashStatus?.environment === 'LIVE' ? 'Argent réel' : 'Démo'}
+                        </span>
+                      </span>
+                      <span className="text-xs text-slate-400">{koraCashEntry === 'LOGIN_REQUIRED' ? 'Avec un compte Google' : 'Joue ton solde en FCFA'}</span>
+                    </span>
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-amber-300 shrink-0" />
+                </button>
+              )}
             </motion.div>
           </motion.div>
         )}

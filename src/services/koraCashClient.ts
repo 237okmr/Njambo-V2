@@ -12,6 +12,8 @@ export interface KoraCashWallet {
 }
 
 async function authHeaders(): Promise<Record<string, string>> {
+  // Page rechargée sur son adresse : la session Google n'est pas encore rétablie au premier appel.
+  await auth.authStateReady();
   const user = auth.currentUser;
   if (!user) {
     throw new Error('Connexion requise.');
@@ -106,6 +108,22 @@ export async function fetchPendingDeposits(): Promise<PendingDeposit[]> {
     .filter((d: PendingDeposit) => d.id !== '' && Number.isFinite(d.amount));
 }
 
+export type CashMovementKind =
+  | 'DEPOSIT'
+  | 'TABLE_BUYIN'
+  | 'TABLE_CASHOUT'
+  | 'TABLE_SETTLEMENT'
+  | 'WITHDRAWAL_HOLD'
+  | 'WITHDRAWAL_REFUND'
+  | 'ADJUSTMENT';
+
+export interface CashMovement {
+  kind: CashMovementKind;
+  /** Effet sur l'argent du joueur : positif s'il gagne, négatif s'il perd ou engage. */
+  amount: number;
+  createdAt: number;
+}
+
 export interface CashTablesView {
   enabled: boolean;
   betLevels: number[];
@@ -192,6 +210,10 @@ export async function fetchWithdrawalSettings(): Promise<WithdrawalSettingsView>
     minAmount: Number(data.minAmount) || 0,
     maxAmount: Number(data.maxAmount) || 0,
   };
+}
+
+export async function fetchCashHistory(): Promise<CashMovement[]> {
+  return (await cashRequest<{ movements: CashMovement[] }>('/api/cash/history', 'Lecture de ton historique impossible.')).movements;
 }
 
 export async function fetchPhones(): Promise<CashPhone[]> {

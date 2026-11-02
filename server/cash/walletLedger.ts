@@ -9,6 +9,7 @@
  */
 
 import { getFirebaseAdminAppDb } from '../firebaseAdmin';
+import { recordServerReads } from '../katika/readBudget';
 import {
   CashEnvironment,
   CashLedgerEntry,
@@ -42,6 +43,14 @@ export async function getWallet(uid: string, environment: CashEnvironment = 'DEM
   assertValidUid(uid);
   const snap = await getFirebaseAdminAppDb().collection(walletCollectionFor(environment)).doc(uid).get();
   return walletFromData(uid, snap.exists ? (snap.data() as Partial<CashWallet>) : undefined);
+}
+
+/** Lit les lignes de registre d'un joueur, comptées dans la jauge de lectures. Lecture seule. */
+export async function listPlayerLedger(uid: string, environment: CashEnvironment = 'DEMO'): Promise<CashLedgerEntry[]> {
+  assertValidUid(uid);
+  const snap = await getFirebaseAdminAppDb().collection(ledgerCollectionFor(environment)).where('uid', '==', uid).get();
+  recordServerReads(snap.size);
+  return snap.docs.map((d) => d.data() as CashLedgerEntry);
 }
 
 export interface ApplyMovementResult {

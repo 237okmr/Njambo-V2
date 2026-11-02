@@ -119,6 +119,51 @@ export function withdrawalStatusLabel(status: string): string {
   }
 }
 
+/** Libellé d'une ligne d'historique. Le signe du montant distingue une partie gagnée d'une partie perdue. */
+export function cashMovementLabel(kind: string, amount: number): string {
+  switch (kind) {
+    case 'DEPOSIT':
+      return 'Dépôt';
+    case 'TABLE_BUYIN':
+      return 'Entrée à une table';
+    case 'TABLE_CASHOUT':
+      return 'Sortie de table';
+    case 'TABLE_SETTLEMENT':
+      return amount >= 0 ? 'Partie gagnée' : 'Partie perdue';
+    case 'WITHDRAWAL_HOLD':
+      return 'Retrait';
+    case 'WITHDRAWAL_REFUND':
+      return 'Retrait rendu';
+    case 'ADJUSTMENT':
+      return 'Correction';
+    default:
+      return 'Mouvement';
+  }
+}
+
+/** 1250 devient « +1 250 FCFA ». Le signe moins vient de formatFcfa. */
+export function formatSignedFcfa(amount: number): string {
+  return `${amount > 0 ? '+' : ''}${formatFcfa(amount)}`;
+}
+
+export type KoraCashTab = 'tables' | 'wallet' | 'history' | 'account';
+
+/** Onglet d'arrivée : Tables si le joueur peut s'y asseoir ou y retourner, sinon Portefeuille. */
+export function defaultKoraCashTab(
+  tables: { enabled: boolean; betLevels: number[]; minBuyInMultiple: number; myTableCode: string | null } | null,
+  available: number
+): KoraCashTab {
+  if (!tables || !tables.enabled) return 'wallet';
+  if (tables.myTableCode) return 'tables';
+  if (tables.betLevels.length === 0) return 'wallet';
+  return available >= Math.min(...tables.betLevels) * tables.minBuyInMultiple ? 'tables' : 'wallet';
+}
+
+/** Bandeau toujours visible sur la page : on sait d'un coup d'œil si l'argent est réel. */
+export function cashEnvironmentLabel(environment: KoraCashEnvironment): string {
+  return environment === 'LIVE' ? 'Argent réel' : 'Démo : solde de test';
+}
+
 /** Numéro enregistré (237677123412) affiché lisiblement : 6 77 12 34 12. */
 export function formatPhone(phone: string): string {
   const local = phone.startsWith('237') ? phone.slice(3) : phone;

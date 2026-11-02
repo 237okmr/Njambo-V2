@@ -11,6 +11,7 @@ describe('adresses des écrans', () => {
     assert.equal(screenFromPath('/game/multijoueur'), 'multiplayer');
     assert.equal(screenFromPath('/game/profil'), 'profile');
     assert.equal(screenFromPath('/game/notifications'), 'notifications');
+    assert.equal(screenFromPath('/game/kora-cash'), 'koraCash');
   });
 
   it("n'associe aucun écran à l'accueil ni à une adresse inconnue", () => {
@@ -36,6 +37,8 @@ describe('adresses des écrans', () => {
     assert.equal(routePathFor({}), GAME_HOME_PATH);
     assert.equal(routePathFor({ multiplayer: true }), ROUTE_PATHS.multiplayer);
     assert.equal(routePathFor({ multiplayer: true, profile: true }), ROUTE_PATHS.profile);
+    assert.equal(routePathFor({ multiplayer: true, koraCash: true }), ROUTE_PATHS.koraCash);
+    assert.equal(routePathFor({ koraCash: true, profile: true }), ROUTE_PATHS.profile);
     assert.equal(routePathFor({ profile: true, leaderboard: true }), ROUTE_PATHS.leaderboard);
     assert.equal(routePathFor({ leaderboard: true, notifications: true }), ROUTE_PATHS.notifications);
   });

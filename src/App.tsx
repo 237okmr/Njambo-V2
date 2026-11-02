@@ -50,6 +50,7 @@ import { notificationNavigation } from './services/notificationNavigation';
 import { notificationScreen, useNotificationScreenOpen } from './hooks/useNotificationHistory';
 import { NotificationHistoryScreen } from './components/notifications/NotificationHistoryScreen';
 import { PlayerProfileScreen } from './components/profile/PlayerProfileScreen';
+import { KoraCashScreen } from './components/KoraCashScreen';
 import { GlobalLeaderboardModal } from './components/leaderboard/GlobalLeaderboardModal';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { TopNotificationStack } from './components/common/TopNotificationStack';
@@ -177,6 +178,7 @@ function GameApp() {
   const [showTestModeModal, setShowTestModeModal] = useState<boolean>(false);
   const [showQuitModal, setShowQuitModal] = useState<boolean>(false);
   const [showHomeModeSheet, setShowHomeModeSheet] = useState<boolean>(false);
+  const [isKoraCashOpen, setIsKoraCashOpen] = useState<boolean>(false);
   const { notify } = useNotify();
   const [useDiamondLayout, setUseDiamondLayout] = useState<boolean>(() => {
     return localStorage.getItem('njambo_diamond_layout') === 'true';
@@ -482,6 +484,7 @@ function GameApp() {
     leaderboard: isLeaderboardOpen,
     profile: isProfileModalOpen,
     rules: showRulesModal,
+    koraCash: isKoraCashOpen,
     multiplayer: showMultiplayerHub || showMultiplayerLobby,
   });
   const routePathRef = useRef<string>(routePath);
@@ -516,6 +519,7 @@ function GameApp() {
     if (screen === 'leaderboard') setIsLeaderboardOpen(true);
     if (screen === 'multiplayer') setShowMultiplayerHub(true);
     if (screen === 'profile') setIsProfileModalOpen(true);
+    if (screen === 'koraCash') setIsKoraCashOpen(true);
     if (screen === 'notifications') notificationScreen.open();
   }, [setIsLeaderboardOpen, setIsProfileModalOpen, setShowMultiplayerHub]);
 
@@ -589,6 +593,11 @@ function GameApp() {
         rearmBackGuard();
         return;
       }
+      if (isKoraCashOpen) {
+        setIsKoraCashOpen(false);
+        rearmBackGuard();
+        return;
+      }
       if (showInstallModal) {
         setShowInstallModal(false);
         rearmBackGuard();
@@ -639,6 +648,7 @@ function GameApp() {
     isNotificationScreenOpen,
     isProfileModalOpen,
     isLeaderboardOpen,
+    isKoraCashOpen,
     showMultiplayerHub,
     showMultiplayerLobby,
     setIsProfileModalOpen,
@@ -714,6 +724,10 @@ function GameApp() {
           setIsProfileModalOpen(false);
           return;
         }
+        if (isKoraCashOpen) {
+          setIsKoraCashOpen(false);
+          return;
+        }
         if (showMultiplayerHub || showMultiplayerLobby) {
           setShowMultiplayerHub(false);
           setShowMultiplayerLobby(false);
@@ -740,6 +754,7 @@ function GameApp() {
     isNotificationScreenOpen,
     isLeaderboardOpen,
     isProfileModalOpen,
+    isKoraCashOpen,
     showMultiplayerHub,
     showMultiplayerLobby,
     setIsLeaderboardOpen,
@@ -2280,17 +2295,7 @@ function GameApp() {
       <main id="main-content" className="flex-1 flex flex-col overflow-hidden relative">
         {currentScreen === 'HOME' ? (
           <HomeScreen
-            onOpenCashTable={(request) => handleOpenCashTable(request, localPlayerName)}
-            onResumeCashTable={(roomCode) => {
-              void handleJoinRoom(roomCode, localPlayerName).then((res) => {
-                if (!res.success) {
-                  triggerToast(res.error || 'Retour à la table impossible.');
-                  return;
-                }
-                const current = wsService.getCurrentRoom();
-                if (current && current.status !== 'LOBBY') setCurrentScreen('GAME');
-              });
-            }}
+            onOpenKoraCash={() => setIsKoraCashOpen(true)}
             savedSessions={savedSessions}
             activeSessionId={activeSessionId}
             pendingInvitesCount={incomingInvitations.length}
@@ -3146,6 +3151,30 @@ function GameApp() {
             isOpen={true}
             onClose={() => setIsLeaderboardOpen(false)}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Page Kora Cash */}
+      <AnimatePresence>
+        {isKoraCashOpen && (
+          <ErrorBoundary>
+            <KoraCashScreen
+              onClose={() => setIsKoraCashOpen(false)}
+              soundEnabled={soundEnabled}
+              onToggleSound={toggleSound}
+              onOpenCashTable={(request) => handleOpenCashTable(request, localPlayerName)}
+              onResumeCashTable={(roomCode) => {
+                void handleJoinRoom(roomCode, localPlayerName).then((res) => {
+                  if (!res.success) {
+                    triggerToast(res.error || 'Retour à la table impossible.');
+                    return;
+                  }
+                  const current = wsService.getCurrentRoom();
+                  if (current && current.status !== 'LOBBY') setCurrentScreen('GAME');
+                });
+              }}
+            />
+          </ErrorBoundary>
         )}
       </AnimatePresence>
 
