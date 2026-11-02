@@ -11,6 +11,7 @@ import { KoraCashDepositPanel } from './KoraCashDepositPanel';
 import { KoraCashHistoryPanel } from './KoraCashHistoryPanel';
 import { KoraCashPhonesPanel, KoraCashWithdrawPanel } from './KoraCashWithdrawPanels';
 import { CashTableRequest, KoraCashTablesPanel } from './KoraCashTablesPanel';
+import { KoraCashProtectionPanel } from './KoraCashProtectionPanel';
 import { useKoraCashDeposits } from '../hooks/useKoraCashDeposits';
 import { useBackLayer } from '../hooks/useBackLayer';
 import {
@@ -330,6 +331,8 @@ export const KoraCashScreen: React.FC<KoraCashScreenProps> = ({ onClose, onOpenC
                   )}
                 </section>
               )}
+
+              <KoraCashProtectionPanel />
 
               <ReportProblemCard onOpenDiagnostic={() => setShowDiagnostic(true)} />
             </>

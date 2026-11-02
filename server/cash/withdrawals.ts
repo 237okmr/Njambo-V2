@@ -59,6 +59,8 @@ export interface WithdrawalDeps {
   sendToCampay(params: { amount: number; phone: string; withdrawalId: string }): Promise<WithdrawSendResult>;
   readTransaction(reference: string): Promise<WithdrawalRead>;
   getWebhookKey(): Promise<string | null>;
+  /** Gel des retraits et signaux qui imposent une validation humaine. */
+  getProtectionGate(uid: string, nowMs: number): Promise<{ blockedMessage: string | null; reviewReasons: string[] }>;
   newId?(): string;
   nowMs(): number;
 }
@@ -166,6 +168,10 @@ export async function requestWithdrawal(deps: WithdrawalDeps, input: { uid: stri
   if (!parsed.ok || parsed.amount === undefined) {
     return { httpStatus: 400, success: false, message: parsed.error || 'Montant invalide.' };
   }
+  const gate = await deps.getProtectionGate(input.uid, deps.nowMs());
+  if (gate.blockedMessage) {
+    return { httpStatus: 403, success: false, message: gate.blockedMessage };
+  }
   const phone = normalizeCameroonPhone(input.phone);
   if (!phone.ok || !phone.phone) {
     return { httpStatus: 400, success: false, message: phone.error || 'Numéro invalide.' };
@@ -198,9 +204,10 @@ export async function requestWithdrawal(deps: WithdrawalDeps, input: { uid: stri
       phone: phone.phone,
       status: 'HOLDING',
       dateKey,
-      autoApproved: shouldAutoApprove(parsed.amount, dayTotal, settings),
+      autoApproved: gate.reviewReasons.length === 0 && shouldAutoApprove(parsed.amount, dayTotal, settings),
       createdAt: now,
       updatedAt: now,
+      ...(gate.reviewReasons.length > 0 ? { reviewReasons: gate.reviewReasons } : {}),
     };
     await deps.createWithdrawal(doc);
   } catch (err) {
@@ -310,6 +317,14 @@ export async function cancelMyWithdrawal(deps: WithdrawalDeps, input: { uid: str
 
 export async function approveWithdrawal(deps: WithdrawalDeps, input: { id: unknown; actor: string }): Promise<WithdrawalResult> {
   if (!isValidWithdrawalId(input.id)) return { httpStatus: 400, success: false, message: MSG_NOT_FOUND };
+  // Un gel posé après la demande bloque aussi la validation : rien ne part tant qu'il n'est pas levé.
+  const pending = await deps.getWithdrawal(input.id);
+  if (pending) {
+    const gate = await deps.getProtectionGate(pending.uid, deps.nowMs());
+    if (gate.blockedMessage) {
+      return { httpStatus: 409, success: false, message: 'Retraits gelés pour ce joueur : lève d\'abord le gel.' };
+    }
+  }
   const sent = await sendWithdrawal(deps, input.id, ['AWAITING_APPROVAL'], { decidedBy: input.actor });
   if (!sent) return { httpStatus: 409, success: false, message: 'Cette demande n\'attend plus de validation.' };
   return ok(sent);

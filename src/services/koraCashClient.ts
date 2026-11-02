@@ -154,6 +154,41 @@ export async function acceptCashTableTerms(): Promise<void> {
   await cashRequest('/api/cash/tables/consent', 'Enregistrement impossible.', { method: 'POST' });
 }
 
+export interface CashLimitView {
+  effective: number;
+  ceiling: number;
+  pending: { value: number | null; effectiveAt: number } | null;
+}
+
+export interface CashProtectionView {
+  deposit: CashLimitView;
+  loss: CashLimitView;
+  raiseDelayHours: number;
+  today: { deposits: number; losses: number };
+  exclusion: { kind: 'PAUSE' | 'PERMANENT'; until: number | null } | null;
+}
+
+export async function fetchCashProtection(): Promise<CashProtectionView> {
+  return (await cashRequest<{ protection: CashProtectionView }>('/api/cash/protection', 'Lecture de tes limites impossible.')).protection;
+}
+
+export async function updateCashLimit(kind: 'deposit' | 'loss', value: number | null): Promise<{ delayed: boolean; protection: CashProtectionView }> {
+  return cashRequest('/api/cash/protection/limit', 'Changement de limite impossible.', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ kind, value }),
+  });
+}
+
+export async function startCashExclusion(kind: 'PAUSE' | 'PERMANENT', days?: number): Promise<CashProtectionView> {
+  const data = await cashRequest<{ protection: CashProtectionView }>('/api/cash/protection/exclusion', 'Pause impossible pour le moment.', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ kind, days }),
+  });
+  return data.protection;
+}
+
 export interface WithdrawalSettingsView {
   enabled: boolean;
   feePercent: number;

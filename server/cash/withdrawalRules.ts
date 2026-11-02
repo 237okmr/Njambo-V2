@@ -49,6 +49,8 @@ export interface WithdrawalDoc {
   refundFinal?: WithdrawalFinalRefund;
   /** Admin qui a validé, refusé ou tranché. */
   decidedBy?: string;
+  /** Signaux qui ont envoyé ce retrait à la validation. Jamais montrés au joueur. */
+  reviewReasons?: string[];
 }
 
 const ALLOWED_TRANSITIONS: Record<WithdrawalStatus, WithdrawalStatus[]> = {

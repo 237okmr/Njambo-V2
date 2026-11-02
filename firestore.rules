@@ -504,6 +504,21 @@ service cloud.firestore {
     match /cash_table_consents/{uid} {
       allow read, write: if false;
     }
+    match /cash_player_protection/{uid} {
+      allow read, write: if false;
+    }
+    match /cash_daily_totals/{docId} {
+      allow read, write: if false;
+    }
+    match /cash_player_activity/{docId} {
+      allow read, write: if false;
+    }
+    match /cash_pair_stats/{pairId} {
+      allow read, write: if false;
+    }
+    match /cash_collusion_alerts/{alertId} {
+      allow read, write: if false;
+    }
     // Identifiants des prestataires de paiement (chiffrés) : jamais accessibles depuis un client.
     match /server_secrets/{docId} {
       allow read, write: if false;

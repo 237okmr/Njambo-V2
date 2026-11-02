@@ -12,11 +12,16 @@ import { CashLedgerError } from '../cash/cashTypes';
 import type { CashTableBook } from '../cash/cashTables';
 import { getCashTablesAccess, getLiveCashTableBook, hasCashTableConsent } from '../cash/cashTableStore';
 import { CashTableSettings, buyInRangeFor, isValidCapacity, validateBuyIn, validateRebuy } from '../cash/cashTableRules';
+import { PartiePairOutcome, pairOutcomesFromResult } from '../cash/protectionRules';
+import { checkTableEntryAllowed, recordPartieOutcomes } from '../cash/protectionStore';
 
 export interface CashTableRuntime {
   book: CashTableBook;
   getAccess: () => Promise<{ open: boolean; settings: CashTableSettings }>;
   hasConsent: (uid: string) => Promise<boolean>;
+  /** Pause, exclusion ou limite de pertes atteinte : message de refus, sinon null. */
+  checkEntry: (uid: string) => Promise<string | null>;
+  recordPartieOutcomes: (outcomes: PartiePairOutcome[]) => Promise<void>;
 }
 import { saveKoraMoment } from './koraMomentStore';
 import { recordMultiplayerPartie } from './gameRecordStore';
@@ -1418,7 +1423,13 @@ export class RoomManager {
 
   private static getCashRuntime(): CashTableRuntime {
     if (!this.cashRuntime) {
-      this.cashRuntime = { book: getLiveCashTableBook(), getAccess: getCashTablesAccess, hasConsent: hasCashTableConsent };
+      this.cashRuntime = {
+        book: getLiveCashTableBook(),
+        getAccess: getCashTablesAccess,
+        hasConsent: hasCashTableConsent,
+        checkEntry: checkTableEntryAllowed,
+        recordPartieOutcomes,
+      };
     }
     return this.cashRuntime;
   }
@@ -1530,6 +1541,11 @@ export class RoomManager {
     }
     if (!(await runtime.hasConsent(uid))) {
       this.sendCashError(client, 'Confirme d’abord que tu as 18 ans et que tu joues de l’argent réel.');
+      return;
+    }
+    const entryRefusal = await runtime.checkEntry(uid);
+    if (entryRefusal) {
+      this.sendCashError(client, entryRefusal);
       return;
     }
 
@@ -1779,6 +1795,9 @@ export class RoomManager {
     });
     room.cash.lastRake = result.rake ?? 0;
     void book.recordPartie({ tableId, resultId: `${tableId}_${tag}`, rake: result.rake ?? 0, bet: result.baseBet });
+    // Signalement de collusion seulement : ni le jeu ni l'argent n'attendent ce calcul.
+    const forfeitedIds = (room.gameState?.players || []).filter((p) => p.isForfeit).map((p) => p.id);
+    void this.getCashRuntime().recordPartieOutcomes(pairOutcomesFromResult(result, forfeitedIds));
   }
 
   /** Juste avant la partie suivante : qui ne peut plus miser récupère ce qu'il lui reste et quitte la table. */
@@ -1905,6 +1924,11 @@ export class RoomManager {
       const { open } = await runtime.getAccess();
       if (!open) {
         this.sendCashError(client, 'Les tables Kora Cash sont fermées : la recave n’est plus possible.');
+        return;
+      }
+      const entryRefusal = await runtime.checkEntry(uid);
+      if (entryRefusal) {
+        this.sendCashError(client, entryRefusal);
         return;
       }
       const seat = room.cash.seats[uid];

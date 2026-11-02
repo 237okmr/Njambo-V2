@@ -22,6 +22,7 @@ import {
   sumDailyWithdrawals,
   transitionWithdrawal,
 } from './withdrawalStore';
+import { getWithdrawalGate } from './protectionStore';
 import {
   attachCampayReference,
   confirmDeposit,
@@ -324,6 +325,7 @@ export function createLiveWithdrawalDeps(): WithdrawalDeps {
     sendToCampay: startCampayWithdraw,
     readTransaction: readCampayTransaction,
     getWebhookKey: getCampayWebhookKey,
+    getProtectionGate: getWithdrawalGate,
     nowMs: () => Date.now(),
   };
 }

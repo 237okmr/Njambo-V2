@@ -17,6 +17,7 @@ interface WithdrawalRow {
   campayOperator?: string;
   campayReason?: string;
   decidedBy?: string;
+  reviewLabels?: string[];
 }
 
 interface Settings {
@@ -218,6 +219,7 @@ export const KatikaWithdrawalsCard: React.FC = () => {
                   {r.campayOperator ? ` · ${r.campayOperator}` : ''}
                 </div>
                 {r.note && <div className="text-amber-200">{r.note}</div>}
+                {r.reviewLabels && r.reviewLabels.length > 0 && <div className="text-amber-200">À vérifier : {r.reviewLabels.join(' · ')}</div>}
                 {r.campayReason && <div className="text-amber-200">Motif Campay : {r.campayReason}</div>}
                 {r.decidedBy && <div className="text-slate-500">Décidé par {r.decidedBy}</div>}
                 <div className="flex flex-wrap gap-2 pt-1">

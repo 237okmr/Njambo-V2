@@ -66,9 +66,13 @@ function harness(opts: HarnessOptions = {}) {
   const slots = new Map<string, string>();
   const ledger = new Map<string, WithdrawalMovement>();
   const state = { available: opts.available ?? 25, sends: 0 };
+  const gate: { current: { blockedMessage: string | null; reviewReasons: string[] } } = { current: { blockedMessage: null, reviewReasons: [] } };
   const deps: WithdrawalDeps = {
     async getSettings() {
       return { ...DEFAULT_WITHDRAWAL_SETTINGS, enabled: true, ...opts.settings };
+    },
+    async getProtectionGate() {
+      return gate.current;
     },
     async isVerifiedPhone() {
       return opts.verified ?? true;
@@ -124,7 +128,7 @@ function harness(opts: HarnessOptions = {}) {
     newId: () => ID,
     nowMs: () => NOW,
   };
-  return { deps, docs, slots, ledger, state };
+  return { deps, docs, slots, ledger, state, gate };
 }
 
 const request = (deps: WithdrawalDeps, amount: unknown = 20) => requestWithdrawal(deps, { uid: UID, amount, phone: PHONE });
@@ -258,6 +262,56 @@ describe('Retrait — annulation par le joueur', () => {
     assert.equal((await cancelMyWithdrawal(h.deps, { uid: 'autre', id: ID })).httpStatus, 404);
     assert.equal((await verifyMyWithdrawal(h.deps, { uid: 'autre', id: ID })).httpStatus, 404);
     assert.equal(h.state.available, 5);
+  });
+});
+
+describe('Retrait — gel et signaux', () => {
+  const FROZEN = 'Les retraits sont suspendus pour le moment.';
+
+  it('un gel refuse la demande sans toucher au solde', async () => {
+    const h = harness();
+    h.gate.current = { blockedMessage: FROZEN, reviewReasons: [] };
+    const r = await request(h.deps);
+    assert.equal(r.success, false);
+    assert.equal(r.httpStatus, 403);
+    assert.equal(r.message, FROZEN);
+    assert.equal(h.state.available, 25);
+    assert.equal(h.state.sends, 0);
+    assert.equal(h.docs.size, 0);
+  });
+
+  it('un signal envoie à la validation même sous le seuil, sans dévoiler la raison au joueur', async () => {
+    const h = harness();
+    h.gate.current = { blockedMessage: null, reviewReasons: ['DEPOSIT_NO_PLAY'] };
+    const r = await request(h.deps);
+    assert.equal(r.success, true);
+    assert.equal(r.withdrawal?.status, 'AWAITING_APPROVAL');
+    assert.equal(h.state.sends, 0);
+    assert.equal(h.state.available, 5);
+    assert.deepEqual(h.docs.get(ID)?.reviewReasons, ['DEPOSIT_NO_PLAY']);
+    assert.equal(JSON.stringify(r).includes('DEPOSIT_NO_PLAY'), false);
+  });
+
+  it('sans signal, le retrait part seul comme avant', async () => {
+    const h = harness();
+    const r = await request(h.deps);
+    assert.equal(r.success, true);
+    assert.equal(h.state.sends, 1);
+    assert.equal(h.docs.get(ID)?.reviewReasons, undefined);
+  });
+
+  it('un gel posé après la demande bloque la validation, et le refus reste possible', async () => {
+    const h = harness();
+    h.gate.current = { blockedMessage: null, reviewReasons: ['ABNORMAL_GAIN'] };
+    await request(h.deps);
+    h.gate.current = { blockedMessage: FROZEN, reviewReasons: [] };
+    const blocked = await approveWithdrawal(h.deps, { id: ID, actor: 'admin' });
+    assert.equal(blocked.success, false);
+    assert.match(blocked.message!, /gel/);
+    assert.equal(h.state.sends, 0);
+    h.gate.current = { blockedMessage: null, reviewReasons: [] };
+    assert.equal((await approveWithdrawal(h.deps, { id: ID, actor: 'admin' })).success, true);
+    assert.equal(h.state.sends, 1);
   });
 });
 

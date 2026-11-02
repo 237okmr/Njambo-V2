@@ -10,11 +10,14 @@ import { ServerGameEngine } from '../engine/serverGameEngine';
 import { CashTableBook, CashSeatDoc, CashPartieDoc } from '../cash/cashTables';
 import { computeMovement } from '../cash/cashLedgerRules';
 import { DEFAULT_CASH_TABLE_SETTINGS, seatDocId } from '../cash/cashTableRules';
+import type { PartiePairOutcome } from '../cash/protectionRules';
 import type { MultiplayerRoom } from '../../src/types';
 
 const manager = RoomManager as any;
 
 function fakeRuntime(balances: Record<string, number>, overrides?: { open?: boolean; consent?: boolean }) {
+  const entryRefusal: { current: string | null } = { current: null };
+  const pairOutcomes: PartiePairOutcome[] = [];
   const wallets = new Map(Object.entries(balances).map(([uid, available]) => [uid, { available, locked: 0 }]));
   const refs = new Set<string>();
   const lines: { uid: string; kind: string; lockedDelta: number; tableId?: unknown }[] = [];
@@ -47,8 +50,10 @@ function fakeRuntime(balances: Record<string, number>, overrides?: { open?: bool
     book,
     getAccess: async () => ({ open: overrides?.open ?? true, settings: { ...DEFAULT_CASH_TABLE_SETTINGS, enabled: overrides?.open ?? true } }),
     hasConsent: async () => overrides?.consent ?? true,
+    checkEntry: async () => entryRefusal.current,
+    recordPartieOutcomes: async (outcomes) => void pairOutcomes.push(...outcomes),
   });
-  return { book, wallets, lines, seats, parties };
+  return { book, wallets, lines, seats, parties, entryRefusal, pairOutcomes };
 }
 
 function connect(uid: string, options?: { provider?: string; verified?: boolean }) {
@@ -262,6 +267,43 @@ describe('Table Cash — jeu', () => {
   });
 });
 
+describe('Table Cash — protection', () => {
+  it('une pause ou une limite atteinte ferme l’entrée, sans toucher au solde', async () => {
+    const { wallets, entryRefusal } = fakeRuntime({ a: 1000 });
+    entryRefusal.current = 'Tu as choisi une pause de Kora Cash.';
+    const a = connect('a');
+    await manager.handleCashTableOpen(a.client, { type: 'CASH_TABLE_OPEN', cashTable: { betLevel: 5, capacity: 2, buyIn: 50 } });
+    assert.match(a.lastError() ?? '', /pause/);
+    assert.deepEqual(wallets.get('a'), { available: 1000, locked: 0 });
+    assert.equal(a.client.roomCode, null);
+  });
+
+  it('une limite atteinte ferme la recave mais laisse finir la table', async () => {
+    const { wallets, entryRefusal } = fakeRuntime({ a: 1000, b: 1000 });
+    const a = connect('a');
+    const b = connect('b');
+    const room = await openPrivateTable(a, b, 250);
+    start(a);
+    entryRefusal.current = 'Tu as atteint ta limite de pertes du jour.';
+    room.status = 'PARTIE_OVER';
+    await manager.handleCashTableRebuy(a.client, { type: 'CASH_TABLE_REBUY', cashAmount: 100 });
+    assert.match(a.lastError() ?? '', /limite de pertes/);
+    assert.equal(wallets.get('a')?.locked, 250);
+    assert.equal(room.cash?.seats.a.open, true);
+  });
+
+  it('chaque partie remonte qui a pris quoi à qui, sans rien bloquer', async () => {
+    const { pairOutcomes, book } = fakeRuntime({ a: 300, b: 300 });
+    const a = connect('a');
+    const b = connect('b');
+    const room = await openPrivateTable(a, b, 250);
+    start(a);
+    RoomManager.forceRemovePlayer(room.id, 'a', true);
+    await book.flush(room.cash!.tableId);
+    assert.deepEqual(pairOutcomes, [{ winner: 'b', loser: 'a', amount: 25, forfeit: true }]);
+  });
+});
+
 describe('Table Cash — démarrage incomplet', () => {
   async function tableOfFour(players: ReturnType<typeof connect>[]) {
     const [host, ...others] = players;
@@ -450,7 +492,7 @@ describe('Table Cash — recave et capital insuffisant', () => {
     set('b', capitals.b, capitals.b < room.baseBet);
     gs.phase = 'PARTIE_OVER';
     room.status = 'PARTIE_OVER';
-    manager.settleCashPartie({ mancheNumber: 1, partieCount: 1, baseBet: 25, rake: 0 }, room);
+    manager.settleCashPartie({ mancheNumber: 1, partieCount: 1, baseBet: 25, rake: 0, participants: [] }, room);
     await runtime.book.flush(room.cash!.tableId);
     return { ...runtime, a, b, room };
   }

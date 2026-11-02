@@ -61,6 +61,23 @@ import {
   updateCashTableSettings,
 } from './server/cash/cashTableStore';
 import { parseCashTableSettingsPatch } from './server/cash/cashTableRules';
+import {
+  ProtectionError,
+  checkDepositAllowed,
+  closeCollusionAlert,
+  getPlayerProtection,
+  getProtectionSettings,
+  getProtectionView,
+  liftPlayerExclusion,
+  listOpenCollusionAlerts,
+  listWatchedPlayers,
+  requestExclusion,
+  setPersonalLimit,
+  setPlayerFreeze,
+  updateProtectionSettings,
+} from './server/cash/protectionStore';
+import { dateKeyFor } from './server/cash/withdrawalRules';
+import { COLLUSION_REASON_LABELS, REVIEW_REASON_LABELS, exclusionEnd, parseProtectionSettingsPatch } from './server/cash/protectionRules';
 import { setWalletChangeListener } from './server/cash/walletEvents';
 import { listPendingDeposits, listRecentCampayDeposits } from './server/cash/depositStore';
 import { previewDemoCleanup, applyDemoCleanup } from './server/cash/demoCleanup';
@@ -1025,6 +1042,15 @@ async function startServer() {
       if (cfg.activeProviderId !== 'campay') {
         return res.status(403).json({ success: false, error: 'Le dépôt Mobile Money n\'est pas activé.' });
       }
+      const refusal = await checkDepositAllowed(player.uid, req.body?.amount, async () =>
+        // Seuls les dépôts lancés aujourd'hui comptent : un paiement abandonné un autre jour ne doit pas réduire la limite du jour.
+        (await listPendingDeposits(player.uid, 50))
+          .filter((d) => dateKeyFor(d.createdAt) === dateKeyFor(Date.now()))
+          .reduce((total, d) => total + d.amount, 0)
+      );
+      if (refusal) {
+        return res.status(403).json({ success: false, error: refusal });
+      }
       const result = await startCampayDeposit(createLiveCampayDeps(), {
         uid: player.uid,
         amount: req.body?.amount,
@@ -1093,6 +1119,51 @@ async function startServer() {
   };
   app.get('/api/cash/campay/webhook', campayWebhookHandler);
   app.post('/api/cash/campay/webhook', campayWebhookHandler);
+
+  // Kora Cash — protection du joueur connecté : ses limites, ses totaux du jour, sa pause en cours.
+  app.get('/api/cash/protection', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const player = await requireGooglePlayer(req, res);
+    if (!player) return;
+    try {
+      res.json({ success: true, protection: await getProtectionView(player.uid) });
+    } catch (err) {
+      console.error('[KoraCash] Lecture de la protection impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Lecture de tes limites impossible.' });
+    }
+  });
+
+  app.post('/api/cash/protection/limit', express.json(), async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const player = await requireGooglePlayer(req, res);
+    if (!player) return;
+    const kind = req.body?.kind;
+    if (kind !== 'deposit' && kind !== 'loss') {
+      return res.status(400).json({ success: false, error: 'Limite inconnue.' });
+    }
+    try {
+      const { delayed } = await setPersonalLimit(player.uid, kind, req.body?.value);
+      res.json({ success: true, delayed, protection: await getProtectionView(player.uid) });
+    } catch (err) {
+      if (err instanceof ProtectionError) return res.status(400).json({ success: false, error: err.message });
+      console.error('[KoraCash] Changement de limite impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Changement de limite impossible.' });
+    }
+  });
+
+  app.post('/api/cash/protection/exclusion', express.json(), async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const player = await requireGooglePlayer(req, res);
+    if (!player) return;
+    try {
+      await requestExclusion(player.uid, { kind: req.body?.kind, days: req.body?.days });
+      res.json({ success: true, protection: await getProtectionView(player.uid) });
+    } catch (err) {
+      if (err instanceof ProtectionError) return res.status(400).json({ success: false, error: err.message });
+      console.error('[KoraCash] Pause impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Pause impossible pour le moment.' });
+    }
+  });
 
   // Kora Cash — ce que la fenêtre du joueur doit savoir des tables : ouvertes ou non, niveaux, commission, sa table en cours.
   app.get('/api/cash/tables', async (req, res) => {
@@ -1855,6 +1926,7 @@ async function startServer() {
           createdAt: w.createdAt,
           updatedAt: w.updatedAt,
           note: w.note,
+          reviewLabels: (w.reviewReasons || []).map((reason) => REVIEW_REASON_LABELS[reason as keyof typeof REVIEW_REASON_LABELS] || reason),
           campayStatus: w.campayStatus,
           campayOperator: w.campayOperator,
           campayReason: w.campayReason,
@@ -1864,6 +1936,87 @@ async function startServer() {
     } catch (err) {
       console.error('[KoraCash] Lecture de la file des retraits impossible.', err instanceof Error ? err.message : String(err));
       res.status(500).json({ success: false, error: 'Lecture des retraits impossible.' });
+    }
+  });
+
+  // Protection : réglages, joueurs gelés ou exclus, signalements de collusion ouverts.
+  app.get('/api/katika/cash/protection', async (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const [settings, players, alerts] = await Promise.all([getProtectionSettings(), listWatchedPlayers(), listOpenCollusionAlerts()]);
+      const now = Date.now();
+      res.json({
+        success: true,
+        settings,
+        players: players.map((p) => {
+          const end = exclusionEnd(p, now);
+          return {
+            uid: p.uid,
+            freeze: p.freeze ?? null,
+            exclusion: end !== null && p.exclusion ? { ...p.exclusion, end: Number.isFinite(end) ? end : null } : null,
+          };
+        }),
+        alerts: alerts.map((a) => ({ ...a, label: COLLUSION_REASON_LABELS[a.reason] })),
+      });
+    } catch (err) {
+      console.error('[KoraCash] Lecture de la protection impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Lecture de la protection impossible.' });
+    }
+  });
+
+  app.post('/api/katika/cash/protection-settings', express.json(), async (req, res) => {
+    const parsed = parseProtectionSettingsPatch(req.body);
+    if (!parsed.ok || !parsed.patch) {
+      return res.status(400).json({ success: false, error: parsed.error || 'Corps de requête invalide.' });
+    }
+    try {
+      const settings = await updateProtectionSettings(parsed.patch, (req as any).katikaUser?.email as string | undefined);
+      res.json({ success: true, settings });
+    } catch (err) {
+      console.error('[KoraCash] Enregistrement de la protection impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Enregistrement impossible.' });
+    }
+  });
+
+  app.post('/api/katika/cash/protection-players/:uid/:action', express.json(), async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const actor = String((req as any).katikaUser?.email || 'katika');
+    const uid = req.params.uid;
+    try {
+      if (!uid || uid.length > 128 || uid.includes('/')) {
+        return res.status(400).json({ success: false, error: 'Identifiant joueur invalide.' });
+      }
+      switch (req.params.action) {
+        case 'freeze':
+          await setPlayerFreeze(uid, { frozen: true, actor, note: req.body?.note });
+          break;
+        case 'unfreeze':
+          await setPlayerFreeze(uid, { frozen: false, actor, note: '' });
+          break;
+        case 'lift-exclusion':
+          await liftPlayerExclusion(uid, { actor, note: req.body?.note });
+          break;
+        default:
+          return res.status(404).json({ success: false, error: 'Action inconnue.' });
+      }
+      const player = await getPlayerProtection(uid);
+      res.json({ success: true, liftAt: player.exclusion?.liftAt ?? null });
+    } catch (err) {
+      if (err instanceof ProtectionError) return res.status(400).json({ success: false, error: err.message });
+      console.error('[KoraCash] Action de protection impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Action impossible.' });
+    }
+  });
+
+  app.post('/api/katika/cash/collusion-alerts/:id/close', express.json(), async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      await closeCollusionAlert(req.params.id, { actor: String((req as any).katikaUser?.email || 'katika'), note: req.body?.note });
+      res.json({ success: true });
+    } catch (err) {
+      if (err instanceof ProtectionError) return res.status(400).json({ success: false, error: err.message });
+      console.error('[KoraCash] Clôture du signalement impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Clôture impossible.' });
     }
   });
 

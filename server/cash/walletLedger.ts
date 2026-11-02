@@ -8,6 +8,7 @@
  *  - Aucune route HTTP, aucun accès client, aucun délai ici.
  */
 
+import { FieldValue } from 'firebase-admin/firestore';
 import { getFirebaseAdminAppDb } from '../firebaseAdmin';
 import { recordServerReads } from '../katika/readBudget';
 import {
@@ -21,6 +22,8 @@ import {
 } from './cashTypes';
 import { computeMovement, isValidRef } from './cashLedgerRules';
 import { emitWalletChanged } from './walletEvents';
+import { dateKeyFor } from './withdrawalRules';
+import { CASH_DAILY_TOTALS_COLLECTION, CASH_PLAYER_ACTIVITY_COLLECTION, dailyTotalsDocId, playerActivityDocId } from './protectionStore';
 
 function walletFromData(uid: string, data: Partial<CashWallet> | undefined): CashWallet {
   return {
@@ -120,6 +123,27 @@ export async function applyMovement(input: CashMovementInput): Promise<ApplyMove
 
     tx.set(ledgerRef, entry);
     tx.set(walletRef, wallet);
+
+    // Totaux du jour et dernière activité : écrits avec le mouvement, ils ne peuvent pas s'écarter du registre.
+    if (input.kind === 'DEPOSIT' || input.kind === 'TABLE_SETTLEMENT') {
+      const isDeposit = input.kind === 'DEPOSIT';
+      const environment = input.environment ?? 'DEMO';
+      const dateKey = dateKeyFor(now);
+      tx.set(
+        db.collection(CASH_DAILY_TOTALS_COLLECTION).doc(dailyTotalsDocId(input.uid, dateKey, environment)),
+        {
+          uid: input.uid,
+          dateKey,
+          ...(isDeposit ? { deposits: FieldValue.increment(input.availableDelta) } : { settlementNet: FieldValue.increment(input.lockedDelta) }),
+        },
+        { merge: true }
+      );
+      tx.set(
+        db.collection(CASH_PLAYER_ACTIVITY_COLLECTION).doc(playerActivityDocId(input.uid, environment)),
+        isDeposit ? { lastDepositAt: now } : { lastPlayAt: now },
+        { merge: true }
+      );
+    }
 
     return { applied: true, entry, wallet };
   });
