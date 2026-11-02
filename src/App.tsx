@@ -49,7 +49,7 @@ import { useNotificationHistoryBridge } from './hooks/useNotificationHistoryBrid
 import { notificationNavigation } from './services/notificationNavigation';
 import { notificationScreen, useNotificationScreenOpen } from './hooks/useNotificationHistory';
 import { NotificationHistoryScreen } from './components/notifications/NotificationHistoryScreen';
-import { PlayerProfileScreen } from './components/profile/PlayerProfileScreen';
+import { PlayerProfileScreen, ProfileTabType } from './components/profile/PlayerProfileScreen';
 import { KoraCashScreen } from './components/KoraCashScreen';
 import { GlobalLeaderboardModal } from './components/leaderboard/GlobalLeaderboardModal';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
@@ -179,6 +179,7 @@ function GameApp() {
   const [showQuitModal, setShowQuitModal] = useState<boolean>(false);
   const [showHomeModeSheet, setShowHomeModeSheet] = useState<boolean>(false);
   const [isKoraCashOpen, setIsKoraCashOpen] = useState<boolean>(false);
+  const [profileInitialTab, setProfileInitialTab] = useState<ProfileTabType>('identity');
   const { notify } = useNotify();
   const [useDiamondLayout, setUseDiamondLayout] = useState<boolean>(() => {
     return localStorage.getItem('njambo_diamond_layout') === 'true';
@@ -477,6 +478,11 @@ function GameApp() {
       wsService.setPresenceStatus('ONLINE_IDLE');
     }
   }, [currentScreen, isMultiplayerMode, multiplayerRoom]);
+
+  // Le profil revient sur son premier onglet après avoir été ouvert sur les réglages.
+  useEffect(() => {
+    if (!isProfileModalOpen) setProfileInitialTab('identity');
+  }, [isProfileModalOpen]);
 
   // Une adresse par écran : celle de l'écran au premier plan, sans ajouter d'entrée à l'historique.
   const routePath = routePathFor({
@@ -3093,6 +3099,10 @@ function GameApp() {
             soundEnabled={soundEnabled}
             onToggleSound={toggleSound}
             onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
+            onOpenAccountSettings={() => {
+              setProfileInitialTab('settings');
+              setIsProfileModalOpen(true);
+            }}
             room={showMultiplayerLobby && multiplayerRoom ? multiplayerRoom : null}
             localPlayerId={localPlayerId}
             errorMessage={serverErrorMessage}
@@ -3139,6 +3149,15 @@ function GameApp() {
               soundEnabled={soundEnabled}
               onToggleSound={toggleSound}
               onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
+              initialTab={profileInitialTab}
+              onOpenKoraCash={
+                currentScreen === 'HOME'
+                  ? () => {
+                      setIsProfileModalOpen(false);
+                      setIsKoraCashOpen(true);
+                    }
+                  : undefined
+              }
             />
           </ErrorBoundary>
         )}

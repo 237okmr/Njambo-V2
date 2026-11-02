@@ -45,7 +45,6 @@ import {
   Send,
   Inbox,
   ShieldAlert,
-  Activity,
   ChevronDown,
   ChevronRight,
 } from 'lucide-react';
@@ -67,13 +66,10 @@ import { notificationNavigation } from '../../services/notificationNavigation';
 import { webSocketService } from '../../services/websocketService';
 import { isTestEnvironment } from '../../utils/envUtils';
 import { PlayerAvatar } from '../profile/PlayerAvatar';
-import { PushNotificationToggle } from '../profile/PushNotificationToggle';
 import { RoomFilterBottomSheet, AdvancedRoomFilters } from './RoomFilterBottomSheet';
 import { FriendQrModal } from './FriendQrModal';
 import { JoinProgressIndicator } from './JoinProgressIndicator';
 import { HeadToHeadModal } from '../rivalry/HeadToHeadModal';
-import { ConnectionDiagnosticModal } from '../common/ConnectionDiagnosticModal';
-import { ReportProblemCard } from '../common/ReportProblemCard';
 import { usePlayerProfile } from '../../context/PlayerProfileContext';
 import { useInvitations } from '../../context/InvitationsContext';
 import { NativeScreenHeader } from '../common/NativeScreenHeader';
@@ -120,6 +116,7 @@ export interface MultiplayerScreenProps {
   onLeaveRoom: () => Promise<void>;
   onKickPlayer?: (playerId: string) => Promise<void>;
   onOpenLeaderboard?: () => void;
+  onOpenAccountSettings?: () => void;
 }
 
 export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
@@ -129,6 +126,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
   soundEnabled = true,
   onToggleSound,
   onOpenLeaderboard,
+  onOpenAccountSettings,
   room,
   localPlayerId,
   errorMessage,
@@ -193,7 +191,6 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
   const [showJoinCodeModal, setShowJoinCodeModal] = useState<boolean>(false);
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
   const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
-  const [showDiagnosticModal, setShowDiagnosticModal] = useState<boolean>(false);
   const [showAddFriendModal, setShowAddFriendModal] = useState<boolean>(false);
   const [showFilterBottomSheet, setShowFilterBottomSheet] = useState<boolean>(false);
   const [showQrModal, setShowQrModal] = useState<boolean>(false);
@@ -3906,20 +3903,21 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                 />
               </div>
 
-              {/* Push notifications */}
-              <PushNotificationToggle
-                userId={localPlayerId}
-                userName={playerName}
-                onToast={handleCopyCode}
-              />
-
-              {/* Signaler un problème (diagnostic détaillé réservé aux admins) */}
-              <ReportProblemCard
-                onOpenDiagnostic={() => {
-                  setShowSettingsModal(false);
-                  setShowDiagnosticModal(true);
-                }}
-              />
+              {/* Notifications, son, aide : réunis dans les réglages du compte */}
+              {onOpenAccountSettings && (
+                <button
+                  type="button"
+                  id="btn-multiplayer-account-settings"
+                  onClick={() => {
+                    setShowSettingsModal(false);
+                    onOpenAccountSettings();
+                  }}
+                  className="w-full min-h-11 px-3 rounded-xl bg-slate-950 border border-slate-700/80 hover:border-amber-500/50 text-amber-300 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
+                >
+                  <Settings className="w-4 h-4 text-amber-400" />
+                  <span>Notifications, son et aide</span>
+                </button>
+              )}
 
               <button
                 type="button"
@@ -4323,13 +4321,6 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
         )}
       </AnimatePresence>
 
-      {/* ========================================================================= */}
-      {/* MODAL : DIAGNOSTIC DE CONNEXION TEMPS RÉEL                                */}
-      {/* ========================================================================= */}
-      <ConnectionDiagnosticModal
-        isOpen={showDiagnosticModal}
-        onClose={() => setShowDiagnosticModal(false)}
-      />
     </motion.div>
   );
 };

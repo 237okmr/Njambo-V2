@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Activity, Check, Copy, LifeBuoy } from 'lucide-react';
+import { Activity, Check, Copy, LifeBuoy, MessageCircle } from 'lucide-react';
+import { NJAMBO_WHATSAPP_GROUP_URL } from '../../utils/communityLinks';
 import { buildDiagnosticReport, copyTextToClipboard, fetchDiagnosticHealth } from '../../services/diagnosticReport';
 import { DiagnosticHealth } from '../../services/diagnosticReportFormat';
 import { useIsGameAdmin } from '../../hooks/useIsGameAdmin';
@@ -43,10 +44,10 @@ export const ReportProblemCard: React.FC<ReportProblemCardProps> = ({ onOpenDiag
           <h3 className="text-sm font-bold text-white">Signaler un problème</h3>
           <p className="text-xs text-slate-400">
             {state === 'copied'
-              ? 'Rapport copié : colle-le dans ton message à l’équipe Njambo.'
+              ? 'Rapport copié : ouvre le groupe et colle-le dans ton message.'
               : state === 'failed'
                 ? 'La copie a échoué. Réessaie dans un instant.'
-                : 'Copie un rapport à joindre à ton message pour nous aider à comprendre.'}
+                : 'Copie le rapport, puis envoie-le sur le groupe WhatsApp en expliquant ce qui s’est passé.'}
           </p>
         </div>
       </div>
@@ -59,6 +60,17 @@ export const ReportProblemCard: React.FC<ReportProblemCardProps> = ({ onOpenDiag
         {state === 'copied' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
         <span>{state === 'copied' ? 'Rapport copié' : 'Copier le rapport'}</span>
       </button>
+      <a
+        id="link-report-whatsapp"
+        href={NJAMBO_WHATSAPP_GROUP_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="w-full min-h-11 px-3.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer"
+      >
+        <MessageCircle className="w-3.5 h-3.5" />
+        <span>Ouvrir le groupe WhatsApp</span>
+      </a>
+      <p className="text-xs text-slate-500">Les membres du groupe verront ton message et le rapport, qui contient ton identifiant de joueur.</p>
       {isAdmin && (
         <button
           type="button"

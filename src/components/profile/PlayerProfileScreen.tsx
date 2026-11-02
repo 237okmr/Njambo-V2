@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'motion/react';
 import {
-  ArrowLeft,
   ArrowRight,
   User as UserIcon,
   BarChart3,
@@ -16,27 +15,21 @@ import {
   Zap,
   Award,
   Lock,
-  LogOut,
-  Volume2,
-  VolumeX,
   Sparkles,
   RefreshCw,
   Cloud,
-  Smartphone,
   Coins,
   AlertTriangle,
   Clock,
   Users,
-  UserX,
+  Settings,
 } from 'lucide-react';
 import { usePlayerProfile } from '../../context/PlayerProfileContext';
-import { FriendService, BlockedPlayerRecord } from '../../services/friendService';
-import { triggerHaptic } from '../../utils/sound';
 import { PlayerAvatar } from './PlayerAvatar';
-import { PushNotificationToggle } from './PushNotificationToggle';
+import { ProfileDetailsSection } from './ProfileDetailsSection';
+import { ProfileSettingsTab } from './ProfileSettingsTab';
 import { AvatarPickerBottomSheet } from './AvatarPickerBottomSheet';
 import { ConnectionDiagnosticModal } from '../common/ConnectionDiagnosticModal';
-import { ReportProblemCard } from '../common/ReportProblemCard';
 import { NativeScreenHeader } from '../common/NativeScreenHeader';
 import { NativeSegmentedNav, SegmentTab } from '../common/NativeSegmentedNav';
 import { useBackLayer } from '../../hooks/useBackLayer';
@@ -48,7 +41,7 @@ import {
   DEFAULT_PLAYER_STATS,
 } from '../../types/playerProfile';
 
-export type ProfileTabType = 'identity' | 'google' | 'blocked' | 'stats' | 'progression' | 'history';
+export type ProfileTabType = 'identity' | 'stats' | 'history' | 'settings';
 export type HistoryFilter = 'ALL' | 'MANCHES' | 'DONNES' | 'SOLO' | 'MULTIPLAYER' | 'WINS' | 'KORAS';
 
 import { GoogleIcon } from '../common/GoogleIcon';
@@ -64,6 +57,8 @@ export interface PlayerProfileScreenProps {
   soundEnabled?: boolean;
   onToggleSound?: () => void;
   onOpenLeaderboard?: () => void;
+  onOpenKoraCash?: () => void;
+  initialTab?: ProfileTabType;
 }
 
 export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
@@ -76,6 +71,8 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
   soundEnabled,
   onToggleSound,
   onOpenLeaderboard,
+  onOpenKoraCash,
+  initialTab = 'identity',
 }) => {
   const {
     profile,
@@ -99,7 +96,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
     flushOfflineQueue,
   } = usePlayerProfile();
 
-  const [activeTab, setActiveTab] = useState<ProfileTabType>('identity');
+  const [activeTab, setActiveTab] = useState<ProfileTabType>(initialTab);
   const [showAvatarSheet, setShowAvatarSheet] = useState<boolean>(false);
   const [showDiagnosticModal, setShowDiagnosticModal] = useState<boolean>(false);
   const [isRefreshingCloud, setIsRefreshingCloud] = useState<boolean>(false);
@@ -144,38 +141,6 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
       setNameInput(safeProfile.displayName);
     }
   }, [safeProfile.displayName]);
-
-  // Blocked players state
-  const [blockedPlayers, setBlockedPlayers] = useState<BlockedPlayerRecord[]>([]);
-  const [isLoadingBlocked, setIsLoadingBlocked] = useState<boolean>(false);
-
-  const loadBlockedPlayers = useCallback(async () => {
-    setIsLoadingBlocked(true);
-    try {
-      const records = await FriendService.fetchCloudBlockedPlayers(safeProfile.uid);
-      setBlockedPlayers(records);
-    } catch (e) {
-      console.error('Error loading blocked players:', e);
-    } finally {
-      setIsLoadingBlocked(false);
-    }
-  }, [safeProfile.uid]);
-
-  useEffect(() => {
-    if (isOpen) {
-      loadBlockedPlayers();
-    }
-  }, [isOpen, loadBlockedPlayers]);
-
-  const handleUnblockPlayer = async (targetUid: string) => {
-    try {
-      await FriendService.unblockPlayer(targetUid);
-      setBlockedPlayers((prev) => prev.filter((p) => p.uid !== targetUid));
-      triggerHaptic('light');
-    } catch (e) {
-      console.error('Error unblocking player:', e);
-    }
-  };
 
   // History filtering & pagination
   const [historyFilter, setHistoryFilter] = useState<HistoryFilter>('ALL');
@@ -251,28 +216,12 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
     onClose();
   };
 
-  const profileTabs: SegmentTab<ProfileTabType>[] = useMemo(() => [
-    { id: 'identity', label: 'Profil', shortLabel: 'Profil', icon: UserIcon },
-    {
-      id: 'google',
-      label: 'Google',
-      shortLabel: 'Google',
-      icon: ShieldCheck,
-      badge: isLoggedIn ? '✓' : undefined,
-      badgeColor: 'bg-emerald-500 text-slate-950 font-black',
-    },
-    {
-      id: 'blocked',
-      label: 'Bloqués',
-      shortLabel: 'Bloqués',
-      icon: UserX,
-      badge: blockedPlayers.length > 0 ? String(blockedPlayers.length) : undefined,
-      badgeColor: 'bg-rose-500 text-white font-black',
-    },
-    { id: 'stats', label: 'Stats', shortLabel: 'Stats', icon: BarChart3 },
-    { id: 'progression', label: 'Rangs', shortLabel: 'Rangs', icon: Trophy },
-    { id: 'history', label: 'Parties', shortLabel: 'Parties', icon: History },
-  ], [isLoggedIn, blockedPlayers.length]);
+  const profileTabs: SegmentTab<ProfileTabType>[] = [
+    { id: 'identity', label: 'Profil', icon: UserIcon },
+    { id: 'stats', label: 'Stats', icon: BarChart3 },
+    { id: 'history', label: 'Parties', icon: History },
+    { id: 'settings', label: 'Réglages', icon: Settings },
+  ];
 
   // Rule of Hooks: Return null only after all hooks have run
   if (!isOpen) return null;
@@ -571,7 +520,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
               {!isLoggedIn && (
                 <button
                   type="button"
-                  onClick={() => setActiveTab('google')}
+                  onClick={() => setActiveTab('settings')}
                   className="w-full p-3.5 rounded-2xl border bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-amber-500/5 border-amber-500/30 hover:border-amber-400/50 flex items-center justify-between gap-3 text-left transition-all duration-150 cursor-pointer active:scale-[0.99] shadow-sm"
                 >
                   <div className="flex items-center gap-3 min-w-0">
@@ -588,262 +537,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
               )}
 
 
-              {/* Push Notifications Card */}
-              <PushNotificationToggle
-                userId={safeProfile.uid || 'guest'}
-                userName={safeProfile.displayName || 'Joueur'}
-              />
 
-              {/* Signaler un problème (diagnostic détaillé réservé aux admins) */}
-              <ReportProblemCard onOpenDiagnostic={() => setShowDiagnosticModal(true)} />
-
-            </div>
-          )}
-
-          {/* ========================================================= */}
-          {/* TAB 2: AUTHENTIFICATION & COMPTE GOOGLE (Dédié & Moderne) */}
-          {/* ========================================================= */}
-          {activeTab === 'google' && (
-            <div className="space-y-5 animate-in fade-in duration-150">
-              {isLoggedIn ? (
-                /* CONNECTED GOOGLE ACCOUNT VIEW */
-                <>
-                  {/* Verified Google Account Hero Card */}
-                  <div className="bg-gradient-to-br from-slate-900 via-slate-900/95 to-emerald-950/40 border border-emerald-500/30 rounded-2xl p-5 sm:p-6 shadow-xl relative overflow-hidden space-y-4">
-                    <div className="absolute -top-10 -right-10 w-36 h-36 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
-
-                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-5">
-                      {/* Photo or Avatar with Google Verified Ring */}
-                      <div className="relative shrink-0">
-                        {safeProfile.photoURL ? (
-                          <img
-                            src={safeProfile.photoURL}
-                            alt="Photo Google"
-                            className="w-16 h-16 sm:w-18 sm:h-18 rounded-full border-2 border-emerald-400 shadow-lg object-cover"
-                            referrerPolicy="no-referrer"
-                          />
-                        ) : (
-                          <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-3xl shadow-lg border-2 border-emerald-400">
-                            👑
-                          </div>
-                        )}
-                        <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-slate-950 border-2 border-emerald-400 flex items-center justify-center shadow">
-                          <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[3]" />
-                        </div>
-                      </div>
-
-                      {/* Account Details */}
-                      <div className="flex-1 text-center sm:text-left space-y-1.5 min-w-0">
-                        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                          <h2 className="text-lg sm:text-xl font-black text-white truncate">
-                            {safeProfile.displayName}
-                          </h2>
-                          <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                            <ShieldCheck className="w-3 h-3" />
-                            Compte Google
-                          </span>
-                        </div>
-
-                        <p className="text-xs sm:text-sm font-semibold text-emerald-300 truncate">
-                          {safeProfile.email || 'Compte Google synchronisé'}
-                        </p>
-
-                        <p className="text-xs text-slate-400 flex items-center justify-center sm:justify-start gap-1.5 pt-0.5">
-                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                          <span>Ta progression est sauvegardée sur ce compte</span>
-                        </p>
-                      </div>
-                    </div>
-
-                  </div>
-
-
-                  {/* Account Actions Bar */}
-                  <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
-                    <div className="text-center sm:text-left space-y-0.5">
-                      <p className="text-xs font-bold text-white">Déconnexion</p>
-                      <p className="text-xs text-slate-400">
-                        Tu repasseras en mode invité sur cet appareil.
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
-                      <button
-                        type="button"
-                        onClick={logout}
-                        disabled={isSyncing}
-                        className="flex-1 sm:flex-initial px-4 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 hover:text-rose-200 border border-rose-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 disabled:opacity-50"
-                      >
-                        <LogOut className="w-3.5 h-3.5" />
-                        <span>Se déconnecter</span>
-                      </button>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                /* GUEST MODE: SLEEK CLOUD UPGRADE CTA */
-                <>
-                  {/* Hero CTA Card */}
-                  <div className="bg-gradient-to-br from-slate-900 via-amber-950/20 to-slate-950 border border-amber-500/30 rounded-2xl p-5 sm:p-7 shadow-2xl relative overflow-hidden space-y-5 text-center">
-                    <div className="absolute -top-16 -left-16 w-44 h-44 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-                    <div className="absolute -bottom-16 -right-16 w-44 h-44 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-
-                    {/* Badge */}
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                      <span>SAUVEGARDE PERMANENTE</span>
-                    </div>
-
-                    {/* Headline */}
-                    <div className="space-y-2 max-w-lg mx-auto">
-                      <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                        Protège ton Palmarès avec Google
-                      </h2>
-                      <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                        Tu joues actuellement en <strong className="text-amber-300">Mode Invité</strong>. Associe ton compte Google en un clic pour ne jamais perdre tes victoires, tes Koras et ton titre honorifique.
-                      </p>
-                    </div>
-
-                    {/* The Big Official Google Action Button */}
-                    <div className="max-w-md mx-auto pt-2 space-y-2.5">
-                      <button
-                        type="button"
-                        id="btn-google-login-dedicated"
-                        onClick={loginWithGoogle}
-                        disabled={isSyncing}
-                        className="w-full py-3.5 px-5 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 font-extrabold text-sm sm:text-base flex items-center justify-center gap-3 transition-all duration-200 shadow-xl shadow-white/10 active:scale-[0.98] cursor-pointer disabled:opacity-50"
-                      >
-                        {isSyncing ? (
-                          <>
-                            <RefreshCw className="w-5 h-5 animate-spin text-slate-700" />
-                            <span>Connexion sécurisée en cours...</span>
-                          </>
-                        ) : (
-                          <>
-                            <GoogleIcon className="w-5 h-5" />
-                            <span>Sauvegarder avec Google</span>
-                          </>
-                        )}
-                      </button>
-
-                      <p className="text-xs text-slate-400 flex items-center justify-center gap-1.5">
-                        <Lock className="w-3 h-3 text-slate-500" />
-                        <span>Connexion sans mot de passe, par Google</span>
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Automatic Fusion Guarantee */}
-                  <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl flex items-start gap-3.5 shadow-sm">
-                    <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
-                      <RefreshCw className="w-4 h-4" />
-                    </div>
-                    <div className="space-y-1">
-                      <h4 className="text-xs sm:text-sm font-bold text-white">
-                        Fusion automatique et sans perte
-                      </h4>
-                      <p className="text-xs text-slate-400 leading-relaxed">
-                        Toutes tes parties jouées aujourd’hui ({safeStats.gamesPlayed || 0} partie(s), {safeStats.gamesWon || 0} victoire(s)) seront instantanément rattachées à ton compte Google lors de ta première connexion.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* 3 Pillars Bento Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-1.5 shadow-sm">
-                      <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-                        <ShieldCheck className="w-4 h-4" />
-                      </div>
-                      <h4 className="text-xs font-bold text-white">Sauvegarde</h4>
-                      <p className="text-xs text-slate-400 leading-snug">
-                        Tes trophées restent enregistrés pour toujours, même après réinitialisation de ton navigateur.
-                      </p>
-                    </div>
-
-                    <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-1.5 shadow-sm">
-                      <div className="w-8 h-8 rounded-xl bg-slate-500/10 text-slate-400 flex items-center justify-center">
-                        <Smartphone className="w-4 h-4" />
-                      </div>
-                      <h4 className="text-xs font-bold text-white">Multi-Appareils</h4>
-                      <p className="text-xs text-slate-400 leading-snug">
-                        Retrouve ta progression sur ton mobile, ta tablette ou ton ordinateur de bureau.
-                      </p>
-                    </div>
-
-                    <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-1.5 shadow-sm">
-                      <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center">
-                        <Crown className="w-4 h-4" />
-                      </div>
-                      <h4 className="text-xs font-bold text-white">Statut Multijoueur</h4>
-                      <p className="text-xs text-slate-400 leading-snug">
-                        Arbore ton avatar personnalisé et ton rang honorifique dans toutes les salles multijoueurs.
-                      </p>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* ========================================================= */}
-          {/* TAB 3: JOUEURS BLOQUÉS                                   */}
-          {/* ========================================================= */}
-          {activeTab === 'blocked' && (
-            <div className="space-y-4 animate-in fade-in duration-150">
-              <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4 shadow-md">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-                      <UserX className="w-4 h-4 text-rose-400" />
-                      Joueurs Bloqués ({blockedPlayers.length})
-                    </h3>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      Les joueurs bloqués ne peuvent ni t'envoyer d'invitations ni te trouver lors des recherches.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={loadBlockedPlayers}
-                    disabled={isLoadingBlocked}
-                    className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer disabled:opacity-50"
-                    title="Actualiser la liste"
-                  >
-                    <RefreshCw className={`w-4 h-4 ${isLoadingBlocked ? 'animate-spin' : ''}`} />
-                  </button>
-                </div>
-
-                {blockedPlayers.length === 0 ? (
-                  <div className="p-8 text-center bg-slate-950/60 rounded-xl border border-slate-800/80 flex flex-col items-center gap-2">
-                    <UserX className="w-8 h-8 text-slate-600" />
-                    <p className="text-xs font-semibold text-slate-400">Aucun joueur bloqué pour le moment.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
-                    {blockedPlayers.map((player) => (
-                      <div
-                        key={player.uid}
-                        className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-3 shadow-sm"
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <PlayerAvatar avatarId="lion" size="sm" className="w-9 h-9 border border-rose-500/30" />
-                          <div className="flex flex-col min-w-0">
-                            <span className="text-xs font-bold text-white truncate">{player.displayName}</span>
-                            <span className="text-xs text-amber-400 font-mono font-bold">{player.friendCode}</span>
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => handleUnblockPlayer(player.uid)}
-                          className="h-8 px-3 rounded-xl bg-slate-800 hover:bg-emerald-500/20 hover:text-emerald-400 text-slate-300 text-xs font-bold border border-slate-700 hover:border-emerald-500/40 transition active:scale-95 cursor-pointer shrink-0"
-                        >
-                          Débloquer
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
             </div>
           )}
 
@@ -852,45 +546,58 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
           {/* ========================================================= */}
           {activeTab === 'stats' && (
             <div className="space-y-5 animate-in fade-in duration-150">
-              {/* Cloud Sync & Refresh Header */}
-              <div className="flex items-center justify-between p-3.5 bg-slate-900/80 border border-slate-800 rounded-2xl">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-xl bg-amber-500/15 text-amber-400">
-                    <Cloud className="w-4 h-4" />
+              {/* Current Title Card with Progress */}
+              <div
+                className={`p-4 sm:p-5 rounded-2xl border bg-gradient-to-br ${safeTitle.glowClass} ${safeTitle.borderClass} space-y-3 shadow-lg`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl sm:text-4xl">{safeTitle.badge}</span>
+                    <div>
+                      <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">
+                        Ton grade actuel
+                      </span>
+                      <h2 className={`text-lg sm:text-xl font-black ${safeTitle.colorClass}`}>
+                        {safeTitle.title} ({safeTitle.subtitle})
+                      </h2>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-white">Tes statistiques</h4>
-                    <p className="text-xs text-slate-400">
-                      {isLoggedIn
-                        ? 'Sauvegardées sur ton compte Google'
-                        : 'Enregistrées sur ce téléphone jusqu’à ta connexion à Google'}
-                    </p>
-                  </div>
+
+                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-slate-900/80 border border-slate-700 text-amber-300">
+                    Actif ✓
+                  </span>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={async () => {
-                    setIsRefreshingCloud(true);
-                    setCloudRefreshSuccess(false);
-                    try {
-                      await refreshConsolidatedStats();
-                      setCloudRefreshSuccess(true);
-                      setTimeout(() => setCloudRefreshSuccess(false), 2500);
-                    } catch (e) {
-                      console.warn(e);
-                    } finally {
-                      setIsRefreshingCloud(false);
-                    }
-                  }}
-                  disabled={isRefreshingCloud}
-                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-xs font-bold text-slate-200 border border-slate-700 flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
-                  title="Rafraîchir les statistiques"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingCloud ? 'animate-spin text-amber-400' : 'text-slate-400'}`} />
-                  <span>{cloudRefreshSuccess ? 'Synchronisé !' : isRefreshingCloud ? 'Calcul...' : 'Actualiser'}</span>
-                </button>
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  {safeTitle.description}
+                </p>
+
+                {/* Progress Bar to next title */}
+                {nextTitle ? (
+                  <div className="space-y-1.5 pt-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-300 flex items-center gap-1.5">
+                        Prochain grade :{' '}
+                        <strong className={`font-bold ${nextTitle.colorClass}`}>{nextTitle.title}</strong>
+                      </span>
+                      <span className="font-bold text-amber-400">{progressPercent}%</span>
+                    </div>
+
+                    <div className="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden p-0.5 border border-slate-700">
+                      <div
+                        className="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all duration-500"
+                        style={{ width: `${progressPercent}%` }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-xs text-amber-300 font-semibold flex items-center gap-1.5 pt-1">
+                    <Crown className="w-4 h-4 text-amber-400" />
+                    Tu as atteint le rang suprême de Légende Kora !
+                  </div>
+                )}
               </div>
+
 
 
               {/* Score de Maîtrise Highlight Banner */}
@@ -916,40 +623,10 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
 
                 <SoloDailyGauge soloDaily={profile?.soloDaily} />
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-amber-500/20 text-center">
-                  <div className="p-2 bg-slate-950/60 rounded-xl border border-slate-800/80">
-                    <span className="text-xs uppercase font-bold text-slate-400 block">Manches Multi</span>
-                    <span className="text-sm font-black text-amber-300 font-mono">
-                      {safeStats.multiplayerManchesWon || 0}
-                    </span>
-                    <span className="text-xs text-slate-500 block">+10 points par manche</span>
-                  </div>
-                  <div className="p-2 bg-slate-950/60 rounded-xl border border-slate-800/80">
-                    <span className="text-xs uppercase font-bold text-slate-400 block">Manches Solo</span>
-                    <span className="text-sm font-black text-amber-300 font-mono">
-                      {safeStats.soloManchesWon || (safeStats.soloManchesWonHard || 0) + (safeStats.soloManchesWonNormal || 0) + (safeStats.soloManchesWonEasy || 0)}
-                    </span>
-                    <span className="text-xs text-slate-500 block">1 à 6 points par manche</span>
-                  </div>
-                  <div className="p-2 bg-slate-950/60 rounded-xl border border-slate-800/80">
-                    <span className="text-xs uppercase font-bold text-slate-400 block">Parties gagnées</span>
-                    <span className="text-sm font-black text-emerald-400 font-mono">
-                      {safeStats.partiesWon || safeStats.gamesWon || 0}
-                    </span>
-                    <span className="text-xs text-slate-500 block">+1 point par partie</span>
-                  </div>
-                  <div className="p-2 bg-slate-950/60 rounded-xl border border-slate-800/80">
-                    <span className="text-xs uppercase font-bold text-slate-400 block">Koras / Doubles</span>
-                    <span className="text-sm font-black text-amber-300 font-mono">
-                      {safeStats.koraCount || 0} / {safeStats.doubleKoraCount || 0}
-                    </span>
-                    <span className="text-xs text-slate-500 block">+5 et +20 points</span>
-                  </div>
-                </div>
               </div>
 
               {/* 6 Core Metrics Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 {/* 1. Parties Jouées (Distinction Manche / Partie) */}
                 <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 space-y-1 shadow-sm">
                   <div className="flex items-center justify-between text-slate-400">
@@ -1022,6 +699,43 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   </div>
                 </div>
 
+              </div>
+
+              <ProfileDetailsSection title="Détail du score de Maîtrise">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                  <div className="p-2 bg-slate-950/60 rounded-xl border border-slate-800/80">
+                    <span className="text-xs uppercase font-bold text-slate-400 block">Manches Multi</span>
+                    <span className="text-sm font-black text-amber-300 font-mono">
+                      {safeStats.multiplayerManchesWon || 0}
+                    </span>
+                    <span className="text-xs text-slate-500 block">+10 points par manche</span>
+                  </div>
+                  <div className="p-2 bg-slate-950/60 rounded-xl border border-slate-800/80">
+                    <span className="text-xs uppercase font-bold text-slate-400 block">Manches Solo</span>
+                    <span className="text-sm font-black text-amber-300 font-mono">
+                      {safeStats.soloManchesWon || (safeStats.soloManchesWonHard || 0) + (safeStats.soloManchesWonNormal || 0) + (safeStats.soloManchesWonEasy || 0)}
+                    </span>
+                    <span className="text-xs text-slate-500 block">1 à 6 points par manche</span>
+                  </div>
+                  <div className="p-2 bg-slate-950/60 rounded-xl border border-slate-800/80">
+                    <span className="text-xs uppercase font-bold text-slate-400 block">Parties gagnées</span>
+                    <span className="text-sm font-black text-emerald-400 font-mono">
+                      {safeStats.partiesWon || safeStats.gamesWon || 0}
+                    </span>
+                    <span className="text-xs text-slate-500 block">+1 point par partie</span>
+                  </div>
+                  <div className="p-2 bg-slate-950/60 rounded-xl border border-slate-800/80">
+                    <span className="text-xs uppercase font-bold text-slate-400 block">Koras / Doubles</span>
+                    <span className="text-sm font-black text-amber-300 font-mono">
+                      {safeStats.koraCount || 0} / {safeStats.doubleKoraCount || 0}
+                    </span>
+                    <span className="text-xs text-slate-500 block">+5 et +20 points</span>
+                  </div>
+                </div>
+              </ProfileDetailsSection>
+
+              <ProfileDetailsSection title="Records">
+                <div className="grid grid-cols-2 gap-3">
                 {/* 5. Plus Gros Pot Remporté */}
                 <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 space-y-1 shadow-sm">
                   <div className="flex items-center justify-between text-amber-300">
@@ -1052,17 +766,10 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     Total : {safeStats.totalTricksWon || 0} tours
                   </div>
                 </div>
-              </div>
-
-              {/* Comparatif Solo vs Multijoueur Détaillé */}
-              <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4 shadow-md">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs sm:text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
-                    <BarChart3 className="w-4 h-4 text-amber-400" />
-                    Solo et Multijoueur
-                  </h3>
                 </div>
+              </ProfileDetailsSection>
 
+              <ProfileDetailsSection title="Solo et Multijoueur">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Taux de Victoire comparative list */}
                   <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800/80 flex flex-col justify-between space-y-2">
@@ -1145,15 +852,9 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     </div>
                   </div>
                 </div>
-              </div>
+              </ProfileDetailsSection>
 
-              {/* Fair-Play & Respect des règles (Lot 3 - C) */}
-              <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3 shadow-md">
-                <h3 className="text-xs sm:text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                  Fair-play
-                </h3>
-
+              <ProfileDetailsSection title="Fair-play">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">
                     <span className="text-xs uppercase font-bold text-slate-400">Abandons</span>
@@ -1183,14 +884,9 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     <p className="text-xs text-slate-400">Statut dans les salons multijoueurs</p>
                   </div>
                 </div>
-              </div>
+              </ProfileDetailsSection>
 
-              {/* Special Strategic Accomplishments */}
-              <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3 shadow-md">
-                <h3 className="text-xs sm:text-sm font-bold text-slate-200 uppercase tracking-wider">
-                  Victoires spéciales
-                </h3>
-
+              <ProfileDetailsSection title="Victoires spéciales">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="flex items-center justify-between p-3 bg-slate-950 rounded-xl border border-slate-800">
                     <div className="space-y-0.5">
@@ -1211,73 +907,9 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     </span>
                   </div>
                 </div>
-              </div>
-            </div>
-          )}
+              </ProfileDetailsSection>
 
-          {/* ========================================================= */}
-          {/* TAB 3: PROGRESSION & RANGS (Roadmap des Titres)            */}
-          {/* ========================================================= */}
-          {activeTab === 'progression' && (
-            <div className="space-y-5 animate-in fade-in duration-150">
-              {/* Current Title Card with Progress */}
-              <div
-                className={`p-4 sm:p-5 rounded-2xl border bg-gradient-to-br ${safeTitle.glowClass} ${safeTitle.borderClass} space-y-3 shadow-lg`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-3xl sm:text-4xl">{safeTitle.badge}</span>
-                    <div>
-                      <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">
-                        Ton grade actuel
-                      </span>
-                      <h2 className={`text-lg sm:text-xl font-black ${safeTitle.colorClass}`}>
-                        {safeTitle.title} ({safeTitle.subtitle})
-                      </h2>
-                    </div>
-                  </div>
-
-                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-slate-900/80 border border-slate-700 text-amber-300">
-                    Actif ✓
-                  </span>
-                </div>
-
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                  {safeTitle.description}
-                </p>
-
-                {/* Progress Bar to next title */}
-                {nextTitle ? (
-                  <div className="space-y-1.5 pt-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-300 flex items-center gap-1.5">
-                        Prochain grade :{' '}
-                        <strong className={`font-bold ${nextTitle.colorClass}`}>{nextTitle.title}</strong>
-                      </span>
-                      <span className="font-bold text-amber-400">{progressPercent}%</span>
-                    </div>
-
-                    <div className="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden p-0.5 border border-slate-700">
-                      <div
-                        className="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all duration-500"
-                        style={{ width: `${progressPercent}%` }}
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-xs text-amber-300 font-semibold flex items-center gap-1.5 pt-1">
-                    <Crown className="w-4 h-4 text-amber-400" />
-                    Tu as atteint le rang suprême de Légende Kora !
-                  </div>
-                )}
-              </div>
-
-              {/* All Titles Roadmap */}
-              <div className="space-y-3">
-                <h3 className="text-xs sm:text-sm font-bold text-slate-300 uppercase tracking-wider">
-                  Tous les rangs
-                </h3>
-
+              <ProfileDetailsSection title="Tous les rangs">
                 <div className="space-y-2.5">
                   {HONORIFIC_TITLES.map((t) => {
                     const isUnlocked =
@@ -1339,8 +971,70 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     );
                   })}
                 </div>
+              </ProfileDetailsSection>
+
+              {/* Cloud Sync & Refresh Header */}
+              <div className="flex items-center justify-between p-3.5 bg-slate-900/80 border border-slate-800 rounded-2xl">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-amber-500/15 text-amber-400">
+                    <Cloud className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white">Tes statistiques</h4>
+                    <p className="text-xs text-slate-400">
+                      {isLoggedIn
+                        ? 'Sauvegardées sur ton compte Google'
+                        : 'Enregistrées sur ce téléphone jusqu’à ta connexion à Google'}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setIsRefreshingCloud(true);
+                    setCloudRefreshSuccess(false);
+                    try {
+                      await refreshConsolidatedStats();
+                      setCloudRefreshSuccess(true);
+                      setTimeout(() => setCloudRefreshSuccess(false), 2500);
+                    } catch (e) {
+                      console.warn(e);
+                    } finally {
+                      setIsRefreshingCloud(false);
+                    }
+                  }}
+                  disabled={isRefreshingCloud}
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-xs font-bold text-slate-200 border border-slate-700 flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+                  title="Rafraîchir les statistiques"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingCloud ? 'animate-spin text-amber-400' : 'text-slate-400'}`} />
+                  <span>{cloudRefreshSuccess ? 'Synchronisé !' : isRefreshingCloud ? 'Calcul...' : 'Actualiser'}</span>
+                </button>
               </div>
             </div>
+          )}
+
+          {/* ========================================================= */}
+          {/* RÉGLAGES DU COMPTE (tous modes de jeu)                    */}
+          {/* ========================================================= */}
+          {activeTab === 'settings' && (
+            <ProfileSettingsTab
+              uid={safeProfile.uid}
+              displayName={safeProfile.displayName || 'Joueur'}
+              email={safeProfile.email}
+              photoURL={safeProfile.photoURL}
+              gamesPlayed={safeStats.gamesPlayed || 0}
+              gamesWon={safeStats.gamesWon || 0}
+              isLoggedIn={isLoggedIn}
+              isSyncing={isSyncing}
+              onLogin={loginWithGoogle}
+              onLogout={logout}
+              soundEnabled={soundEnabled}
+              onToggleSound={onToggleSound}
+              onOpenDiagnostic={() => setShowDiagnosticModal(true)}
+              onOpenKoraCash={onOpenKoraCash}
+            />
           )}
 
           {/* ========================================================= */}

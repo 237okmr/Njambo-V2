@@ -1,8 +1,9 @@
 import { getSocialLinks } from '../services/copilotSettingsService';
+import { NJAMBO_WHATSAPP_GROUP_URL } from '../../utils/communityLinks';
 
 export const NJAMBO_APP_URL = 'https://njambo-kora.ai.studio';
 export const NJAMBO_DOMAIN = 'njambo-kora.ai.studio';
-export const NJAMBO_WHATSAPP_GROUP_URL = 'https://chat.whatsapp.com/JmIYaCOSjy1Lycd2OANd5l?s=cl&p=a&mlu=4&ilr=4';
+export { NJAMBO_WHATSAPP_GROUP_URL };
 
 /**
  * Calcule l'année et le numéro de semaine ISO (1-53) pour le tracking marketing.
