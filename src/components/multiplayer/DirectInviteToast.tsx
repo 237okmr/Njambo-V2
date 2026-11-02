@@ -210,7 +210,7 @@ const InviteCard: React.FC<InviteCardProps> = ({
         </div>
         {willSaveSolo && (
           <p className="mt-1 truncate pl-11 text-[10px] font-medium text-emerald-400">
-            Votre partie solo sera sauvegardée automatiquement.
+            Ta partie solo sera sauvegardée automatiquement.
           </p>
         )}
       </motion.div>
@@ -245,7 +245,7 @@ const InviteCard: React.FC<InviteCardProps> = ({
           </span>
           {willSaveSolo && (
             <span className="mt-0.5 block truncate text-[10px] font-medium text-emerald-400">
-              Votre partie solo sera sauvegardée automatiquement.
+              Ta partie solo sera sauvegardée automatiquement.
             </span>
           )}
         </div>

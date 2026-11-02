@@ -93,7 +93,7 @@ export const MultiplayerHubModal: React.FC<MultiplayerHubModalProps> = ({
 
   const handleCreate = async () => {
     if (!playerName.trim()) {
-      setErrorMsg('Veuillez entrer un pseudo');
+      setErrorMsg('Entre un pseudo');
       return;
     }
     if (playerName.trim().toLowerCase() === 'katika') {
@@ -123,7 +123,7 @@ export const MultiplayerHubModal: React.FC<MultiplayerHubModalProps> = ({
 
   const handleJoin = async () => {
     if (!playerName.trim()) {
-      setErrorMsg('Veuillez entrer un pseudo');
+      setErrorMsg('Entre un pseudo');
       return;
     }
     if (playerName.trim().toLowerCase() === 'katika') {
@@ -131,7 +131,7 @@ export const MultiplayerHubModal: React.FC<MultiplayerHubModalProps> = ({
       return;
     }
     if (!roomCode.trim()) {
-      setErrorMsg('Veuillez entrer un code de salon');
+      setErrorMsg('Entre un code de salon');
       return;
     }
     setErrorMsg(null);
@@ -183,7 +183,7 @@ export const MultiplayerHubModal: React.FC<MultiplayerHubModalProps> = ({
         <div className="bg-slate-950/60 p-3 rounded-2xl border border-slate-800 flex flex-col gap-1.5">
           <label htmlFor="multiplayer-pseudo-input" className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
             <Users className="w-3.5 h-3.5 text-amber-400" />
-            <span>Votre Pseudo</span>
+            <span>Ton pseudo</span>
           </label>
           <input
             id="multiplayer-pseudo-input"

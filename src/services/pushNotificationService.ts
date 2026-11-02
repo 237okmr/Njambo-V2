@@ -360,7 +360,7 @@ class PushNotificationService {
 
   public async enableNotifications(profile: PushUserProfile | { id: string; name: string }): Promise<{ success: boolean; error?: string }> {
     if (!this.status.isSupported) {
-      return { success: false, error: 'Les notifications Push ne sont pas supportées par votre navigateur.' };
+      return { success: false, error: 'Les notifications Push ne sont pas supportées par ton navigateur.' };
     }
 
     // L'identifiant reçu de l'écran appelant peut être un repli (« guest ») ou un identifiant de session de salle :
@@ -381,7 +381,7 @@ class PushNotificationService {
         return {
           success: false,
           error: perm === 'denied'
-            ? 'Notifications bloquées dans les paramètres de votre navigateur.'
+            ? 'Notifications bloquées dans les paramètres de ton navigateur.'
             : 'Permission refusée.',
         };
       }

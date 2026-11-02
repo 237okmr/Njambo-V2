@@ -254,7 +254,7 @@ export class RoomManager {
     } else {
       status = 'WARNED';
       sanctionType = 'WARNING';
-      message = 'ℹ️ Rappel Fair-Play : Quitter une partie en cours pénalise vos adversaires.';
+      message = 'ℹ️ Rappel Fair-Play : Quitter une partie en cours pénalise tes adversaires.';
     }
 
     this.playerSanctions.set(playerId, {
@@ -325,7 +325,7 @@ export class RoomManager {
       this.sendMessage(client.socket, {
         type: 'ERROR',
         errorCode: 'BANNED',
-        error: `Votre compte a été suspendu par le Katika Master. Motif: ${reason}`,
+        error: `Ton compte a été suspendu par le Katika Master. Motif: ${reason}`,
       });
       client.socket.close();
     }
@@ -586,7 +586,7 @@ export class RoomManager {
             if (client && client.socket.readyState === WebSocket.OPEN) {
               this.sendMessage(client.socket, {
                 type: 'NOTIFICATION',
-                notification: '⚠️ Avertissement de stabilité de connexion : vous avez été déclaré forfait pour cette partie suite à une déconnexion prolongée.',
+                notification: '⚠️ Avertissement de stabilité de connexion : tu as été déclaré forfait pour cette partie suite à une déconnexion prolongée.',
               });
             }
           }
@@ -1090,7 +1090,7 @@ export class RoomManager {
         this.sendMessage(client.socket, {
           type: 'ERROR',
           errorCode: 'GENERIC',
-          error: 'Erreur lors de la vérification de votre identité.',
+          error: 'Erreur lors de la vérification de ton identité.',
         });
       });
   }
@@ -1174,7 +1174,7 @@ export class RoomManager {
           this.sendMessage(client.socket, {
             type: 'ERROR',
             errorCode: 'BANNED',
-            error: `Accès refusé : Votre compte a été suspendu. Motif: ${sanction.bannedReason || 'Sanction administrative'}`,
+            error: `Accès refusé : ton compte a été suspendu. Motif: ${sanction.bannedReason || 'Sanction administrative'}`,
           });
           try {
             client.socket.close();
@@ -1407,7 +1407,7 @@ export class RoomManager {
         this.sendMessage(client.socket, {
           type: 'ERROR',
           errorCode: 'ACTIVE_GAME_IN_PROGRESS',
-          error: `Vous avez une partie en cours (salon ${activeGame.roomCode}). Retournez-y ou quittez-la explicitement.`,
+          error: `Tu as une partie en cours (salon ${activeGame.roomCode}). Retournes-y ou quitte-la explicitement.`,
           activeGameRoomCode: activeGame.roomCode,
         });
         return;
@@ -1736,7 +1736,7 @@ export class RoomManager {
       this.sendMessage(client.socket, {
         type: 'ERROR',
         errorCode: 'BANNED',
-        error: "Vous avez été expulsé de ce salon et ne pouvez pas le rejoindre.",
+        error: "Tu as été expulsé de ce salon et tu ne peux pas le rejoindre.",
       });
       return;
     }
@@ -1811,7 +1811,7 @@ export class RoomManager {
         this.sendMessage(client.socket, {
           type: 'ERROR',
           errorCode: 'ACTIVE_GAME_IN_PROGRESS',
-          error: `Vous avez une partie en cours (salon ${activeGame.roomCode}). Retournez-y ou quittez-la explicitement.`,
+          error: `Tu as une partie en cours (salon ${activeGame.roomCode}). Retournes-y ou quitte-la explicitement.`,
           activeGameRoomCode: activeGame.roomCode,
         });
         return;
@@ -1869,7 +1869,7 @@ export class RoomManager {
           this.sendMessage(client.socket, {
             type: 'ERROR',
             errorCode: 'SEAT_TAKEN',
-            error: "Session protégée : Ce siège est réservé par un autre appareil. Vous avez été admis sur la table en mode spectateur.",
+            error: "Session protégée : Ce siège est réservé par un autre appareil. Tu as été admis sur la table en mode spectateur.",
           });
         } else {
           // In LOBBY
@@ -2628,7 +2628,7 @@ export class RoomManager {
           this.sendMessage(targetClient.socket, {
             type: 'ERROR',
             errorCode: 'BANNED',
-            error: "Vous avez été expulsé du salon par l'hôte.",
+            error: "Tu as été expulsé du salon par l'hôte.",
           });
         }
       }
@@ -3673,7 +3673,7 @@ export class RoomManager {
       this.sendMessage(client.socket, {
         type: 'ERROR',
         errorCode: 'JOIN_REFUSED',
-        error: `Capital restant insuffisant (${prorataCapital} 🪙 < mise de ${room.baseBet} 🪙). Vous pouvez continuer à observer.`,
+        error: `Capital restant insuffisant (${prorataCapital} 🪙 < mise de ${room.baseBet} 🪙). Tu peux continuer à observer.`,
       });
       return;
     }
@@ -4386,7 +4386,7 @@ export class RoomManager {
         const mancheAtStake = othersAbleToPlay <= 1;
         send(
           'DISCONNECTED',
-          `⚠️ Table #${room.id} : un relais joue pour vous`,
+          `⚠️ Table #${room.id} : un relais joue pour toi`,
           mancheAtStake
             ? 'Revenez avant la fin de la partie (et de son compte à rebours) : sinon la manche est perdue par forfait.'
             : 'Revenez avant la fin de la partie pour reprendre la main. Sinon la mise de la partie est perdue.'
@@ -4400,8 +4400,8 @@ export class RoomManager {
           'FORFEIT_WARNING',
           last ? `🚨 Table #${room.id} : dernier avertissement` : `⏱ Table #${room.id} : tour manqué`,
           last
-            ? `Au prochain tour manqué, un relais jouera à votre place jusqu'à la fin de la partie et la mise sera perdue.`
-            : `${alert.missed} tour manqué sur ${alert.maxMissed}. Au ${alert.maxMissed}e, un relais jouera à votre place jusqu'à la fin de la partie.`
+            ? `Au prochain tour manqué, un relais jouera à ta place jusqu'à la fin de la partie et la mise sera perdue.`
+            : `${alert.missed} tour manqué sur ${alert.maxMissed}. Au ${alert.maxMissed}e, un relais jouera à ta place jusqu'à la fin de la partie.`
         );
         return;
       }
@@ -4410,7 +4410,7 @@ export class RoomManager {
         send(
           'FORFEIT_DECLARED',
           `📉 Table #${room.id} : partie perdue par absence`,
-          `Votre mise de la partie est perdue.${kora} Revenez au début de la prochaine partie pour rejouer avec votre capital.`,
+          `Ta mise de la partie est perdue.${kora} Reviens au début de la prochaine partie pour rejouer avec ton capital.`,
           { openTable: false }
         );
         return;
@@ -4419,7 +4419,7 @@ export class RoomManager {
         send(
           'FORFEIT_DECLARED',
           `🚪 Table #${room.id} : forfait pour la partie`,
-          "Vous n'êtes pas de retour : vous passez la partie suivante. Vous pouvez revenir au début de n'importe quelle partie, avec votre capital.",
+          "Tu n'es pas de retour : tu passes la partie suivante. Tu peux revenir au début de n'importe quelle partie, avec ton capital.",
           { openTable: false }
         );
         return;
@@ -4435,7 +4435,7 @@ export class RoomManager {
         send(
           'FORFEIT_DECLARED',
           `🪑 Table #${room.id} : siège libéré`,
-          "Après plusieurs parties d'absence, votre siège a été confié à un bot pour ne pas bloquer la table. Votre capital reste en jeu : revenez en observateur pour demander à réintégrer la table.",
+          "Après plusieurs parties d'absence, ton siège a été confié à un bot pour ne pas bloquer la table. Ton capital reste en jeu : reviens en observateur pour demander à réintégrer la table.",
           { openTable: true }
         );
         return;
@@ -4443,7 +4443,7 @@ export class RoomManager {
         send(
           'FORFEIT_DECLARED',
           `⏳ Table #${room.id} : personne ne rejoint ?`,
-          "L'attente se prolonge. Vous pouvez remplir les sièges restants avec des bots pour lancer la partie tout de suite.",
+          "L'attente se prolonge. Tu peux remplir les sièges restants avec des bots pour lancer la partie tout de suite.",
           { openTable: true }
         );
         return;
@@ -4511,8 +4511,8 @@ export class RoomManager {
           if (!isAtTable && !coveredByDisconnectAlert) {
             console.log(`[RoomManager] Active player ${currentPlayer.name} (${currentPlayer.id}) is not at table. Dispatching "YOUR_TURN" push alert.`);
             pushService.sendNotificationToUser(currentPlayer.id, {
-              title: '⏳ À vous de jouer',
-              body: `Table #${room.id} : posez votre carte, le tour est chronométré.`,
+              title: '⏳ À toi de jouer',
+              body: `Table #${room.id} : pose ta carte, le tour est chronométré.`,
               icon: '/icon-192.png',
               badge: '/badge-96.png',
               tag: `turn-${room.id}`,
@@ -4752,7 +4752,7 @@ export class RoomManager {
       this.sendMessage(client.socket, {
         type: 'ERROR',
         errorCode: 'BANNED',
-        error: 'Vous avez été expulsé de la table par le Katika Master.',
+        error: 'Tu as été expulsé de la table par le Katika Master.',
       });
       client.socket.close();
     }
@@ -5207,7 +5207,7 @@ export class RoomManager {
       this.sendMessage(client.socket, {
         type: 'ERROR',
         errorCode: 'SELF_INVITE',
-        error: 'Vous ne pouvez pas vous inviter vous-même.',
+        error: 'Tu ne peux pas t\'inviter toi-même.',
       });
       return;
     }
@@ -5378,7 +5378,7 @@ export class RoomManager {
     this.sendMessage(client.socket, {
       type: 'NOTIFICATION',
       notification: deliveredViaWs
-        ? `Invitation transmise à votre contact pour le salon ${msg.roomCode}.`
+        ? `Invitation transmise à ton contact pour le salon ${msg.roomCode}.`
         : `Invitation envoyée par notification Push mobile pour le salon ${msg.roomCode}.`,
     });
   }
@@ -5406,7 +5406,7 @@ export class RoomManager {
         inviteFeedback: {
           inviteId: invite.id,
           agree: !!msg.agree,
-          responderName: msg.playerName || 'Votre invité',
+          responderName: msg.playerName || 'Ton invité',
           roomCode: invite.roomCode,
         },
         timestamp: Date.now(),
@@ -5460,7 +5460,7 @@ export class RoomManager {
         this.sendMessage(client.socket, {
           type: 'ERROR',
           errorCode: 'ACTIVE_GAME_IN_PROGRESS',
-          error: `Vous avez une partie en cours (salon ${activeGame.roomCode}). Retournez-y ou quittez-la explicitement.`,
+          error: `Tu as une partie en cours (salon ${activeGame.roomCode}). Retournes-y ou quitte-la explicitement.`,
           activeGameRoomCode: activeGame.roomCode,
         });
         return;
@@ -5785,8 +5785,8 @@ export class RoomManager {
     room.lastJoinPushTime = now;
 
     pushService.sendNotificationToUser(origHostId, {
-      title: 'Katika - Nouveau joueur à votre table !',
-      body: `${joiningPlayerName} a rejoint votre table #${room.id}. Cliquez pour revenir jouer.`,
+      title: 'Katika - Nouveau joueur à ta table !',
+      body: `${joiningPlayerName} a rejoint ta table #${room.id}. Clique pour revenir jouer.`,
       icon: '/icon-192.png',
       badge: '/badge-96.png',
       tag: `join_${room.id}`,

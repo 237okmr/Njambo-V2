@@ -1338,7 +1338,7 @@ export const playerProfileService = {
       };
       message = '⚠️ Avertissement Fair-Play : 2 abandons consécutifs. Le prochain entraînera une suspension de création de salon (15 min).';
     } else {
-      message = 'ℹ️ Rappel Fair-Play : Quitter une partie pénalise les autres joueurs et affecte votre réputation.';
+      message = 'ℹ️ Rappel Fair-Play : Quitter une partie pénalise les autres joueurs et affecte ta réputation.';
     }
 
     if (newSanction) {

@@ -391,7 +391,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
               </span>
               {isLocalSpectator && (
                 <span className="text-[10px] text-blue-300 font-bold">
-                  Vous observez ce salon
+                  Tu observes ce salon
                 </span>
               )}
             </div>
@@ -570,7 +570,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
 
               {!canStartInstantly && hasMinimumHumans && (
                 <p className="text-[11px] text-center text-slate-400">
-                  Tous les invités doivent être <b className="text-emerald-400">« Prêts »</b> avant le lancement. Cliquez pour leur envoyer une alerte.
+                  Tous les invités doivent être <b className="text-emerald-400">« Prêts »</b> avant le lancement. Clique pour leur envoyer une alerte.
                 </p>
               )}
             </div>
@@ -595,7 +595,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
               ) : (
                 <div className="w-full py-2.5 px-4 rounded-xl bg-cyan-950/80 border border-cyan-500/40 text-cyan-200 text-xs font-bold text-center flex items-center justify-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                  <span>Table complète · Vous observez ce salon (Place attribuée dès qu'un joueur quitte)</span>
+                  <span>Table complète · Tu observes ce salon (Place attribuée dès qu'un joueur quitte)</span>
                 </div>
               )
             ) : onToggleReady ? (
@@ -615,7 +615,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
                 {isLocalReady ? (
                   <>
                     <Check className="w-4 h-4" />
-                    <span>Vous êtes PRÊT ! (Cliquer pour annuler)</span>
+                    <span>Tu es PRÊT ! (Cliquer pour annuler)</span>
                   </>
                 ) : (
                   <>
@@ -629,7 +629,7 @@ export const MultiplayerLobbyModal: React.FC<MultiplayerLobbyModalProps> = ({
             {/* Contextual Tip for Waiting Players */}
             {!isHost && (
               <p className="text-[11px] text-center text-slate-400 leading-tight">
-                💡 <b className="text-slate-300">Astuce :</b> Vous pouvez fermer cette fenêtre pour réviser les <b className="text-amber-400">Règles du jeu</b> pendant l'attente.
+                💡 <b className="text-slate-300">Astuce :</b> Tu peux fermer cette fenêtre pour réviser les <b className="text-amber-400">Règles du jeu</b> pendant l'attente.
               </p>
             )}
 

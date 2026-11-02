@@ -56,7 +56,7 @@ export const CapacityExtensionProposalWidget: React.FC<CapacityExtensionProposal
         <div className="flex items-center gap-1.5 ml-auto shrink-0">
           {isProposer ? (
             <span className="px-2 py-0.5 rounded-md bg-cyan-900/60 border border-cyan-600/50 text-cyan-300 text-[10px] font-bold">
-              Votre proposition
+              Ta proposition
             </span>
           ) : hasAgreed ? (
             <span className="px-2 py-1 rounded-lg bg-emerald-900/80 border border-emerald-600/60 text-emerald-300 text-[10px] font-bold flex items-center gap-1">

@@ -1037,7 +1037,7 @@ class WebSocketService {
             }
             this.notifyRoomUpdate(null);
             this.notifyError(
-              'Votre session a été réinitialisée par le serveur. Veuillez rejoindre la table à nouveau.',
+              'Ta session a été réinitialisée par le serveur. Rejoins la table à nouveau.',
               'SESSION_RESET'
             );
             this.lastConnectedPlayerId = serverAssignedId;

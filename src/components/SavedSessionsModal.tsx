@@ -86,7 +86,7 @@ export const SavedSessionsModal: React.FC<SavedSessionsModalProps> = ({
                 Gestion des Manches
               </h2>
               <p className="text-xs text-slate-400 line-clamp-1 sm:line-clamp-none">
-                Sauvegardez vos parties, chargez ou basculez entre vos manches.
+                Sauvegarde tes parties, charge ou bascule entre tes manches.
               </p>
             </div>
           </div>
@@ -285,7 +285,7 @@ export const SavedSessionsModal: React.FC<SavedSessionsModalProps> = ({
 
         {/* Footer info */}
         <div className="text-[10px] text-slate-400 text-center border-t border-slate-800 pt-2.5">
-          Toutes les sauvegardes sont conservées localement dans votre navigateur.
+          Toutes les sauvegardes sont conservées localement dans ton navigateur.
         </div>
       </motion.div>
     </div>

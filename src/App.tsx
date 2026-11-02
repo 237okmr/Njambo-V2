@@ -446,7 +446,7 @@ function GameApp() {
 
   useEffect(() => {
     const unsub = wsService.onSessionRestored(() => {
-      triggerToast('Reconnexion réussie ! Vous avez repris le contrôle de votre jeu.');
+      triggerToast('Reconnexion réussie ! Tu as repris le contrôle de ton jeu.');
       triggerHaptic('success');
     });
     return () => unsub();
@@ -468,9 +468,9 @@ function GameApp() {
     if (latestEmote && latestEmote.id !== lastProcessedEmoteIdRef.current) {
       lastProcessedEmoteIdRef.current = latestEmote.id;
       if (latestEmote.text && latestEmote.text.includes("L'IA a joué") && latestEmote.text.includes(localPlayerName)) {
-        const match = latestEmote.text.match(/L'IA a joué (\d+ tour[s]?) en votre absence/);
+        const match = latestEmote.text.match(/L'IA a joué (\d+ tour[s]?) en (?:votre|ton) absence/);
         const trickStr = match ? match[1] : '1 tour';
-        triggerToast(`🤖 L'IA a joué ${trickStr} en votre absence.`);
+        triggerToast(`🤖 L'IA a joué ${trickStr} en ton absence.`);
       }
     }
   }, [isOnlineActive, multiplayerRoom?.activeEmotes, localPlayerName, triggerToast]);
@@ -578,7 +578,7 @@ function GameApp() {
         }
         lastBackPressTimeRef.current = now;
         window.history.pushState({ screen: 'HOME', active: true }, '');
-        triggerToast('Appuyez à nouveau pour quitter');
+        triggerToast('Appuie à nouveau pour quitter');
         triggerHaptic('light');
       }
     };
@@ -621,7 +621,7 @@ function GameApp() {
 
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
-      e.returnValue = 'Une manche est en cours. Si vous quittez, vous risquez un forfait.';
+      e.returnValue = 'Une manche est en cours. Si tu quittes, tu risques un forfait.';
       return e.returnValue;
     };
 
@@ -721,7 +721,7 @@ function GameApp() {
   useEffect(() => {
     const unsub = onInviteFeedback((fb) => {
       if (fb.agree) {
-        triggerToast(`${fb.responderName} a accepté votre invitation !`);
+        triggerToast(`${fb.responderName} a accepté ton invitation !`);
       } else {
         triggerToast(`${fb.responderName} a décliné l'invitation.`);
       }
@@ -887,7 +887,7 @@ function GameApp() {
 
       // Forfait déjà prononcé : rien à rejoindre, on explique simplement.
       if (d.type === 'FORFEIT_DECLARED') {
-        notify({ message: 'Vous avez été déclaré forfait sur cette table.', tone: 'warning', durationMs: 6000 });
+        notify({ message: 'Tu as été déclaré forfait sur cette table.', tone: 'warning', durationMs: 6000 });
         return;
       }
       if (!roomCode) return;
@@ -2301,7 +2301,7 @@ function GameApp() {
                       <span className="w-2 h-2 rounded-full bg-rose-400 animate-ping shrink-0" />
                       <span className="font-semibold">Reconnexion en cours...</span>
                     </div>
-                    <span className="text-[11px] text-rose-300/80">Votre place et vos jetons sont préservés</span>
+                    <span className="text-[11px] text-rose-300/80">Ta place et tes jetons sont préservés</span>
                   </div>
                 )}
 
@@ -2315,10 +2315,10 @@ function GameApp() {
                       <span className="text-xl lg:text-lg">⚔️</span>
                       <div className="text-xs">
                         <p className="font-bold text-amber-300">
-                          Vos adversaires humains ont quitté la table.
+                          Tes adversaires humains ont quitté la table.
                         </p>
                         <p className="text-slate-400 text-[11px] sm:text-xs">
-                          Réclamez votre part du pot ({humanPotShareEstimate} jetons) avec victoire par forfait, ou relevez le défi contre l'IA.
+                          Réclame ta part du pot ({humanPotShareEstimate} jetons) avec victoire par forfait, ou relève le défi contre l'IA.
                         </p>
                       </div>
                     </div>
@@ -2446,7 +2446,7 @@ function GameApp() {
                             triggerHaptic('medium');
                             await handleLeaveMultiplayer();
                             setCurrentScreen('HOME');
-                            triggerToast('Vous avez quitté le mode spectateur');
+                            triggerToast('Tu as quitté le mode spectateur');
                           }}
                           className="text-xs font-bold text-rose-400 hover:text-rose-300 flex items-center gap-1.5 cursor-pointer bg-rose-500/10 hover:bg-rose-500/20 px-3 py-1.5 rounded-xl border border-rose-500/25 transition-all active:scale-95 shadow-sm shadow-rose-950/40"
                         >
@@ -2464,7 +2464,7 @@ function GameApp() {
                           <div className="flex flex-col">
                             <span className="text-xs font-bold text-white">Intégration validée !</span>
                             <span className="text-[11px] text-emerald-300/90">
-                              Vous entrerez en jeu dès le début de la prochaine partie avec un capital de{' '}
+                              Tu entreras en jeu dès le début de la prochaine partie avec un capital de{' '}
                               <strong className="text-white font-mono">{prorataCapitalEstimate} 🪙</strong>.
                             </span>
                           </div>
@@ -2498,7 +2498,7 @@ function GameApp() {
                         </div>
                       ) : (
                         <p className="text-xs text-slate-400 text-center">
-                          Vous assistez aux échanges de cartes en direct. Vous pouvez réagir en temps réel avec la table ci-dessous :
+                          Tu assistes aux échanges de cartes en direct. Tu peux réagir en temps réel avec la table ci-dessous :
                         </p>
                       )}
 
@@ -2535,10 +2535,10 @@ function GameApp() {
                           Mode Spectateur
                         </div>
                         <p className="text-sm sm:text-base text-slate-100 font-medium">
-                          Vous avez été éliminé de la manche en cours.
+                          Tu as été éliminé de la manche en cours.
                         </p>
                         <p className="text-xs sm:text-sm text-slate-400 max-w-lg">
-                          Les autres joueurs continuent à s'affronter. Vous pouvez observer le dénouement en direct ou simuler instantanément la fin de la partie pour obtenir les résultats.
+                          Les autres joueurs continuent à s'affronter. Tu peux observer le dénouement en direct ou simuler instantanément la fin de la partie pour obtenir les résultats.
                         </p>
                       </div>
 
@@ -2737,7 +2737,7 @@ function GameApp() {
                       <ul className="space-y-2 bg-slate-950/60 p-3 rounded-xl border border-slate-800 text-slate-300">
                         <li className="flex items-start gap-2">
                           <span className="text-rose-400 font-bold">•</span>
-                          <span>Votre mise initiale de <strong className="text-amber-400">{activeGameState.baseBet || 10} jetons</strong> est perdue pour cette partie.</span>
+                          <span>Ta mise initiale de <strong className="text-amber-400">{activeGameState.baseBet || 10} jetons</strong> est perdue pour cette partie.</span>
                         </li>
                         <li className="flex items-start gap-2">
                           <span className="text-rose-400 font-bold">•</span>
@@ -2745,7 +2745,7 @@ function GameApp() {
                         </li>
                         <li className="flex items-start gap-2">
                           <span className="text-emerald-400 font-bold">•</span>
-                          <span>Vous restez assis à la table en spectateur et rejouerez automatiquement dès la partie suivante.</span>
+                          <span>Tu restes assis à la table en spectateur et tu rejoueras automatiquement dès la partie suivante.</span>
                         </li>
                       </ul>
                     </div>
@@ -2863,7 +2863,7 @@ function GameApp() {
           setShowQuitModal(false);
           await handleLeaveMultiplayer();
           setCurrentScreen('HOME');
-          triggerToast('Vous avez quitté le mode spectateur');
+          triggerToast('Tu as quitté le mode spectateur');
         }}
         onForfeitAndQuitMultiplayer={async () => {
           setShowQuitModal(false);
@@ -3166,10 +3166,10 @@ function GameApp() {
             </div>
             <h2 className="text-xl font-black text-white">Mise à Jour Requise</h2>
             <p className="text-xs text-slate-300 leading-relaxed">
-              Votre version de l'application (Protocole v1) n'est plus compatible avec le serveur officiel Katika (Protocole v2 - {versionStatus.serverVersion || '2.5.22'}).
+              Ta version de l'application (Protocole v1) n'est plus compatible avec le serveur officiel Katika (Protocole v2 - {versionStatus.serverVersion || '2.5.22'}).
             </p>
             <p className="text-[11px] text-amber-400 font-bold bg-amber-500/10 border border-amber-500/20 px-3 py-2 rounded-xl">
-              Veuillez recharger la page pour synchroniser automatiquement les protocoles de jeu.
+              Recharge la page pour synchroniser automatiquement les protocoles de jeu.
             </p>
             <button
               type="button"
@@ -3191,10 +3191,10 @@ function GameApp() {
             </div>
             <h2 className="text-xl font-black text-white">Jeu en cours sur un autre onglet</h2>
             <p className="text-xs text-slate-300 leading-relaxed">
-              Votre compte a été connecté sur un autre onglet ou un autre appareil. Par mesure de sécurité et pour éviter les conflits, cette session a été mise en pause.
+              Ton compte a été connecté sur un autre onglet ou un autre appareil. Par mesure de sécurité et pour éviter les conflits, cette session a été mise en pause.
             </p>
             <p className="text-[11px] text-amber-400 font-bold bg-amber-500/10 border border-amber-500/20 px-3 py-2 rounded-xl">
-              Si vous souhaitez reprendre la partie sur cet écran, cliquez sur le bouton ci-dessous pour forcer la reconnexion.
+              Si tu souhaites reprendre la partie sur cet écran, clique sur le bouton ci-dessous pour forcer la reconnexion.
             </p>
             <button
               type="button"

@@ -245,7 +245,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           id="btn-header-install"
           onClick={onOpenInstallModal}
           className="h-9 w-9 sm:w-auto px-0 sm:px-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 active:scale-95 text-amber-300 border border-amber-500/40 text-xs font-bold transition-all duration-150 flex items-center justify-center sm:gap-1.5 cursor-pointer shadow-sm shrink-0"
-          title="Installer l'application sur votre appareil"
+          title="Installer l'application sur ton appareil"
           aria-label="Installer l'application"
         >
           <Smartphone className="w-3.5 h-3.5 text-amber-400 shrink-0" />
@@ -728,7 +728,7 @@ const AbandonMultiplayerControl: React.FC<{
     return (
       <div className="flex flex-col gap-1.5 mt-2 p-2 rounded-lg bg-rose-950/80 border border-rose-800/80 text-rose-200">
         <p className="text-[11px] leading-tight font-medium">
-          Abandonner la table ? Votre mise sera perdue et l'IA prendra le relais.
+          Abandonner la table ? Ta mise sera perdue et l'IA prendra le relais.
         </p>
         <div className="flex items-center gap-2 mt-0.5">
           <button

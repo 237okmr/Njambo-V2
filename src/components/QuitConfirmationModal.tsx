@@ -96,7 +96,7 @@ export const QuitConfirmationModal: React.FC<QuitConfirmationModalProps> = ({
               <div className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800 text-xs text-slate-300 flex items-center gap-2.5">
                 <BookmarkCheck className="w-4 h-4 text-emerald-400 shrink-0" />
                 <p>
-                  Vous pouvez quitter et revenir à l'accueil à tout moment. Votre capital de jetons de <strong className="text-emerald-300">{playerCapital} 🪙</strong> ne subira aucune pénalité.
+                  Tu peux quitter et revenir à l'accueil à tout moment. Ton capital de jetons de <strong className="text-emerald-300">{playerCapital} 🪙</strong> ne subira aucune pénalité.
                 </p>
               </div>
 
@@ -266,7 +266,7 @@ export const QuitConfirmationModal: React.FC<QuitConfirmationModalProps> = ({
             <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800 text-xs text-slate-300 flex items-center gap-2.5">
               <BookmarkCheck className="w-4 h-4 text-amber-400 shrink-0" />
               <p>
-                Vous pouvez sauvegarder votre manche pour la reprendre à tout moment dans <strong className="text-amber-300">Mes Manches</strong>.
+                Tu peux sauvegarder ta manche pour la reprendre à tout moment dans <strong className="text-amber-300">Mes Manches</strong>.
               </p>
             </div>
 

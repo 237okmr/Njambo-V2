@@ -357,7 +357,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                       <span className="font-bold truncate text-[11px]">
                         {player.isHuman
                           ? player.name.includes('Vous')
-                            ? 'Vous'
+                            ? 'Toi'
                             : player.name
                           : player.name.replace(/^Joueur\s+/i, '')}
                       </span>
@@ -527,7 +527,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                   onOpenInstallModal();
                 }}
                 className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-xs font-bold text-amber-300 border border-amber-500/40 transition cursor-pointer"
-                title="Installer l'application sur votre téléphone Android"
+                title="Installer l'application sur ton téléphone Android"
               >
                 <Smartphone className="w-3.5 h-3.5 text-amber-400" />
                 <span>Installer App</span>

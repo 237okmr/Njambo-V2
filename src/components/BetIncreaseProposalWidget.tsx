@@ -118,7 +118,7 @@ export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps>
                   Hausse : <strong className="text-amber-300 font-mono font-black text-xs">{proposal.proposedBet} 🪙</strong>
                 </span>
                 <span className="text-[9px] text-slate-400 font-normal truncate">
-                  {isLocalProposer ? 'Votre proposition' : `Par ${proposal.proposerName}`} ({agreedCount}/{totalRequired} OK)
+                  {isLocalProposer ? 'Ta proposition' : `Par ${proposal.proposerName}`} ({agreedCount}/{totalRequired} OK)
                 </span>
               </div>
             </div>

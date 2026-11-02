@@ -255,8 +255,8 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                     >
                       {isLocalPlayer
                         ? player.name.includes('Vous')
-                          ? 'Vous'
-                          : `${player.name} (Vous)`
+                          ? 'Toi'
+                          : `${player.name} (Toi)`
                         : isOnlineRemoteHuman
                         ? player.name
                         : player.name.replace(/^Joueur\s+/i, '')}

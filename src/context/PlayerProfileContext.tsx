@@ -221,7 +221,7 @@ export const PlayerProfileProvider: React.FC<{ children: ReactNode }> = ({ child
 
   const loginWithGoogle = useCallback(async () => {
     setIsSyncing(true);
-    setSyncMessage('Fusion de vos données locales avec votre compte Google...');
+    setSyncMessage('Fusion de tes données locales avec ton compte Google...');
     try {
       const result = await playerProfileService.loginWithGoogle();
       setProfile(result.profile);
@@ -230,12 +230,12 @@ export const PlayerProfileProvider: React.FC<{ children: ReactNode }> = ({ child
       FriendService.mergeLocalContactsToCloud(result.profile.uid).catch((e) => {
         console.warn('[PlayerProfileContext] Merge friends warning:', e);
       });
-      setSyncMessage('Synchronisation réussie ! Votre palmarès est sécurisé.');
+      setSyncMessage('Synchronisation réussie ! Ton palmarès est sécurisé.');
       setTimeout(() => setSyncMessage(null), 4000);
     } catch (err: any) {
       if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
         console.error('[PlayerProfile] Login error:', err);
-        setSyncMessage('Erreur lors de la connexion. Vos données locales restent intactes.');
+        setSyncMessage('Erreur lors de la connexion. Tes données locales restent intactes.');
         setTimeout(() => setSyncMessage(null), 5000);
       } else {
         setSyncMessage(null);

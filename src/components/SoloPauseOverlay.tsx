@@ -67,7 +67,7 @@ export const SoloPauseOverlay: React.FC<SoloPauseOverlayProps> = ({
             <div className="flex flex-col items-center gap-0.5">
               <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Tour</span>
               <span className={`font-extrabold text-sm ${isHumanTurn ? 'text-emerald-400' : 'text-cyan-300'}`}>
-                {isHumanTurn ? 'À vous' : currentTurnPlayer?.name || 'IA'}
+                {isHumanTurn ? 'À toi' : currentTurnPlayer?.name || 'IA'}
               </span>
             </div>
           </div>
@@ -104,7 +104,7 @@ export const SoloPauseOverlay: React.FC<SoloPauseOverlayProps> = ({
           {/* Status micro-pill */}
           <div className="flex items-center gap-1.5 text-[11px] text-slate-400/90 font-medium">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Votre progression et vos jetons sont sécurisés</span>
+            <span>Ta progression et tes jetons sont sécurisés</span>
           </div>
         </motion.div>
       </div>

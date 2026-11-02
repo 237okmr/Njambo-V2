@@ -207,7 +207,7 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
                     <span>Obligation de Couleur</span>
                   </div>
                   <p className="text-xs text-slate-300 leading-snug">
-                    Vous devez obligatoirement fournir la couleur de la 1ère carte posée si vous en avez en main.
+                    Tu dois obligatoirement fournir la couleur de la 1ère carte posée si tu en as en main.
                   </p>
                 </div>
 
@@ -217,7 +217,7 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
                     <span>Pas d'Atout de Coupe</span>
                   </div>
                   <p className="text-xs text-slate-300 leading-snug">
-                    Si vous n'avez pas la couleur demandée, vous défaussez une autre carte. Une défausse ne gagne jamais le tour.
+                    Si tu n'as pas la couleur demandée, tu défausses une autre carte. Une défausse ne gagne jamais le tour.
                   </p>
                 </div>
 
@@ -468,7 +468,7 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
                   <span>Astuce de Maître : Préparer son Kora</span>
                 </div>
                 <p className="text-xs text-slate-300 leading-relaxed">
-                  Pour placer un Kora avec un 3 au 5ᵉ tour, observez attentivement les défausses des tours 1 à 4. Vous devez être certain qu'aucun adversaire n'a conservé une carte supérieure à la vôtre dans cette couleur pour la dernière main !
+                  Pour placer un Kora avec un 3 au 5ᵉ tour, observe attentivement les défausses des tours 1 à 4. Tu dois être certain qu'aucun adversaire n'a conservé une carte supérieure à la tienne dans cette couleur pour le dernier tour !
                 </p>
               </div>
             </motion.div>

@@ -229,10 +229,10 @@ export const HumanHand: React.FC<HumanHandProps> = ({
                 </div>
                 <p className="text-[11px] text-slate-400">
                   {isForfeit
-                    ? 'Forfait pour cette partie (déconnexion). Vous réintégrerez la table dès la partie suivante si vous restez connecté.'
+                    ? 'Forfait pour cette partie (déconnexion). Tu réintégreras la table dès la partie suivante si tu restes connecté.'
                     : isEliminated
                     ? 'Éliminé de la manche (Capital insuffisant).'
-                    : 'Observez les tours en cours. Vos cartes seront redistribuées dès la partie suivante.'}
+                    : 'Observe les tours en cours. Tes cartes seront redistribuées dès la partie suivante.'}
                 </p>
               </div>
             </div>
@@ -349,7 +349,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
               : isHumanInstantWinner
               ? '🎉 MAIN GAGNANTE !'
               : isHumanTurn
-              ? 'À vous de jouer'
+              ? 'À toi de jouer'
               : playerName}
           </span>
         </div>
@@ -358,12 +358,12 @@ export const HumanHand: React.FC<HumanHandProps> = ({
           {isDealing ? (
             <span className="text-blue-300 flex items-center gap-1 font-medium">
               <Loader2 className="w-3 h-3 animate-spin" />
-              Réception de vos 5 cartes...
+              Réception de tes 5 cartes...
             </span>
           ) : isHumanInstantWinner ? (
             <span className="text-emerald-400 font-extrabold flex items-center gap-1">
               <Crown className="w-3.5 h-3.5 text-emerald-400" />
-              🎉 Victoire immédiate ! Vous remportez le pot !
+              🎉 Victoire immédiate ! Tu remportes le pot !
             </span>
           ) : instantWinReveal ? (
             <span className="text-amber-400 font-bold flex items-center gap-1">
@@ -381,7 +381,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
                 </span>
               )
             ) : (
-              <span className="text-slate-300">Vous entamez la main.</span>
+              <span className="text-slate-300">Tu ouvres le tour.</span>
             )
           ) : (
             <span className="text-slate-500 italic">En attente de l'adversaire...</span>
@@ -395,7 +395,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
         {isHumanTurn && hand.length > 0 && !isDealing && !instantWinReveal && (
           <div className="flex items-center gap-1 text-[10px] text-amber-400/90 font-medium mb-0.5 animate-pulse select-none">
             <ChevronUp className="w-3 h-3 text-amber-400 animate-bounce" />
-            <span>Glissez vers le haut ou touchez 2x pour jouer</span>
+            <span>Glisse vers le haut ou touche 2x pour jouer</span>
           </div>
         )}
 
@@ -673,8 +673,8 @@ export const HumanHand: React.FC<HumanHandProps> = ({
               : isHumanInstantWinner
               ? 'Combinaison validée'
               : isHumanTurn
-              ? 'Sélectionnez ou glissez'
-              : 'Attendez votre tour'}
+              ? 'Sélectionne ou glisse'
+              : 'Attends ton tour'}
           </div>
         )}
       </div>
@@ -709,7 +709,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
                 <ul className="space-y-2 bg-slate-950/60 p-3 rounded-xl border border-slate-800 text-slate-300">
                   <li className="flex items-start gap-2">
                     <span className="text-rose-400 font-bold">•</span>
-                    <span>Votre mise initiale de <strong className="text-amber-400">{baseBet} jetons</strong> est perdue pour cette partie.</span>
+                    <span>Ta mise initiale de <strong className="text-amber-400">{baseBet} jetons</strong> est perdue pour cette partie.</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-rose-400 font-bold">•</span>
@@ -717,7 +717,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-emerald-400 font-bold">•</span>
-                    <span>Vous restez assis à la table en spectateur et rejouerez automatiquement dès la partie suivante.</span>
+                    <span>Tu restes assis à la table en spectateur et tu rejoueras automatiquement dès la partie suivante.</span>
                   </li>
                 </ul>
               </div>

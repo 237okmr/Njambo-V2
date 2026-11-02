@@ -83,7 +83,7 @@ export const PushNotificationToggle: React.FC<PushNotificationToggleProps> = ({
     setIsTesting(false);
     if (res.success) {
       triggerHaptic('success');
-      onToast?.('Notification test envoyée sur votre appareil !');
+      onToast?.('Notification test envoyée sur ton appareil !');
     } else {
       onToast?.(res.error || 'Échec de l’envoi du test.');
     }
@@ -123,7 +123,7 @@ export const PushNotificationToggle: React.FC<PushNotificationToggleProps> = ({
               )}
             </div>
             <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
-              Recevez les invitations de vos amis, les rappels de tour et les défis même lorsque le jeu est fermé.
+              Reçois les invitations de tes amis, les rappels de tour et les défis même lorsque le jeu est fermé.
             </p>
           </div>
         </div>
@@ -146,10 +146,10 @@ export const PushNotificationToggle: React.FC<PushNotificationToggleProps> = ({
           <div className="flex-1 leading-snug">
             Les notifications sont <strong>bloquées</strong>.{' '}
             {isIOS
-              ? "Ouvrez Réglages › Notifications › Njambo Kora pour les autoriser."
+              ? "Ouvre Réglages › Notifications › Njambo Kora pour les autoriser."
               : isStandalone
-                ? "Ouvrez les paramètres du téléphone › Applications › Njambo Kora › Notifications pour les autoriser."
-                : "Touchez le cadenas dans la barre d'adresse pour les autoriser."}
+                ? "Ouvre les paramètres du téléphone › Applications › Njambo Kora › Notifications pour les autoriser."
+                : "Touche le cadenas dans la barre d'adresse pour les autoriser."}
           </div>
         </div>
       )}
@@ -240,7 +240,7 @@ export const PushNotificationToggle: React.FC<PushNotificationToggleProps> = ({
             <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Timer className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span className="text-slate-200 font-medium">Rappels "À vous de jouer"</span>
+                <span className="text-slate-200 font-medium">Rappels "À toi de jouer"</span>
               </div>
               <input
                 type="checkbox"

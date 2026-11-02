@@ -683,9 +683,9 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400 leading-tight">
-                  {soloBetIncreaseMode === 'souverain' && 'Souverain : Vous modifiez la mise directement, sans vote des bots.'}
-                  {soloBetIncreaseMode === 'tactique' && 'Tactique : Vous proposez des hausses que les bots peuvent accepter ou refuser.'}
-                  {soloBetIncreaseMode === 'symetrique' && 'Symétrique : Vous et les bots pouvez initier des hausses (vote unanime requis).'}
+                  {soloBetIncreaseMode === 'souverain' && 'Souverain : tu modifies la mise directement, sans vote des bots.'}
+                  {soloBetIncreaseMode === 'tactique' && 'Tactique : tu proposes des hausses que les bots peuvent accepter ou refuser.'}
+                  {soloBetIncreaseMode === 'symetrique' && 'Symétrique : toi et les bots pouvez initier des hausses (vote unanime requis).'}
                 </p>
               </div>
 
@@ -1014,7 +1014,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
                   Lancer une <strong className="text-amber-300">nouvelle manche</strong> réinitialisera les capitaux de tous les joueurs à {selectedCapital} jetons.
                 </p>
                 <p className="text-slate-400 text-[11px]">
-                  💡 <em>Vous pouvez sauvegarder votre progression actuelle avant de redémarrer.</em>
+                  💡 <em>Tu peux sauvegarder ta progression actuelle avant de redémarrer.</em>
                 </p>
               </div>
 

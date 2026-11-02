@@ -578,7 +578,7 @@ export class FriendService {
       return { success: false, status: 'BLOCKED', message: 'Connexion Google requise pour envoyer une demande.' };
     }
     if (!targetFriend.uid || targetFriend.uid === userId) {
-      return { success: false, status: 'BLOCKED', message: 'Impossible de vous ajouter vous-même en ami.' };
+      return { success: false, status: 'BLOCKED', message: 'Impossible de t\'ajouter toi-même en ami.' };
     }
 
     try {
@@ -638,7 +638,7 @@ export class FriendService {
         return {
           success: true,
           status: 'ACCEPTED',
-          message: `Demande croisée validée ! ${targetFriend.displayName} et vous êtes désormais amis.`,
+          message: `Demande croisée validée ! ${targetFriend.displayName} et toi êtes désormais amis.`,
         };
       }
 

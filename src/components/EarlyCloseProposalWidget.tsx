@@ -50,7 +50,7 @@ export const EarlyCloseProposalWidget: React.FC<EarlyCloseProposalWidgetProps> =
                   Fin de partie d'un commun accord ?
                 </span>
                 <span className="text-[9px] text-slate-300">
-                  {isLocalProposer ? 'Votre demande' : `Par ${proposal.proposerName}`} • Accord : {agreedCount}/{totalRequired}
+                  {isLocalProposer ? 'Ta demande' : `Par ${proposal.proposerName}`} • Accord : {agreedCount}/{totalRequired}
                 </span>
               </div>
             </div>

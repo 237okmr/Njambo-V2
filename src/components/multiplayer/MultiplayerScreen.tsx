@@ -587,7 +587,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
     }
 
     if (!playerName.trim()) {
-      setHubErrorMsg('Veuillez renseigner votre pseudo de joueur.');
+      setHubErrorMsg('Renseigne ton pseudo de joueur.');
       return;
     }
     setHubErrorMsg(null);
@@ -670,7 +670,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
     }
 
     if (!playerName.trim()) {
-      setHubErrorMsg('Veuillez entrer votre pseudo de joueur.');
+      setHubErrorMsg('Entre ton pseudo de joueur.');
       return;
     }
     if (playerName.trim().toLowerCase() === 'katika') {
@@ -740,7 +740,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
 
     const code = (codeToJoin || roomCodeInput).trim().toUpperCase();
     if (!playerName.trim()) {
-      setHubErrorMsg('Veuillez entrer votre pseudo de joueur.');
+      setHubErrorMsg('Entre ton pseudo de joueur.');
       return;
     }
     if (playerName.trim().toLowerCase() === 'katika') {
@@ -748,7 +748,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
       return;
     }
     if (!code) {
-      setHubErrorMsg('Veuillez entrer le code du salon.');
+      setHubErrorMsg('Entre le code du salon.');
       return;
     }
     setHubErrorMsg(null);
@@ -864,7 +864,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
       return;
     }
     if (!room) {
-      setHubErrorMsg('Vous devez être dans un salon pour envoyer une invitation.');
+      setHubErrorMsg('Tu dois être dans un salon pour envoyer une invitation.');
       return;
     }
     try {
@@ -982,7 +982,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
         request.avatarId
       );
       if (ok) {
-        setHubSuccessMsg(`Demande acceptée ! ${request.displayName} est désormais votre ami.`);
+        setHubSuccessMsg(`Demande acceptée ! ${request.displayName} est désormais ton ami.`);
         triggerHaptic('success');
         setTimeout(() => setHubSuccessMsg(null), getPublicParamNumber('uiToastDurationMs'));
       } else {
@@ -1036,7 +1036,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
       FriendService.removeLocalContact(friendId);
       setLocalContacts(FriendService.getLocalContacts());
     }
-    setHubSuccessMsg(`${friendName} a été retiré de votre liste d'amis.`);
+    setHubSuccessMsg(`${friendName} a été retiré de ta liste d'amis.`);
     triggerHaptic('light');
     setTimeout(() => setHubSuccessMsg(null), getPublicParamNumber('uiToastDurationMs'));
   };
@@ -1092,7 +1092,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
   }) => {
     if (!isLoggedIn || !profile?.uid) {
       setAuthRequirementReason(
-        "Pour envoyer des demandes d'ami officielles synchronisées dans le Cloud, vous devez être connecté avec Google."
+        "Pour envoyer des demandes d'ami officielles synchronisées dans le Cloud, tu dois être connecté avec Google."
       );
       setShowAuthRequirementModal(true);
       return;
@@ -1464,7 +1464,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                 />
                 <div className="flex flex-col min-w-0">
                   <span className="text-xs font-black text-white truncate">
-                    {friendAcceptedToast.name} a accepté votre demande !
+                    {friendAcceptedToast.name} a accepté ta demande !
                   </span>
                   <span className="text-[10px] text-emerald-300/90 font-medium truncate">
                     Vous êtes désormais amis connectés.
@@ -1513,7 +1513,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                     ⚠️ L'hôte est déconnecté
                   </span>
                   <span className="text-[11px] text-rose-300/90 truncate">
-                    Reprenez l'organisation du salon pour lancer la partie.
+                    Reprends l'organisation du salon pour lancer la partie.
                   </span>
                 </div>
               </div>
@@ -1586,7 +1586,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                 <div className="flex flex-col min-w-0">
                   <span className="text-xs font-black text-amber-200 truncate">
                     {isHost
-                      ? `La partie démarre dans ${autoStartSecondsLeft} s (vous pouvez aussi cliquer sur Lancer)`
+                      ? `La partie démarre dans ${autoStartSecondsLeft} s (tu peux aussi cliquer sur Lancer)`
                       : `La partie démarre dans ${autoStartSecondsLeft} s`}
                   </span>
                   <span className="text-[11px] text-amber-300/90 truncate">
@@ -1804,7 +1804,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                         className="text-[11px] text-amber-300 font-semibold flex items-center gap-1 text-right animate-pulse"
                       >
                         <Clock className="w-3 h-3 text-amber-400 animate-spin" />
-                        {`La partie démarre dans ${autoStartSecondsLeft !== null ? autoStartSecondsLeft : Math.max(0, Math.ceil((room.autoStartCountdownAt - webSocketService.getServerTime()) / 1000))} s (vous pouvez aussi cliquer sur Lancer)`}
+                        {`La partie démarre dans ${autoStartSecondsLeft !== null ? autoStartSecondsLeft : Math.max(0, Math.ceil((room.autoStartCountdownAt - webSocketService.getServerTime()) / 1000))} s (tu peux aussi cliquer sur Lancer)`}
                       </span>
                     )}
                   </div>
@@ -1936,7 +1936,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                         isFriend ? (
                           <span
                             className="h-7 px-2 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold flex items-center gap-1 select-none"
-                            title="Ce joueur fait partie de vos amis"
+                            title="Ce joueur fait partie de tes amis"
                           >
                             <Check className="w-3 h-3 text-emerald-400" />
                             <span>Ami</span>
@@ -1958,7 +1958,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                                 setFriendActionPendingMap((prev) => ({ ...prev, [p.id]: true }));
                                 try {
                                   await FriendService.acceptCloudFriendRequest(profile.uid, p.id, p.name, (p as any).avatarSeed || (p as any).avatarId);
-                                  setHubSuccessMsg(`Demande acceptée ! ${p.name} est maintenant votre ami.`);
+                                  setHubSuccessMsg(`Demande acceptée ! ${p.name} est maintenant ton ami.`);
                                   triggerHaptic('success');
                                   setTimeout(() => setHubSuccessMsg(null), getPublicParamNumber('uiToastLongDurationMs'));
                                 } catch (e: any) {
@@ -2063,7 +2063,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   </span>
                   {isLocalSpectator && (
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-500/30">
-                      Vous êtes observateur
+                      Tu es observateur
                     </span>
                   )}
                 </div>
@@ -2145,7 +2145,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                 />
                 <div className="flex flex-col min-w-0">
                   <span className="text-xs font-black text-white truncate">
-                    {friendAcceptedToast.name} a accepté votre demande !
+                    {friendAcceptedToast.name} a accepté ta demande !
                   </span>
                   <span className="text-[10px] text-emerald-300/90 font-medium truncate">
                     Vous êtes désormais amis connectés.
@@ -2197,7 +2197,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   {activeSanction.reason}
                 </p>
                 <p className="text-[10px] text-rose-300/80">
-                  Les abandons répétés en cours de partie limitent vos accès aux salons multijoueurs.
+                  Les abandons répétés en cours de partie limitent tes accès aux salons multijoueurs.
                 </p>
               </div>
             </div>
@@ -2558,7 +2558,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   <div className="flex flex-col gap-1">
                     <h3 className="text-sm font-black text-slate-200">Aucune table disponible</h3>
                     <p className="text-[11px] text-slate-400 max-w-[250px] leading-relaxed">
-                      Aucun salon public ne correspond à vos critères actuels. Créez votre propre table et laissez les autres vous rejoindre !
+                      Aucun salon public ne correspond à tes critères actuels. Crée ta propre table et laisse les autres te rejoindre !
                     </p>
                   </div>
                   <button
@@ -2797,7 +2797,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                             className="w-8 h-8"
                           />
                           <div className="flex flex-col">
-                            <span className="text-xs font-black text-white">{inv.fromUserName} vous défie !</span>
+                            <span className="text-xs font-black text-white">{inv.fromUserName} te défie !</span>
                             <span className="text-[10px] text-slate-400">
                               Table #{inv.roomCode} · {inv.baseBet} Jetons 🪙
                             </span>
@@ -2847,7 +2847,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   {isLoggedIn && (
                     <span
                       className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center"
-                      title="Code associé à votre compte Google"
+                      title="Code associé à ton compte Google"
                     >
                       <Check className="w-4 h-4" />
                     </span>
@@ -2942,9 +2942,9 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                         <Users className="w-8 h-8 text-amber-400 opacity-80" />
                       </div>
                       <div className="flex flex-col gap-1">
-                        <h3 className="text-sm font-black text-slate-200">Vous jouez seul ?</h3>
+                        <h3 className="text-sm font-black text-slate-200">Tu joues seul ?</h3>
                         <p className="text-[11px] text-slate-400 max-w-[250px] leading-relaxed">
-                          Votre liste d'amis est vide. Recherchez des joueurs par Code Ami ou invitez vos proches par WhatsApp !
+                          Ta liste d'amis est vide. Recherche des joueurs par Code Ami ou invite tes proches par WhatsApp !
                         </p>
                       </div>
                       <button
@@ -3161,7 +3161,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                       <div className="flex flex-col gap-1">
                         <h3 className="text-sm font-bold text-slate-200">Aucune demande reçue</h3>
                         <p className="text-[11px] text-slate-400 max-w-[240px]">
-                          Lorsque d'autres joueurs vous ajoutent par votre Code Ami, leurs invitations apparaîtront ici.
+                          Lorsque d'autres joueurs t'ajoutent par ton Code Ami, leurs invitations apparaîtront ici.
                         </p>
                       </div>
                     </div>
@@ -3182,7 +3182,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                             <div className="flex flex-col min-w-0">
                               <span className="text-xs font-black text-white truncate">{req.displayName}</span>
                               <span className="text-[10px] text-amber-400 font-mono font-bold">{req.friendCode}</span>
-                              <span className="text-[9px] text-slate-400">Souhaite devenir votre ami</span>
+                              <span className="text-[9px] text-slate-400">Souhaite devenir ton ami</span>
                             </div>
                           </div>
 
@@ -3234,7 +3234,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                       <div className="flex flex-col gap-1">
                         <h3 className="text-sm font-bold text-slate-200">Aucune demande en attente</h3>
                         <p className="text-[11px] text-slate-400 max-w-[240px]">
-                          Toutes les demandes que vous avez envoyées ont été traitées.
+                          Toutes les demandes que tu as envoyées ont été traitées.
                         </p>
                       </div>
                     </div>
@@ -3350,7 +3350,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                             {isMe ? null : isFriend ? (
                               <span
                                 className="h-6 px-2 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold flex items-center gap-1 select-none"
-                                title="Ce joueur fait partie de vos amis"
+                                title="Ce joueur fait partie de tes amis"
                               >
                                 <Check className="w-2.5 h-2.5 text-emerald-400" />
                                 <span>Ami</span>
@@ -3372,7 +3372,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                                     setFriendActionPendingMap((prev) => ({ ...prev, [r.id]: true }));
                                     try {
                                       await FriendService.acceptCloudFriendRequest(profile.uid, r.id, r.name, (r as any).avatarSeed || (r as any).avatarId);
-                                      setHubSuccessMsg(`Demande acceptée ! ${r.name} est maintenant votre ami.`);
+                                      setHubSuccessMsg(`Demande acceptée ! ${r.name} est maintenant ton ami.`);
                                       triggerHaptic('success');
                                       setTimeout(() => setHubSuccessMsg(null), getPublicParamNumber('uiToastLongDurationMs'));
                                     } catch (e: any) {
@@ -3955,7 +3955,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   </div>
                   <div>
                     <h3 className="text-base font-black text-white">Ajouter un Ami</h3>
-                    <p className="text-[10px] text-slate-400">Recherchez un adversaire par pseudo ou Code Ami</p>
+                    <p className="text-[10px] text-slate-400">Recherche un adversaire par pseudo ou Code Ami</p>
                   </div>
                 </div>
                 <button
@@ -3976,7 +3976,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   <div className="flex flex-col gap-1.5 flex-1">
                     <span className="text-xs font-bold text-amber-300">Connexion Google recommandée</span>
                     <p className="text-[10px] text-slate-300 leading-relaxed">
-                      Pour envoyer une demande officielle qui apparaîtra dans les alertes du joueur et synchroniser vos amis entre appareils, connectez votre compte Google.
+                      Pour envoyer une demande officielle qui apparaîtra dans les alertes du joueur et synchroniser tes amis entre appareils, connecte ton compte Google.
                     </p>
                     <button
                       type="button"
@@ -4073,7 +4073,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                               />
                               <div className="flex flex-col min-w-0">
                                 <span className="text-xs font-bold text-white truncate">
-                                  {player.displayName} {isSelf && '(Vous)'}
+                                  {player.displayName} {isSelf && '(Toi)'}
                                 </span>
                                 <span className="text-[10px] text-amber-400 font-mono">
                                   {player.friendCode}
@@ -4085,7 +4085,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                             <div className="shrink-0 flex items-center gap-1.5">
                               {isSelf ? (
                                 <span className="text-[10px] text-slate-500 font-bold px-2 py-1 rounded-lg bg-slate-800">
-                                  Vous
+                                  Toi
                                 </span>
                               ) : isAlreadyFriend ? (
                                 <span className="text-[10px] text-emerald-400 font-bold px-2 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-1">
@@ -4268,14 +4268,14 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   Partie en cours détectée
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-300 mt-1.5 leading-relaxed">
-                  Vous avez déjà une partie active sur la table{' '}
+                  Tu as déjà une partie active sur la table{' '}
                   <span className="font-black text-amber-400 tracking-wider">
                     #{activeGameConflict.activeRoomCode}
                   </span>
                   .
                 </p>
                 <p className="text-[11px] sm:text-xs text-slate-400 mt-1">
-                  Rejoindre ou créer une autre table sans la terminer sera comptabilisé comme un abandon de votre part.
+                  Rejoindre ou créer une autre table sans la terminer sera comptabilisé comme un abandon de ta part.
                 </p>
               </div>
 

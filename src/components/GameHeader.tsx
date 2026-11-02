@@ -519,7 +519,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                       <FolderOpen className="w-4 h-4 text-amber-400 shrink-0" />
                       <div>
                         <span className="font-semibold text-xs text-slate-100 block">Manches sauvegardées</span>
-                        <span className="text-[10px] text-slate-400">Reprendre ou organiser vos parties</span>
+                        <span className="text-[10px] text-slate-400">Reprendre ou organiser tes parties</span>
                       </div>
                     </button>
 

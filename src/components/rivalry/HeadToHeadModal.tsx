@@ -165,7 +165,7 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                           <Flame className="w-2.5 h-2.5 text-amber-400" />
                           <span>
                             {stats.currentStreak.winner === 'player'
-                              ? `Série: +${stats.currentStreak.count} Vous`
+                              ? `Série: +${stats.currentStreak.count} Toi`
                               : `Série: +${stats.currentStreak.count} ${opponent.name}`}
                           </span>
                         </div>
@@ -219,7 +219,7 @@ export const HeadToHeadModal: React.FC<HeadToHeadModalProps> = ({
                   ) : (
                     <div className="text-center py-1">
                       <span className="text-[11px] text-amber-400/90 font-semibold">
-                        Aucun duel enregistré pour le moment. Lancez le premier défi !
+                        Aucun duel enregistré pour le moment. Lance le premier défi !
                       </span>
                     </div>
                   )}

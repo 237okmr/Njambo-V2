@@ -114,7 +114,7 @@ export const InstallPwaModal: React.FC<InstallPwaModalProps> = ({
                   Chrome
                 </span>
               </div>
-              <p className="text-xs text-slate-400">Une vraie application sur votre téléphone</p>
+              <p className="text-xs text-slate-400">Une vraie application sur ton téléphone</p>
             </div>
           </div>
 
@@ -125,7 +125,7 @@ export const InstallPwaModal: React.FC<InstallPwaModalProps> = ({
               <div className="text-xs text-emerald-200">
                 <p className="font-bold text-emerald-300">Application installée avec succès !</p>
                 <p className="text-[11px] text-emerald-400/80 mt-0.5">
-                  Njambo Kora est désormais accessible directement parmi vos icônes Android.
+                  Njambo Kora est désormais accessible directement parmi tes icônes Android.
                 </p>
               </div>
             </div>
@@ -148,7 +148,7 @@ export const InstallPwaModal: React.FC<InstallPwaModalProps> = ({
                     <span>Tiroir d'apps</span>
                   </div>
                   <span className="text-[11px] text-slate-400 leading-tight">
-                    Icône dédiée avec vos autres applications
+                    Icône dédiée avec tes autres applications
                   </span>
                 </div>
               </div>
@@ -173,7 +173,7 @@ export const InstallPwaModal: React.FC<InstallPwaModalProps> = ({
                     <span>💡 Pour installer dans Chrome sur Android :</span>
                   </p>
                   <p className="text-[11px] text-slate-300 leading-relaxed mb-2.5">
-                    Ouvrez le jeu dans un onglet Chrome, puis utilisez le menu d'installation ci-dessous.
+                    Ouvre le jeu dans un onglet Chrome, puis utilise le menu d'installation ci-dessous.
                   </p>
                   <button
                     type="button"

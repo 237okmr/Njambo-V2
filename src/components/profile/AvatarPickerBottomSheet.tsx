@@ -55,7 +55,7 @@ export const AvatarPickerBottomSheet: React.FC<AvatarPickerBottomSheetProps> = (
               </div>
               <div className="min-w-0">
                 <h3 className="text-sm sm:text-base font-black text-white tracking-tight truncate">
-                  Choisir votre Avatar de Table
+                  Choisir ton avatar de table
                 </h3>
                 <p className="text-[11px] text-slate-400 truncate">
                   Visible par tous les joueurs en Solo et Multijoueur

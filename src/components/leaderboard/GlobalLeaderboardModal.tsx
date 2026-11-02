@@ -234,7 +234,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
     try {
       if (isLoggedIn && profile?.uid) {
         if (player.uid === profile.uid) {
-          setActionSuccessMessage('Vous ne pouvez pas vous ajouter vous-même !');
+          setActionSuccessMessage('Tu ne peux pas t\'ajouter toi-même !');
           setTimeout(() => setActionSuccessMessage(null), 3000);
           return;
         }
@@ -250,7 +250,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
           name: player.displayName,
           avatarSeed: player.avatarId,
         });
-        setActionSuccessMessage(`${player.displayName} a été ajouté à vos contacts !`);
+        setActionSuccessMessage(`${player.displayName} a été ajouté à tes contacts !`);
       }
     } catch (e: any) {
       setActionSuccessMessage(e?.message || 'Erreur lors de l’envoi de la demande.');
@@ -259,7 +259,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
   };
 
   const handleSharePalmares = () => {
-    const text = `🏆 Consultez le Palmarès de Njambo Kora ! Défiez les meilleurs joueurs de cartes : ${getPwaShareBase()}`;
+    const text = `🏆 Consulte le Palmarès de Njambo Kora ! Défie les meilleurs joueurs de cartes : ${getPwaShareBase()}`;
     if (navigator.share) {
       navigator.share({ title: 'Palmarès Njambo Kora', text }).catch(() => {});
     } else {
@@ -915,7 +915,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                   : 'Aucun joueur qualifié pour le moment.'}
               </p>
               <p className="text-[11px] text-slate-500">
-                Connectez-vous avec Google et jouez des parties pour figurer au Palmarès !
+                Connecte-toi avec Google et joue des parties pour figurer au Palmarès !
               </p>
             </div>
           ) : (
@@ -964,7 +964,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                         </span>
                         {player.isCurrentUser && (
                           <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-amber-500 text-slate-950">
-                            Vous
+                            Toi
                           </span>
                         )}
                         <span className="text-[10px] text-slate-500 font-mono">
@@ -1013,7 +1013,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
               </div>
               <div className="flex flex-col min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-black text-white">Votre Position au Palmarès</span>
+                  <span className="text-xs font-black text-white">Ta position au Palmarès</span>
                   <span className="text-[10px] font-mono text-amber-400">
                     (Rang #{userRank.rank}/{userRank.totalRankedPlayers})
                   </span>
@@ -1038,7 +1038,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                     </>
                   ) : (
                     <span className="text-emerald-400 font-black tracking-wide flex items-center gap-1">
-                      👑 Vous êtes au sommet du Palmarès !
+                      👑 Tu es au sommet du Palmarès !
                     </span>
                   )}
                 </div>
@@ -1069,7 +1069,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
             <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end shrink-0">
               {/* Highlight own stats */}
               <div className="px-3 py-1 bg-slate-950 rounded-lg border border-slate-800 text-center sm:text-right min-w-[80px]">
-                <div className="text-[8px] text-slate-500 uppercase font-black">Votre {activeCategory === 'CHIPS' ? 'Fortune' : activeCategory === 'WINS' ? 'Score' : activeCategory === 'KORAS' ? 'Koras' : 'Ratio'}</div>
+                <div className="text-[8px] text-slate-500 uppercase font-black">{activeCategory === 'CHIPS' ? 'Ta fortune' : activeCategory === 'WINS' ? 'Ton score' : activeCategory === 'KORAS' ? 'Tes Koras' : 'Ton ratio'}</div>
                 <div className={`text-xs font-black font-mono ${
                   activeCategory === 'CHIPS'
                     ? ((profile?.stats?.fortune || 0) > 0 ? 'text-emerald-400' : (profile?.stats?.fortune || 0) < 0 ? 'text-rose-400' : 'text-slate-400')

@@ -427,7 +427,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                           onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
                           maxLength={24}
                           className="flex-1 px-3 py-1.5 bg-slate-950 border border-amber-400 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-400/50 font-semibold"
-                          placeholder="Votre pseudo"
+                          placeholder="Ton pseudo"
                           autoFocus
                         />
                         <button
@@ -511,7 +511,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                       {activeSanction.reason}
                     </p>
                     <p className="text-[11px] text-rose-300/80">
-                      Les abandons et déconnexions en cours de partie impactent la communauté et limitent vos accès multijoueur.
+                      Les abandons et déconnexions en cours de partie impactent la communauté et limitent tes accès multijoueur.
                     </p>
                   </div>
                 </div>
@@ -557,7 +557,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                       <span className="text-xs font-bold text-amber-400/80 font-sans">jetons</span>
                     </div>
                     <p className="text-[10px] text-slate-400">
-                      Synchronisé avec vos parties et gains de pot
+                      Synchronisé avec tes parties et gains de pot
                     </p>
                   </div>
                   <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0 shadow-inner">
@@ -633,7 +633,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     <p className="text-[11px] text-slate-400 truncate">
                       {isLoggedIn
                         ? `Connecté en tant que ${safeProfile.email || safeProfile.displayName}`
-                        : 'Sauvegardez vos victoires et vos trophées dans le Cloud'}
+                        : 'Sauvegarde tes victoires et tes trophées dans le Cloud'}
                     </p>
                   </div>
                 </div>
@@ -650,10 +650,10 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   <div>
                     <h3 className="text-xs sm:text-sm font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                      Choisir votre Avatar de Table (8 disponibles)
+                      Choisir ton avatar de table (8 disponibles)
                     </h3>
                     <p className="text-[11px] text-slate-400">
-                      Touchez un avatar pour personnaliser votre présence sur le tapis.
+                      Touche un avatar pour personnaliser ta présence sur le tapis.
                     </p>
                   </div>
 
@@ -755,7 +755,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   </div>
                   <div className="flex flex-col text-left">
                     <span className="font-bold text-slate-200 group-hover:text-white">Joueurs bloqués</span>
-                    <span className="text-[10px] text-slate-400">Gérer votre liste de blocage ({blockedPlayers.length})</span>
+                    <span className="text-[10px] text-slate-400">Gérer ta liste de blocage ({blockedPlayers.length})</span>
                   </div>
                 </div>
                 <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-slate-300 transition-transform group-hover:translate-x-0.5" />
@@ -843,7 +843,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                       </div>
                       <h4 className="text-xs font-bold text-white">Sauvegarde Firestore</h4>
                       <p className="text-[11px] text-slate-400 leading-snug">
-                        Chaque victoire et trophée est gravé instantanément dans votre base Cloud sécurisée.
+                        Chaque victoire et trophée est gravé instantanément dans ta base Cloud sécurisée.
                       </p>
                     </div>
 
@@ -853,7 +853,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                       </div>
                       <h4 className="text-xs font-bold text-white">Multi-Appareils</h4>
                       <p className="text-[11px] text-slate-400 leading-snug">
-                        Jouez sur mobile, PWA ou PC : votre rang et vos avatars vous suivent partout.
+                        Joue sur mobile, PWA ou PC : ton rang et tes avatars te suivent partout.
                       </p>
                     </div>
 
@@ -863,7 +863,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                       </div>
                       <h4 className="text-xs font-bold text-white">Anti-Perte Absolu</h4>
                       <p className="text-[11px] text-slate-400 leading-snug">
-                        Même en vidant votre cache ou en changeant de téléphone, votre historique reste intact.
+                        Même en vidant ton cache ou en changeant de téléphone, ton historique reste intact.
                       </p>
                     </div>
                   </div>
@@ -873,7 +873,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     <div className="text-center sm:text-left space-y-0.5">
                       <p className="text-xs font-bold text-white">Gestion de la session</p>
                       <p className="text-[11px] text-slate-400">
-                        Vous pouvez synchroniser manuellement ou vous déconnecter pour repasser en mode invité.
+                        Tu peux synchroniser manuellement ou te déconnecter pour repasser en mode invité.
                       </p>
                     </div>
 
@@ -917,10 +917,10 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     {/* Headline */}
                     <div className="space-y-2 max-w-lg mx-auto">
                       <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                        Protégez votre Palmarès avec Google
+                        Protège ton Palmarès avec Google
                       </h2>
                       <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                        Vous jouez actuellement en <strong className="text-amber-300">Mode Invité</strong>. Associez votre compte Google en un clic pour ne jamais perdre vos victoires, vos Koras et votre titre honorifique.
+                        Tu joues actuellement en <strong className="text-amber-300">Mode Invité</strong>. Associe ton compte Google en un clic pour ne jamais perdre tes victoires, tes Koras et ton titre honorifique.
                       </p>
                     </div>
 
@@ -963,7 +963,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                         Fusion automatique et sans perte
                       </h4>
                       <p className="text-xs text-slate-400 leading-relaxed">
-                        Toutes vos parties jouées aujourd’hui ({safeStats.gamesPlayed || 0} partie(s), {safeStats.gamesWon || 0} victoire(s)) seront instantanément rattachées à votre compte Google lors de votre première connexion.
+                        Toutes tes parties jouées aujourd’hui ({safeStats.gamesPlayed || 0} partie(s), {safeStats.gamesWon || 0} victoire(s)) seront instantanément rattachées à ton compte Google lors de ta première connexion.
                       </p>
                     </div>
                   </div>
@@ -976,7 +976,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                       </div>
                       <h4 className="text-xs font-bold text-white">Sécurité Cloud</h4>
                       <p className="text-[11px] text-slate-400 leading-snug">
-                        Vos trophées restent enregistrés pour toujours, même après réinitialisation de votre navigateur.
+                        Tes trophées restent enregistrés pour toujours, même après réinitialisation de ton navigateur.
                       </p>
                     </div>
 
@@ -986,7 +986,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                       </div>
                       <h4 className="text-xs font-bold text-white">Multi-Appareils</h4>
                       <p className="text-[11px] text-slate-400 leading-snug">
-                        Retrouvez votre progression sur votre mobile, votre tablette ou votre ordinateur de bureau.
+                        Retrouve ta progression sur ton mobile, ta tablette ou ton ordinateur de bureau.
                       </p>
                     </div>
 
@@ -996,7 +996,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                       </div>
                       <h4 className="text-xs font-bold text-white">Statut Multijoueur</h4>
                       <p className="text-[11px] text-slate-400 leading-snug">
-                        Arborez votre avatar personnalisé et votre rang honorifique dans toutes les salles multijoueurs.
+                        Arbore ton avatar personnalisé et ton rang honorifique dans toutes les salles multijoueurs.
                       </p>
                     </div>
                   </div>
@@ -1018,7 +1018,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                       Joueurs Bloqués ({blockedPlayers.length})
                     </h3>
                     <p className="text-xs text-slate-400 mt-0.5">
-                      Les joueurs bloqués ne peuvent ni vous envoyer d'invitations ni vous trouver lors des recherches.
+                      Les joueurs bloqués ne peuvent ni t'envoyer d'invitations ni te trouver lors des recherches.
                     </p>
                   </div>
                   <button
@@ -1082,7 +1082,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     <h4 className="text-xs font-bold text-white">Statistiques Consolidées</h4>
                     <p className="text-[10px] text-slate-400">
                       {isLoggedIn
-                        ? 'Données synchronisées avec votre profil Firestore Cloud'
+                        ? 'Données synchronisées avec ton profil Firestore Cloud'
                         : 'Mode Invité : Données conservées localement avec fusion Cloud à la connexion'}
                     </p>
                   </div>
@@ -1127,7 +1127,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                         Palmarès & Classement
                       </span>
                       <span className="text-[11px] text-slate-400 truncate">
-                        Découvrez votre rang face aux autres joueurs de la communauté
+                        Découvre ton rang face aux autres joueurs de la communauté
                       </span>
                     </div>
                   </div>
@@ -1489,7 +1489,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     <span className="text-3xl sm:text-4xl">{safeTitle.badge}</span>
                     <div>
                       <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                        Votre Grade Actuel
+                        Ton grade actuel
                       </span>
                       <h2 className={`text-lg sm:text-xl font-black ${safeTitle.colorClass}`}>
                         {safeTitle.title} ({safeTitle.subtitle})
@@ -1527,7 +1527,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                 ) : (
                   <div className="text-xs text-amber-300 font-semibold flex items-center gap-1.5 pt-1">
                     <Crown className="w-4 h-4 text-yellow-400" />
-                    Vous avez atteint le rang suprême de Légende Kora !
+                    Tu as atteint le rang suprême de Légende Kora !
                   </div>
                 )}
               </div>
@@ -1644,7 +1644,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     Aucune partie trouvée pour ce filtre
                   </p>
                   <p className="text-xs text-slate-500">
-                    Disputez une manche pour enregistrer vos statistiques et vos trophées !
+                    Dispute une manche pour enregistrer tes statistiques et tes trophées !
                   </p>
                 </div>
               ) : (
@@ -1736,7 +1736,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
 
                             <p className="text-[11px] text-slate-400">
                               {isWin
-                                ? `Vainqueur : Vous`
+                                ? `Vainqueur : Toi`
                                 : `Vainqueur : ${item.winnerName || 'Adversaire'}`}{' '}
                               • {dateStr}
                             </p>

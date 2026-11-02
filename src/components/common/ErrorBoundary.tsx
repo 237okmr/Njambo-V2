@@ -49,7 +49,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             </h3>
             <p className="text-xs text-slate-400 leading-relaxed">
               {this.props.fallbackMessage ||
-                'Impossible de charger ce composant. Vos données locales sont sécurisées.'}
+                'Impossible de charger ce composant. Tes données locales sont sécurisées.'}
             </p>
             {this.state.error && (
               <div className="mt-2 p-2 bg-slate-950/80 rounded-lg border border-red-900/50 text-left overflow-x-auto max-h-32 text-[10px] font-mono text-red-300">

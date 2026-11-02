@@ -44,7 +44,7 @@ export const KoraHunterAlertBanner: React.FC<KoraHunterAlertBannerProps> = ({
                   🔥 Chasseur de Kora !
                 </span>
                 <span className="text-[11px] text-amber-200/90 font-medium inline">
-                  Un joueur prépare un Kora (victoire au 3). Protégez vos cartes !
+                  Un joueur prépare un Kora (victoire au 3). Protège tes cartes !
                 </span>
               </div>
             </div>

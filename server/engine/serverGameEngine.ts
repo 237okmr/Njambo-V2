@@ -2008,7 +2008,7 @@ export class ServerGameEngine {
 
     if (hadAiRelayStarted) {
       const relayInfoText = relayCount > 0
-        ? ` (L'IA a joué ${relayCount} tour${relayCount > 1 ? 's' : ''} en votre absence)`
+        ? ` (L'IA a joué ${relayCount} tour${relayCount > 1 ? 's' : ''} en ton absence)`
         : '';
 
       const emote: EmoteMessage = {
