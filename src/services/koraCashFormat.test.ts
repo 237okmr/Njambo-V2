@@ -15,7 +15,8 @@ import {
   formatPhone,
   quoteWithdrawal,
   withdrawalStatusLabel,
-  cashEnvironmentLabel,
+  CASH_BALANCE_LABEL,
+  depositButtonLabel,
   cashMovementLabel,
   defaultKoraCashTab,
   formatSignedFcfa,
@@ -39,9 +40,8 @@ describe('Kora Cash joueur — page', () => {
     assert.equal(defaultKoraCashTab(null, 1000), 'wallet');
   });
 
-  it('distingue toujours la démo de l’argent réel', () => {
-    assert.match(cashEnvironmentLabel('DEMO'), /Démo/);
-    assert.equal(cashEnvironmentLabel('LIVE'), 'Argent réel');
+  it('le bandeau reste le même avant et après le lancement', () => {
+    assert.equal(CASH_BALANCE_LABEL, 'Mon solde');
   });
 
   it('nomme chaque mouvement et signe les montants', () => {
@@ -104,20 +104,25 @@ describe('Kora Cash joueur — format et saisie', () => {
   it('en démo sans paiement Campay actif aucun dépôt n\'est proposé, et en LIVE non plus', () => {
     const demo = getDepositUi('DEMO');
     assert.equal(demo.canDeposit, false);
-    assert.match(demo.banner, /aucun moyen de paiement de test/);
+    assert.match(demo.banner, /indisponible pour l’instant/);
+    assert.equal(demo.closedTitle, 'Dépôt indisponible');
     const live = getDepositUi('LIVE');
     assert.equal(live.canDeposit, false);
-    assert.doesNotMatch(live.banner, /fictif/);
+    assert.match(live.banner, /ouvre bientôt/);
+    assert.equal(live.closedTitle, 'Dépôt bientôt ouvert');
   });
 
-  it('en démo avec Campay : paiement de test, numéro demandé, débit réel annoncé', () => {
+  it('en démo avec Campay : numéro demandé, débit annoncé, aucun mot banni de la charte', () => {
     const ui = getDepositUi('DEMO', 'CAMPAY');
     assert.equal(ui.canDeposit, true);
     assert.equal(ui.needsPhone, true);
-    assert.match(ui.banner, /test/);
-    assert.match(ui.banner, /réellement débité/);
-    assert.doesNotMatch(ui.banner, /Aucun argent réel/);
+    assert.match(ui.banner, /débité de ton compte Mobile Money/);
+    for (const text of [ui.banner, ui.buttonLabel, getDepositUi('DEMO', 'CAMPAY', true).banner, getDepositUi('DEMO').banner, getDepositUi('LIVE').banner]) {
+      assert.doesNotMatch(text, /d[ée]mo|\btest\b|fictif|b[êe]ta|campay/i);
+    }
     assert.match(ui.buttonLabel, /Mobile Money/);
+    assert.equal(depositButtonLabel(ui, undefined), 'Payer par Mobile Money');
+    assert.equal(depositButtonLabel(ui, 25), 'Payer 25 FCFA par Mobile Money');
     assert.equal(getDepositUi('DEMO').needsPhone, false);
     assert.equal(getDepositUi('LIVE', 'CAMPAY').canDeposit, false);
   });
@@ -132,7 +137,7 @@ describe('Kora Cash joueur — format et saisie', () => {
     assert.equal(parseTypedAmount('10', limits).ok, true);
     assert.equal(parseTypedAmount('25', limits).ok, true);
     assert.equal(parseTypedAmount('9', limits).ok, false);
-    assert.equal(parseTypedAmount('26', limits).ok, false);
+    assert.equal(parseTypedAmount('26', limits).error, 'Le dépôt maximum est de 25 FCFA pour le moment.');
     const simulated = getDepositUi('DEMO');
     assert.equal(simulated.minAmount, MIN_DEPOSIT_FCFA_CLIENT);
     assert.equal(simulated.maxAmount, null);
@@ -160,7 +165,7 @@ describe('Kora Cash — retrait : affichage', () => {
   });
 
   it('ne promet le retrait dans le bandeau que si le retrait est ouvert', () => {
-    assert.match(getDepositUi('DEMO', 'CAMPAY').banner, /ne peut pas être retiré/);
+    assert.match(getDepositUi('DEMO', 'CAMPAY').banner, /ne peut pas encore être retiré/);
     assert.match(getDepositUi('DEMO', 'CAMPAY', true).banner, /Tu peux retirer/);
   });
 });

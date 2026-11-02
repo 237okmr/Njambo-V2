@@ -97,7 +97,7 @@ export interface WithdrawalResult {
 }
 
 const MSG_NOT_FOUND = 'Demande de retrait introuvable.';
-const MSG_REVIEW = 'Nous vérifions cet envoi avec Campay. Ton argent reste de côté en attendant.';
+const MSG_REVIEW = 'Nous vérifions cet envoi avec ton opérateur. Ton argent reste de côté en attendant.';
 
 function ok(withdrawal: WithdrawalDoc, message?: string): WithdrawalResult {
   return { httpStatus: 200, success: true, withdrawal: toPublicWithdrawal(withdrawal), ...(message ? { message } : {}) };

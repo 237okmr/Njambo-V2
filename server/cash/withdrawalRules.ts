@@ -200,7 +200,7 @@ export function parseWithdrawalAmount(raw: unknown): { ok: boolean; amount?: num
     return { ok: false, error: `Le retrait minimum est de ${WITHDRAWAL_DEMO_MIN_FCFA} FCFA.` };
   }
   if (raw > WITHDRAWAL_DEMO_MAX_FCFA) {
-    return { ok: false, error: `Le retrait est limité à ${WITHDRAWAL_DEMO_MAX_FCFA} FCFA en démo.` };
+    return { ok: false, error: `Le retrait maximum est de ${WITHDRAWAL_DEMO_MAX_FCFA} FCFA pour le moment.` };
   }
   return { ok: true, amount: raw };
 }

@@ -2,11 +2,10 @@ import React from 'react';
 import { Play, Globe, BookOpen, FolderOpen, Zap, Sparkles, Volume2, VolumeX, Smartphone, HelpCircle, ChevronRight, Trophy, Wallet, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { SavedManche } from '../types';
-import { APP_VERSION } from '../version';
 import { usePlayerProfile } from '../context/PlayerProfileContext';
 import { NativeScreenHeader } from './common/NativeScreenHeader';
 import { fetchKoraCashStatus } from '../services/koraCashClient';
-import { KoraCashPublicStatus, resolveEntryState, formatFcfa, cashEnvironmentBadge } from '../services/koraCashFormat';
+import { KoraCashPublicStatus, resolveEntryState, formatFcfa } from '../services/koraCashFormat';
 import { useKoraCashWallet } from '../services/koraCashWalletStore';
 
 interface HomeScreenProps {
@@ -507,12 +506,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-400 shrink-0 shadow-[0_0_12px_rgba(245,158,11,0.35)] group-hover:scale-105 transition">
                 <AnimatedBanknotesIcon />
               </div>
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="leading-tight text-xs sm:text-sm font-extrabold text-white truncate group-hover:text-amber-200 transition">Kora Cash</span>
-                <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase tracking-wider shrink-0">
-                  {koraCashEntry === 'COMING_SOON' ? 'Bientôt' : cashEnvironmentBadge(koraCashStatus?.environment)}
-                </span>
-              </div>
+              <span className="leading-tight text-xs sm:text-sm font-extrabold text-white truncate group-hover:text-amber-200 transition">Kora Cash</span>
             </div>
 
             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 group-hover:text-amber-400 transition shrink-0 relative z-10">
@@ -630,12 +624,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                       <AnimatedBanknotesIcon />
                     </span>
                     <span className="flex flex-col min-w-0">
-                      <span className="flex items-center gap-1.5">
-                        <span className="text-sm font-black text-white group-hover:text-amber-200 transition">Kora Cash</span>
-                        <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase tracking-wider shrink-0">
-                          {cashEnvironmentBadge(koraCashStatus?.environment)}
-                        </span>
-                      </span>
+                      <span className="text-sm font-black text-white group-hover:text-amber-200 transition">Kora Cash</span>
                       <span className="text-xs text-slate-400">{koraCashEntry === 'LOGIN_REQUIRED' ? 'Avec un compte Google' : 'Joue ton solde en FCFA'}</span>
                     </span>
                   </span>
@@ -663,13 +652,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </button>
           </div>
         )}
-
-        <p className="text-xs text-slate-500 text-center mt-0.5 font-medium flex items-center justify-center gap-2">
-          <span>Mises, Kora & Double Kora</span>
-          <span className="text-xs px-1.5 py-0.2 rounded bg-slate-900 border border-slate-800 text-slate-400 font-mono">
-            v{APP_VERSION}
-          </span>
-        </p>
       </footer>
     </div>
   );

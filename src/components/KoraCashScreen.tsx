@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { CheckCircle2, Hourglass, History, Loader2, Lock, ShieldAlert, Spade, UserCog, Wallet } from 'lucide-react';
+import { CheckCircle2, Hourglass, History, Loader2, Lock, Spade, UserCog, Wallet } from 'lucide-react';
 import { usePlayerProfile } from '../context/PlayerProfileContext';
 import { GoogleIcon } from './common/GoogleIcon';
 import { NativeScreenHeader } from './common/NativeScreenHeader';
@@ -27,7 +27,7 @@ import { refreshKoraCashWallet, useKoraCashWallet } from '../services/koraCashWa
 import {
   KoraCashPublicStatus,
   KoraCashTab,
-  cashEnvironmentLabel,
+  CASH_BALANCE_LABEL,
   defaultKoraCashTab,
   formatFcfa,
   getDepositUi,
@@ -146,8 +146,6 @@ export const KoraCashScreen: React.FC<KoraCashScreenProps> = ({ onClose, onOpenC
     setChosenTab('wallet');
   };
 
-  const isLive = environment === 'LIVE';
-
   return (
     <motion.div
       initial={{ x: '100%' }}
@@ -165,25 +163,20 @@ export const KoraCashScreen: React.FC<KoraCashScreenProps> = ({ onClose, onOpenC
         title="Kora Cash"
       />
 
-      {statusLoaded && entry !== 'COMING_SOON' && (
-        <div
-          id="kora-cash-banner"
-          className={`shrink-0 px-3 sm:px-6 py-2 border-b ${isLive ? 'bg-rose-500/15 border-rose-500/40' : 'bg-amber-500/15 border-amber-500/40'}`}
-        >
+      {isOpen && (
+        <div id="kora-cash-banner" className="shrink-0 px-3 sm:px-6 py-2 border-b bg-amber-500/10 border-amber-500/30">
           <div className="max-w-2xl mx-auto flex flex-col gap-1">
-            <span className={`flex items-center gap-1.5 text-xs font-black uppercase tracking-wider ${isLive ? 'text-rose-200' : 'text-amber-200'}`}>
-              <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
-              {cashEnvironmentLabel(environment)}
+            <span className="flex items-center gap-1.5 text-xs font-black text-amber-200">
+              <Wallet className="w-3.5 h-3.5 shrink-0" />
+              {CASH_BALANCE_LABEL}
             </span>
-            {isOpen && (
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="text-lg font-black text-white">{loadingWallet && !wallet ? '…' : formatFcfa(available)}</span>
-                <span className="flex items-center gap-1 text-xs font-bold text-slate-300">
-                  <Lock className="w-3 h-3 text-slate-400" />
-                  En table : {loadingWallet && !wallet ? '…' : formatFcfa(wallet?.locked ?? 0)}
-                </span>
-              </div>
-            )}
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="text-lg font-black text-white">{loadingWallet && !wallet ? '…' : formatFcfa(available)}</span>
+              <span className="flex items-center gap-1 text-xs font-bold text-slate-300">
+                <Lock className="w-3 h-3 text-slate-400" />
+                En table : {loadingWallet && !wallet ? '…' : formatFcfa(wallet?.locked ?? 0)}
+              </span>
+            </div>
           </div>
         </div>
       )}
@@ -280,10 +273,7 @@ export const KoraCashScreen: React.FC<KoraCashScreenProps> = ({ onClose, onOpenC
               </div>
 
               {walletView === 'deposit' && (
-                <>
-                  <p className={`px-3 py-2 rounded-xl text-xs font-bold border ${isLive ? 'bg-rose-500/10 text-rose-200 border-rose-500/30' : 'bg-amber-500/10 text-amber-200 border-amber-500/30'}`}>{ui.banner}</p>
-                  {ui.canDeposit ? <KoraCashDepositPanel ui={ui} phones={phones} deposits={deposits} feePercent={status?.depositFeePercent ?? 0} /> : <SoonCard title="Dépôt bientôt ouvert" text="Le dépôt par Mobile Money n’est pas encore disponible." />}
-                </>
+                <>{ui.canDeposit ? <KoraCashDepositPanel ui={ui} phones={phones} deposits={deposits} feePercent={status?.depositFeePercent ?? 0} /> : <SoonCard title={ui.closedTitle} text={ui.banner} />}</>
               )}
 
               {walletView === 'withdraw' &&

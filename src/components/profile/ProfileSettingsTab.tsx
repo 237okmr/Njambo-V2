@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Bell, Check, LifeBuoy, Lock, LogOut, RefreshCw, ShieldCheck, UserX, Volume2, VolumeX } from 'lucide-react';
 import { FriendService, BlockedPlayerRecord } from '../../services/friendService';
 import { triggerHaptic } from '../../utils/sound';
+import { APP_VERSION } from '../../version';
 import { GoogleIcon } from '../common/GoogleIcon';
 import { ReportProblemCard } from '../common/ReportProblemCard';
 import { MobileMoneySection } from './MobileMoneySection';
@@ -214,6 +215,7 @@ export const ProfileSettingsTab: React.FC<ProfileSettingsTabProps> = ({
       <section id="settings-help" className="flex flex-col gap-2">
         <SectionTitle icon={LifeBuoy}>Aide</SectionTitle>
         <ReportProblemCard onOpenDiagnostic={onOpenDiagnostic} />
+        <p id="settings-version" className="px-1 text-xs text-slate-500 text-center">Version {APP_VERSION}</p>
       </section>
     </div>
   );

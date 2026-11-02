@@ -135,7 +135,7 @@ export async function initiateCampayDeposit(params: {
       amount: String(params.amount),
       currency: 'XAF',
       from: params.phoneNumber,
-      description: `Recharge Kora Cash démo #${params.externalReference}`,
+      description: `Recharge Kora Cash #${params.externalReference}`,
       external_reference: params.externalReference,
     }),
   });
@@ -191,13 +191,13 @@ export async function startCampayCollect(params: { amount: number; phone: string
   let token: string | null = null;
   try {
     const creds = await getProviderCredentials('campay', 'demo');
-    if (!creds) return { kind: 'REJECTED', message: 'Le paiement par Mobile Money n\'est pas disponible pour le moment.' };
+    if (!creds) return { kind: 'REJECTED', message: 'Le paiement par Mobile Money est indisponible pour l\'instant.' };
     token = await resolveDemoToken(creds);
   } catch {
     // Rien n'a encore été demandé à Campay : l'échec est sans risque.
-    return { kind: 'REJECTED', message: 'Campay est injoignable pour le moment. Réessaie dans un instant.' };
+    return { kind: 'REJECTED', message: 'Mobile Money ne répond pas. Réessaie dans un instant.' };
   }
-  if (!token) return { kind: 'REJECTED', message: 'Le paiement par Mobile Money n\'est pas disponible pour le moment.' };
+  if (!token) return { kind: 'REJECTED', message: 'Le paiement par Mobile Money est indisponible pour l\'instant.' };
 
   try {
     const res = await fetch(`${CAMPAY_DEMO_BASE_URL}/api/collect/`, {
@@ -207,7 +207,7 @@ export async function startCampayCollect(params: { amount: number; phone: string
         amount: String(params.amount),
         currency: 'XAF',
         from: params.phone,
-        description: `Recharge Kora Cash demo ${params.depositId}`,
+        description: `Recharge Kora Cash ${params.depositId}`,
         external_reference: params.depositId,
       }),
       signal: AbortSignal.timeout(providerTimeoutMs()),
@@ -219,7 +219,7 @@ export async function startCampayCollect(params: { amount: number; phone: string
     }
     if (res.status >= 400 && res.status < 500) {
       const detail = typeof data?.message === 'string' && data.message ? data.message : `Erreur ${res.status}`;
-      return { kind: 'REJECTED', message: `Campay a refusé la demande : ${detail}` };
+      return { kind: 'REJECTED', message: `Le paiement a été refusé : ${detail}` };
     }
     return { kind: 'UNKNOWN', message: `Réponse inattendue de Campay (statut ${res.status}).` };
   } catch {
@@ -235,13 +235,13 @@ export async function startCampayWithdraw(params: { amount: number; phone: strin
   let token: string | null = null;
   try {
     const creds = await getProviderCredentials('campay', 'demo');
-    if (!creds) return { kind: 'REJECTED', message: 'Le retrait par Mobile Money n\'est pas disponible pour le moment.' };
+    if (!creds) return { kind: 'REJECTED', message: 'Le retrait par Mobile Money est indisponible pour l\'instant.' };
     token = await resolveDemoToken(creds);
   } catch {
     // Rien n'a encore été demandé à Campay : l'échec est sans risque.
-    return { kind: 'REJECTED', message: 'Campay est injoignable pour le moment. Réessaie dans un instant.' };
+    return { kind: 'REJECTED', message: 'Mobile Money ne répond pas. Réessaie dans un instant.' };
   }
-  if (!token) return { kind: 'REJECTED', message: 'Le retrait par Mobile Money n\'est pas disponible pour le moment.' };
+  if (!token) return { kind: 'REJECTED', message: 'Le retrait par Mobile Money est indisponible pour l\'instant.' };
 
   try {
     const res = await fetch(`${CAMPAY_DEMO_BASE_URL}/api/withdraw/`, {
@@ -250,7 +250,7 @@ export async function startCampayWithdraw(params: { amount: number; phone: strin
       body: JSON.stringify({
         amount: String(params.amount),
         to: params.phone,
-        description: `Retrait Kora Cash demo ${params.withdrawalId}`,
+        description: `Retrait Kora Cash ${params.withdrawalId}`,
         external_reference: params.withdrawalId,
       }),
       signal: AbortSignal.timeout(providerTimeoutMs()),
@@ -262,7 +262,7 @@ export async function startCampayWithdraw(params: { amount: number; phone: strin
     }
     if (res.status >= 400 && res.status < 500) {
       const detail = typeof data?.message === 'string' && data.message ? data.message : `Erreur ${res.status}`;
-      return { kind: 'REJECTED', message: `Campay a refusé le retrait : ${detail}` };
+      return { kind: 'REJECTED', message: `Le retrait a été refusé : ${detail}` };
     }
     return { kind: 'UNKNOWN', message: `Réponse inattendue de Campay (statut ${res.status}).` };
   } catch {

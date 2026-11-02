@@ -229,7 +229,7 @@ export const KoraCashWithdrawPanel: React.FC<WithdrawPanelProps> = ({ settings, 
                   </button>
                 )}
               </div>
-              {w.status === 'REVIEW' && <p className="text-amber-200">Nous vérifions cet envoi avec Campay. Ton argent reste de côté en attendant.</p>}
+              {w.status === 'REVIEW' && <p className="text-amber-200">Nous vérifions cet envoi avec ton opérateur. Ton argent reste de côté en attendant.</p>}
             </div>
           ))}
         </div>

@@ -62,7 +62,7 @@ export function parseTypedAmount(raw: string, limits?: { min: number; max?: numb
     return { ok: false, error: `Le dépôt minimum est de ${formatFcfa(min)}.` };
   }
   if (limits?.max !== undefined && amount > limits.max) {
-    return { ok: false, error: `Le dépôt maximum est de ${formatFcfa(limits.max)}.` };
+    return { ok: false, error: `Le dépôt maximum est de ${formatFcfa(limits.max)} pour le moment.` };
   }
   return { ok: true, amount };
 }
@@ -80,6 +80,8 @@ export interface DepositUi {
   buttonLabel: string;
   /** false : aucun bouton de dépôt n'est proposé (le dépôt réel n'est pas encore ouvert). */
   canDeposit: boolean;
+  /** Titre de la carte affichée quand le dépôt est fermé. */
+  closedTitle: string;
   /** true : le joueur saisit son numéro Mobile Money avant de payer. */
   needsPhone: boolean;
   /** Boutons de montant rapide proposés. */
@@ -161,19 +163,12 @@ export function defaultKoraCashTab(
   return available >= Math.min(...tables.betLevels) * tables.minBuyInMultiple ? 'tables' : 'wallet';
 }
 
-/** Bandeau toujours visible sur la page : on sait d'un coup d'œil si l'argent est réel. */
-export function cashEnvironmentLabel(environment: KoraCashEnvironment): string {
-  return environment === 'LIVE' ? 'Argent réel' : 'Démo : solde de test';
-}
-
-/** Badge court de Kora Cash sur l'accueil. */
-export function cashEnvironmentBadge(environment: KoraCashEnvironment | undefined): string {
-  return environment === 'LIVE' ? 'Argent réel' : 'Démo';
-}
+/** Titre du bandeau fixe de la page, le même quel que soit l'environnement. */
+export const CASH_BALANCE_LABEL = 'Mon solde';
 
 /** Messages du suivi d'un dépôt. */
-export const DEPOSIT_CONFIRMED_TEXT = 'Paiement confirmé : ton solde de test est crédité.';
-export const NO_PAYMENT_METHOD_TEXT = 'Aucun moyen de paiement de test n’est actif pour le moment.';
+export const DEPOSIT_CONFIRMED_TEXT = 'Paiement confirmé : ton solde est crédité.';
+export const NO_PAYMENT_METHOD_TEXT = 'Le dépôt par Mobile Money est indisponible pour l’instant.';
 
 /** Numéro enregistré (237677123412) affiché lisiblement : 6 77 12 34 12. */
 export function formatPhone(phone: string): string {
@@ -182,16 +177,22 @@ export function formatPhone(phone: string): string {
   return `${local[0]} ${local.slice(1, 3)} ${local.slice(3, 5)} ${local.slice(5, 7)} ${local.slice(7)}`;
 }
 
+/** Texte du bouton de dépôt : le montant choisi y figure dès qu'il est connu. */
+export function depositButtonLabel(ui: DepositUi, amount: number | undefined): string {
+  return ui.needsPhone && amount !== undefined ? `Payer ${formatFcfa(amount)} par Mobile Money` : ui.buttonLabel;
+}
+
 /** Libellés selon l'environnement et la méthode : en démo, seul le paiement Campay de test est proposé. */
 export function getDepositUi(environment: KoraCashEnvironment, depositMode: KoraCashDepositMode = 'SIMULATED', canWithdraw: boolean = false): DepositUi {
   if (environment === 'DEMO') {
     if (depositMode === 'CAMPAY') {
       return {
         banner: canWithdraw
-          ? 'Mode démo : paiement de test avec Campay. Attention : ton compte Mobile Money est réellement débité du montant choisi. Tu peux retirer ce solde vers un numéro vérifié.'
-          : 'Mode démo : paiement de test avec Campay. Attention : ton compte Mobile Money est réellement débité du montant choisi, mais ce solde de test ne peut pas être retiré.',
-        buttonLabel: 'Payer par Mobile Money (test)',
+          ? 'Le montant choisi est débité de ton compte Mobile Money. Tu peux retirer ce solde vers un numéro vérifié.'
+          : 'Le montant choisi est débité de ton compte Mobile Money. Ce solde ne peut pas encore être retiré.',
+        buttonLabel: 'Payer par Mobile Money',
         canDeposit: true,
+        closedTitle: 'Dépôt indisponible',
         needsPhone: true,
         quickAmounts: CAMPAY_DEMO_QUICK_AMOUNTS,
         minAmount: CAMPAY_DEMO_MIN_FCFA_CLIENT,
@@ -200,9 +201,10 @@ export function getDepositUi(environment: KoraCashEnvironment, depositMode: Kora
     }
     // Le dépôt fictif n'existe plus : sans paiement Campay de test actif, aucun dépôt n'est proposé en démo.
     return {
-      banner: 'Mode démo : aucun moyen de paiement de test n’est actif pour le moment.',
+      banner: NO_PAYMENT_METHOD_TEXT,
       buttonLabel: 'Déposer',
       canDeposit: false,
+      closedTitle: 'Dépôt indisponible',
       needsPhone: false,
       quickAmounts: QUICK_DEPOSIT_AMOUNTS,
       minAmount: MIN_DEPOSIT_FCFA_CLIENT,
@@ -210,9 +212,10 @@ export function getDepositUi(environment: KoraCashEnvironment, depositMode: Kora
     };
   }
   return {
-    banner: 'Argent réel : le dépôt par Mobile Money ouvre bientôt.',
+    banner: 'Le dépôt par Mobile Money ouvre bientôt.',
     buttonLabel: 'Déposer',
     canDeposit: false,
+    closedTitle: 'Dépôt bientôt ouvert',
     needsPhone: false,
     quickAmounts: QUICK_DEPOSIT_AMOUNTS,
     minAmount: MIN_DEPOSIT_FCFA_CLIENT,

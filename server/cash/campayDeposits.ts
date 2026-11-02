@@ -58,8 +58,8 @@ export interface PublicDepositResult {
   wallet?: { available: number; locked: number };
 }
 
-const MSG_PENDING = 'Campay attend encore la réponse de ton opérateur. Si tu as validé la demande, la confirmation arrive toute seule.';
-const MSG_UNREACHABLE = 'Campay ne répond pas pour le moment. Réessaie dans un instant.';
+const MSG_PENDING = 'Ton opérateur n\'a pas encore répondu. Si tu as validé la demande, la confirmation arrive toute seule.';
+const MSG_UNREACHABLE = 'Mobile Money ne répond pas. Réessaie dans un instant.';
 const MSG_REVIEW = 'Ce paiement demande une vérification. Ton solde sera crédité dès qu\'elle est faite.';
 const MSG_FAILED = 'Le paiement a échoué ou a été annulé. Aucun montant n\'a été crédité.';
 const MSG_SUCCESS = 'Paiement confirmé. Ton solde est crédité.';
@@ -166,7 +166,7 @@ export async function startCampayDeposit(
     console.warn('[KoraCash][Campay] Issue incertaine à la création de la collecte : dépôt laissé en attente.', { depositId: deposit.id });
     return pending(
       deposit.id,
-      'Nous n\'avons pas pu confirmer la demande auprès de Campay. Si une demande de validation arrive sur ton téléphone, valide-la : ton solde sera crédité.',
+      'Nous n\'avons pas pu confirmer la demande auprès de ton opérateur. Si une demande de validation arrive sur ton téléphone, valide-la : ton solde sera crédité.',
     );
   }
 

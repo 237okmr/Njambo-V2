@@ -57,10 +57,10 @@ export function parseCampayDemoAmount(raw: unknown): CampayDemoAmountResult {
     return { ok: false, error: 'Le montant doit être un nombre entier de FCFA.' };
   }
   if (raw < CAMPAY_DEMO_MIN_FCFA) {
-    return { ok: false, error: `Le paiement de test minimum est de ${CAMPAY_DEMO_MIN_FCFA} FCFA.` };
+    return { ok: false, error: `Le dépôt minimum est de ${CAMPAY_DEMO_MIN_FCFA} FCFA.` };
   }
   if (raw > CAMPAY_DEMO_MAX_FCFA) {
-    return { ok: false, error: `Le paiement de test est limité à ${CAMPAY_DEMO_MAX_FCFA} FCFA par la démo Campay.` };
+    return { ok: false, error: `Le dépôt maximum est de ${CAMPAY_DEMO_MAX_FCFA} FCFA pour le moment.` };
   }
   return { ok: true, amount: raw };
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { CheckCircle2, Clock, Loader2, ShieldAlert } from 'lucide-react';
 import { CashPhone } from '../services/koraCashClient';
-import { DepositUi, formatFcfa, formatPhone, parseTypedAmount, quoteWithdrawal } from '../services/koraCashFormat';
+import { DepositUi, depositButtonLabel, formatFcfa, formatPhone, parseTypedAmount, quoteWithdrawal } from '../services/koraCashFormat';
 import { KoraCashDepositsState } from '../hooks/useKoraCashDeposits';
 
 interface KoraCashDepositPanelProps {
@@ -116,6 +116,7 @@ export const KoraCashDepositPanel: React.FC<KoraCashDepositPanelProps> = ({ ui, 
           className="w-full h-10 px-3 rounded-xl bg-slate-900 border border-slate-700 focus:border-amber-400 outline-none text-xs text-white placeholder:text-slate-500"
         />
       )}
+      <p id="kora-cash-deposit-notice" className="px-3 py-2 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-200 border border-amber-500/30">{ui.banner}</p>
       {quote && quote.fee > 0 && (
         <p id="kora-cash-deposit-quote" className="text-xs font-bold text-slate-200">
           Tu paies {formatFcfa(chosenAmount)}, frais {formatFcfa(quote.fee)} : {formatFcfa(quote.net)} crédités sur ton solde.
@@ -128,18 +129,18 @@ export const KoraCashDepositPanel: React.FC<KoraCashDepositPanelProps> = ({ ui, 
         className="w-full h-10 rounded-xl bg-gradient-to-r from-amber-400 to-amber-600 text-slate-950 font-black text-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
       >
         {depositing ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-        <span>{ui.buttonLabel}</span>
+        <span>{depositButtonLabel(ui, chosenAmount)}</span>
       </button>
       {pendingDeposit && (
         <div className="flex flex-col gap-1.5 px-3 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-100">
           <span className="font-bold flex items-center gap-2">
             {autoStopped ? <Clock className="w-3.5 h-3.5 shrink-0" /> : <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />}
-            <span>{autoStopped ? 'Toujours en attente chez Campay' : 'Confirmation en cours…'}</span>
+            <span>{autoStopped ? 'Toujours en attente de ton opérateur' : 'Valide la demande sur ton téléphone'}</span>
           </span>
           <span className="text-amber-100/80">
             {autoStopped
-              ? 'Campay n’a toujours pas reçu de réponse de ton opérateur. Si tu as refusé ou ignoré la demande, rien ne sera crédité. Si tu l’as validée, ton solde se mettra à jour dès que Campay confirme.'
-              : 'Campay attend la réponse de ton opérateur. Si tu as validé la demande sur ton téléphone, ton solde se mettra à jour tout seul.'}
+              ? 'Si tu as refusé ou ignoré la demande, rien ne sera crédité. Si tu l’as validée, ton solde se mettra à jour tout seul.'
+              : 'Ton solde se mettra à jour tout seul.'}
           </span>
           {(showManualVerify || autoStopped) && (
             <button
