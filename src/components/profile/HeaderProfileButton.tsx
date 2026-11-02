@@ -108,13 +108,13 @@ export const HeaderProfileButton: React.FC<HeaderProfileButtonProps> = ({
       />
 
       {shouldShowName && (
-        <span className="text-xs font-semibold text-slate-200 group-hover:text-white transition-colors truncate max-w-[65px] xs:max-w-[85px] sm:max-w-[110px] tracking-tight">
+        <span className="hidden min-[360px]:block text-xs font-semibold text-slate-200 group-hover:text-white transition-colors truncate max-w-[65px] xs:max-w-[85px] sm:max-w-[110px] tracking-tight">
           {safeProfile?.displayName || 'Joueur'}
         </span>
       )}
 
       {shouldShowChevron && (
-        <ChevronRight className="w-3 h-3 text-slate-400/80 group-hover:text-amber-300 transition-transform group-hover:translate-x-0.5 shrink-0" />
+        <ChevronRight className="hidden min-[360px]:block w-3 h-3 text-slate-400/80 group-hover:text-amber-300 transition-transform group-hover:translate-x-0.5 shrink-0" />
       )}
     </button>
   );

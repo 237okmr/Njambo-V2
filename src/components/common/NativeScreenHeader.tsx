@@ -88,7 +88,7 @@ export const NativeScreenHeader: React.FC<NativeScreenHeaderProps> = ({
             aria-label={backLabel}
           >
             <ArrowLeft className="w-4 h-4 text-amber-400 shrink-0" />
-            <span className="tracking-tight max-w-[85px] sm:max-w-none truncate">{backLabel}</span>
+            <span className="hidden min-[400px]:block tracking-tight max-w-[85px] sm:max-w-none truncate">{backLabel}</span>
           </button>
         ) : leftContent ? (
           leftContent
@@ -107,7 +107,7 @@ export const NativeScreenHeader: React.FC<NativeScreenHeaderProps> = ({
           <div className="max-w-full truncate flex items-center justify-center">{title}</div>
         )}
         {subtitle && (
-          <div className="text-[11px] text-slate-400 font-medium truncate hidden xs:block max-w-full">
+          <div className="text-[11px] text-slate-400 font-medium truncate hidden sm:block max-w-full">
             {subtitle}
           </div>
         )}

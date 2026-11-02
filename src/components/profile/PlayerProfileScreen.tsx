@@ -309,13 +309,13 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
         backLabel="Retour"
         onBack={handleBackClick}
         backTitle={sourceScreen === 'GAME' ? 'Retourner à la partie en cours' : 'Retourner à l’accueil'}
-        title="Mon Profil & Palmarès"
+        title="Profil"
         onToggleSound={onToggleSound}
         soundEnabled={soundEnabled}
         onHome={onClose}
         contextBadge={
           (isGameActive || sourceScreen === 'GAME') ? (
-            <div className="hidden xs:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-[11px] font-semibold">
+            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-[11px] font-semibold">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>
                 Partie en cours {isMultiplayer ? `(Multi ${gamePlayerCount}J)` : '(Solo vs IA)'}
@@ -334,7 +334,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                 title="Consulter le Palmarès"
               >
                 <Trophy className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                <span className="hidden xs:inline">Palmarès</span>
+                <span className="hidden sm:inline">Palmarès</span>
               </button>
             )}
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 font-mono font-bold text-xs shadow-xs">

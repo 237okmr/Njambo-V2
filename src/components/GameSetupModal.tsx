@@ -389,17 +389,17 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
         backLabel="Retour"
         onBack={handleBackClick}
         backTitle={isMancheInProgress ? 'Revenir à la manche en cours' : 'Retourner au menu'}
-        title="Configuration Solo"
+        title="Partie solo"
         onToggleSound={onToggleSound}
         soundEnabled={soundEnabled}
         contextBadge={
           isMancheInProgress ? (
-            <div className="hidden xs:flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-semibold truncate">
+            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-semibold truncate">
               <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
               <span className="truncate">Partie {currentPartieCount} en cours</span>
             </div>
           ) : (
-            <div className="hidden xs:flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-800/80 border border-slate-700/80 text-slate-300 text-[11px] font-medium">
+            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-800/80 border border-slate-700/80 text-slate-300 text-[11px] font-medium">
               <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
               <span>Solo Hors-Ligne</span>
             </div>
@@ -417,7 +417,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
                 title="Lier votre compte Google pour sauvegarder votre progression"
               >
                 <GoogleIcon className="w-3.5 h-3.5" />
-                <span className="hidden xs:inline">{isAuthLoading ? '...' : 'Lier Google'}</span>
+                <span className="hidden sm:inline">{isAuthLoading ? '...' : 'Lier Google'}</span>
               </button>
             ) : (
               <div

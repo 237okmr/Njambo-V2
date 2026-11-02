@@ -565,8 +565,8 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
         backTitle={selectedPlayer ? 'Retour au classement' : activeCategory !== 'WINS' ? 'Retour aux victoires' : 'Retour à l\'accueil'}
         title={
           <div className="flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-amber-400 fill-amber-400 shrink-0" />
-            <span className="font-black text-white tracking-tight">Palmarès</span>
+            <Trophy className="hidden sm:block w-5 h-5 text-amber-400 fill-amber-400 shrink-0" />
+            <span className="text-sm sm:text-base font-black text-white tracking-tight">Palmarès</span>
           </div>
         }
         subtitle="Classement et statistiques de la communauté de Njambo Kora"

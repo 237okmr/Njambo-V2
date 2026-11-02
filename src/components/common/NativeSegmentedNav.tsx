@@ -65,7 +65,7 @@ export function NativeSegmentedNav<T extends string = string>({
             >
               {Icon && (
                 <Icon
-                  className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-transform ${
+                  className={`${tabs.length >= 5 ? 'hidden sm:block ' : ''}w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-transform ${
                     isActive ? 'text-slate-950 scale-105' : 'text-slate-400'
                   }`}
                 />

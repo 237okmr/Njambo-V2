@@ -80,7 +80,7 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
               <span className="text-base sm:text-lg font-black tracking-tight text-white">
                 Académie Njambo Kora
               </span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase tracking-wider">
+              <span className="hidden sm:inline text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase tracking-wider">
                 Guide Officiel
               </span>
             </div>
@@ -182,15 +182,15 @@ export const GameRulesScreen: React.FC<GameRulesScreenProps> = ({
                     {[1, 2, 3, 4].map((tour) => (
                       <div
                         key={tour}
-                        className="p-2 sm:p-2.5 rounded-xl bg-slate-900 border border-slate-800 flex flex-col items-center justify-center"
+                        className="p-1 sm:p-2.5 rounded-xl bg-slate-900 border border-slate-800 flex flex-col items-center justify-center"
                       >
                         <span className="text-[10px] text-slate-500 font-bold uppercase">Tour {tour}</span>
-                        <span className="text-[11px] sm:text-xs text-slate-300 font-medium">Placement</span>
+                        <span className="text-[11px] sm:text-xs text-slate-300 font-medium">Pose</span>
                       </div>
                     ))}
-                    <div className="p-2 sm:p-2.5 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 text-slate-950 font-black shadow-lg shadow-amber-500/20 border border-amber-300 flex flex-col items-center justify-center">
+                    <div className="p-1 sm:p-2.5 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 text-slate-950 font-black shadow-lg shadow-amber-500/20 border border-amber-300 flex flex-col items-center justify-center">
                       <span className="text-[10px] uppercase opacity-80">Tour 5</span>
-                      <span className="text-[11px] sm:text-xs">🏆 Victoire</span>
+                      <span className="text-[11px] sm:text-xs">🏆<span className="hidden sm:inline"> Victoire</span></span>
                     </div>
                   </div>
                   <p className="text-[11px] text-slate-400 mt-2 text-center italic">

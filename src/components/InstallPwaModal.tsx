@@ -94,26 +94,27 @@ export const InstallPwaModal: React.FC<InstallPwaModalProps> = ({
           <button
             type="button"
             onClick={onClose}
+            aria-label="Fermer"
             className="absolute top-4 right-4 p-2 rounded-xl bg-slate-800/80 text-slate-400 hover:text-white hover:bg-slate-700 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
 
           {/* Header */}
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 p-0.5 shadow-lg shadow-amber-500/20 flex items-center justify-center">
+          <div className="flex items-center gap-3 mb-5 pr-10">
+            <div className="w-12 h-12 shrink-0 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 p-0.5 shadow-lg shadow-amber-500/20 flex items-center justify-center">
               <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
                 <Smartphone className="w-6 h-6 text-amber-400" />
               </div>
             </div>
             <div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5">
                 <h3 className="text-lg font-black text-white">Installer sur Android</h3>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
                   Chrome
                 </span>
               </div>
-              <p className="text-xs text-slate-400">Application native complète (PWA / WebAPK)</p>
+              <p className="text-xs text-slate-400">Une vraie application sur votre téléphone</p>
             </div>
           </div>
 
@@ -172,7 +173,7 @@ export const InstallPwaModal: React.FC<InstallPwaModalProps> = ({
                     <span>💡 Pour installer dans Chrome sur Android :</span>
                   </p>
                   <p className="text-[11px] text-slate-300 leading-relaxed mb-2.5">
-                    Ouvrez le jeu dans son onglet dédié Chrome, puis utilisez le menu d'installation ci-dessous.
+                    Ouvrez le jeu dans un onglet Chrome, puis utilisez le menu d'installation ci-dessous.
                   </p>
                   <button
                     type="button"

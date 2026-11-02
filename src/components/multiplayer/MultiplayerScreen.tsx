@@ -1311,7 +1311,15 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
         backLabel="Retour"
         onBack={handleBack}
         backTitle={room ? 'Quitter la table' : 'Retour'}
-        title={room ? `Table #${room.id}` : 'Multijoueur'}
+        title={
+          room ? (
+            `Table #${room.id}`
+          ) : (
+            <span className="hidden min-[400px]:block text-xs sm:text-sm md:text-base font-black tracking-tight uppercase text-white truncate">
+              Multijoueur
+            </span>
+          )
+        }
         subtitle={
           room
             ? `${connectedHumansCount}/${roomMaxCapacity} joueurs${
@@ -1321,7 +1329,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
         }
         onToggleSound={onToggleSound}
         soundEnabled={soundEnabled}
-        onHome={handleHome}
+        onHome={room ? handleHome : undefined}
         contextBadge={
           <span
             className={`text-[10px] font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 shrink-0 ${
@@ -1336,7 +1344,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                 isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400 animate-ping'
               }`}
             />
-            <span className="hidden xs:inline">{isConnected ? 'En Ligne' : 'Connexion'}</span>
+            <span className="hidden sm:inline">{isConnected ? 'En Ligne' : 'Connexion'}</span>
           </span>
         }
         rightActions={
@@ -1397,7 +1405,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   aria-label="Connexion Google"
                 >
                   <GoogleIcon className="w-4 h-4" />
-                  <span className="hidden xs:inline">{isAuthLoading ? '...' : 'Connexion'}</span>
+                  <span className="hidden sm:inline">{isAuthLoading ? '...' : 'Connexion'}</span>
                 </button>
               ) : (
                 <div
@@ -2365,14 +2373,14 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                     value={roomCodeInput}
                     onChange={(e) => setRoomCodeInput(e.target.value.toUpperCase())}
                     placeholder="EX: K8T4"
-                    className="flex-1 h-12 px-4 rounded-xl bg-slate-950 border border-slate-700 text-white font-black text-lg text-center tracking-[0.25em] uppercase focus:outline-none focus:border-amber-400 disabled:opacity-60"
+                    className="flex-1 min-w-0 h-12 px-4 rounded-xl bg-slate-950 border border-slate-700 text-white font-black text-lg text-center tracking-[0.25em] uppercase focus:outline-none focus:border-amber-400 disabled:opacity-60"
                   />
                   <button
                     type="button"
                     disabled={isLoading}
                     onClick={handlePasteClipboard}
                     title="Coller depuis le presse-papier"
-                    className="h-12 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-bold flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                    className="h-12 px-3 shrink-0 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-bold flex items-center gap-1 cursor-pointer disabled:opacity-50"
                   >
                     <ClipboardPaste className="w-4 h-4" />
                   </button>
@@ -3585,14 +3593,14 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                     value={roomCodeInput}
                     onChange={(e) => setRoomCodeInput(e.target.value.toUpperCase())}
                     placeholder="EX: K8T4"
-                    className="flex-1 h-12 px-4 rounded-xl bg-slate-950 border border-slate-700 text-white font-black text-lg text-center tracking-[0.25em] uppercase focus:outline-none focus:border-amber-400 disabled:opacity-60"
+                    className="flex-1 min-w-0 h-12 px-4 rounded-xl bg-slate-950 border border-slate-700 text-white font-black text-lg text-center tracking-[0.25em] uppercase focus:outline-none focus:border-amber-400 disabled:opacity-60"
                   />
                   <button
                     type="button"
                     disabled={isLoading}
                     onClick={handlePasteClipboard}
                     title="Coller depuis le presse-papier"
-                    className="h-12 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-bold flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                    className="h-12 px-3 shrink-0 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-bold flex items-center gap-1 cursor-pointer disabled:opacity-50"
                   >
                     <ClipboardPaste className="w-4 h-4" />
                   </button>

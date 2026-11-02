@@ -204,15 +204,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     }
   };
 
-  // 1. Left branding block for NativeScreenHeader (Logo 🎴 + Gradient text)
+  // 1. Left branding block for NativeScreenHeader (le grand titre NJAMBO KORA est juste en dessous)
   const leftContent = (
     <div className="flex items-center gap-2 shrink-0">
       <div className="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-black text-xs shadow-sm">
         🎴
       </div>
-      <span className="text-xs font-black tracking-tight bg-gradient-to-r from-amber-400 to-amber-200 bg-clip-text text-transparent hidden xs:inline">
-        NJAMBO KORA
-      </span>
     </div>
   );
 
@@ -238,7 +235,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           aria-label="Consulter l'Académie & Règles du jeu"
         >
           <BookOpen className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-          <span className="hidden xs:inline">Règles</span>
         </button>
       )}
 
@@ -290,9 +286,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         {/* Card 1: 10 Koubi (Top-Left, Winner trick) */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8, rotate: -25 }}
-          animate={{ opacity: 1, scale: 1, rotate: -18 }}
+          animate={{ opacity: 0.4, scale: 1, rotate: -18 }}
           transition={{ duration: 0.8, delay: 0.1 }}
-          className="absolute top-[8%] left-[2%] sm:left-[8%] w-20 sm:w-24 h-28 sm:h-34 rounded-xl bg-slate-100 text-slate-900 border-2 border-amber-400/60 p-2 flex flex-col justify-between shadow-2xl opacity-40 sm:opacity-45"
+          className="absolute top-[8%] left-[2%] sm:left-[8%] w-20 sm:w-24 h-28 sm:h-34 rounded-xl bg-slate-100 text-slate-900 border-2 border-amber-400/60 p-2 flex flex-col justify-between shadow-2xl"
         >
           <div className="flex flex-col items-start leading-none">
             <span className="text-xs sm:text-sm font-black text-rose-600">10</span>
@@ -311,9 +307,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         {/* Card 2: 10 Black (Top-Right) */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8, rotate: 25 }}
-          animate={{ opacity: 1, scale: 1, rotate: 16 }}
+          animate={{ opacity: 0.4, scale: 1, rotate: 16 }}
           transition={{ duration: 0.8, delay: 0.15 }}
-          className="absolute top-[10%] right-[2%] sm:right-[8%] w-20 sm:w-24 h-28 sm:h-34 rounded-xl bg-slate-100 text-slate-900 border-2 border-slate-300/50 p-2 flex flex-col justify-between shadow-2xl opacity-40 sm:opacity-45"
+          className="absolute top-[10%] right-[2%] sm:right-[8%] w-20 sm:w-24 h-28 sm:h-34 rounded-xl bg-slate-100 text-slate-900 border-2 border-slate-300/50 p-2 flex flex-col justify-between shadow-2xl"
         >
           <div className="flex flex-col items-start leading-none">
             <span className="text-xs sm:text-sm font-black text-slate-900">10</span>
@@ -329,9 +325,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         {/* Card 3: 3 Koubi (Bottom-Left - Kora card) */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8, rotate: -40 }}
-          animate={{ opacity: 1, scale: 1, rotate: -32 }}
+          animate={{ opacity: 0.36, scale: 1, rotate: -32 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="absolute bottom-[16%] left-[3%] sm:left-[9%] w-20 sm:w-24 h-28 sm:h-34 rounded-xl bg-slate-100 text-slate-900 border-2 border-amber-400/80 p-2 flex flex-col justify-between shadow-2xl opacity-36 sm:opacity-40"
+          className="absolute bottom-[16%] left-[3%] sm:left-[9%] w-20 sm:w-24 h-28 sm:h-34 rounded-xl bg-slate-100 text-slate-900 border-2 border-amber-400/80 p-2 flex flex-col justify-between shadow-2xl"
         >
           <div className="flex flex-col items-start leading-none">
             <span className="text-xs sm:text-sm font-black text-rose-600">3</span>
@@ -350,9 +346,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         {/* Card 4: 10 Tchaka (Bottom-Right) */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8, rotate: 40 }}
-          animate={{ opacity: 1, scale: 1, rotate: 28 }}
+          animate={{ opacity: 0.36, scale: 1, rotate: 28 }}
           transition={{ duration: 0.8, delay: 0.25 }}
-          className="absolute bottom-[20%] right-[3%] sm:right-[9%] w-20 sm:w-24 h-28 sm:h-34 rounded-xl bg-slate-100 text-slate-900 border-2 border-slate-300/50 p-2 flex flex-col justify-between shadow-2xl opacity-36 sm:opacity-40"
+          className="absolute bottom-[20%] right-[3%] sm:right-[9%] w-20 sm:w-24 h-28 sm:h-34 rounded-xl bg-slate-100 text-slate-900 border-2 border-slate-300/50 p-2 flex flex-col justify-between shadow-2xl"
         >
           <div className="flex flex-col items-start leading-none">
             <span className="text-xs sm:text-sm font-black text-emerald-700">10</span>
@@ -368,9 +364,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         {/* Card 5: 9 Zing (Center-Left background fan) */}
         <motion.div
           initial={{ opacity: 0, rotate: 8 }}
-          animate={{ opacity: 1, rotate: 12 }}
+          animate={{ opacity: 0.3, rotate: 12 }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className="absolute top-[42%] -left-[4%] sm:left-[1%] w-18 sm:w-22 h-26 sm:h-30 rounded-xl bg-slate-100 text-slate-900 border border-slate-300/40 p-1.5 flex flex-col justify-between shadow-xl opacity-30 sm:opacity-34"
+          className="absolute top-[42%] -left-[4%] sm:left-[1%] w-18 sm:w-22 h-26 sm:h-30 rounded-xl bg-slate-100 text-slate-900 border border-slate-300/40 p-1.5 flex flex-col justify-between shadow-xl"
         >
           <div className="flex flex-col items-start leading-none">
             <span className="text-xs font-black text-amber-600">9</span>
@@ -386,9 +382,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         {/* Card 6: 8 Black (Center-Right background fan) */}
         <motion.div
           initial={{ opacity: 0, rotate: -12 }}
-          animate={{ opacity: 1, rotate: -15 }}
+          animate={{ opacity: 0.3, rotate: -15 }}
           transition={{ duration: 0.8, delay: 0.35 }}
-          className="absolute top-[46%] -right-[4%] sm:right-[1%] w-18 sm:w-22 h-26 sm:h-30 rounded-xl bg-slate-100 text-slate-900 border border-slate-300/40 p-1.5 flex flex-col justify-between shadow-xl opacity-30 sm:opacity-34"
+          className="absolute top-[46%] -right-[4%] sm:right-[1%] w-18 sm:w-22 h-26 sm:h-30 rounded-xl bg-slate-100 text-slate-900 border border-slate-300/40 p-1.5 flex flex-col justify-between shadow-xl"
         >
           <div className="flex flex-col items-start leading-none">
             <span className="text-xs font-black text-slate-900">8</span>
@@ -584,7 +580,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 <AnimatedDealingDeckIcon />
               </div>
               <span className="leading-tight text-xs sm:text-sm font-black text-white group-hover:text-rose-200 transition">
-                Nouvelle Partie (Mode Solo)
+                Partie solo
               </span>
             </div>
 
@@ -631,7 +627,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               </div>
               <div className="flex items-center gap-1.5 min-w-0">
                 <span className="leading-tight text-xs sm:text-sm font-extrabold text-white truncate group-hover:text-cyan-200 transition">
-                  Multijoueur en Ligne
+                  Multijoueur
                 </span>
                 {pendingInvitesCount > 0 ? (
                   <span className="text-[8px] font-black px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 uppercase tracking-wider animate-pulse shrink-0">
@@ -682,7 +678,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 </div>
                 <div className="flex items-center gap-1.5 min-w-0">
                   <span className="leading-tight text-xs sm:text-sm font-extrabold text-white truncate group-hover:text-purple-200 transition">
-                    Palmarès des joueurs
+                    Palmarès
                   </span>
                   <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 uppercase tracking-wider shrink-0">
                     Classement

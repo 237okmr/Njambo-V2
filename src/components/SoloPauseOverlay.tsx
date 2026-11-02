@@ -46,7 +46,7 @@ export const SoloPauseOverlay: React.FC<SoloPauseOverlayProps> = ({
               <span>Partie en pause</span>
             </h2>
             <p className="text-xs sm:text-sm text-slate-400 font-medium max-w-xs mx-auto leading-relaxed">
-              La table a été figée automatiquement lors de la mise en veille.
+              La partie est en pause.
             </p>
           </div>
 

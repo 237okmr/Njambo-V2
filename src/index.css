@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Variante « xs: » : à partir de 480 px, pour garder les téléphones compacts. */
+@theme {
+  --breakpoint-xs: 30rem;
+}
+
 /* Écrans courts (téléphones) : variante « short: » pour compacter les modales. */
 @custom-variant short (@media (max-height: 700px));
 
