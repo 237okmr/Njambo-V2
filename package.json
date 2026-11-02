@@ -1,7 +1,7 @@
 {
   "name": "react-example",
   "private": true,
-  "version": "2.5.397",
+  "version": "2.5.398",
   "type": "module",
   "scripts": {
     "version:sync": "node scripts/sync-version.js",

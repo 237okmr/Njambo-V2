@@ -1085,7 +1085,7 @@ export function createRealisticNjamboPuzzleScenario(
         ],
         ctaText: 'Commente A ou B 👇',
         linkUrl: `${NJAMBO_DOMAIN}`,
-        postCaption: `🔥 DUEL 1 VS 1 — LE CLASH DU 5e TOUR (SCORE 2-2) ! 🇨🇲\n\nChaque joueur a remporté 2 tours. Tout se joue sur cette ultime carte !\nL'adversaire abat le 8 Koubi (♥).\n\nTu as en main :\n🅰️ Option A : Le 10 Koubi ♥ (Abattre le maître suprême)\n🅱️ Option B : Le 4 Koubi ♥ (Sous-jouer)\n\nPrends-tu le risque d'abattre le 10 tout de suite ? Votez en commentaire ! 💬👇\n\n🎮 Joue gratuitement : ${NJAMBO_APP_URL}\n💬 Groupe officiel WhatsApp : ${NJAMBO_WHATSAPP_GROUP_URL}`,
+        postCaption: `🔥 DUEL 1 VS 1 — LE CLASH DU 5e TOUR (SCORE 2-2) ! 🇨🇲\n\nChaque joueur a remporté 2 tours. Tout se joue sur cette ultime carte !\nL'adversaire abat le 8 Koubi (♥).\n\nTu as en main :\n🅰️ Option A : Le 10 Koubi ♥ (Abattre le maître suprême)\n🅱️ Option B : Le 4 Koubi ♥ (Sous-jouer)\n\nPrends-tu le risque d'abattre le 10 tout de suite ? Votez en commentaire ! 💬👇\n\n🎮 Joue en jetons virtuels : ${NJAMBO_APP_URL}\n💬 Groupe officiel WhatsApp : ${NJAMBO_WHATSAPP_GROUP_URL}`,
         whatsAppMessage: `🔥 *DUEL 1 VS 1 — CLASH DU 5e TOUR (2-2) !* 🇨🇲\n\nL'adversaire pose le *8 Koubi (♥)*.\nQuelle carte lances-tu pour empocher la donne ?\n🅰️ *10 Koubi ♥*\n🅱️ *4 Koubi ♥*\n\n👉 *Joue au Njambo Kora :* ${NJAMBO_APP_URL}`,
         hashtags: ['#ClashFinal', '#DuelNjambo', '#NjamboKora', '#JeuxDeCartes'],
       };
@@ -1154,7 +1154,7 @@ export function createRealisticNjamboPuzzleScenario(
         ctaText: 'Vote A, B ou C en commentaire 👇',
         linkUrl: `${NJAMBO_DOMAIN}`,
         postCaption: `⚠️ DUEL 1 VS 1 — LE PIÈGE DE LA DÉFAUSSE ! 🇨🇲\n\nL'adversaire entame au 9 Koubi (♥). Tu es « chicane » (zéro carte Cœur dans ton jeu).\n\nTu dois défausser l'une de tes 3 cartes restantes :\n🅰️ Option A : Le 4 Zing ♦ (Jeter une petite carte morte)\n🅱️ Option B : Le 9 Black ♠ (Sacrifier un maître Black)\n🅲️ Option C : Le 10 Zing ♦ (Sacrifier le 10 Zing)\n\nQue lâches-tu pour garder l'avantage au 5e tour ? Votez en commentaire ! 💬👇\n\n🎮 Lien du jeu : ${NJAMBO_APP_URL}\n💬 Rejoins la communauté : ${NJAMBO_WHATSAPP_GROUP_URL}`,
-        whatsAppMessage: `⚠️ *LE PIÈGE DE LA DÉFAUSSE NJAMBO !* 🇨🇲\n\nAttaque adverse : *9 Koubi (♥)* (Tu n'as pas de Koubi).\nQuelle carte défausses-tu ?\n🅰️ *4 Zing ♦*\n🅱️ *9 Black ♠*\n🅲️ *10 Zing ♦*\n\n👉 *Joue gratuitement :* ${NJAMBO_APP_URL}`,
+        whatsAppMessage: `⚠️ *LE PIÈGE DE LA DÉFAUSSE NJAMBO !* 🇨🇲\n\nAttaque adverse : *9 Koubi (♥)* (Tu n'as pas de Koubi).\nQuelle carte défausses-tu ?\n🅰️ *4 Zing ♦*\n🅱️ *9 Black ♠*\n🅲️ *10 Zing ♦*\n\n👉 *Joue en jetons virtuels :* ${NJAMBO_APP_URL}`,
         hashtags: ['#DefausseNjambo', '#CasseTeteCartes', '#KoraMaster'],
       };
 

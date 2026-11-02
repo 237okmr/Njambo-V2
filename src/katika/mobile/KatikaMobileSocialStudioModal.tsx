@@ -166,7 +166,7 @@ export const KatikaMobileSocialStudioModal: React.FC<KatikaMobileSocialStudioMod
           ],
           ctaText: 'Pratique ton bluff dès maintenant',
           linkUrl: `${NJAMBO_DOMAIN} • Astuces`,
-          postCaption: `💡 ASTUCE DE MAÎTRE : Le piège du 5e tour !\n\nBeaucoup de débutants se précipitent et gaspillent leurs cartes maîtresses dès l'entame. Erreur fatale ! Au Njambo Kora, remporter le 5e tour avec son 3 nécessite d'observer les défausses et d'anticiper la couleur menée.\n\n🎮 Joue gratuitement en ligne : ${NJAMBO_APP_URL}\n💬 Échange tes tactiques sur notre groupe WhatsApp : ${NJAMBO_WHATSAPP_GROUP_URL}`,
+          postCaption: `💡 ASTUCE DE MAÎTRE : Le piège du 5e tour !\n\nBeaucoup de débutants se précipitent et gaspillent leurs cartes maîtresses dès l'entame. Erreur fatale ! Au Njambo Kora, remporter le 5e tour avec son 3 nécessite d'observer les défausses et d'anticiper la couleur menée.\n\n🎮 Joue en jetons virtuels en ligne : ${NJAMBO_APP_URL}\n💬 Échange tes tactiques sur notre groupe WhatsApp : ${NJAMBO_WHATSAPP_GROUP_URL}`,
           whatsAppMessage: `💡 *ASTUCE NJAMBO DU JOUR !* 🇨🇲\n\nObserve les défausses et prépare ton 3 pour le 5e tour décisif !\n\n👉 *Lien du jeu :* ${NJAMBO_APP_URL}\n💬 *Groupe WhatsApp :* ${NJAMBO_WHATSAPP_GROUP_URL}`,
           hashtags: ['#NjamboKora', '#AstuceKora', '#StrategieCartes', '#GamingAfrique'],
         };
@@ -180,7 +180,7 @@ export const KatikaMobileSocialStudioModal: React.FC<KatikaMobileSocialStudioMod
           ctaText: 'Fais vivre la tradition en ligne',
           linkUrl: `${NJAMBO_DOMAIN} • Tradition 237`,
           postCaption: `🇨🇲 LE NJAMBO KORA : UN PATRIMOINE VIVANT !\n\nAutour d'une table en bois, sous une véranda ou lors des grandes veillées, le Njambo a toujours rassemblé les passionnés de cartes. Aujourd'hui, Katika numérise fidèlement chaque subtilité de ce trésor camerounais !\n\n🎮 Joue au Njambo en ligne : ${NJAMBO_APP_URL}\n💬 Communauté WhatsApp officielle : ${NJAMBO_WHATSAPP_GROUP_URL}`,
-          whatsAppMessage: `🇨🇲 *LE NJAMBO KORA, FIERTÉ DU MBOA !* 🃏\n\nRetrouve les sensations authentiques de nos tables de quartier !\n\n👉 *Joue gratuitement :* ${NJAMBO_APP_URL}\n💬 *Rejoins le groupe WhatsApp :* ${NJAMBO_WHATSAPP_GROUP_URL}`,
+          whatsAppMessage: `🇨🇲 *LE NJAMBO KORA, FIERTÉ DU MBOA !* 🃏\n\nRetrouve les sensations authentiques de nos tables de quartier !\n\n👉 *Joue en jetons virtuels :* ${NJAMBO_APP_URL}\n💬 *Rejoins le groupe WhatsApp :* ${NJAMBO_WHATSAPP_GROUP_URL}`,
           hashtags: ['#NjamboKora', '#CultureCamerounaise', '#PatrimoineAfricain', '#Fierte237'],
         };
 
@@ -217,7 +217,7 @@ export const KatikaMobileSocialStudioModal: React.FC<KatikaMobileSocialStudioMod
           badge: 'NJAMBO KORA LIVE 🔥',
           headline: 'Arène de cartes 100% en direct !',
           mainText: 'Rejoignez la table multijoueur dès aujourd’hui et défiez les maîtres du pays en temps réel.',
-          ctaText: 'Jouer gratuitement en ligne',
+          ctaText: 'Jouer en jetons virtuels en ligne',
           linkUrl: `${NJAMBO_DOMAIN} • Rejoins-nous`,
           postCaption: `🔥 Rejoins les tables de Njambo Kora en ligne ! Défie tes amis en direct sur mobile ou ordinateur :\n\n🎮 Lien du jeu : ${NJAMBO_APP_URL}\n💬 Groupe WhatsApp officiel : ${NJAMBO_WHATSAPP_GROUP_URL}`,
           whatsAppMessage: `🔥 *REJOINS LES TABLES DE NJAMBO KORA EN LIGNE !* 🇨🇲\n\nJoue directement sur ton téléphone ou PC, sans installation !\n\n👉 *Lien du jeu :* ${NJAMBO_APP_URL}\n💬 *Rejoins notre groupe WhatsApp officiel :* ${NJAMBO_WHATSAPP_GROUP_URL}`,
@@ -279,7 +279,7 @@ export const KatikaMobileSocialStudioModal: React.FC<KatikaMobileSocialStudioMod
           },
           ctaText: 'Identifie ce menteur 🤣',
           linkUrl: `${NJAMBO_DOMAIN} • Humour 237`,
-          postCaption: `😂 On a tous ce joueur à la table ! Tague ton pote en commentaire ! 🃏👇\n\n🎮 Joue gratuitement au Njambo : ${NJAMBO_APP_URL}\n💬 Rejoins les délires sur WhatsApp : ${NJAMBO_WHATSAPP_GROUP_URL}`,
+          postCaption: `😂 On a tous ce joueur à la table ! Tague ton pote en commentaire ! 🃏👇\n\n🎮 Joue en jetons virtuels au Njambo : ${NJAMBO_APP_URL}\n💬 Rejoins les délires sur WhatsApp : ${NJAMBO_WHATSAPP_GROUP_URL}`,
           whatsAppMessage: `😂 « J'ai une main pourrie... » et BAM Kora au 3 au 5e tour ! 🃏🤣\n\n👉 *Viens jouer :* ${NJAMBO_APP_URL}\n💬 *Groupe WhatsApp officiel :* ${NJAMBO_WHATSAPP_GROUP_URL}`,
           aiImagePrompt: `Funny candid high contrast portrait of smiling African man revealing a winning card under wooden table, evening lights.`,
           hashtags: ['#NjamboMeme', '#HumourCameroun'],
@@ -301,7 +301,7 @@ export const KatikaMobileSocialStudioModal: React.FC<KatikaMobileSocialStudioMod
           ctaText: 'Glisse pour la suite ➔',
           linkUrl: `${NJAMBO_DOMAIN} • Guide`,
           postCaption: `📚 Guide express pour maîtriser le Njambo Kora ! Glisse pour lire la suite ! 🃏\n\n🎮 Entraîne-toi dès maintenant : ${NJAMBO_APP_URL}\n💬 Astuces sur le groupe WhatsApp : ${NJAMBO_WHATSAPP_GROUP_URL}`,
-          whatsAppMessage: `📚 *ASTUCE NJAMBO :* Observe toujours les cartes maîtresses tombées aux premiers tours avant de jouer ton 3 !\n\n👉 *Viens t'entraîner gratuitement :* ${NJAMBO_APP_URL}\n💬 *Rejoins notre groupe WhatsApp officiel :* ${NJAMBO_WHATSAPP_GROUP_URL}`,
+          whatsAppMessage: `📚 *ASTUCE NJAMBO :* Observe toujours les cartes maîtresses tombées aux premiers tours avant de jouer ton 3 !\n\n👉 *Viens t'entraîner en jetons virtuels :* ${NJAMBO_APP_URL}\n💬 *Rejoins notre groupe WhatsApp officiel :* ${NJAMBO_WHATSAPP_GROUP_URL}`,
           aiImagePrompt: `Modern minimalist African graphic card poster, geometric Ndop border, golden accents.`,
           hashtags: ['#GuideNjambo', '#CamerounGaming'],
         };
