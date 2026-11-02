@@ -102,6 +102,42 @@ describe('Multiplayer Public Table Auto-Start', () => {
     );
   });
 
+  it('salon public incomplet : long decompte des 2 humains, raccourci si la table se remplit', () => {
+    const roomCode = 'PART_TEST_' + Math.random().toString(36).slice(2, 7);
+    testRoomIds.push(roomCode);
+    const third = createMockPlayer('third_part', false, true);
+    const room = createMockRoom({
+      id: roomCode,
+      isPublic: true,
+      players: [createMockPlayer('host_part', true, true), createMockPlayer('guest_part', false, true), third],
+      maxPlayers: 4,
+    });
+    RoomManager.setRoomForTest(roomCode, room);
+
+    room.players = room.players.slice(0, 1);
+    RoomManager.evaluateAutoStart(roomCode);
+    assert.equal(room.autoStartCountdownAt ?? null, null, 'Un humain seul ne declenche rien');
+
+    room.players = [room.players[0], createMockPlayer('guest_part', false, true), third];
+    RoomManager.evaluateAutoStart(roomCode);
+    const partialMs = Number(DEFAULT_ENGINE_CONFIG.publicPartialStartSeconds) * 1000;
+    const shortMs = Number(DEFAULT_ENGINE_CONFIG.publicAutoStartSeconds ?? 8) * 1000;
+    assert.ok(room.autoStartCountdownAt! - Date.now() > partialMs - 2000, 'Long decompte tant que la table est incomplete');
+    const countdown = room.autoStartCountdownAt;
+
+    RoomManager.evaluateAutoStart(roomCode);
+    assert.equal(room.autoStartCountdownAt, countdown, 'Une nouvelle evaluation ne relance pas le decompte');
+
+    room.players.push(createMockPlayer('fourth_part', false, true));
+    RoomManager.evaluateAutoStart(roomCode);
+    assert.ok(room.autoStartCountdownAt! - Date.now() <= shortMs + 100, 'Table pleine : decompte court');
+    assert.equal(room.status, 'LOBBY');
+
+    room.players = room.players.slice(0, 1);
+    RoomManager.evaluateAutoStart(roomCode);
+    assert.equal(room.autoStartCountdownAt ?? null, null, 'Retour a un seul humain : decompte annule');
+  });
+
   it('ne declenche pas de demarrage automatique sur une table privee', () => {
     const roomCode = 'PRIV_TEST_' + Math.random().toString(36).slice(2, 7);
     testRoomIds.push(roomCode);

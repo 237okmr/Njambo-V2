@@ -2893,9 +2893,7 @@ export class RoomManager {
     // Cas 2 : L'hôte est connecté, vérification des conditions de lancement et d'inactivité
     const connectedGuests = connectedHumans.filter((p) => !p.isHost);
     const maxCapacity = Math.min(4, Math.max(2, room.maxPlayers || 4));
-    const hasRequiredHumansToStart = room.fillWithBots
-      ? connectedHumans.length >= 2
-      : connectedHumans.length >= maxCapacity;
+    const hasRequiredHumansToStart = connectedHumans.length >= 2;
 
     const unreadyGuests = connectedGuests.filter((p) => !p.isReady);
     const isLaunchReady = hasRequiredHumansToStart && unreadyGuests.length === 0 && connectedGuests.length >= 1;
@@ -2978,7 +2976,8 @@ export class RoomManager {
     const maxCapacity = Math.min(4, Math.max(2, room.maxPlayers || 4));
     
     // Auto-start conditions for public rooms:
-    // Either room is full of humans, OR fillWithBots is enabled and we have at least 2 humans.
+    // Either room is full of humans, OR fillWithBots is enabled and we have at least 2 humans,
+    // OR the room is incomplete with at least 2 humans (longer countdown, to leave time for others to arrive).
     // AND all connected humans are ready (except host which is implicitly ready).
     // Note: Never auto-start a room with only 1 human so the host has time to wait for friends.
     const isFullWithHumans = connectedHumans.length >= maxCapacity;
@@ -2986,11 +2985,20 @@ export class RoomManager {
     const allReady = connectedHumans.every(p => p.isReady || p.isHost);
     const hasEnoughHumans = connectedHumans.length >= 2;
 
-    const shouldAutoStart = (isFullWithHumans || (canFillWithBots && hasEnoughHumans)) && allReady;
+    const isPartialStart = !isFullWithHumans && !canFillWithBots && hasEnoughHumans;
+    const shouldAutoStart = (isFullWithHumans || canFillWithBots || isPartialStart) && allReady;
 
     if (shouldAutoStart) {
+      // La table vient de se remplir pendant le long décompte : on repart sur le décompte court.
+      if (state.autoStartTimer && state.autoStartIsPartial && !isPartialStart) {
+        clearTimeout(state.autoStartTimer);
+        state.autoStartTimer = null;
+      }
       if (!state.autoStartTimer) {
-        const delay = Number(this.engineConfig.publicAutoStartSeconds ?? 8) * 1000;
+        const delay = isPartialStart
+          ? Number(this.engineConfig.publicPartialStartSeconds ?? 30) * 1000
+          : Number(this.engineConfig.publicAutoStartSeconds ?? 8) * 1000;
+        state.autoStartIsPartial = isPartialStart;
         room.autoStartCountdownAt = Date.now() + delay;
         state.autoStartTimer = setTimeout(() => {
           state.autoStartTimer = null;
@@ -3125,15 +3133,6 @@ export class RoomManager {
       return;
     }
 
-    if (!room.fillWithBots && connectedHumans.length < maxCapacity) {
-      this.sendMessage(client.socket, {
-        type: 'ERROR',
-        errorCode: 'GENERIC',
-        error: `Ce salon 100% humains est configuré pour ${maxCapacity} joueurs. Veuillez attendre ${maxCapacity - connectedHumans.length} joueur(s) supplémentaire(s) ou activer l'option "Remplir avec des Bots".`,
-      });
-      return;
-    }
-
     if (room.status === 'MANCHE_OVER') {
       // Revanche / Nouvelle manche : incrémenter le numéro de manche officiel pour toute la table
       room.mancheNumber = (room.mancheNumber || 1) + 1;
@@ -3170,6 +3169,19 @@ export class RoomManager {
         error: 'Tous les invités doivent avoir cliqué sur "Prêt" avant de lancer la partie.',
       });
       return;
+    }
+
+    // Le nombre de places est un maximum : sans bots, la table part avec les humains présents et ses places restantes se ferment.
+    if (!room.fillWithBots) {
+      // Un absent ne reçoit pas de cartes à une table qui démarre sans lui. S'il a une entrée Kora Cash, elle lui est rendue à la diffusion suivante.
+      room.players = (room.players || []).filter((p) => !p.isHuman || p.connected);
+      const hostStillHere = room.players.some((p) => p.id === room.hostId);
+      if (!hostStillHere && room.players[0]) {
+        room.hostId = room.players[0].id;
+        room.hostName = room.players[0].name;
+        room.players[0].isHost = true;
+      }
+      room.maxPlayers = Math.max(2, Math.min(maxCapacity, room.players.length));
     }
 
     // Réinitialiser le timer d'inactivité
@@ -4565,6 +4577,7 @@ export class RoomManager {
   private static handleProposeCapacityExtension(client: ConnectedClient, msg: ClientMessage): void {
     if (!client.roomCode || !this.rooms.has(client.roomCode)) return;
     const room = this.rooms.get(client.roomCode)!;
+    if (room.cash) return; // les places d'une table Cash se ferment au lancement
     if (room.hostId !== client.playerId) {
       this.sendMessage(client.socket, {
         type: 'ERROR',

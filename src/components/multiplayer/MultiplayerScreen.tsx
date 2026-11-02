@@ -1229,14 +1229,8 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
   }, [seatedPlayers]);
   const allGuestsReady = unreadyGuests.length === 0;
 
-  // If fillWithBots is disabled, table strictly requires roomMaxCapacity humans to start!
-  // If fillWithBots is enabled, 2 humans are enough (bots will fill the remaining seats).
-  const canStartGame = room
-    ? room.fillWithBots
-      ? connectedHumansCount >= 2 && allGuestsReady
-      : connectedHumansCount >= roomMaxCapacity && allGuestsReady
-    : false;
-  const missingHumansToStart = Math.max(0, roomMaxCapacity - connectedHumansCount);
+  // 2 humains suffisent : le nombre de places est un maximum. Avec fillWithBots, les bots complètent les places restantes.
+  const canStartGame = room ? hasMinimumHumans && allGuestsReady : false;
   const currentTimer = room ? room.turnTimerSeconds ?? getPublicParamNumber('turnTimerSeconds') : getPublicParamNumber('turnTimerSeconds');
   const hasEmptySeats = seatedPlayers.length < roomMaxCapacity;
 
@@ -1640,15 +1634,26 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                     >
                       {!room.fillWithBots ? '👥 100% Humains' : '🤖 Mode Mixte'}
                     </span>
+                    {room.cash && (
+                      <span id="lobby-cash-badge" className="text-xs font-black px-2 py-0.5 rounded-full border bg-amber-500/20 text-amber-300 border-amber-500/40">
+                        Kora Cash
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 text-xs text-slate-400 mt-1 flex-wrap">
                     <span>
-                      Mise : <strong className="text-amber-400">{room.baseBet} 🪙</strong>
+                      Mise : <strong className="text-amber-400">{room.baseBet} {room.cash ? 'FCFA' : '🪙'}</strong>
                     </span>
                     <span>·</span>
-                    <span>
-                      Capital : <strong className="text-amber-300">{room.initialCapital || 100} 🪙</strong>
-                    </span>
+                    {room.cash ? (
+                      <span>
+                        Commission : <strong className="text-amber-300">{room.cash.rakePercent} % du pot gagné</strong>
+                      </span>
+                    ) : (
+                      <span>
+                        Capital : <strong className="text-amber-300">{room.initialCapital || 100} 🪙</strong>
+                      </span>
+                    )}
                     <span>·</span>
                     <span>
                       Timer : <strong className="text-white">{currentTimer}s</strong>
@@ -1767,8 +1772,8 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                             ? 'Au moins 2 joueurs requis'
                             : !allGuestsReady
                             ? `En attente de : ${unreadyGuests.map((g) => g.name).join(', ')}`
-                            : !canStartGame && !room.fillWithBots
-                            ? `En attente de ${missingHumansToStart} joueur(s) pour une table à ${roomMaxCapacity}`
+                            : !room.fillWithBots && connectedHumansCount < roomMaxCapacity
+                            ? `Lancer à ${connectedHumansCount} joueurs : les places libres se fermeront`
                             : 'Lancer la partie'
                         }
                         className={`h-10 px-5 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer shadow-lg ${
@@ -1785,10 +1790,10 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                             ? `En attente (${connectedHumansCount}/${roomMaxCapacity})`
                             : !allGuestsReady
                             ? `Attente prêts (${unreadyGuests.length})`
-                            : !canStartGame && !room.fillWithBots && missingHumansToStart > 0
-                            ? `En attente (${connectedHumansCount}/${roomMaxCapacity})`
                             : room.autoStartCountdownAt && autoStartSecondsLeft !== null
                             ? `Lancer (${autoStartSecondsLeft}s)`
+                            : !room.fillWithBots && connectedHumansCount < roomMaxCapacity
+                            ? `Lancer à ${connectedHumansCount}`
                             : 'Lancer'}
                         </span>
                       </button>
@@ -1809,7 +1814,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
             </div>
 
             {/* Host or Guest Emergency Action: Switch or Vote Bots */}
-            {!room.fillWithBots && (
+            {!room.fillWithBots && !room.cash && (
               <div className={`pt-2 border-t flex items-center justify-between gap-2 ${isLongWait ? 'border-amber-700/60' : 'border-slate-800'}`}>
                 <span className={`text-xs flex items-center gap-1 ${isLongWait ? 'text-amber-300 font-bold' : 'text-slate-400'}`}>
                   {isLongWait && <Clock className="w-3 h-3 animate-pulse" />}

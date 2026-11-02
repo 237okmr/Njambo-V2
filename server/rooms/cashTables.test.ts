@@ -262,6 +262,73 @@ describe('Table Cash — jeu', () => {
   });
 });
 
+describe('Table Cash — démarrage incomplet', () => {
+  async function tableOfFour(players: ReturnType<typeof connect>[]) {
+    const [host, ...others] = players;
+    await manager.handleCashTableOpen(host.client, { type: 'CASH_TABLE_OPEN', playerName: 'Hote', cashTable: { betLevel: 25, capacity: 4, buyIn: 250, isPublic: false } });
+    const code = host.client.roomCode as string;
+    opened.push(code);
+    for (const other of others) {
+      await manager.handleCashTableOpen(other.client, { type: 'CASH_TABLE_OPEN', playerName: other.client.playerId, cashTable: { roomCode: code, buyIn: 250 } });
+    }
+    return RoomManager.getRoom(code) as MultiplayerRoom;
+  }
+
+  it('une table de 4 places démarre à 3 humains, sans bot, et ses places se ferment', async () => {
+    fakeRuntime({ a: 300, b: 300, c: 300 });
+    const players = [connect('a'), connect('b'), connect('c')];
+    const room = await tableOfFour(players);
+    start(players[0]);
+    assert.equal(room.status, 'PLAYING');
+    assert.equal(room.gameState?.players.length, 3);
+    assert.equal(room.players.every((p) => p.isHuman), true);
+    assert.equal(room.maxPlayers, 3);
+    assert.equal(room.gameState?.pot, 75);
+
+    const late = connect('d');
+    await manager.handleCashTableOpen(late.client, { type: 'CASH_TABLE_OPEN', cashTable: { roomCode: room.id, buyIn: 250 } });
+    assert.match(late.lastError() ?? '', /déjà commencé/);
+  });
+
+  it('un humain seul ne peut pas démarrer', async () => {
+    fakeRuntime({ a: 300 });
+    const players = [connect('a')];
+    const room = await tableOfFour(players);
+    start(players[0]);
+    assert.equal(room.status, 'LOBBY');
+    assert.match(players[0].lastError() ?? '', /au moins 2 joueurs/);
+  });
+
+  it('un absent au lancement ne reçoit pas de cartes et récupère son entrée', async () => {
+    const { wallets, book } = fakeRuntime({ a: 300, b: 300, c: 300 });
+    const players = [connect('a'), connect('b'), connect('c')];
+    const room = await tableOfFour(players);
+    room.players.find((p) => p.id === 'c')!.connected = false;
+    start(players[0]);
+    assert.equal(room.status, 'PLAYING');
+    assert.deepEqual(room.gameState?.players.map((p) => p.id), ['a', 'b']);
+    assert.equal(room.maxPlayers, 2);
+    await book.flush(room.cash!.tableId);
+    assert.deepEqual(wallets.get('c'), { available: 300, locked: 0 });
+    assert.equal(room.cash?.seats.c.open, false);
+  });
+
+  it('un salon public incomplet démarre par le décompte', async () => {
+    fakeRuntime({ a: 300, b: 300 });
+    const a = connect('a');
+    const b = connect('b');
+    await manager.handleCashTableOpen(a.client, { type: 'CASH_TABLE_OPEN', playerName: 'Awa', cashTable: { betLevel: 25, capacity: 4, buyIn: 250, isPublic: true } });
+    const code = a.client.roomCode as string;
+    opened.push(code);
+    const room = RoomManager.getRoom(code) as MultiplayerRoom;
+    assert.equal(room.autoStartCountdownAt ?? null, null);
+    await manager.handleCashTableOpen(b.client, { type: 'CASH_TABLE_OPEN', playerName: 'Ben', cashTable: { betLevel: 25, capacity: 4, buyIn: 250, isPublic: true } });
+    assert.equal(b.client.roomCode, code);
+    assert.ok(room.autoStartCountdownAt);
+    assert.equal(room.fillWithBots, false);
+  });
+});
+
 describe('Table Cash — fin normale d’une partie', () => {
   function endWith(room: MultiplayerRoom, winnerIndex: number, winningValue: number = 6) {
     const gs = room.gameState!;

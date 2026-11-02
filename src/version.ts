@@ -1,3 +1,3 @@
 // App version build metadata - synchronized automatically
-export const APP_VERSION = "2.5.381";
-export const APP_BUILD_ID = "2026.11.02-v25381";
+export const APP_VERSION = "2.5.382";
+export const APP_BUILD_ID = "2026.11.02-v25382";

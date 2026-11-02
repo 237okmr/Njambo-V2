@@ -366,6 +366,12 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Une table dont la mise est jusqu\'à ce facteur plus haute ou plus basse que la mise demandée est considérée comme proche. Ex. 2 : accepte de moitié à double.',
   },
   {
+    key: 'publicPartialStartSeconds', label: 'Décompte d\'un salon public incomplet', unit: 's',
+    min: 10, max: 300, default: 30, group: 'salons', scope: 'server', effect: 'immediate',
+    help: 'Dès 2 humains prêts dans un salon public incomplet, la partie démarre après ce délai. Si la table se remplit avant, elle démarre aussitôt.',
+  },
+
+  {
     key: 'botFillReminderSeconds', label: 'Relance pour remplir avec des bots', unit: 's',
     min: 15, max: 300, default: 45, group: 'salons', scope: 'both', effect: 'immediate',
     help: 'Après ce délai d\'attente sans table complète, une relance est envoyée à l\'hôte et le bouton "Remplir avec des bots" devient plus visible.',

@@ -22,6 +22,7 @@ export interface KatikaEngineConfig {
   botVoteDelayMaxMs?: number;
   integrationVoteSeconds?: number;
   publicAutoStartSeconds?: number;
+  publicPartialStartSeconds?: number;
   emoteDisplayMs?: number;
   roomTickIntervalMs?: number;
   trickWinnerViewMs?: number;

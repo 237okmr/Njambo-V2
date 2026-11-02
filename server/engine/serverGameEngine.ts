@@ -61,6 +61,8 @@ export interface ActiveRoomState {
   botMoveTimer: NodeJS.Timeout | null;
   instantWinTimer?: NodeJS.Timeout | null;
   autoStartTimer?: NodeJS.Timeout | null;
+  /** Le décompte en cours est celui d'un salon incomplet : il se raccourcit si la table se remplit. */
+  autoStartIsPartial?: boolean;
   hostTransferTimer?: NodeJS.Timeout | null;
   isHostDisconnectTimer?: boolean;
   disconnectTimers: Map<string, NodeJS.Timeout>;
