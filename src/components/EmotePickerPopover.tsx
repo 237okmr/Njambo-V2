@@ -83,7 +83,7 @@ export const EmotePickerPopover: React.FC<EmotePickerPopoverProps> = ({
             ? 'bg-amber-500/20 text-amber-300 border-amber-400/60 ring-2 ring-amber-400/40'
             : 'bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-amber-300 border-slate-700/80 hover:border-amber-500/40 active:scale-95'
         } ${disabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
-        title="Répliques & Émotes Njambo"
+        title="Répliques et émotes"
       >
         <MessageSquare className="w-4 h-4 text-amber-400" />
       </button>
@@ -111,7 +111,7 @@ export const EmotePickerPopover: React.FC<EmotePickerPopoverProps> = ({
               <div className="flex items-center justify-between pb-2 border-b border-slate-800/80 mb-2.5">
                 <div className="flex items-center gap-1.5 font-bold text-amber-300 text-xs tracking-wide">
                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Répliques & Émotes</span>
+                  <span>Répliques et émotes</span>
                 </div>
                 <button
                   type="button"
@@ -149,7 +149,7 @@ export const EmotePickerPopover: React.FC<EmotePickerPopoverProps> = ({
                   }`}
                 >
                   <Zap className="w-3 h-3 text-amber-400" />
-                  <span>Mises & Rythme</span>
+                  <span>Mises et rythme</span>
                 </button>
                 <button
                   type="button"

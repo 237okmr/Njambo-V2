@@ -158,7 +158,7 @@ export const PlayZoneFelt: React.FC<PlayZoneFeltProps> = ({
             className="flex items-center gap-1.5 bg-amber-950/95 border border-amber-400 px-3 py-0.5 rounded-full text-amber-200 text-[11px] font-black shadow-lg"
           >
             <Crown className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
-            <span>{winnerPlay.playerName.split(' ')[0]} remporte le Tour {currentTrickNumber} !</span>
+            <span>{winnerPlay.playerName.split(' ')[0]} remporte le tour {currentTrickNumber} !</span>
           </motion.div>
         ) : isDoubleKoraAchieved ? (
           <motion.div
@@ -272,7 +272,7 @@ export const PlayZoneFelt: React.FC<PlayZoneFeltProps> = ({
               {/* Emergency Bot Auto-Play Badge */}
               {isAutoPlayedBot && (
                 <div
-                  title="Joué automatiquement par le bot d'urgence (délai 20s dépassé)"
+                  title="Joué automatiquement par le relais (délai de 20 s dépassé)"
                   className="absolute bottom-1 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black text-[11px] px-1.5 py-0.2 rounded-full border border-amber-300 shadow flex items-center gap-0.5 whitespace-nowrap z-25 tracking-tight"
                 >
                   <span>🤖</span>
@@ -430,7 +430,7 @@ export const PlayZoneFelt: React.FC<PlayZoneFeltProps> = ({
             )}
 
             <div className="text-[11px] sm:text-xs font-semibold text-emerald-100 mt-1">
-              Somme des 5 cartes ≤ 21 · Victoire Instantanée !
+              Somme des 5 cartes ≤ 21 · Victoire instantanée !
             </div>
           </motion.div>
         )}
@@ -464,7 +464,7 @@ export const PlayZoneFelt: React.FC<PlayZoneFeltProps> = ({
             )}
 
             <div className="text-[11px] sm:text-xs font-semibold text-amber-100 mt-1">
-              Trois "7" dans la main · Victoire Instantanée !
+              Trois "7" dans la main · Victoire instantanée !
             </div>
           </motion.div>
         )}

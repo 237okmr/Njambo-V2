@@ -200,7 +200,7 @@ export const IntegrationProposalWidget: React.FC<IntegrationProposalWidgetProps>
               <Eye className="w-3.5 h-3.5 text-amber-400" />
             </span>
             <span className="text-xs text-slate-300 font-medium">
-              Spectateur (Place libre)
+              Spectateur (place libre)
             </span>
           </div>
 

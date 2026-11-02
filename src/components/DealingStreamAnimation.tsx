@@ -95,11 +95,11 @@ export const DealingStreamAnimation: React.FC<DealingStreamAnimationProps> = ({
           <div className="text-xs font-black tracking-wide text-amber-200">
             {dealStage === 'PASS_1' ? (
               <span>
-                1ère Passe : <span className="text-amber-400 font-extrabold">3 CARTES</span> / joueur
+                1re passe : <span className="text-amber-400 font-extrabold">3 CARTES</span> / joueur
               </span>
             ) : (
               <span>
-                2ème Passe : <span className="text-amber-400 font-extrabold">2 CARTES</span> / joueur
+                2e passe : <span className="text-amber-400 font-extrabold">2 CARTES</span> / joueur
               </span>
             )}
           </div>

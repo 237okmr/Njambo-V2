@@ -224,14 +224,14 @@ export const HumanHand: React.FC<HumanHandProps> = ({
                   <span className="font-bold text-slate-100 text-xs sm:text-sm truncate">{playerName}</span>
                   <span className="shrink-0 bg-emerald-950/90 text-emerald-300 border border-emerald-700/80 text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
                     <Radio className="w-2.5 h-2.5 text-emerald-400 animate-pulse" />
-                    {isForfeit ? 'Forfait (cette partie)' : isEliminated ? 'Éliminé' : 'Spectateur (Partie passée)'}
+                    {isForfeit ? 'Forfait (cette partie)' : isEliminated ? 'Éliminé' : 'Spectateur (partie passée)'}
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400">
                   {isForfeit
                     ? 'Forfait pour cette partie (déconnexion). Tu réintégreras la table dès la partie suivante si tu restes connecté.'
                     : isEliminated
-                    ? 'Éliminé de la manche (Capital insuffisant).'
+                    ? 'Éliminé de la manche (capital insuffisant).'
                     : 'Observe les tours en cours. Tes cartes seront redistribuées dès la partie suivante.'}
                 </p>
               </div>
@@ -248,14 +248,14 @@ export const HumanHand: React.FC<HumanHandProps> = ({
           <div className="flex items-center flex-wrap gap-2 w-full sm:w-auto justify-center sm:justify-end">
             <div className="bg-slate-800/80 border border-slate-700/70 px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-xs text-slate-300">
               <Trophy className="w-3.5 h-3.5 text-amber-400" />
-              <span className="text-slate-400 font-medium">Tour:</span>
+              <span className="text-slate-400 font-medium">Tour :</span>
               <span className="font-bold text-amber-300">{currentTrickNumber} / 5</span>
             </div>
 
             {pot > 0 && (
               <div className="bg-amber-950/40 border border-amber-800/50 px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-xs text-amber-200">
                 <Coins className="w-3.5 h-3.5 text-amber-400" />
-                <span className="text-amber-400/80 font-medium">Pot:</span>
+                <span className="text-amber-400/80 font-medium">Pot :</span>
                 <span className="font-extrabold text-amber-300">{pot.toLocaleString()} jetons</span>
               </div>
             )}
@@ -263,7 +263,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
             {trickLeader && (trickLeader.tricksWonInRound || 0) > 0 && (
               <div className="bg-slate-800/80 border border-slate-700/70 px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-xs text-slate-300">
                 <Crown className="w-3.5 h-3.5 text-amber-400" />
-                <span className="text-slate-400 font-medium">Meneur:</span>
+                <span className="text-slate-400 font-medium">Meneur :</span>
                 <span className="font-bold text-slate-200">
                   {trickLeader.name}{' '}
                   <span
@@ -287,7 +287,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
         {/* Dynamic Boss Tracker Mini-Bar */}
         <div className="w-full bg-slate-950/60 border border-slate-800/80 rounded-lg px-3 py-1.5 flex items-center justify-between text-[11px] text-slate-400 overflow-x-auto gap-2">
           <span className="font-semibold text-slate-300 shrink-0 flex items-center gap-1">
-            <Crown className="w-3 h-3 text-amber-400" /> Cartes Maîtresses restantes :
+            <Crown className="w-3 h-3 text-amber-400" /> Cartes maîtresses restantes :
           </span>
           <div className="flex items-center gap-3 shrink-0">
             <span className="text-rose-400 font-bold">♥ {bossCoeur === 10 ? '10♥' : `${bossCoeur}♥`}</span>
@@ -377,7 +377,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
                 </span>
               ) : (
                 <span className="text-emerald-400 font-medium">
-                  Pas de {leadSuitInfo.name} : pas la carte, jouez librement
+                  Pas de {leadSuitInfo.name}  : tu joues librement
                 </span>
               )
             ) : (
@@ -603,7 +603,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
               title={
                 hasDeclaredKoraInPartie
                   ? 'Alerte Kora déjà transmise pour cette partie'
-                  : 'Lancer l\'Alerte Anonyme "Chasseur de Kora" à la table'
+                  : 'Lancer l\'alerte anonyme "Chasseur de Kora" à la table'
               }
             >
               <Crown className="w-3.5 h-3.5 text-slate-950 fill-slate-950 shrink-0" />
@@ -654,7 +654,7 @@ export const HumanHand: React.FC<HumanHandProps> = ({
                 setShowFoldConfirm(true);
               }}
               className="flex items-center justify-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl font-bold text-xs bg-rose-950/80 hover:bg-rose-900 text-rose-200 border border-rose-600/60 transition-all cursor-pointer shadow-md active:scale-95 shrink-0 lg:hidden"
-              title="Passer cette partie (Déclarer Forfait)"
+              title="Passer cette partie (déclarer forfait)"
             >
               <Flag className="w-3.5 h-3.5 text-rose-400 shrink-0" />
               <span>Forfait</span>

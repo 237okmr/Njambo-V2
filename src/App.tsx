@@ -2746,7 +2746,7 @@ function GameApp() {
                         title={
                           hasDeclaredKoraInPartie
                             ? 'Alerte Kora déjà transmise pour cette partie'
-                            : 'Lancer l\'Alerte Anonyme "Chasseur de Kora" à la table'
+                            : 'Lancer l\'alerte anonyme "Chasseur de Kora" à la table'
                         }
                       >
                         <Crown className="w-3.5 h-3.5 text-slate-950 fill-slate-950 shrink-0" />

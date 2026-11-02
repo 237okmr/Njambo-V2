@@ -45,7 +45,7 @@ export interface GameSetupModalProps {
   onStartGame: (
     opponentCount: number,
     baseBet: number,
-    initialCapital: number,
+    initialCapital : number,
     enableDoubleKora: boolean,
     enableUnder21: boolean,
     showBotPersonalityIcons: boolean,
@@ -56,7 +56,7 @@ export interface GameSetupModalProps {
   onSaveAndStartNewGame?: (
     opponentCount: number,
     baseBet: number,
-    initialCapital: number,
+    initialCapital : number,
     enableDoubleKora: boolean,
     enableUnder21: boolean,
     showBotPersonalityIcons: boolean,
@@ -263,7 +263,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
     {
       count: 1,
       seats: 2,
-      label: '2 Joueurs',
+      label: '2 joueurs',
       name: 'Duo',
       subtitle: '1 bot',
       summary: 'Face-à-face · 10 cartes en main',
@@ -272,7 +272,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
     {
       count: 2,
       seats: 3,
-      label: '3 Joueurs',
+      label: '3 joueurs',
       name: 'Trio',
       subtitle: '2 bots',
       summary: 'Partie à 3 · 15 cartes en main',
@@ -281,7 +281,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
     {
       count: 3,
       seats: 4,
-      label: '4 Joueurs',
+      label: '4 joueurs',
       name: 'Classique',
       subtitle: '3 bots',
       summary: 'Format officiel · 20 cartes en main',
@@ -328,7 +328,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
   const regularTrickPot = selectedBet * totalPlayers;
   const koraPot = selectedBet * totalPlayers * 2;
 
-  // The 2 requested tabs: "Partie" and "Règles & Options"
+  // The 2 requested tabs: "Partie" and "Règles et options"
   const tabsConfig: SegmentTab<SoloSetupTabType>[] = [
     {
       id: 'partie',
@@ -338,8 +338,8 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
     },
     {
       id: 'rules',
-      label: 'Règles & Options',
-      shortLabel: 'Règles & Options',
+      label: 'Règles et options',
+      shortLabel: 'Règles et options',
       icon: Sparkles,
     },
   ];
@@ -370,7 +370,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
           ) : (
             <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-800/80 border border-slate-700/80 text-slate-300 text-xs font-medium">
               <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-              <span>Solo Hors-Ligne</span>
+              <span>Partie solo</span>
             </div>
           )
         }
@@ -382,7 +382,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
                 title={`Connecté avec Google (${profile.displayName})`}
               >
                 <Cloud className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="hidden sm:inline">Cloud Actif</span>
+                <span className="hidden sm:inline">Sauvegardé</span>
               </div>
             )}
           </div>
@@ -450,7 +450,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
               <div className="flex items-center justify-between px-0.5">
                 <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
                   <Users className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Format de la Table</span>
+                  <span>Format de la table</span>
                 </div>
                 <span className="text-xs font-semibold text-amber-300 font-mono">
                   {selectedCount + 1} Joueurs au total
@@ -498,12 +498,12 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
               </div>
             </section>
 
-            {/* 1.2 Enjeux Financiers : Mise par Donne & Capital Initial */}
+            {/* 1.2 Mises et capital : Mise par Donne & Capital Initial */}
             <section className="p-3 rounded-2xl bg-[#0d121c]/90 border border-white/[0.07] flex flex-col gap-2 shadow-sm">
               <div className="flex items-center justify-between border-b border-white/[0.06] pb-1 px-0.5">
                 <span className="text-xs font-black text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
                   <Coins className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Enjeux Financiers</span>
+                  <span>Mises et capital</span>
                 </span>
                 <span className="text-xs font-mono text-slate-400">
                   Autonomie : <strong className="text-amber-300 font-bold">{Math.round(selectedCapital / selectedBet)}</strong> parties
@@ -573,12 +573,12 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
               </div>
             </section>
 
-            {/* 1.3 Niveau de l'IA : 4 boutons horizontaux (Facile / Normal / Expert / Grand Katika) */}
+            {/* 1.3 Niveau des bots : 4 boutons horizontaux (Facile / Normal / Expert / Grand Katika) */}
             <section className="p-3 rounded-2xl bg-[#0d121c]/90 border border-white/[0.07] flex flex-col gap-1.5 shadow-sm">
               <div className="flex items-center justify-between px-0.5">
                 <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
                   <Brain className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Niveau de l'IA</span>
+                  <span>Niveau des bots</span>
                 </div>
                 <span className="text-xs font-semibold text-amber-300 font-mono">
                   {difficultyOptions.find((d) => d.id === selectedDifficulty)?.stars}
@@ -587,7 +587,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
 
               <div
                 role="radiogroup"
-                aria-label="Difficulté de l'IA"
+                aria-label="Difficulté des bots"
                 className="grid grid-cols-4 p-1 rounded-xl bg-slate-950/90 border border-white/10 shadow-inner gap-1"
               >
                 {difficultyOptions.map((lvl) => {
@@ -645,13 +645,13 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
         {/* ========================================================================= */}
         {activeTab === 'rules' && (
           <div className="flex flex-col gap-2.5 animate-in fade-in duration-150">
-            {/* 2.1 Hausse des Mises (Solo) */}
+            {/* 2.1 Hausse des mises (solo) */}
             <section className="p-3 rounded-2xl bg-[#0d121c]/90 border border-white/[0.07] flex flex-col gap-1.5 shadow-sm">
               <div className="flex flex-col gap-0.5 px-0.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
                     <Zap className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Hausse des Mises (Solo)</span>
+                    <span>Hausse des mises (solo)</span>
                   </div>
                   <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-amber-400/10 text-amber-300 border border-amber-400/20 capitalize">
                     {soloBetIncreaseMode}
@@ -696,7 +696,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
             <section className="p-3 rounded-2xl bg-[#0d121c]/90 border border-white/[0.07] flex flex-col gap-1.5 shadow-sm">
               <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400 px-0.5">
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                <span>Variantes & Assistances</span>
+                <span>Variantes et assistances</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2">
@@ -813,7 +813,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
                     </div>
                     <div className="min-w-0">
                       <div className="text-xs font-bold text-white truncate leading-tight">
-                        Profils Adversaires
+                        Profils des adversaires
                       </div>
                       <div className="text-xs text-slate-400 truncate">
                         Archétypes visibles
@@ -830,7 +830,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
                   </div>
                 </div>
 
-                {/* Alerte Chasseur Kora */}
+                {/* Alerte chasseur Kora */}
                 <div
                   id="toggle-enable-kora-hunter-alerts"
                   role="switch"
@@ -859,7 +859,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
                     </div>
                     <div className="min-w-0">
                       <div className="text-xs font-bold text-white truncate leading-tight">
-                        Alerte Chasseur
+                        Alerte chasseur
                       </div>
                       <div className="text-xs text-slate-400 truncate">
                         Offensive Kora
@@ -897,9 +897,9 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
               {opponentOptions.find((o) => o.count === selectedCount)?.name} ({selectedCount + 1}J)
             </span>
             <span>·</span>
-            <span>Mise: <strong className="font-mono text-amber-400">{selectedBet} jetons</strong></span>
+            <span>Mise : <strong className="font-mono text-amber-400">{selectedBet} jetons</strong></span>
             <span>·</span>
-            <span>Capital: <strong className="font-mono text-amber-300">{selectedCapital} jetons</strong></span>
+            <span>Capital : <strong className="font-mono text-amber-300">{selectedCapital} jetons</strong></span>
             <span>·</span>
             <span className="text-amber-300 font-semibold">{difficultyOptions.find((d) => d.id === selectedDifficulty)?.label}</span>
           </div>
@@ -942,12 +942,12 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
               {canContinueCurrentManche ? (
                 <>
                   <RotateCcw className="w-3.5 h-3.5 text-rose-400" />
-                  <span>Nouvelle Manche</span>
+                  <span>Nouvelle manche</span>
                 </>
               ) : (
                 <>
                   <Play className="w-3.5 h-3.5 fill-slate-950" />
-                  <span>Lancer la Partie ({selectedCount + 1} Joueurs)</span>
+                  <span>Lancer la partie ({selectedCount + 1} Joueurs)</span>
                 </>
               )}
             </button>
@@ -976,7 +976,7 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
                 </div>
                 <div>
                   <h3 className="text-base font-black text-amber-300 leading-tight">
-                    Une Manche est déjà en cours
+                    Une manche est déjà en cours
                   </h3>
                   <p className="text-xs text-slate-400 mt-0.5">
                     Partie {currentPartieCount} terminée · {activePlayersCount} joueurs qualifiés

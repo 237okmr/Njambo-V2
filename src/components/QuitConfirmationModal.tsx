@@ -140,7 +140,7 @@ export const QuitConfirmationModal: React.FC<QuitConfirmationModalProps> = ({
               </div>
               <div className="flex-1">
                 <h2 className="text-base sm:text-lg font-black text-rose-300 leading-tight">
-                  Déclarer Forfait & Quitter ?
+                  Déclarer forfait et quitter ?
                 </h2>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-xs font-bold px-1.5 py-0.2 rounded bg-rose-950/60 text-rose-300 border border-rose-800/50">
@@ -157,10 +157,10 @@ export const QuitConfirmationModal: React.FC<QuitConfirmationModalProps> = ({
             <div className="bg-slate-950/70 p-3 rounded-xl border border-slate-800 text-xs text-slate-300 flex flex-col gap-1.5 leading-relaxed">
               <div className="flex items-center gap-1.5 text-amber-400 font-bold text-xs">
                 <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
-                <span>Relais IA & Règles d'abandon</span>
+                <span>Relais et règles d'abandon</span>
               </div>
               <p>
-                Quitter la table active le <strong className="text-slate-300">relais automatique par l'IA</strong> de secours pour ne pas bloquer les autres joueurs, puis entraîne un <strong className="text-rose-400">forfait définitif</strong> avec déduction de la mise si la manche se termine.
+                Quitter la table active le <strong className="text-slate-300">relais automatique</strong> de secours pour ne pas bloquer les autres joueurs, puis entraîne un <strong className="text-rose-400">forfait définitif</strong> avec déduction de la mise si la manche se termine.
               </p>
             </div>
 
@@ -225,7 +225,7 @@ export const QuitConfirmationModal: React.FC<QuitConfirmationModalProps> = ({
                   className="w-full py-2 px-4 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-xs border border-amber-500/40 transition flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <span>🤝</span>
-                  <span>Proposer de clore la partie (Partager le pot)</span>
+                  <span>Proposer de clore la partie (partager le pot)</span>
                 </button>
               )}
 
@@ -250,7 +250,7 @@ export const QuitConfirmationModal: React.FC<QuitConfirmationModalProps> = ({
               </div>
               <div className="flex-1">
                 <h2 className="text-base sm:text-lg font-black text-amber-200 leading-tight">
-                  Quitter la Manche ?
+                  Quitter la manche ?
                 </h2>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-xs font-bold px-1.5 py-0.2 rounded bg-amber-950/60 text-amber-300 border border-amber-800/50">
@@ -266,7 +266,7 @@ export const QuitConfirmationModal: React.FC<QuitConfirmationModalProps> = ({
             <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800 text-xs text-slate-300 flex items-center gap-2.5">
               <BookmarkCheck className="w-4 h-4 text-amber-400 shrink-0" />
               <p>
-                Tu peux sauvegarder ta manche pour la reprendre à tout moment dans <strong className="text-amber-300">Mes Manches</strong>.
+                Tu peux sauvegarder ta manche pour la reprendre à tout moment dans <strong className="text-amber-300">Mes manches</strong>.
               </p>
             </div>
 
@@ -278,7 +278,7 @@ export const QuitConfirmationModal: React.FC<QuitConfirmationModalProps> = ({
                 className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs transition flex items-center justify-center gap-2 shadow cursor-pointer"
               >
                 <Save className="w-4 h-4" />
-                <span>Sauvegarder et aller à l'Accueil</span>
+                <span>Sauvegarder et aller à l'accueil</span>
               </button>
 
               <button
@@ -288,7 +288,7 @@ export const QuitConfirmationModal: React.FC<QuitConfirmationModalProps> = ({
                 className="w-full py-2 px-4 rounded-xl bg-slate-800 hover:bg-rose-950/50 hover:text-rose-300 text-slate-400 font-semibold text-xs border border-slate-700 transition flex items-center justify-center gap-2 cursor-pointer"
               >
                 <LogOut className="w-3.5 h-3.5" />
-                <span>Aller à l'Accueil sans sauvegarder</span>
+                <span>Aller à l'accueil sans sauvegarder</span>
               </button>
 
               <button

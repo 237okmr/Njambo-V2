@@ -228,7 +228,7 @@ export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps>
             >
               <Zap className="w-3.5 h-3.5 text-slate-400 fill-slate-400" />
             </motion.div>
-            <span>Monter mise</span>
+            <span>Monter la mise</span>
             <span className="text-xs opacity-75 font-mono">({currentBaseBet}➔x2)</span>
           </button>
         ) : (
@@ -318,7 +318,7 @@ export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps>
                 </div>
                 <div className="h-6 w-px bg-slate-800" />
                 <div className="text-right">
-                  <span className="text-xs text-slate-400 uppercase tracking-wider block">Plafond table (tapis min)</span>
+                  <span className="text-xs text-slate-400 uppercase tracking-wider block">Plafond de la table</span>
                   <span className="text-sm font-bold text-amber-400 font-mono">{maxAllowedBet} jetons</span>
                 </div>
               </div>
@@ -364,7 +364,7 @@ export const BetIncreaseProposalWidget: React.FC<BetIncreaseProposalWidgetProps>
 
               <div className="text-xs text-slate-400 flex items-start gap-1.5 bg-slate-950/40 p-2 rounded-lg border border-slate-800/60">
                 <Users className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                <span>Tous les joueurs humains de la table doivent accepter à l'unanimité pour valider.</span>
+                <span>Tous les joueurs de la table doivent accepter.</span>
               </div>
 
               {/* Action Buttons */}

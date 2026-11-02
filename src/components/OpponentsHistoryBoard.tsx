@@ -61,7 +61,7 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
             <span>Distribution (3+2) en cours...</span>
           </div>
           <div className="text-[11px] sm:text-xs text-amber-300 font-mono bg-amber-950/90 px-2 py-0.5 rounded border border-amber-500/40">
-            {Object.values(cardsDealtCountByPlayer || {}).some((c: number) => c > 3) ? '2ème Passe (+2 cartes)' : '1ère Passe (3 cartes)'}
+            {Object.values(cardsDealtCountByPlayer || {}).some((c: number) => c > 3) ? '2e passe (+2 cartes)' : '1re passe (3 cartes)'}
           </div>
         </div>
       )}
@@ -290,7 +290,7 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                     {isDisconnected && (
                       <span
                         className="text-[11px] font-bold px-1.5 py-0.2 bg-amber-500/20 text-amber-300 rounded border border-amber-500/40 animate-pulse flex items-center gap-0.5"
-                        title="Micro-coupure : Reconnexion en attente"
+                        title="Reconnexion en cours"
                       >
                         <WifiOff className="w-2.5 h-2.5" />
                         <span>{graceSecondsLeft > 0 ? `${graceSecondsLeft}s` : 'Déco'}</span>
@@ -324,7 +324,7 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                             ? 'bg-rose-500/30 text-rose-300 border-rose-500/50 animate-pulse'
                             : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
                         }`}
-                        title={isDisconnected ? "Délai avant coup automatique du bot d'urgence" : "Temps restant pour jouer"}
+                        title={isDisconnected ? "Délai avant que le relais joue" : "Temps restant pour jouer"}
                       >
                         <span>⏳</span>
                         <span>{turnRemainingSeconds}s</span>
@@ -342,9 +342,9 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                     ) : player.isFoldedInRound ? (
                       <span className="text-[11px] font-bold text-rose-400 uppercase">A passé</span>
                     ) : player.isAiRelay ? (
-                      <span className="text-[11px] font-bold text-amber-300 uppercase flex items-center gap-0.5">🤖 Relais IA</span>
+                      <span className="text-[11px] font-bold text-amber-300 uppercase flex items-center gap-0.5">🤖 Relais</span>
                     ) : isDisconnected ? (
-                      <span className="text-[11px] font-bold text-amber-400 uppercase flex items-center gap-0.5">📡 Hors-ligne</span>
+                      <span className="text-[11px] font-bold text-amber-400 uppercase flex items-center gap-0.5">📡 Hors ligne</span>
                     ) : !isEliminated ? (
                       <div className="lg:hidden">
                         <span className="font-bold text-slate-200">{player.tricksWonInRound}</span>/5<span className="hidden min-[360px]:inline"> tours</span>
@@ -380,13 +380,13 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
               {isForfeit && completedPlays.length === 0 ? (
                 <div className="px-3 py-1 bg-rose-950/60 border border-rose-800/80 rounded-lg text-rose-400 text-[11px] font-extrabold tracking-wider uppercase flex items-center gap-1">
                   <Ban className="w-3 h-3" />
-                  <span className="hidden sm:inline">Partie Perdue (Forfait / Déconnexion)</span>
+                  <span className="hidden sm:inline">Partie perdue (forfait ou déconnexion)</span>
                   <span className="sm:hidden">Forfait</span>
                 </div>
               ) : isEliminated && completedPlays.length === 0 ? (
                 <div className="px-3 py-1 bg-rose-950/40 border border-rose-800/60 rounded-lg text-rose-400 text-[11px] font-extrabold tracking-wider uppercase flex items-center gap-1">
                   <Skull className="w-3 h-3" />
-                  <span className="hidden sm:inline">Éliminé de la Manche (Capital insuffisant)</span>
+                  <span className="hidden sm:inline">Éliminé de la manche (capital insuffisant)</span>
                   <span className="sm:hidden">Éliminé</span>
                 </div>
               ) : isInstantWinner ? (

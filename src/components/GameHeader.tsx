@@ -339,7 +339,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                     <SlidersHorizontal className="w-4 h-4 text-emerald-400" />
                   </div>
                   <div>
-                    <h2 className="text-base font-bold text-slate-100 leading-tight">Pause & Options</h2>
+                    <h2 className="text-base font-bold text-slate-100 leading-tight">Pause et options</h2>
                     <p className="text-[11px] text-slate-400">Paramètres et navigation</p>
                   </div>
                 </div>
@@ -386,7 +386,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                           </span>
                         </div>
                         <span className="text-[11px] text-slate-400">
-                          {stats.gamesWon}V / {stats.gamesPlayed}P • {isLoggedIn ? 'Cloud Google' : 'Invité'}
+                          {stats.gamesWon}V / {stats.gamesPlayed}P • {isLoggedIn ? 'Compte Google' : 'Invité'}
                         </span>
                       </div>
                     </div>
@@ -399,7 +399,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                 {/* CATEGORY 1: En jeu (Confort & Rythme) */}
                 <div className="flex flex-col gap-1.5">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1">
-                    Gameplay & Confort
+                    Jeu et confort
                   </span>
                   <div className="bg-slate-950/60 rounded-2xl p-1 border border-slate-800/60 flex flex-col gap-0.5">
                     {/* Game Speed Toggle */}
@@ -412,7 +412,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                           <Zap className="w-4 h-4 text-amber-400 fill-amber-400 shrink-0" />
                           <div>
                             <span className="font-semibold text-xs text-slate-100 block">Vitesse du jeu</span>
-                            <span className="text-[11px] text-slate-400">Accélérer les tours des IA</span>
+                            <span className="text-[11px] text-slate-400">Accélérer les tours des bots</span>
                           </div>
                         </div>
                         <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-950/70 text-amber-300 border border-amber-800/60 font-mono">
@@ -435,8 +435,8 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                             {AI_DIFFICULTIES_INFO[activeGameState.aiDifficulty || 'NORMAL']?.icon || '⚔️'}
                           </span>
                           <div>
-                            <span className="font-semibold text-xs text-slate-100 block">Niveau des IA</span>
-                            <span className="text-[11px] text-slate-400">Modifier l'intelligence adverse</span>
+                            <span className="font-semibold text-xs text-slate-100 block">Niveau des bots</span>
+                            <span className="text-[11px] text-slate-400">Changer la difficulté</span>
                           </div>
                         </div>
                         <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-950/70 text-amber-300 border border-amber-800/60">
@@ -499,10 +499,10 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                   </div>
                 </div>
 
-                {/* CATEGORY 2: Assistance & Outils */}
+                {/* CATEGORY 2: Aide et outils */}
                 <div className="flex flex-col gap-1.5">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1">
-                    Assistance & Outils
+                    Aide et outils
                   </span>
                   <div className="bg-slate-950/60 rounded-2xl p-1 border border-slate-800/60 flex flex-col gap-0.5">
                     {/* Rules */}

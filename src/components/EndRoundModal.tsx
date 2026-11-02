@@ -256,7 +256,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
         case 'THREE_SEVENS':
           return {
             badgeClass: 'bg-gradient-to-r from-amber-400 to-amber-400 text-slate-950 font-black shadow-amber-500/40',
-            badgeText: '777 · Trois Septs',
+            badgeText: '777 · Trois 7',
             modalBorder: 'border-amber-400/80 shadow-amber-500/30 ring-1 ring-amber-400/20',
             bannerGradient: 'from-amber-950 via-amber-900 to-amber-950 border-2 border-amber-400 shadow-amber-500/30',
             icon: <Sparkles className="w-3.5 h-3.5" />,
@@ -281,7 +281,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
         default:
           return {
             badgeClass: 'bg-slate-800/90 text-amber-300 border border-amber-400/40 font-black',
-            badgeText: 'Victoire au 5ᵉ Tour',
+            badgeText: 'Victoire au 5ᵉ tour',
             modalBorder: levelTheme.modalBorder,
             bannerGradient: levelTheme.bannerGradient,
             icon: <Trophy className="w-3.5 h-3.5 text-amber-400" />,
@@ -291,7 +291,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
 
     return {
       badgeClass: 'bg-slate-800/90 text-amber-300 border border-amber-400/40 font-black',
-      badgeText: isMancheOver ? 'Victoire de la Manche' : 'Victoire au 5ᵉ Tour',
+      badgeText: isMancheOver ? 'Victoire de la manche' : 'Victoire au 5ᵉ tour',
       modalBorder: levelTheme.modalBorder,
       bannerGradient: levelTheme.bannerGradient,
       icon: <Trophy className="w-3.5 h-3.5 text-amber-400" />,
@@ -401,14 +401,14 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
                 {isHumanEliminated && !isSpectator
                   ? '☠️ Fin de partie (Éliminé)'
                   : isMancheOver
-                  ? '🏆 Victoire de la Manche'
+                  ? '🏆 Victoire de la manche'
                   : `Partie ${partieCount}`}
               </div>
               <div className={`text-base sm:text-lg font-black flex items-center gap-2 leading-tight ${
                 isHumanEliminated && !isSpectator ? 'text-rose-200' : 'text-amber-200'
               }`}>
                 {isHumanEliminated && !isSpectator ? (
-                  <span>Banqueroute du Joueur</span>
+                  <span>Banqueroute du joueur</span>
                 ) : (
                   <>
                     <Crown className="w-4 h-4 text-amber-400 shrink-0" />
@@ -436,7 +436,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
                   ? '👑 Victoire par forfait (tous les autres joueurs humains ont quitté la partie).'
                   : isHumanWinner
                   ? '🎉 Félicitations ! Tu as éliminé tous tes adversaires.'
-                  : `🏆 ${winnerName} remporte définitivement la Manche.`}
+                  : `🏆 ${winnerName} remporte définitivement la manche.`}
               </span>
             ) : partieWinType === 'FORFEIT' ? (
               <span className="text-xs text-amber-300 font-bold text-center">
@@ -448,7 +448,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
               </span>
             ) : partieWinType === 'THREE_SEVENS' ? (
               <span className="text-xs text-amber-300 font-medium">
-                3x Septs reçus dès la distribution
+                Trois 7 reçus dès la distribution
               </span>
             ) : (
               finalTrick?.winningCard && (() => {
@@ -520,7 +520,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
             <div className="bg-slate-950/85 border border-emerald-500/40 rounded-xl p-2 sm:p-3 text-center shadow-lg">
               <div className="text-xs font-bold text-emerald-300 mb-2 uppercase tracking-wider flex items-center justify-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Main Victorieuse</span>
+                <span>Main victorieuse</span>
               </div>
               <div className="flex items-center justify-center gap-2 sm:gap-3 flex-wrap py-1">
                 {winningHand.map((card, idx) => {
@@ -646,7 +646,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
                         if (mpPlayer.isAiRelay) {
                           return (
                             <span className="text-slate-300 font-semibold bg-slate-800/80 px-1.5 py-0.5 rounded border border-slate-700">
-                              🤖 Relais IA
+                              🤖 Relais
                             </span>
                           );
                         }
@@ -855,7 +855,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
               className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-slate-950 font-black text-sm shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 cursor-pointer ring-1 ring-amber-400/60 btn-juicy"
             >
               <RotateCcw className="w-4 h-4" />
-              <span>Recommencer une Manche</span>
+              <span>Recommencer une manche</span>
             </button>
           ) : !isMancheOver ? (
             isOnlineMultiplayer ? (
@@ -891,7 +891,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
                     <div className="w-full py-2.5 px-3 rounded-xl bg-slate-950/60 border border-slate-500/30 text-slate-300 text-xs font-medium text-center flex flex-col items-center justify-center gap-1.5">
                       <div className="flex items-center justify-center gap-2">
                         <Eye className="w-4 h-4 shrink-0 text-slate-400" />
-                        <span className="font-bold">Match en direct (Spectateur)</span>
+                        <span className="font-bold">Partie en direct (spectateur)</span>
                         {roundEndRemainingSeconds !== null && roundEndRemainingSeconds !== undefined && roundEndRemainingSeconds > 0 && (
                           <span className="text-xs bg-slate-900/80 border border-slate-400/40 text-slate-200 px-1.5 py-0.5 rounded font-mono font-bold">
                             {roundEndRemainingSeconds}s
@@ -1000,7 +1000,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
                 className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-slate-950 font-black text-sm shadow-lg shadow-amber-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer ring-1 ring-amber-400/60 active:scale-[0.99]"
               >
                 <RotateCcw className="w-4 h-4" />
-                <span>Recommencer une Manche (Hôte)</span>
+                <span>Recommencer une manche (Hôte)</span>
               </button>
             ) : (
               <div className="flex flex-col gap-2">
@@ -1012,7 +1012,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
                     className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-500/20 hover:brightness-110 transition flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <RotateCcw className="w-4 h-4" />
-                    <span>Demander une Revanche ⚔️</span>
+                    <span>Demander une revanche ⚔️</span>
                   </button>
                 )}
                 <div className="w-full py-2 px-3 rounded-xl bg-slate-950/80 text-amber-300/90 border border-slate-800 text-center text-xs font-semibold flex items-center justify-center gap-2">
@@ -1039,7 +1039,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
               className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-slate-950 font-black text-sm shadow-lg shadow-amber-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer ring-1 ring-amber-400/60 active:scale-[0.99]"
             >
               <RotateCcw className="w-4 h-4" />
-              <span>Recommencer une Manche</span>
+              <span>Recommencer une manche</span>
             </button>
           )}
 
@@ -1118,7 +1118,7 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
                 className="py-1.5 px-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-amber-300 font-medium text-xs border border-amber-500/30 flex items-center justify-center gap-1 cursor-pointer btn-juicy-subtle"
               >
                 <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" />
-                <span className="truncate">Config</span>
+                <span className="truncate">Réglages</span>
               </button>
             ) : onQuitManche ? (
               <button

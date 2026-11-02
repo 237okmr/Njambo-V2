@@ -145,7 +145,7 @@ export const InstallPwaModal: React.FC<InstallPwaModalProps> = ({
                 <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800 flex flex-col gap-1">
                   <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-bold">
                     <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>Tiroir d'apps</span>
+                    <span>Liste des applications</span>
                   </div>
                   <span className="text-xs text-slate-400 leading-tight">
                     Icône dédiée avec tes autres applications
@@ -189,7 +189,7 @@ export const InstallPwaModal: React.FC<InstallPwaModalProps> = ({
               {/* Step-by-Step Android Chrome Visual Schematic */}
               <div className="p-3 rounded-2xl bg-slate-950/70 border border-slate-800 text-left">
                 <h4 className="text-xs font-black text-amber-300 uppercase tracking-wider mb-2.5">
-                  Guide Rapide Chrome Android
+                  Guide rapide pour Chrome sur Android
                 </h4>
 
                 <div className="grid grid-cols-3 gap-2 text-center">

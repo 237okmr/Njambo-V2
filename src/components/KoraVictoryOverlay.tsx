@@ -106,7 +106,7 @@ export const KoraVictoryOverlay: React.FC<KoraVictoryOverlayProps> = ({
           cardBg: 'bg-gradient-to-b from-amber-950 via-yellow-950 to-slate-950 border-yellow-400 shadow-yellow-500/40',
           raysBg: 'from-yellow-500/40 via-amber-900/10 to-transparent',
           btnBg: 'bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-slate-950 shadow-yellow-500/30',
-          description: 'A obtenu 3x Septs dès la distribution initiale et gagne immédiatement la manche !',
+          description: 'A reçu trois 7 dès la distribution et gagne immédiatement la manche !',
           tagText: '777 CUMULÉ',
           penaltyText: 'Victoire directe',
         };
@@ -126,7 +126,7 @@ export const KoraVictoryOverlay: React.FC<KoraVictoryOverlayProps> = ({
         };
       case 'FORFEIT':
         return {
-          title: '👑 VICTOIRE PAR FORFEIT !',
+          title: '👑 VICTOIRE PAR FORFAIT !',
           icon: <Trophy className="w-4 h-4 text-slate-950 fill-slate-950" />,
           mainIcon: <Crown className="w-12 h-12 sm:w-14 sm:h-14 fill-current drop-shadow-md" />,
           badgeBg: 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 border-amber-200 shadow-amber-500/50',
@@ -136,7 +136,7 @@ export const KoraVictoryOverlay: React.FC<KoraVictoryOverlayProps> = ({
           btnBg: 'bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 shadow-amber-500/30',
           description: 'Tous les adversaires ont quitté la table ou abandonné la manche.',
           tagText: 'FORFEIT',
-          penaltyText: 'Part du Pot',
+          penaltyText: 'Part du pot',
         };
       case 'KORA':
       default:
@@ -213,7 +213,7 @@ export const KoraVictoryOverlay: React.FC<KoraVictoryOverlayProps> = ({
           {/* Gains & Multiplier Summary */}
           <div className="w-full bg-slate-950/80 border border-slate-800 rounded-2xl p-3 sm:p-4 grid grid-cols-2 gap-2 sm:gap-3 text-center">
             <div className="flex flex-col items-center justify-center border-r border-slate-800 pr-1 sm:pr-2">
-              <span className="text-[10px] font-bold uppercase text-slate-400">Pot Récolté</span>
+              <span className="text-[10px] font-bold uppercase text-slate-400">Pot récolté</span>
               <span className="text-sm sm:text-lg font-black text-amber-400 flex items-center gap-1 mt-0.5 justify-center">
                 <Coins className="w-4 h-4 text-amber-400 shrink-0" />
                 <span className="truncate">+{pot} {unit}</span>
@@ -221,7 +221,7 @@ export const KoraVictoryOverlay: React.FC<KoraVictoryOverlayProps> = ({
             </div>
 
             <div className="flex flex-col items-center justify-center pl-1 sm:pl-2">
-              <span className="text-[10px] font-bold uppercase text-slate-400">Statut du Gain</span>
+              <span className="text-[10px] font-bold uppercase text-slate-400">Statut du gain</span>
               <span className="text-sm sm:text-lg font-black text-amber-300 flex items-center gap-1 mt-0.5 justify-center">
                 <Zap className="w-4 h-4 shrink-0" />
                 <span className="truncate">{config.penaltyText}</span>
@@ -237,7 +237,7 @@ export const KoraVictoryOverlay: React.FC<KoraVictoryOverlayProps> = ({
             onClick={onContinue}
             className={`w-full py-3 sm:py-3.5 px-4 sm:px-6 rounded-2xl font-black text-xs sm:text-base shadow-xl flex items-center justify-center gap-2 cursor-pointer transition-all ${config.btnBg}`}
           >
-            <span>Voir le Bilan de la Partie</span>
+            <span>Voir le bilan de la partie</span>
             <ArrowRight className="w-5 h-5" />
           </motion.button>
         </motion.div>
