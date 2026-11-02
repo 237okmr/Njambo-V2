@@ -36,6 +36,8 @@ export interface PushPreferences {
   quietHoursEnd: number; // 0-23 (e.g. 8)
 }
 
+const FIRST_PLAY_ASKED_KEY = 'njambo_push_first_play_asked';
+
 export const DEFAULT_PUSH_PREFERENCES: PushPreferences = {
   turnReminders: true,
   directInvites: true,
@@ -360,7 +362,7 @@ class PushNotificationService {
 
   public async enableNotifications(profile: PushUserProfile | { id: string; name: string }): Promise<{ success: boolean; error?: string }> {
     if (!this.status.isSupported) {
-      return { success: false, error: 'Les notifications Push ne sont pas supportées par ton navigateur.' };
+      return { success: false, error: 'Ton appareil ne permet pas de recevoir les notifications.' };
     }
 
     // L'identifiant reçu de l'écran appelant peut être un repli (« guest ») ou un identifiant de session de salle :
@@ -381,17 +383,17 @@ class PushNotificationService {
         return {
           success: false,
           error: perm === 'denied'
-            ? 'Notifications bloquées dans les paramètres de ton navigateur.'
-            : 'Permission refusée.',
+            ? 'Les notifications sont bloquées. Autorise-les dans les réglages de ton téléphone.'
+            : 'Notifications non activées.',
         };
       }
 
       // 2. Fetch server VAPID public key
       const keyRes = await fetch('/api/push/public-key');
-      if (!keyRes.ok) throw new Error('Impossible de récupérer la clé VAPID du serveur.');
+      if (!keyRes.ok) throw new Error('Les notifications n’ont pas pu être activées. Réessaie dans un instant.');
       const keyData = await keyRes.json();
       const vapidPublicKey = keyData.publicKey;
-      if (!vapidPublicKey) throw new Error('Clé VAPID publique introuvable.');
+      if (!vapidPublicKey) throw new Error('Les notifications n’ont pas pu être activées. Réessaie dans un instant.');
 
       // 3. Service worker prêt
       const reg = await navigator.serviceWorker.ready;
@@ -424,7 +426,7 @@ class PushNotificationService {
         }),
       });
 
-      if (!saveRes.ok) throw new Error('Erreur lors de l’enregistrement de l’abonnement sur le serveur.');
+      if (!saveRes.ok) throw new Error('Les notifications n’ont pas pu être activées. Réessaie dans un instant.');
 
       this.status.isSubscribed = true;
       this.status.isLoading = false;
@@ -434,8 +436,20 @@ class PushNotificationService {
       console.error('[PushService] Error enabling push:', err);
       this.status.isLoading = false;
       this.notifyListeners();
-      return { success: false, error: err?.message || 'Erreur lors de l’activation des notifications.' };
+      return { success: false, error: err?.message || 'Les notifications n’ont pas pu être activées. Réessaie dans un instant.' };
     }
+  }
+
+  /** Au premier appui sur « Jouer » : ouvre la demande du téléphone, une seule fois. Appelée dans le geste du joueur, comme l'exigent les navigateurs. */
+  public requestOnFirstPlay(name: string): void {
+    if (!this.status.isSupported || this.status.permission !== 'default' || this.status.isSubscribed) return;
+    try {
+      if (localStorage.getItem(FIRST_PLAY_ASKED_KEY)) return;
+      localStorage.setItem(FIRST_PLAY_ASKED_KEY, '1');
+    } catch {
+      return;
+    }
+    void this.enableNotifications({ id: getPlayerId(), name });
   }
 
   public async disableNotifications(_userId?: string): Promise<{ success: boolean; error?: string }> {
@@ -466,7 +480,7 @@ class PushNotificationService {
       console.error('[PushService] Error disabling push:', err);
       this.status.isLoading = false;
       this.notifyListeners();
-      return { success: false, error: err?.message || 'Erreur lors de la désactivation.' };
+      return { success: false, error: err?.message || 'Les notifications n’ont pas pu être désactivées. Réessaie dans un instant.' };
     }
   }
 
@@ -475,7 +489,7 @@ class PushNotificationService {
     try {
       const reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.getSubscription();
-      if (!sub) return { success: false, error: 'Aucun abonnement actif sur cet appareil.' };
+      if (!sub) return { success: false, error: 'Les notifications ne sont pas activées sur cet appareil.' };
       const res = await fetch('/api/push/send-test', {
         method: 'POST',
         headers: await getPushAuthHeaders(),
@@ -483,11 +497,11 @@ class PushNotificationService {
       });
       const data = await res.json();
       if (!data.success) {
-        return { success: false, error: data.error || 'Échec de l’envoi de la notification test.' };
+        return { success: false, error: data.error || 'La notification n’a pas pu être envoyée. Réessaie dans un instant.' };
       }
       return { success: true };
     } catch (err: any) {
-      return { success: false, error: err?.message || 'Erreur réseau.' };
+      return { success: false, error: err?.message || 'Vérifie ta connexion puis réessaie.' };
     }
   }
 }

@@ -349,7 +349,7 @@ export class RoomManager {
       this.sendMessage(client.socket, {
         type: 'ERROR',
         errorCode: 'BANNED',
-        error: `Ton compte a été suspendu par le Katika Master. Motif: ${reason}`,
+        error: `Ton compte a été suspendu par le Katika. Motif : ${reason}`,
       });
       client.socket.close();
     }
@@ -644,7 +644,7 @@ export class RoomManager {
             const amount = r.gameState?.players?.find((p) => p.id === playerId)?.capital ?? rp.capital;
             this.closeCashSeat(r, playerId, amount);
             rp.leftRoom = true;
-            this.pushTableEmote(r, `💰 ${rp.name}, absent, récupère ${amount} FCFA dans Kora Cash.`, '💰');
+            this.pushTableEmote(r, `${rp.name}, absent, récupère ${amount} FCFA dans Kora Cash.`, '💰');
           }
         },
         onKoraMoment: (moment) => {
@@ -991,7 +991,7 @@ export class RoomManager {
       this.sendMessage(client.socket, {
         type: 'ERROR',
         errorCode: 'GENERIC',
-        error: 'Jeton d\'authentification manquant.',
+        error: 'Reconnecte-toi à ton compte Google.',
       });
       return;
     }
@@ -1022,7 +1022,7 @@ export class RoomManager {
           this.sendMessage(client.socket, {
             type: 'ERROR',
             errorCode: 'AUTH_TOKEN_INVALID',
-            error: 'Authentification Google invalide ou expirée.',
+            error: 'Ta connexion Google a expiré. Reconnecte-toi.',
           });
           return;
         }
@@ -1136,7 +1136,7 @@ export class RoomManager {
         this.sendMessage(client.socket, {
           type: 'ERROR',
           errorCode: 'GENERIC',
-          error: 'Erreur lors de la vérification de ton identité.',
+          error: 'Ton compte n\'a pas pu être vérifié. Réessaie.',
         });
       });
   }
@@ -1194,7 +1194,7 @@ export class RoomManager {
         this.sendMessage(client.socket, {
           type: 'ERROR',
           errorCode: 'AUTH_REQUIRED',
-          error: 'Action non autorisée : identifiant joueur invalide pour cette connexion.',
+          error: 'Action impossible. Recharge le jeu puis réessaie.',
           expectedPlayerId: client.playerId,
         });
         return;
@@ -1207,7 +1207,7 @@ export class RoomManager {
         this.sendMessage(client.socket, {
           type: 'ERROR',
           errorCode: 'AUTH_REQUIRED',
-          error: 'Action non autorisée : authentification requise.',
+          error: 'Action impossible. Recharge le jeu puis réessaie.',
         });
         return;
       }
@@ -1220,7 +1220,7 @@ export class RoomManager {
           this.sendMessage(client.socket, {
             type: 'ERROR',
             errorCode: 'BANNED',
-            error: `Accès refusé : ton compte a été suspendu. Motif: ${sanction.bannedReason || 'Sanction administrative'}`,
+            error: `Accès refusé : ton compte a été suspendu. Motif : ${sanction.bannedReason || 'Sanction administrative'}`,
           });
           try {
             client.socket.close();
@@ -1603,7 +1603,7 @@ export class RoomManager {
         target = this.findPublicCashTable(bet, capacity);
       }
       if (!target && this.engineConfig.allowNewRooms === false) {
-        this.sendCashError(client, "L'ouverture de nouvelles tables est temporairement suspendue par l'administration Katika.");
+        this.sendCashError(client, "L'ouverture de nouvelles tables est temporairement suspendue par le Katika.");
         return;
       }
     }
@@ -1810,7 +1810,7 @@ export class RoomManager {
       const amount = rp.capital;
       this.closeCashSeat(room, uid, amount);
       rp.leftRoom = true;
-      this.pushTableEmote(room, `💰 ${rp.name} quitte la table avec ${amount} FCFA.`, '💰');
+      this.pushTableEmote(room, `${rp.name} quitte la table avec ${amount} FCFA.`, '💰');
     });
   }
 
@@ -1850,7 +1850,7 @@ export class RoomManager {
       const target = partieVoided ? seat.settled : (gp?.capital ?? rp?.capital ?? seat.settled);
       this.closeCashSeat(room, uid, target, { keepCapitalShown: true });
     });
-    this.pushTableEmote(room, '💰 Table terminée : le capital de chacun est revenu dans Kora Cash.', '💰');
+    this.pushTableEmote(room, 'Table terminée : le capital de chacun est revenu dans Kora Cash.', '💰');
   }
 
   /** Sortie volontaire pendant une partie (forfait avec la pénalité habituelle) ou entre deux parties (tout le capital). */
@@ -1876,7 +1876,7 @@ export class RoomManager {
       const amount = gp?.capital ?? rp?.capital ?? seat.settled;
       this.closeCashSeat(room, uid, amount);
       if (rp) {
-        this.pushTableEmote(room, `💰 ${rp.name} quitte la table avec ${amount} FCFA.`, '💰');
+        this.pushTableEmote(room, `${rp.name} quitte la table avec ${amount} FCFA.`, '💰');
       }
     }
     if (rp) {
@@ -1964,7 +1964,7 @@ export class RoomManager {
             p.score = p.capital;
             if (p.capital >= room.baseBet) p.isEliminated = false;
           });
-          if (player) this.pushTableEmote(room, `💰 ${player.name} recave de ${amount} FCFA.`, '💰');
+          if (player) this.pushTableEmote(room, `${player.name} recave de ${amount} FCFA.`, '💰');
         },
       });
       room.updatedAt = Date.now();
@@ -2044,7 +2044,7 @@ export class RoomManager {
       this.sendMessage(client.socket, {
         type: 'ERROR',
         errorCode: 'JOIN_REFUSED',
-        error: "L'ouverture de nouvelles tables est temporairement suspendue par l'administration Katika.",
+        error: "L'ouverture de nouvelles tables est temporairement suspendue par le Katika.",
       });
       return;
     }
@@ -2113,7 +2113,7 @@ export class RoomManager {
       this.sendMessage(client.socket, {
         type: 'ERROR',
         errorCode: 'JOIN_REFUSED',
-        error: "Connexion Google requise : Cette table a été configurée pour exiger un compte Google.",
+        error: "Connexion Google requise : cette table exige un compte Google.",
       });
       return;
     }
@@ -2256,7 +2256,7 @@ export class RoomManager {
         this.sendMessage(client.socket, {
           type: 'ERROR',
           errorCode: 'RATE_LIMITED',
-          error: 'Trop de tentatives de connexion. Veuillez patienter quelques secondes.',
+          error: 'Trop de tentatives de connexion. Patiente quelques secondes.',
         });
         return;
       }
@@ -2313,7 +2313,7 @@ export class RoomManager {
         this.sendMessage(client.socket, {
           type: 'ERROR',
           errorCode: 'GENERIC',
-          error: "Protocole obsolète : Veuillez recharger l'application pour synchroniser la version compatible du jeu.",
+          error: "Une nouvelle version du jeu est disponible. Recharge le jeu pour continuer.",
           isProtocolCompatible: false,
           serverVersion: this.SERVER_VERSION,
           protocolVersion: this.CURRENT_PROTOCOL_VERSION,
@@ -2500,7 +2500,7 @@ export class RoomManager {
           this.sendMessage(client.socket, {
             type: 'ERROR',
             errorCode: 'SEAT_TAKEN',
-            error: "Session protégée : Ce siège est réservé par un autre appareil. Tu as été admis sur la table en mode spectateur.",
+            error: "Ce siège est réservé par un autre appareil. Tu rejoins la table en spectateur.",
           });
         } else {
           // In LOBBY
@@ -2883,7 +2883,7 @@ export class RoomManager {
               this.broadcastRoomState(roomCode);
               this.evaluateAutoStart(roomCode);
 
-              const alertMsg = `👑 Transfert d'Hôte : L'ancien hôte s'est déconnecté. Le rôle d'hôte a été confié à ${newHost.name} !`;
+              const alertMsg = `👑 Transfert d'hôte : L'ancien hôte s'est déconnecté. Le rôle d'hôte a été confié à ${newHost.name} !`;
               this.clients.forEach((c) => {
                 if (c.roomCode === roomCode && c.socket.readyState === WebSocket.OPEN) {
                   this.sendMessage(c.socket, {
@@ -2954,7 +2954,7 @@ export class RoomManager {
             this.evaluateAutoStart(roomCode);
 
             // Diffusion d'une alerte du transfert d'hôte aux joueurs
-            const alertMsg = `⚠️ Transfert d'Hôte : L'hôte était inactif. Le rôle d'hôte a été transféré à ${newHost.name} !`;
+            const alertMsg = `⚠️ Transfert d'hôte : L'hôte était inactif. Le rôle d'hôte a été transféré à ${newHost.name} !`;
             this.clients.forEach((c) => {
               if (c.roomCode === roomCode && c.socket.readyState === WebSocket.OPEN) {
                 this.sendMessage(c.socket, {
@@ -3152,7 +3152,7 @@ export class RoomManager {
       this.sendMessage(client.socket, {
         type: 'ERROR',
         errorCode: 'GENERIC',
-        error: 'Un salon multijoueur requiert au moins 2 joueurs humains connectés pour démarrer la partie.',
+        error: 'Il faut au moins 2 joueurs connectés pour lancer la partie.',
       });
       return;
     }
@@ -3664,7 +3664,7 @@ export class RoomManager {
     if (room.hostId !== client.playerId) return;
 
     const hostName = room.hostName || 'L’hôte';
-    const alertMsg = `${hostName} souhaite lancer la partie ! Veuillez cliquer sur "Prêt".`;
+    const alertMsg = `${hostName} souhaite lancer la partie ! Appuie sur "Prêt".`;
 
     this.clients.forEach((c) => {
       if (c.roomCode === room.id && c.playerId !== room.hostId && c.socket.readyState === WebSocket.OPEN) {
@@ -5072,8 +5072,8 @@ export class RoomManager {
           'DISCONNECTED',
           `⚠️ Table #${room.id} : un relais joue pour toi`,
           mancheAtStake
-            ? 'Revenez avant la fin de la partie (et de son compte à rebours) : sinon la manche est perdue par forfait.'
-            : 'Revenez avant la fin de la partie pour reprendre la main. Sinon la mise de la partie est perdue.'
+            ? 'Reviens avant la fin de la partie (et de son compte à rebours) : sinon la manche est perdue par forfait.'
+            : 'Reviens avant la fin de la partie pour reprendre la main. Sinon la mise de la partie est perdue.'
         );
         return;
       }
@@ -5151,7 +5151,7 @@ export class RoomManager {
           if (!isOnlineAndAtTable) {
             pushService.sendNotificationToUser(p.id, {
               title: '⚔️ La partie commence',
-              body: `Table #${room.id} : les cartes sont distribuées. Reprenez la partie.`,
+              body: `Table #${room.id} : les cartes sont distribuées. Reprends la partie.`,
               icon: '/icon-192.png',
               badge: '/badge-96.png',
               tag: `gamestart-${room.id}`,
@@ -5439,7 +5439,7 @@ export class RoomManager {
         this.sendMessage(kicked.socket, {
           type: 'ERROR',
           errorCode: 'BANNED',
-          error: 'Tu as été expulsé de la table par le Katika Master. Ton capital est revenu dans Kora Cash.',
+          error: 'Tu as été expulsé de la table par le Katika. Ton capital est revenu dans Kora Cash.',
         });
         kicked.socket.close();
       }
@@ -5452,7 +5452,7 @@ export class RoomManager {
       this.sendMessage(client.socket, {
         type: 'ERROR',
         errorCode: 'BANNED',
-        error: 'Tu as été expulsé de la table par le Katika Master.',
+        error: 'Tu as été expulsé de la table par le Katika.',
       });
       client.socket.close();
     }
@@ -5495,7 +5495,7 @@ export class RoomManager {
         this.sendMessage(client.socket, {
           type: 'ERROR',
           errorCode: 'ROOM_NOT_FOUND',
-          error: 'Cette table a été fermée administrativement par le Katika Master.',
+          error: 'Cette table a été fermée par le Katika.',
         });
       }
     });
@@ -5890,7 +5890,7 @@ export class RoomManager {
       this.sendMessage(client.socket, {
         type: 'ERROR',
         errorCode: 'JOIN_REFUSED',
-        error: "Connexion Google requise : L'envoi d'invitations privées nécessite un compte Google authentifié.",
+        error: "Connexion Google requise : connecte-toi pour inviter un joueur.",
       });
       return;
     }
@@ -5899,7 +5899,7 @@ export class RoomManager {
       this.sendMessage(client.socket, {
         type: 'ERROR',
         errorCode: 'GENERIC',
-        error: 'Paramètres d\'invitation incomplets.',
+        error: 'L\'invitation n\'a pas pu être envoyée. Réessaie.',
       });
       return;
     }
@@ -6020,7 +6020,7 @@ export class RoomManager {
       this.sendMessage(client.socket, {
         type: 'ERROR',
         errorCode: 'RATE_LIMITED',
-        error: `Veuillez patienter ${remainingSeconds} seconde${remainingSeconds > 1 ? 's' : ''} avant de réinviter ce joueur.`,
+        error: `Patiente ${remainingSeconds} seconde${remainingSeconds > 1 ? 's' : ''} avant de réinviter ce joueur.`,
       });
       return;
     }
@@ -6081,7 +6081,7 @@ export class RoomManager {
       type: 'NOTIFICATION',
       notification: deliveredViaWs
         ? `Invitation transmise à ton contact pour le salon ${msg.roomCode}.`
-        : `Invitation envoyée par notification Push mobile pour le salon ${msg.roomCode}.`,
+        : `Invitation envoyée par notification pour le salon ${msg.roomCode}.`,
     });
   }
 
@@ -6488,7 +6488,7 @@ export class RoomManager {
     room.lastJoinPushTime = now;
 
     pushService.sendNotificationToUser(origHostId, {
-      title: 'Katika - Nouveau joueur à ta table !',
+      title: 'Nouveau joueur à ta table !',
       body: `${joiningPlayerName} a rejoint ta table #${room.id}. Clique pour revenir jouer.`,
       icon: '/icon-192.png',
       badge: '/badge-96.png',

@@ -2027,7 +2027,7 @@ export class ServerGameEngine {
 
     if (hadAiRelayStarted) {
       const relayInfoText = relayCount > 0
-        ? ` (L'IA a joué ${relayCount} tour${relayCount > 1 ? 's' : ''} en ton absence)`
+        ? ` (Le relais a joué ${relayCount} tour${relayCount > 1 ? 's' : ''} en ton absence)`
         : '';
 
       const emote: EmoteMessage = {
@@ -2081,7 +2081,7 @@ export class ServerGameEngine {
         id: 'em_' + Math.random().toString(36).substring(2, 9),
         playerId: 'system',
         playerName: 'Table',
-        text: `🤖 ${rp.name} a été remplacé par un Bot (${reason}).`,
+        text: `🤖 ${rp.name} a été remplacé par un bot (${reason}).`,
         emoji: '🤖',
         timestamp: Date.now(),
         isBot: true,
@@ -2341,7 +2341,7 @@ export class ServerGameEngine {
           id: 'em_' + Math.random().toString(36).substring(2, 9),
           playerId: 'system',
           playerName: 'Table',
-          text: `⚠️ ${rp.name} a quitté. ${soleHuman.name} peut continuer contre l'IA ou réclamer la victoire par forfait !`,
+          text: `⚠️ ${rp.name} a quitté. ${soleHuman.name} peut continuer contre un bot ou réclamer la victoire par forfait !`,
           emoji: '⚔️',
           timestamp: Date.now(),
           isBot: true,

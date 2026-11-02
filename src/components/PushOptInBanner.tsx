@@ -62,7 +62,7 @@ export function usePushOptIn(context: { active: boolean; userId: string; userNam
       triggerHaptic('success');
       context.onResult('Alertes de table activées.');
     } else {
-      context.onResult(res.error || "Impossible d'activer les alertes.");
+      context.onResult(res.error || "Les alertes n'ont pas pu être activées. Réessaie dans un instant.");
       later();
     }
   }, [context, later]);

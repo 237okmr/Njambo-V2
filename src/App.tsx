@@ -460,10 +460,10 @@ function GameApp() {
     const latestEmote = multiplayerRoom.activeEmotes[multiplayerRoom.activeEmotes.length - 1];
     if (latestEmote && latestEmote.id !== lastProcessedEmoteIdRef.current) {
       lastProcessedEmoteIdRef.current = latestEmote.id;
-      if (latestEmote.text && latestEmote.text.includes("L'IA a joué") && latestEmote.text.includes(localPlayerName)) {
-        const match = latestEmote.text.match(/L'IA a joué (\d+ tour[s]?) en (?:votre|ton) absence/);
+      if (latestEmote.text && latestEmote.text.includes('Le relais a joué') && latestEmote.text.includes(localPlayerName)) {
+        const match = latestEmote.text.match(/Le relais a joué (\d+ tour[s]?) en ton absence/);
         const trickStr = match ? match[1] : '1 tour';
-        triggerToast(`🤖 L'IA a joué ${trickStr} en ton absence.`);
+        triggerToast(`🤖 Le relais a joué ${trickStr} en ton absence.`);
       }
     }
   }, [isOnlineActive, multiplayerRoom?.activeEmotes, localPlayerName, triggerToast]);
@@ -1150,12 +1150,12 @@ function GameApp() {
       ? 'Grand Katika 👑'
       : 'Normale 🎯';
 
-    const text = `🏆 Victoire éclatante sur Njambo Katika !\n🎯 Mode : ${modeLabel}\n💥 Type : ${winType}\n🪙 Pot raflé : +${pot} jetons (par ${winnerName})\n\nRejoins la table et tente ta chance !`;
+    const text = `🏆 Victoire éclatante sur Njambo Kora !\n🎯 Mode : ${modeLabel}\n💥 Type : ${winType}\n🪙 Pot raflé : +${pot} jetons (par ${winnerName})\n\nRejoins la table et tente ta chance !`;
     const fallbackText = `${text}\n${shareUrl}`;
 
-    if (navigator.share && navigator.canShare && navigator.canShare({ title: 'Njambo Katika - Résultat', text, url: shareUrl })) {
+    if (navigator.share && navigator.canShare && navigator.canShare({ title: 'Njambo Kora - Résultat', text, url: shareUrl })) {
       try {
-        await navigator.share({ title: 'Njambo Katika - Résultat', text, url: shareUrl });
+        await navigator.share({ title: 'Njambo Kora - Résultat', text, url: shareUrl });
         triggerHaptic('medium');
         return;
       } catch (e) {
@@ -2390,7 +2390,7 @@ function GameApp() {
                           Tes adversaires humains ont quitté la table.
                         </p>
                         <p className="text-slate-400 text-xs">
-                          Réclame ta part du pot ({humanPotShareEstimate} jetons) avec victoire par forfait, ou relève le défi contre l'IA.
+                          Réclame ta part du pot ({humanPotShareEstimate} jetons) avec victoire par forfait, ou relève le défi contre un bot.
                         </p>
                       </div>
                     </div>
@@ -2417,7 +2417,7 @@ function GameApp() {
                         className="px-2.5 py-1.5 lg:py-1 rounded-xl font-semibold text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600/60 active:scale-95 transition flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
                       >
                         <span>⚔️</span>
-                        <span>Continuer vs IA</span>
+                        <span>Continuer contre un bot</span>
                       </button>
                     </div>
                   </div>
@@ -2506,7 +2506,7 @@ function GameApp() {
                       <div className="flex flex-wrap items-center justify-between w-full gap-2 border-b border-slate-800/80 pb-2">
                         <div className="flex items-center gap-2 text-slate-400 font-bold text-xs sm:text-sm tracking-wide">
                           <span className="w-2.5 h-2.5 rounded-full bg-slate-400 animate-pulse" />
-                          <span>Mode Spectateur en direct</span>
+                          <span>Mode spectateur en direct</span>
                           <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-slate-950 text-slate-300 border border-slate-500/40">
                             Table #{multiplayerRoom?.id}
                           </span>
@@ -2565,7 +2565,7 @@ function GameApp() {
                             className="h-9 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 font-black text-xs transition shadow-md shadow-amber-500/20 cursor-pointer flex items-center gap-1.5 shrink-0"
                           >
                             <UserPlus className="w-3.5 h-3.5" />
-                            <span>Intégrer la Table</span>
+                            <span>Intégrer la table</span>
                           </button>
                         </div>
                       ) : (
@@ -2604,7 +2604,7 @@ function GameApp() {
                       <div className="flex flex-col items-center text-center gap-1.5">
                         <div className="flex items-center gap-2 text-rose-400 font-bold text-xs sm:text-sm tracking-wide uppercase">
                           <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-                          Mode Spectateur
+                          Mode spectateur
                         </div>
                         <p className="text-sm sm:text-base text-slate-100 font-medium">
                           Tu as été éliminé de la manche en cours.
@@ -2769,7 +2769,7 @@ function GameApp() {
                           setShowSidebarFoldConfirm(true);
                         }}
                         className="flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl font-bold text-xs bg-rose-950/80 hover:bg-rose-900 text-rose-200 border border-rose-600/60 transition-all cursor-pointer shadow-md active:scale-95 flex-1"
-                        title="Passer cette partie (Déclarer Forfait)"
+                        title="Passer cette partie (déclarer forfait)"
                       >
                         <Flag className="w-3.5 h-3.5 text-rose-400 shrink-0" />
                         <span>Forfait</span>
@@ -3135,8 +3135,8 @@ function GameApp() {
       <AnimatePresence>
         {isProfileModalOpen && (
           <ErrorBoundary
-            fallbackTitle="Erreur d'ouverture du profil"
-            fallbackMessage="Le profil du joueur n'a pas pu être affiché correctement."
+            fallbackTitle="Le profil n'a pas pu s'ouvrir"
+            fallbackMessage="Ferme cette fenêtre puis réessaie."
             onClose={() => setIsProfileModalOpen(false)}
           >
             <PlayerProfileScreen
@@ -3259,7 +3259,7 @@ function GameApp() {
           <div className="pointer-events-auto w-[calc(100%-1.5rem)] max-w-sm rounded-2xl border border-amber-500/50 bg-slate-900/95 p-3 text-amber-300 shadow-xl backdrop-blur-md flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-2 text-xs font-medium">
               <span className="text-base">🚀</span>
-              <span>Nouvelle version du serveur disponible ({versionStatus.serverVersion || '2.5.22'}).</span>
+              <span>Nouvelle version disponible ({versionStatus.serverVersion || '2.5.22'}).</span>
             </div>
             <div className="flex shrink-0 items-center gap-1">
               <button
@@ -3299,19 +3299,19 @@ function GameApp() {
             <div className="w-16 h-16 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/40 flex items-center justify-center text-3xl font-black">
               ⚠️
             </div>
-            <h2 className="text-xl font-black text-white">Mise à Jour Requise</h2>
+            <h2 className="text-xl font-black text-white">Mise à jour requise</h2>
             <p className="text-xs text-slate-300 leading-relaxed">
-              Ta version de l'application (Protocole v1) n'est plus compatible avec le serveur officiel Katika (Protocole v2 - {versionStatus.serverVersion || '2.5.22'}).
+              Une nouvelle version du jeu est disponible.
             </p>
             <p className="text-xs text-amber-400 font-bold bg-amber-500/10 border border-amber-500/20 px-3 py-2 rounded-xl">
-              Recharge la page pour synchroniser automatiquement les protocoles de jeu.
+              Recharge le jeu pour continuer.
             </p>
             <button
               type="button"
               onClick={() => window.location.reload()}
               className="w-full py-3.5 rounded-2xl bg-rose-500 text-white font-black text-sm hover:bg-rose-600 transition shadow-lg cursor-pointer"
             >
-              Recharger l'Application Maintenant
+              Recharger le jeu
             </button>
           </div>
         </div>

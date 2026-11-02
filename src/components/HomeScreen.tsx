@@ -7,6 +7,7 @@ import { NativeScreenHeader } from './common/NativeScreenHeader';
 import { fetchKoraCashStatus } from '../services/koraCashClient';
 import { KoraCashPublicStatus, resolveEntryState, formatFcfa } from '../services/koraCashFormat';
 import { useKoraCashWallet } from '../services/koraCashWalletStore';
+import { pushNotificationService } from '../services/pushNotificationService';
 
 interface HomeScreenProps {
   onOpenKoraCash?: () => void;
@@ -457,7 +458,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             whileTap={{ scale: 0.98 }}
             type="button"
             id="btn-home-play"
-            onClick={onOpenModeSheet}
+            onClick={() => {
+              pushNotificationService.requestOnFirstPlay(profile.displayName);
+              onOpenModeSheet?.();
+            }}
             className={
               hasResumableSession
                 ? 'relative w-full py-3 px-3.5 rounded-xl bg-slate-900/95 backdrop-blur-md text-amber-200 font-black text-sm border border-amber-500/60 hover:border-amber-400 shadow-lg flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer'
@@ -667,7 +671,7 @@ const AbandonMultiplayerControl: React.FC<{
     return (
       <div className="flex flex-col gap-1.5 mt-2 p-2 rounded-lg bg-rose-950/80 border border-rose-800/80 text-rose-200">
         <p className="text-xs leading-tight font-medium">
-          Abandonner la table ? Ta mise sera perdue et l'IA prendra le relais.
+          Abandonner la table ? Ta mise sera perdue et un relais jouera à ta place.
         </p>
         <div className="flex items-center gap-2 mt-0.5">
           <button

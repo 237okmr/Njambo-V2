@@ -590,7 +590,7 @@ export class FriendService {
       const myDocData = myDocSnap.exists() ? myDocSnap.data() : null;
 
       if (myDocData?.status === 'ACCEPTED') {
-        return { success: true, status: 'ACCEPTED', message: 'Vous êtes déjà amis avec ce joueur !' };
+        return { success: true, status: 'ACCEPTED', message: 'Tu es déjà ami avec ce joueur.' };
       }
 
       const myProfileName = localStorage.getItem('njambo_player_name') || 'Joueur';
@@ -638,12 +638,12 @@ export class FriendService {
         return {
           success: true,
           status: 'ACCEPTED',
-          message: `Demande croisée validée ! ${targetFriend.displayName} et toi êtes désormais amis.`,
+          message: `${targetFriend.displayName} et toi êtes désormais amis.`,
         };
       }
 
       if (myDocData?.status === 'PENDING_SENT') {
-        return { success: true, status: 'PENDING_SENT', message: 'Demande déjà envoyée en attente de réponse.' };
+        return { success: true, status: 'PENDING_SENT', message: 'Demande déjà envoyée, en attente de réponse.' };
       }
 
       // Standard friend request dispatch
@@ -683,7 +683,7 @@ export class FriendService {
       };
     } catch (e: any) {
       console.error('[FriendService] sendCloudFriendRequest error:', e);
-      return { success: false, status: 'BLOCKED', message: e?.message || 'Erreur lors de l\'envoi de la demande.' };
+      return { success: false, status: 'BLOCKED', message: e?.message || 'La demande n\'a pas pu être envoyée. Réessaie.' };
     }
   }
 

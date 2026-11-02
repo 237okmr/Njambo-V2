@@ -119,8 +119,8 @@ const handleRootReset = (): void => {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary
-      fallbackTitle="Oups ! Une erreur inattendue est survenue"
-      fallbackMessage="L'application a rencontré un problème technique temporaire. Appuyez sur Réessayer pour réinitialiser votre session et recharger."
+      fallbackTitle="Une erreur est survenue"
+      fallbackMessage="Le jeu a rencontré un problème. Appuie sur Réessayer pour le recharger."
       onReset={handleRootReset}
     >
       <NotificationProvider>

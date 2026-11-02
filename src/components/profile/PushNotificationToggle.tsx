@@ -63,15 +63,15 @@ export const PushNotificationToggle: React.FC<PushNotificationToggleProps> = ({
     if (status.isSubscribed) {
       const res = await pushNotificationService.disableNotifications(userId);
       if (res.success) {
-        onToast?.('Notifications push désactivées.');
+        onToast?.('Notifications désactivées.');
       } else {
-        onToast?.(res.error || 'Erreur lors de la désactivation.');
+        onToast?.(res.error || 'Les notifications n’ont pas pu être désactivées. Réessaie dans un instant.');
       }
     } else {
       const res = await pushNotificationService.enableNotifications({ id: userId, name: userName });
       if (res.success) {
         triggerHaptic('success');
-        onToast?.('Notifications push activées avec succès !');
+        onToast?.('Notifications activées.');
       } else {
         onToast?.(res.error || 'Impossible d’activer les notifications.');
       }
@@ -85,9 +85,9 @@ export const PushNotificationToggle: React.FC<PushNotificationToggleProps> = ({
     setIsTesting(false);
     if (res.success) {
       triggerHaptic('success');
-      onToast?.('Notification test envoyée sur ton appareil !');
+      onToast?.('Notification envoyée sur ton appareil.');
     } else {
-      onToast?.(res.error || 'Échec de l’envoi du test.');
+      onToast?.(res.error || 'La notification n’a pas pu être envoyée. Réessaie dans un instant.');
     }
   };
 
@@ -136,7 +136,7 @@ export const PushNotificationToggle: React.FC<PushNotificationToggleProps> = ({
         <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-2.5 text-xs text-amber-300">
           <Smartphone className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
           <div className="flex-1 leading-snug">
-            <strong>Sur iPhone (iOS 16.4+) :</strong> Pour recevoir des notifications hors-ligne, installez d'abord le jeu sur l'écran d'accueil (Bouton <strong>Partager</strong> <span className="underline">Sur l'écran d'accueil</span>).
+            <strong>Sur iPhone (iOS 16.4+) :</strong> Pour recevoir les notifications, installe d'abord le jeu sur ton écran d'accueil (bouton <strong>Partager</strong> <span className="underline">Sur l'écran d'accueil</span>).
           </div>
         </div>
       )}
@@ -181,7 +181,7 @@ export const PushNotificationToggle: React.FC<PushNotificationToggleProps> = ({
           ) : (
             <>
               <BellRing className="w-4 h-4" />
-              <span>Activer les notifications push</span>
+              <span>Activer les notifications</span>
             </>
           )}
         </button>
@@ -194,14 +194,14 @@ export const PushNotificationToggle: React.FC<PushNotificationToggleProps> = ({
                 onClick={handleSendTest}
                 disabled={isTesting}
                 className="min-h-[40px] px-3.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold transition active:scale-95 flex items-center gap-1.5 cursor-pointer shrink-0"
-                title="Envoyer une notification test"
+                title="Essayer les notifications"
               >
                 {isTesting ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
                   <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
                 )}
-                <span>Tester</span>
+                <span>Essayer</span>
               </button>
             )}
 
@@ -222,7 +222,7 @@ export const PushNotificationToggle: React.FC<PushNotificationToggleProps> = ({
       {status.isSubscribed && showAdvanced && (
         <div className="pt-3 border-t border-slate-800/80 flex flex-col gap-2.5 animate-in fade-in slide-in-from-top-2 duration-150 text-xs">
           <span className="font-bold text-slate-300 text-xs uppercase tracking-wider flex items-center gap-1.5">
-            <Sliders className="w-3.5 h-3.5 text-amber-400" /> Filtres & Préférences d'Alertes
+            <Sliders className="w-3.5 h-3.5 text-amber-400" /> Préférences des alertes
           </span>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -294,7 +294,7 @@ export const PushNotificationToggle: React.FC<PushNotificationToggleProps> = ({
             <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between sm:col-span-2">
               <div className="flex items-center gap-2">
                 <BellRing className="w-4 h-4 text-slate-400 shrink-0" />
-                <span className="text-slate-200 font-medium">Début de Manche</span>
+                <span className="text-slate-200 font-medium">Début de manche</span>
               </div>
               <input
                 type="checkbox"
@@ -310,7 +310,7 @@ export const PushNotificationToggle: React.FC<PushNotificationToggleProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Moon className="w-4 h-4 text-slate-400" />
-                <span className="text-slate-200 font-semibold">Mode Nuit Silencieux (Ne pas déranger)</span>
+                <span className="text-slate-200 font-semibold">Mode nuit silencieux</span>
               </div>
               <input
                 type="checkbox"

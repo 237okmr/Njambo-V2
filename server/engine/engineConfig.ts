@@ -107,7 +107,7 @@ const LEGACY_ENGINE_DEFAULTS = {
   under21BonusPoints: 10,
   isMaintenanceMode: false,
   bettingEconomyEnabled: false,
-  maintenanceNotice: 'Serveur de jeu en maintenance administrative.',
+  maintenanceNotice: 'Le jeu est en maintenance. Reviens dans quelques instants.',
   defaultTableMaxPlayers: 2,
   defaultFillWithBots: false,
   allowJoinInProgress: true,
