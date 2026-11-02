@@ -41,6 +41,7 @@ import { AvatarPickerBottomSheet } from './AvatarPickerBottomSheet';
 import { ConnectionDiagnosticModal } from '../common/ConnectionDiagnosticModal';
 import { NativeScreenHeader } from '../common/NativeScreenHeader';
 import { NativeSegmentedNav, SegmentTab } from '../common/NativeSegmentedNav';
+import { useBackLayer } from '../../hooks/useBackLayer';
 import {
   AVATAR_OPTIONS,
   HONORIFIC_TITLES,
@@ -205,16 +206,9 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
     ? ((safeStats.totalTricksWon || 0) / safeStats.gamesPlayed).toFixed(1)
     : '0.0';
 
-  // Hardware Back button & Escape key listener
+  // Escape key listener (le bouton Retour est géré dans App.tsx)
   useEffect(() => {
     if (!isOpen) return;
-
-    // Push a dummy history state so hardware back button pops it and triggers onClose
-    window.history.pushState({ screen: 'profile' }, '');
-
-    const handlePopState = () => {
-      onClose();
-    };
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -222,14 +216,14 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
       }
     };
 
-    window.addEventListener('popstate', handlePopState);
     window.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      window.removeEventListener('popstate', handlePopState);
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen, onClose]);
+
+  useBackLayer(isOpen && showAvatarSheet, () => setShowAvatarSheet(false));
 
   const handleStartEditName = () => {
     setNameInput(safeProfile.displayName || 'Joueur');
@@ -257,15 +251,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
       setShowAvatarSheet(false);
       return;
     }
-    if (activeTab !== 'identity') {
-      setActiveTab('identity');
-      return;
-    }
-    if (window.history.state?.screen === 'profile') {
-      window.history.back();
-    } else {
-      onClose();
-    }
+    onClose();
   };
 
   const profileTabs: SegmentTab<ProfileTabType>[] = useMemo(() => [

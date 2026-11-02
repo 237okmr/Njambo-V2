@@ -35,7 +35,8 @@ import { usePlayerProfile } from '../../context/PlayerProfileContext';
 import { GoogleIcon } from '../common/GoogleIcon';
 import { NativeScreenHeader } from '../common/NativeScreenHeader';
 import { NativeSegmentedNav, SegmentTab } from '../common/NativeSegmentedNav';
-import { getPwaShareBase } from '../../utils/pwaLinks';
+import { ROUTE_PATHS } from '../../utils/appRoutes';
+import { useBackLayer } from '../../hooks/useBackLayer';
 
 export interface GlobalLeaderboardModalProps {
   isOpen: boolean;
@@ -122,33 +123,14 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, selectedPlayer, activeCategory, onClose]);
 
-  useEffect(() => {
-    if (isOpen) {
-      window.history.pushState({ screen: 'leaderboard' }, '');
-      const handlePopState = () => {
-        onClose();
-      };
-      window.addEventListener('popstate', handlePopState);
-      return () => {
-        window.removeEventListener('popstate', handlePopState);
-      };
-    }
-  }, [isOpen, onClose]);
+  useBackLayer(isOpen && Boolean(selectedPlayer), () => setSelectedPlayer(null));
 
   const handleBackClick = () => {
     if (selectedPlayer) {
       setSelectedPlayer(null);
       return;
     }
-    if (activeCategory !== 'WINS') {
-      setActiveCategory('WINS');
-      return;
-    }
-    if (window.history.state?.screen === 'leaderboard') {
-      window.history.back();
-    } else {
-      onClose();
-    }
+    onClose();
   };
 
   const baseEligibleEntries = useMemo(() => {
@@ -259,7 +241,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
   };
 
   const handleSharePalmares = () => {
-    const text = `🏆 Consulte le Palmarès de Njambo Kora ! Défie les meilleurs joueurs de cartes : ${getPwaShareBase()}`;
+    const text = `🏆 Consulte le Palmarès de Njambo Kora ! Défie les meilleurs joueurs de cartes : ${window.location.origin}${ROUTE_PATHS.leaderboard}`;
     if (navigator.share) {
       navigator.share({ title: 'Palmarès Njambo Kora', text }).catch(() => {});
     } else {
@@ -561,7 +543,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
         id="native-leaderboard-header"
         backLabel="Retour"
         onBack={handleBackClick}
-        backTitle={selectedPlayer ? 'Retour au classement' : activeCategory !== 'WINS' ? 'Retour aux victoires' : 'Retour à l\'accueil'}
+        backTitle={selectedPlayer ? 'Retour au classement' : 'Retour'}
         title={
           <div className="flex items-center gap-2">
             <Trophy className="hidden sm:block w-5 h-5 text-amber-400 fill-amber-400 shrink-0" />

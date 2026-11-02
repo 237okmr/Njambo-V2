@@ -78,6 +78,7 @@ import { useInvitations } from '../../context/InvitationsContext';
 import { NativeScreenHeader } from '../common/NativeScreenHeader';
 import { NativeSegmentedNav, SegmentTab } from '../common/NativeSegmentedNav';
 import { GoogleIcon } from '../common/GoogleIcon';
+import { useBackLayer } from '../../hooks/useBackLayer';
 
 export type MultiplayerTab = 'play' | 'rooms' | 'social';
 export type QuickPillarFilter = 'ALL' | 'ONLY_HUMANS' | 'READY_TO_PLAY';
@@ -1141,33 +1142,38 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
     setTimeout(() => setHubSuccessMsg(null), getPublicParamNumber('uiToastDurationMs'));
   };
 
-  const handleBack = async () => {
+  const isAnyDialogOpen =
+    showAuthRequirementModal ||
+    showJoinCodeModal ||
+    showCreateModal ||
+    showSettingsModal ||
+    showAddFriendModal ||
+    showFilterBottomSheet ||
+    showQrModal;
+
+  const closeTopDialog = () => {
     if (showAuthRequirementModal) {
       setShowAuthRequirementModal(false);
-      return;
-    }
-    if (showJoinCodeModal) {
+    } else if (showJoinCodeModal) {
       setShowJoinCodeModal(false);
-      return;
-    }
-    if (showCreateModal) {
+    } else if (showCreateModal) {
       setShowCreateModal(false);
-      return;
-    }
-    if (showSettingsModal) {
+    } else if (showSettingsModal) {
       setShowSettingsModal(false);
-      return;
-    }
-    if (showAddFriendModal) {
+    } else if (showAddFriendModal) {
       setShowAddFriendModal(false);
-      return;
-    }
-    if (showFilterBottomSheet) {
+    } else if (showFilterBottomSheet) {
       setShowFilterBottomSheet(false);
-      return;
-    }
-    if (showQrModal) {
+    } else if (showQrModal) {
       setShowQrModal(false);
+    }
+  };
+
+  useBackLayer(isOpen && isAnyDialogOpen, closeTopDialog);
+
+  const handleBack = async () => {
+    if (isAnyDialogOpen) {
+      closeTopDialog();
       return;
     }
 
@@ -1183,13 +1189,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
       return;
     }
 
-    if (activeTab !== 'play') {
-      // If on sub-tab, return to primary play tab first
-      setActiveTab('play');
-      return;
-    }
-
-    // From hub main tab -> close hub
+    // From hub -> close hub
     onClose();
   };
 

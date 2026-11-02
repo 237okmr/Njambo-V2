@@ -348,7 +348,6 @@ export const OpponentsHistoryBoard: React.FC<OpponentsHistoryBoardProps> = ({
                     ) : !isEliminated ? (
                       <div className="lg:hidden">
                         <span className="font-bold text-slate-200">{player.tricksWonInRound}</span>/5<span className="hidden min-[360px]:inline"> tours</span>
-                        {player.tricksWonInRound > 1 ? 's' : ''}
                       </div>
                     ) : (
                       <span className="text-[11px] font-bold text-rose-400 uppercase">Éliminé</span>

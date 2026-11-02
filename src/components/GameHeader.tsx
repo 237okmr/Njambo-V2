@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useBackLayer } from '../hooks/useBackLayer';
 import {
   Home,
   LogOut,
@@ -92,6 +93,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
 }) => {
   const { profile, stats, currentTitle, isLoggedIn, setIsLeaderboardOpen } = usePlayerProfile();
   const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
+  useBackLayer(isPauseModalOpen, () => setIsPauseModalOpen(false));
   const [justSaved, setJustSaved] = useState(false);
   // Close modal on escape key
   useEffect(() => {

@@ -6,6 +6,8 @@ import { Card, GameState, Player, SavedManche, AIDifficulty, GamePhase, GameInvi
 import { DEFAULT_BASE_BET, DEFAULT_INITIAL_CAPITAL } from './utils/deck';
 import { sounds, triggerHaptic } from './utils/sound';
 import { getPwaShareBase } from './utils/pwaLinks';
+import { GAME_HOME_PATH, isKnownGamePath, routePathFor, screenFromPath } from './utils/appRoutes';
+import { consumeBackLayer } from './utils/backLayers';
 
 // Custom Hooks
 import { usePwaInstall } from './hooks/usePwaInstall';
@@ -486,98 +488,150 @@ function GameApp() {
     }
   }, [currentScreen, isMultiplayerMode, multiplayerRoom]);
 
-  // Double back-press timestamp ref on HOME screen
-  const lastBackPressTimeRef = useRef<number>(0);
+  // Une adresse par écran : celle de l'écran au premier plan, sans ajouter d'entrée à l'historique.
+  const routePath = routePathFor({
+    notifications: isNotificationScreenOpen,
+    leaderboard: isLeaderboardOpen,
+    profile: isProfileModalOpen,
+    rules: showRulesModal,
+    multiplayer: showMultiplayerHub || showMultiplayerLobby,
+  });
+  const routePathRef = useRef<string>(routePath);
+  const isFirstRouteSyncRef = useRef<boolean>(true);
+
+  useEffect(() => {
+    routePathRef.current = routePath;
+    if (isFirstRouteSyncRef.current) {
+      // Au démarrage, l'adresse demandée n'a pas encore ouvert son écran : on ne l'écrase pas.
+      isFirstRouteSyncRef.current = false;
+      return;
+    }
+    if (window.location.pathname !== routePath) {
+      window.history.replaceState(window.history.state, '', routePath + window.location.search + window.location.hash);
+    }
+  }, [routePath]);
+
+  // Historique à deux entrées, posé une seule fois : une sentinelle (accueil) et l'entrée active.
+  // Le bouton Retour revient sur la sentinelle, ce qui prévient le gestionnaire unique ci-dessous.
+  const backGuardReadyRef = useRef<boolean>(false);
+  useEffect(() => {
+    if (backGuardReadyRef.current) return;
+    backGuardReadyRef.current = true;
+
+    const { pathname, search, hash } = window.location;
+    const screen = screenFromPath(pathname);
+    const activeUrl = isKnownGamePath(pathname) && pathname !== '/' ? pathname + search + hash : GAME_HOME_PATH + search + hash;
+    window.history.replaceState({ njamboBack: 'sentinel' }, '', GAME_HOME_PATH);
+    window.history.pushState({ njamboBack: 'active' }, '', activeUrl);
+
+    if (screen === 'rules') setShowRulesModal(true);
+    if (screen === 'leaderboard') setIsLeaderboardOpen(true);
+    if (screen === 'multiplayer') setShowMultiplayerHub(true);
+    if (screen === 'profile') setIsProfileModalOpen(true);
+    if (screen === 'notifications') notificationScreen.open();
+  }, [setIsLeaderboardOpen, setIsProfileModalOpen, setShowMultiplayerHub]);
+
+  const rearmBackGuard = () => {
+    window.history.pushState({ njamboBack: 'active' }, '', routePathRef.current);
+  };
+
+  // Sur l'accueil, le premier appui reste sur la sentinelle : un second appui quitte vraiment le jeu.
+  const exitWindowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closeExitWindow = () => {
+    if (exitWindowTimerRef.current === null) return;
+    clearTimeout(exitWindowTimerRef.current);
+    exitWindowTimerRef.current = null;
+    rearmBackGuard();
+  };
 
   // Jalon 2: Accidental Navigation Guard (Popstate / Mobile Android Back Button / Swiping)
   useEffect(() => {
-    // Keep a state entry in history so popstate always fires rather than closing PWA directly
-    window.history.replaceState({ screen: currentScreen, timestamp: Date.now() }, '');
-    window.history.pushState({ screen: currentScreen, active: true }, '');
+    // Un écran s'ouvre pendant la fenêtre de sortie : le prochain Retour doit le fermer, pas quitter le jeu.
+    closeExitWindow();
 
     const handlePopState = () => {
       // 1. If any overlay modal is open, dismiss it first in priority order
       if (showQuitModal) {
         setShowQuitModal(false);
-        window.history.pushState({ screen: currentScreen, active: true }, '');
+        rearmBackGuard();
         return;
       }
       if (showHomeModeSheet) {
         setShowHomeModeSheet(false);
-        window.history.pushState({ screen: currentScreen, active: true }, '');
+        rearmBackGuard();
         return;
       }
       if (showRulesModal) {
         setShowRulesModal(false);
-        window.history.pushState({ screen: currentScreen, active: true }, '');
+        rearmBackGuard();
+        return;
+      }
+      // Fenêtre ouverte à l'intérieur d'un écran : elle se ferme avant l'écran lui-même
+      if (consumeBackLayer()) {
+        rearmBackGuard();
         return;
       }
       if (showSavedSessionsModal) {
         setShowSavedSessionsModal(false);
-        window.history.pushState({ screen: currentScreen, active: true }, '');
+        rearmBackGuard();
         return;
       }
       if (showSetupModal) {
         setShowSetupModal(false);
-        window.history.pushState({ screen: currentScreen, active: true }, '');
+        rearmBackGuard();
         return;
       }
       if (showTestModeModal) {
         setShowTestModeModal(false);
-        window.history.pushState({ screen: currentScreen, active: true }, '');
+        rearmBackGuard();
         return;
       }
       if (isNotificationScreenOpen) {
         notificationScreen.close();
-        window.history.pushState({ screen: currentScreen, active: true }, '');
-        return;
-      }
-      if (isProfileModalOpen) {
-        setIsProfileModalOpen(false);
-        window.history.pushState({ screen: currentScreen, active: true }, '');
+        rearmBackGuard();
         return;
       }
       if (isLeaderboardOpen) {
         setIsLeaderboardOpen(false);
-        window.history.pushState({ screen: currentScreen, active: true }, '');
+        rearmBackGuard();
+        return;
+      }
+      if (isProfileModalOpen) {
+        setIsProfileModalOpen(false);
+        rearmBackGuard();
         return;
       }
       if (showInstallModal) {
         setShowInstallModal(false);
-        window.history.pushState({ screen: currentScreen, active: true }, '');
+        rearmBackGuard();
         return;
       }
       if (showMultiplayerLobby) {
         handleLeaveMultiplayer();
-        window.history.pushState({ screen: currentScreen, active: true }, '');
+        rearmBackGuard();
         return;
       }
       if (showMultiplayerHub) {
         setShowMultiplayerHub(false);
-        window.history.pushState({ screen: currentScreen, active: true }, '');
+        rearmBackGuard();
         return;
       }
 
       // 2. If inside GAME screen, prevent abrupt exit and open confirmation modal
       if (currentScreen === 'GAME') {
-        window.history.pushState({ screen: 'GAME', active: true }, '');
+        rearmBackGuard();
         setShowQuitModal(true);
-        triggerToast('Partie en cours : confirmez pour quitter.');
+        triggerToast('Partie en cours : confirme pour quitter.');
         triggerHaptic('light');
         return;
       }
 
       // 3. If on HOME screen, require double-press within 2 seconds to quit
       if (currentScreen === 'HOME') {
-        const now = Date.now();
-        if (now - lastBackPressTimeRef.current < 2000) {
-          // Allow default pop/exit
-          return;
-        }
-        lastBackPressTimeRef.current = now;
-        window.history.pushState({ screen: 'HOME', active: true }, '');
         triggerToast('Appuie à nouveau pour quitter');
         triggerHaptic('light');
+        // delay-ok: fenêtre du double appui pour quitter le jeu, pas un délai de jeu
+        exitWindowTimerRef.current = setTimeout(closeExitWindow, 2000);
       }
     };
 
@@ -645,6 +699,9 @@ function GameApp() {
           setShowRulesModal(false);
           return;
         }
+        if (consumeBackLayer()) {
+          return;
+        }
         if (showSavedSessionsModal) {
           setShowSavedSessionsModal(false);
           return;
@@ -659,6 +716,10 @@ function GameApp() {
         }
         if (isNotificationScreenOpen) {
           notificationScreen.close();
+          return;
+        }
+        if (isLeaderboardOpen) {
+          setIsLeaderboardOpen(false);
           return;
         }
         if (isProfileModalOpen) {
@@ -689,9 +750,11 @@ function GameApp() {
     showSetupModal,
     showTestModeModal,
     isNotificationScreenOpen,
+    isLeaderboardOpen,
     isProfileModalOpen,
     showMultiplayerHub,
     showMultiplayerLobby,
+    setIsLeaderboardOpen,
     setIsProfileModalOpen,
     setShowMultiplayerHub,
     setShowMultiplayerLobby,

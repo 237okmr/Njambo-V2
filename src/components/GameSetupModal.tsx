@@ -20,6 +20,7 @@ import { sounds, triggerHaptic } from '../utils/sound';
 import { NativeScreenHeader } from './common/NativeScreenHeader';
 import { NativeSegmentedNav, SegmentTab } from './common/NativeSegmentedNav';
 import { usePlayerProfile } from '../context/PlayerProfileContext';
+import { useBackLayer } from '../hooks/useBackLayer';
 
 export type SoloSetupTabType = 'partie' | 'rules';
 
@@ -153,15 +154,9 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
     currentEnableKoraHunterAlerts,
   ]);
 
-  // Native window hardware back button & Escape key handling
+  // Escape key handling (le bouton Retour est géré dans App.tsx)
   useEffect(() => {
     if (!isOpen) return;
-
-    window.history.pushState({ screen: 'solo_setup' }, '');
-
-    const handlePopState = () => {
-      onClose();
-    };
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -169,27 +164,19 @@ export const GameSetupModal: React.FC<GameSetupModalProps> = ({
       }
     };
 
-    window.addEventListener('popstate', handlePopState);
     window.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      window.removeEventListener('popstate', handlePopState);
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen, onClose]);
 
+  useBackLayer(isOpen && showConfirmReset, () => setShowConfirmReset(false));
+
   if (!isOpen) return null;
 
   const handleBackClick = () => {
-    if (activeTab !== 'partie') {
-      setActiveTab('partie');
-      return;
-    }
-    if (window.history.state?.screen === 'solo_setup') {
-      window.history.back();
-    } else {
-      onClose();
-    }
+    onClose();
   };
 
   const handleTabChange = (tab: SoloSetupTabType) => {
