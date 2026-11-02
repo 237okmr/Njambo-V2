@@ -6,7 +6,7 @@ import { APP_VERSION } from '../version';
 import { usePlayerProfile } from '../context/PlayerProfileContext';
 import { NativeScreenHeader } from './common/NativeScreenHeader';
 import { fetchKoraCashStatus } from '../services/koraCashClient';
-import { KoraCashPublicStatus, resolveEntryState, formatFcfa } from '../services/koraCashFormat';
+import { KoraCashPublicStatus, resolveEntryState, formatFcfa, cashEnvironmentBadge } from '../services/koraCashFormat';
 import { useKoraCashWallet } from '../services/koraCashWalletStore';
 
 interface HomeScreenProps {
@@ -510,7 +510,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <div className="flex items-center gap-1.5 min-w-0">
                 <span className="leading-tight text-xs sm:text-sm font-extrabold text-white truncate group-hover:text-amber-200 transition">Kora Cash</span>
                 <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase tracking-wider shrink-0">
-                  {koraCashEntry === 'COMING_SOON' ? 'Bientôt' : koraCashStatus?.environment === 'LIVE' ? 'Argent réel' : 'Démo'}
+                  {koraCashEntry === 'COMING_SOON' ? 'Bientôt' : cashEnvironmentBadge(koraCashStatus?.environment)}
                 </span>
               </div>
             </div>
@@ -633,7 +633,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                       <span className="flex items-center gap-1.5">
                         <span className="text-sm font-black text-white group-hover:text-amber-200 transition">Kora Cash</span>
                         <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase tracking-wider shrink-0">
-                          {koraCashStatus?.environment === 'LIVE' ? 'Argent réel' : 'Démo'}
+                          {cashEnvironmentBadge(koraCashStatus?.environment)}
                         </span>
                       </span>
                       <span className="text-xs text-slate-400">{koraCashEntry === 'LOGIN_REQUIRED' ? 'Avec un compte Google' : 'Joue ton solde en FCFA'}</span>

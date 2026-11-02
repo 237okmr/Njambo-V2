@@ -6,7 +6,7 @@ import {
   startCampayDeposit,
   verifyCampayDeposit,
 } from '../services/koraCashClient';
-import { DepositUi, parseTypedAmount } from '../services/koraCashFormat';
+import { DEPOSIT_CONFIRMED_TEXT, DepositUi, NO_PAYMENT_METHOD_TEXT, parseTypedAmount } from '../services/koraCashFormat';
 import { refreshKoraCashWallet, setKoraCashWallet } from '../services/koraCashWalletStore';
 import { wsService } from '../services/websocketService';
 import { getPublicParamNumber } from '../services/publicConfig';
@@ -110,7 +110,7 @@ export function useKoraCashDeposits(ui: DepositUi, isLoggedIn: boolean, loadPhon
     setDepositing(true);
     try {
       if (!ui.needsPhone) {
-        setMessage({ type: 'error', text: 'Aucun moyen de paiement de test n’est actif pour le moment.' });
+        setMessage({ type: 'error', text: NO_PAYMENT_METHOD_TEXT });
         return;
       }
       const started = await startCampayDeposit(amount, phone);
@@ -137,7 +137,7 @@ export function useKoraCashDeposits(ui: DepositUi, isLoggedIn: boolean, loadPhon
         setPendingDeposit(null);
         setSelectedQuick(null);
         setTyped('');
-        setMessage({ type: 'success', text: 'Paiement confirmé : ton solde de test est crédité.' });
+        setMessage({ type: 'success', text: DEPOSIT_CONFIRMED_TEXT });
       } else if (status.state === 'FAILED') {
         setPendingDeposit(null);
         setMessage({ type: 'error', text: status.message || 'Le paiement a échoué.' });
@@ -172,7 +172,7 @@ export function useKoraCashDeposits(ui: DepositUi, isLoggedIn: boolean, loadPhon
             setSelectedQuick(null);
             setTyped('');
           }
-          setMessage({ type: 'success', text: 'Paiement confirmé : ton solde de test est crédité.' });
+          setMessage({ type: 'success', text: DEPOSIT_CONFIRMED_TEXT });
           changed = true;
         } else if (status.state === 'FAILED') {
           if (pendingRef.current?.id === id) setPendingDeposit(null);
@@ -246,7 +246,7 @@ export function useKoraCashDeposits(ui: DepositUi, isLoggedIn: boolean, loadPhon
         } else {
           await loadWallet();
         }
-        setMessage({ type: 'success', text: 'Paiement confirmé : ton solde de test est crédité.' });
+        setMessage({ type: 'success', text: DEPOSIT_CONFIRMED_TEXT });
       } else if (status.state === 'FAILED') {
         setMessage({ type: 'error', text: status.message || 'Le paiement a échoué.' });
       } else {

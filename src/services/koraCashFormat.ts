@@ -166,6 +166,15 @@ export function cashEnvironmentLabel(environment: KoraCashEnvironment): string {
   return environment === 'LIVE' ? 'Argent réel' : 'Démo : solde de test';
 }
 
+/** Badge court de Kora Cash sur l'accueil. */
+export function cashEnvironmentBadge(environment: KoraCashEnvironment | undefined): string {
+  return environment === 'LIVE' ? 'Argent réel' : 'Démo';
+}
+
+/** Messages du suivi d'un dépôt. */
+export const DEPOSIT_CONFIRMED_TEXT = 'Paiement confirmé : ton solde de test est crédité.';
+export const NO_PAYMENT_METHOD_TEXT = 'Aucun moyen de paiement de test n’est actif pour le moment.';
+
 /** Numéro enregistré (237677123412) affiché lisiblement : 6 77 12 34 12. */
 export function formatPhone(phone: string): string {
   const local = phone.startsWith('237') ? phone.slice(3) : phone;
