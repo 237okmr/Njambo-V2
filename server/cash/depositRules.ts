@@ -36,6 +36,8 @@ export interface DepositDoc {
   campayReason?: string;
   /** Date de la dernière relecture dont la réponse a été enregistrée. */
   campayCheckedAt?: number;
+  /** Numéro Mobile Money du dépôt : à la réussite, il devient vérifié dans le carnet du joueur. Jamais renvoyé aux listes. */
+  phone?: string;
 }
 
 export type DepositErrorCode = 'INVALID_AMOUNT' | 'DEPOSIT_NOT_FOUND' | 'DEPOSIT_OWNER_MISMATCH' | 'DEPOSIT_FAILED' | 'INVALID_DEPOSIT_ID';

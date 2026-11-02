@@ -4,7 +4,18 @@ import { motion } from 'motion/react';
 import { Wallet, X, Loader2, Lock, Coins, ShieldAlert, CheckCircle2, Clock } from 'lucide-react';
 import { usePlayerProfile } from '../context/PlayerProfileContext';
 import { GoogleIcon } from './common/GoogleIcon';
-import { startCampayDeposit, verifyCampayDeposit, fetchPendingDeposits, KoraCashWallet, PendingDeposit } from '../services/koraCashClient';
+import {
+  startCampayDeposit,
+  verifyCampayDeposit,
+  fetchPendingDeposits,
+  fetchPhones,
+  fetchWithdrawalSettings,
+  CashPhone,
+  KoraCashWallet,
+  PendingDeposit,
+  WithdrawalSettingsView,
+} from '../services/koraCashClient';
+import { KoraCashPhonesPanel, KoraCashWithdrawPanel } from './KoraCashWithdrawPanels';
 import { refreshKoraCashWallet, setKoraCashWallet, useKoraCashWallet } from '../services/koraCashWalletStore';
 import { wsService } from '../services/websocketService';
 import { getPublicParamNumber } from '../services/publicConfig';
@@ -12,6 +23,7 @@ import {
   KoraCashDepositMode,
   KoraCashEnvironment,
   formatFcfa,
+  formatPhone,
   getDepositUi,
   parseTypedAmount,
 } from '../services/koraCashFormat';
@@ -47,7 +59,36 @@ function writeDismissed(ids: string[]): void {
 
 export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depositMode = 'SIMULATED', onClose }) => {
   const { isLoggedIn, loginWithGoogle } = usePlayerProfile();
-  const ui = getDepositUi(environment, depositMode);
+  // Retrait : les onglets n'apparaissent que si le serveur dit qu'il est ouvert.
+  const [withdrawalSettings, setWithdrawalSettings] = useState<WithdrawalSettingsView | null>(null);
+  const [phones, setPhones] = useState<CashPhone[]>([]);
+  const [activeTab, setActiveTab] = useState<'deposit' | 'withdraw' | 'phones'>('deposit');
+  const canWithdraw = withdrawalSettings?.enabled === true;
+  const ui = getDepositUi(environment, depositMode, canWithdraw);
+
+  const loadPhones = useCallback(async () => {
+    try {
+      setPhones(await fetchPhones());
+    } catch {
+      setPhones([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    let cancelled = false;
+    fetchWithdrawalSettings()
+      .then((settings) => {
+        if (!cancelled) setWithdrawalSettings(settings);
+      })
+      .catch(() => {
+        if (!cancelled) setWithdrawalSettings(null);
+      });
+    void loadPhones();
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoggedIn, loadPhones]);
 
   // Solde partagé avec l'accueil, mis à jour en direct quand le serveur signale un mouvement.
   const walletState = useKoraCashWallet(isLoggedIn);
@@ -213,8 +254,10 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
   useEffect(() => {
     return wsService.onCashWalletChanged(() => {
       void checkAllPendingRef.current();
+      // Un dépôt confirmé peut avoir vérifié un numéro du carnet.
+      void loadPhones();
     });
-  }, []);
+  }, [loadPhones]);
 
   // Confirmation automatique : intervalle et nombre d'essais réglés dans katika (registre).
   useEffect(() => {
@@ -371,7 +414,43 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
                 </div>
               )}
 
-              {ui.canDeposit && (
+              {canWithdraw && withdrawalSettings && (
+                <div role="tablist" aria-label="Kora Cash" className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-slate-950/90 border border-slate-800">
+                  {(
+                    [
+                      ['deposit', 'Déposer'],
+                      ['withdraw', 'Retirer'],
+                      ['phones', 'Mes numéros'],
+                    ] as const
+                  ).map(([id, label]) => (
+                    <button
+                      key={id}
+                      type="button"
+                      role="tab"
+                      aria-selected={activeTab === id}
+                      onClick={() => setActiveTab(id)}
+                      className={`h-9 rounded-lg text-xs font-bold cursor-pointer ${activeTab === id ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400 hover:text-slate-200'}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {canWithdraw && withdrawalSettings && activeTab === 'withdraw' && (
+                <KoraCashWithdrawPanel
+                  settings={withdrawalSettings}
+                  phones={phones}
+                  available={wallet?.available ?? 0}
+                  onManagePhones={() => setActiveTab('phones')}
+                />
+              )}
+
+              {canWithdraw && withdrawalSettings && activeTab === 'phones' && (
+                <KoraCashPhonesPanel phones={phones} maxPhones={withdrawalSettings.maxPhones} onPhonesChange={setPhones} />
+              )}
+
+              {ui.canDeposit && (!canWithdraw || activeTab === 'deposit') && (
                 <div className="flex flex-col gap-2.5 p-3 rounded-2xl bg-slate-950/60 border border-slate-800">
                   <span className="text-[11px] font-black text-slate-200">Montant à recharger</span>
                   <div className="grid grid-cols-4 gap-2">
@@ -410,6 +489,26 @@ export const KoraCashModal: React.FC<KoraCashModalProps> = ({ environment, depos
                     aria-label="Autre montant en FCFA"
                     className="w-full h-10 px-3 rounded-xl bg-slate-900 border border-slate-700 focus:border-amber-400 outline-none text-xs text-white placeholder:text-slate-500"
                   />
+                  {ui.needsPhone && phones.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5" aria-label="Mes numéros">
+                      {phones.map((p) => (
+                        <button
+                          key={p.phone}
+                          type="button"
+                          disabled={depositing || pendingDeposit !== null}
+                          onClick={() => {
+                            setPhone(p.phone);
+                            setMessage(null);
+                          }}
+                          className={`min-h-9 px-2.5 rounded-lg text-xs font-bold border cursor-pointer disabled:opacity-50 ${
+                            phone === p.phone ? 'bg-amber-500/20 border-amber-400 text-amber-200' : 'bg-slate-900 border-slate-700 text-slate-200'
+                          }`}
+                        >
+                          {formatPhone(p.phone)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   {ui.needsPhone && (
                     <input
                       type="tel"

@@ -106,6 +106,102 @@ export async function fetchPendingDeposits(): Promise<PendingDeposit[]> {
     .filter((d: PendingDeposit) => d.id !== '' && Number.isFinite(d.amount));
 }
 
+export interface WithdrawalSettingsView {
+  enabled: boolean;
+  feePercent: number;
+  maxPhones: number;
+  minAmount: number;
+  maxAmount: number;
+}
+
+export interface CashPhone {
+  phone: string;
+  verified: boolean;
+  operator?: string;
+}
+
+export type WithdrawalStatusView =
+  | 'HOLDING'
+  | 'AWAITING_APPROVAL'
+  | 'READY'
+  | 'SENDING'
+  | 'PROCESSING'
+  | 'REVIEW'
+  | 'REFUNDING'
+  | 'SUCCESS'
+  | 'FAILED'
+  | 'CANCELLED';
+
+export interface WithdrawalView {
+  id: string;
+  amount: number;
+  fee: number;
+  net: number;
+  phone: string;
+  status: WithdrawalStatusView;
+  createdAt: number;
+  note?: string;
+}
+
+async function cashRequest<T>(url: string, fallbackError: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, { cache: 'no-store', ...init, headers: { ...(init?.headers || {}), ...(await authHeaders()) } });
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data?.success) {
+    throw new Error(data?.error || fallbackError);
+  }
+  return data as T;
+}
+
+/** Le retrait est-il ouvert, à quels frais et dans quelles limites. Fermé au moindre doute. */
+export async function fetchWithdrawalSettings(): Promise<WithdrawalSettingsView> {
+  const data = await cashRequest<any>('/api/cash/withdrawal-settings', 'Lecture des réglages impossible.');
+  return {
+    enabled: data.enabled === true,
+    feePercent: Number(data.feePercent) || 0,
+    maxPhones: Number(data.maxPhones) || 0,
+    minAmount: Number(data.minAmount) || 0,
+    maxAmount: Number(data.maxAmount) || 0,
+  };
+}
+
+export async function fetchPhones(): Promise<CashPhone[]> {
+  return (await cashRequest<{ phones: CashPhone[] }>('/api/cash/phones', 'Lecture de tes numéros impossible.')).phones;
+}
+
+export async function addCashPhone(phone: string): Promise<CashPhone[]> {
+  const data = await cashRequest<{ phones: CashPhone[] }>('/api/cash/phones', 'Ajout du numéro impossible.', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone }),
+  });
+  return data.phones;
+}
+
+export async function removeCashPhone(phone: string): Promise<CashPhone[]> {
+  const data = await cashRequest<{ phones: CashPhone[] }>(`/api/cash/phones/${encodeURIComponent(phone)}`, 'Suppression du numéro impossible.', { method: 'DELETE' });
+  return data.phones;
+}
+
+export async function fetchWithdrawals(): Promise<WithdrawalView[]> {
+  return (await cashRequest<{ withdrawals: WithdrawalView[] }>('/api/cash/withdrawals', 'Lecture de tes retraits impossible.')).withdrawals;
+}
+
+export async function requestWithdrawal(amount: number, phone: string): Promise<{ withdrawal: WithdrawalView; message?: string }> {
+  return cashRequest('/api/cash/withdrawal', 'La demande de retrait a échoué.', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount, phone }),
+  });
+}
+
+export async function verifyWithdrawal(id: string): Promise<WithdrawalView> {
+  return (await cashRequest<{ withdrawal: WithdrawalView }>(`/api/cash/withdrawal/${encodeURIComponent(id)}/verify`, 'Relecture impossible.', { method: 'POST' })).withdrawal;
+}
+
+export async function cancelWithdrawal(id: string): Promise<WithdrawalView> {
+  return (await cashRequest<{ withdrawal: WithdrawalView }>(`/api/cash/withdrawal/${encodeURIComponent(id)}/cancel`, 'Annulation impossible.', { method: 'POST' })).withdrawal;
+}
+
 /** « Vérifier mon paiement » : le serveur relit le paiement chez Campay et crédite seulement s'il est confirmé. */
 export async function verifyCampayDeposit(depositId: string): Promise<CampayDepositStatus> {
   const res = await fetch(`/api/cash/deposit/${encodeURIComponent(depositId)}/verify`, {

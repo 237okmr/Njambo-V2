@@ -18,7 +18,7 @@ import {
   parseCampayDemoAmount,
   verifyWebhookEvent,
 } from './campayRules';
-import { DepositDoc, DepositMode, isValidDepositId } from './depositRules';
+import { DepositDoc, DepositEnvironment, DepositMode, isValidDepositId } from './depositRules';
 import type { ConfirmDepositResult } from './depositStore';
 
 export type CollectResult =
@@ -34,7 +34,7 @@ export type TransactionRead =
   | { kind: 'UNAVAILABLE'; message: string };
 
 export interface CampayDeps {
-  createDeposit(uid: string, amount: number, mode: DepositMode): Promise<DepositDoc>;
+  createDeposit(uid: string, amount: number, mode: DepositMode, environment?: DepositEnvironment, phone?: string): Promise<DepositDoc>;
   getDeposit(id: string): Promise<DepositDoc | null>;
   attachCampayReference(id: string, campayReference: string): Promise<DepositDoc>;
   markDepositFailed(id: string, reason: string): Promise<DepositDoc>;
@@ -153,7 +153,7 @@ export async function startCampayDeposit(
     return { httpStatus: 400, success: false, message: phone.error || 'Numéro invalide.' };
   }
 
-  const deposit = await deps.createDeposit(input.uid, amount.amount, 'CAMPAY');
+  const deposit = await deps.createDeposit(input.uid, amount.amount, 'CAMPAY', 'DEMO', phone.phone);
   const collect = await deps.startCollect({ amount: deposit.amount, phone: phone.phone, depositId: deposit.id });
 
   if (collect.kind === 'REJECTED') {

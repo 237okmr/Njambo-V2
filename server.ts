@@ -23,8 +23,29 @@ import { runLegacyAction, createFirestoreLegacyStore } from './server/rooms/lega
 import { isKoraMoment } from './src/katika/visual/situation';
 import { pushService, buildGameUrl } from './server/pushService';
 import { saveProviderCredentials, getProviderCredentialsMasked } from './server/cash/cashSecrets';
-import { testCampayConnection, createLiveCampayDeps } from './server/cash/campayClient';
+import { testCampayConnection, createLiveCampayDeps, createLiveWithdrawalDeps } from './server/cash/campayClient';
 import { startCampayDeposit, verifyMyDeposit, handleCampayWebhook } from './server/cash/campayDeposits';
+import { extractWebhookEvent, normalizeCameroonPhone } from './server/cash/campayRules';
+import {
+  approveWithdrawal,
+  cancelMyWithdrawal,
+  handleWithdrawalWebhook,
+  recheckWithdrawal,
+  rejectWithdrawal,
+  requestWithdrawal,
+  resolveWithdrawal,
+  toPublicWithdrawal,
+  verifyMyWithdrawal,
+} from './server/cash/withdrawals';
+import {
+  WITHDRAWAL_DEMO_MAX_FCFA,
+  WITHDRAWAL_DEMO_MIN_FCFA,
+  isValidWithdrawalId,
+  parseWithdrawalSettingsPatch,
+} from './server/cash/withdrawalRules';
+import { getWithdrawalSettings, listPlayerWithdrawals, listRecentWithdrawals, updateWithdrawalSettings } from './server/cash/withdrawalStore';
+import { addPhone, listPhones, removePhone } from './server/cash/phoneBookStore';
+import { maskPhone } from './server/cash/phoneBookRules';
 import { getKoraCashConfig, updateKoraCashConfig } from './server/cash/cashConfigStore';
 import { parseConfigPatch, toPublicStatus } from './server/cash/cashConfigRules';
 import { getWallet } from './server/cash/walletLedger';
@@ -1031,6 +1052,11 @@ async function startServer() {
   const campayWebhookHandler = async (req: any, res: any) => {
     res.setHeader('Cache-Control', 'no-store');
     try {
+      // Un retrait porte son propre identifiant : la notification suit alors le service de retrait.
+      if (isValidWithdrawalId(extractWebhookEvent(req.query, req.body).externalReference)) {
+        const withdrawal = await handleWithdrawalWebhook(createLiveWithdrawalDeps(), { query: req.query, body: req.body });
+        return res.status(withdrawal.httpStatus).json({ success: withdrawal.success });
+      }
       const result = await handleCampayWebhook(createLiveCampayDeps(), { query: req.query, body: req.body });
       res.status(result.httpStatus).json({ success: result.success });
     } catch (err) {
@@ -1040,6 +1066,146 @@ async function startServer() {
   };
   app.get('/api/cash/campay/webhook', campayWebhookHandler);
   app.post('/api/cash/campay/webhook', campayWebhookHandler);
+
+  // Kora Cash — le retrait n'est ouvert qu'en démo, avec Campay actif : le serveur reste seul juge.
+  async function isWithdrawalOpen(): Promise<boolean> {
+    const [cfg, settings] = await Promise.all([getKoraCashConfig(), getWithdrawalSettings()]);
+    return cfg.isEnabled && cfg.environment === 'DEMO' && cfg.activeProviderId === 'campay' && settings.enabled;
+  }
+
+  // Kora Cash — ce que la fenêtre du joueur doit savoir du retrait : ouvert ou non, frais, limites. Rien d'autre.
+  app.get('/api/cash/withdrawal-settings', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const player = await requireGooglePlayer(req, res);
+    if (!player) return;
+    try {
+      const settings = await getWithdrawalSettings();
+      res.json({
+        success: true,
+        enabled: await isWithdrawalOpen(),
+        feePercent: settings.feePercent,
+        maxPhones: settings.maxPhones,
+        minAmount: WITHDRAWAL_DEMO_MIN_FCFA,
+        maxAmount: WITHDRAWAL_DEMO_MAX_FCFA,
+      });
+    } catch (err) {
+      console.error('[KoraCash] Lecture des réglages de retrait impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Lecture des réglages impossible.' });
+    }
+  });
+
+  // Kora Cash — carnet de numéros du joueur connecté.
+  app.get('/api/cash/phones', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const player = await requireGooglePlayer(req, res);
+    if (!player) return;
+    try {
+      res.json({ success: true, phones: await listPhones(player.uid) });
+    } catch (err) {
+      console.error('[KoraCash] Lecture du carnet de numéros impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Lecture de tes numéros impossible.' });
+    }
+  });
+
+  app.post('/api/cash/phones', express.json(), async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const player = await requireGooglePlayer(req, res);
+    if (!player) return;
+    const phone = normalizeCameroonPhone(req.body?.phone);
+    if (!phone.ok || !phone.phone) {
+      return res.status(400).json({ success: false, error: phone.error || 'Numéro invalide.' });
+    }
+    try {
+      const settings = await getWithdrawalSettings();
+      const result = await addPhone(player.uid, phone.phone, settings.maxPhones);
+      if (!result.ok) return res.status(400).json({ success: false, error: result.error });
+      res.json({ success: true, phones: result.entries });
+    } catch (err) {
+      console.error('[KoraCash] Ajout du numéro impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Ajout du numéro impossible.' });
+    }
+  });
+
+  app.delete('/api/cash/phones/:phone', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const player = await requireGooglePlayer(req, res);
+    if (!player) return;
+    const phone = normalizeCameroonPhone(req.params.phone);
+    if (!phone.ok || !phone.phone) {
+      return res.status(400).json({ success: false, error: phone.error || 'Numéro invalide.' });
+    }
+    try {
+      // Un numéro qui attend de recevoir un retrait ne peut pas être retiré du carnet.
+      const recent = await listPlayerWithdrawals(player.uid);
+      const inUse = recent.some((w) => w.phone === phone.phone && !['SUCCESS', 'FAILED', 'CANCELLED'].includes(w.status));
+      if (inUse) {
+        return res.status(409).json({ success: false, error: 'Ce numéro attend un retrait en cours.' });
+      }
+      res.json({ success: true, phones: await removePhone(player.uid, phone.phone) });
+    } catch (err) {
+      console.error('[KoraCash] Retrait du numéro impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Suppression du numéro impossible.' });
+    }
+  });
+
+  // Kora Cash — retraits du joueur connecté.
+  app.get('/api/cash/withdrawals', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const player = await requireGooglePlayer(req, res);
+    if (!player) return;
+    try {
+      const withdrawals = await listPlayerWithdrawals(player.uid);
+      res.json({ success: true, withdrawals: withdrawals.map(toPublicWithdrawal) });
+    } catch (err) {
+      console.error('[KoraCash] Lecture des retraits impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Lecture de tes retraits impossible.' });
+    }
+  });
+
+  const sendWithdrawalResult = (res: any, result: { httpStatus: number; success: boolean; message?: string; withdrawal?: unknown }) => {
+    const { httpStatus, message, ...rest } = result;
+    res.status(httpStatus).json(result.success ? { ...rest, message } : { ...rest, error: message });
+  };
+
+  app.post('/api/cash/withdrawal', express.json(), async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const player = await requireGooglePlayer(req, res);
+    if (!player) return;
+    try {
+      if (!(await isWithdrawalOpen())) {
+        return res.status(403).json({ success: false, error: 'Le retrait n\'est pas ouvert pour le moment.' });
+      }
+      sendWithdrawalResult(res, await requestWithdrawal(createLiveWithdrawalDeps(), { uid: player.uid, amount: req.body?.amount, phone: req.body?.phone }));
+    } catch (err) {
+      console.error('[KoraCash] Demande de retrait impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Demande de retrait impossible.' });
+    }
+  });
+
+  // Relecture et annulation restent possibles même si le retrait est coupé depuis : une demande en cours doit pouvoir aboutir.
+  app.post('/api/cash/withdrawal/:id/verify', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const player = await requireGooglePlayer(req, res);
+    if (!player) return;
+    try {
+      sendWithdrawalResult(res, await verifyMyWithdrawal(createLiveWithdrawalDeps(), { uid: player.uid, id: req.params.id }));
+    } catch (err) {
+      console.error('[KoraCash] Relecture du retrait impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Relecture impossible.' });
+    }
+  });
+
+  app.post('/api/cash/withdrawal/:id/cancel', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const player = await requireGooglePlayer(req, res);
+    if (!player) return;
+    try {
+      sendWithdrawalResult(res, await cancelMyWithdrawal(createLiveWithdrawalDeps(), { uid: player.uid, id: req.params.id }));
+    } catch (err) {
+      console.error('[KoraCash] Annulation du retrait impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Annulation impossible.' });
+    }
+  });
 
   // Katika Admin Auth Protection Middleware (Firebase ID Token verification)
   const KATIKA_ADMIN_EMAIL = (process.env.KATIKA_ADMIN_EMAIL || '237okmr@gmail.com').toLowerCase();
@@ -1603,6 +1769,76 @@ async function startServer() {
     } catch (err) {
       console.error('[KoraCash] Lecture des dépôts Campay impossible.', err instanceof Error ? err.message : String(err));
       res.status(500).json({ success: false, error: 'Lecture des dépôts impossible.' });
+    }
+  });
+
+  // Kora Cash — file de suivi des retraits et décisions de l'admin. Les numéros restent masqués.
+  app.get('/api/katika/cash/withdrawals', async (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const [withdrawals, settings] = await Promise.all([listRecentWithdrawals(), getWithdrawalSettings()]);
+      res.json({
+        success: true,
+        settings,
+        withdrawals: withdrawals.map((w) => ({
+          id: w.id,
+          uid: w.uid,
+          amount: w.amount,
+          fee: w.fee,
+          net: w.net,
+          phone: maskPhone(w.phone),
+          status: w.status,
+          autoApproved: w.autoApproved,
+          createdAt: w.createdAt,
+          updatedAt: w.updatedAt,
+          note: w.note,
+          campayStatus: w.campayStatus,
+          campayOperator: w.campayOperator,
+          campayReason: w.campayReason,
+          decidedBy: w.decidedBy,
+        })),
+      });
+    } catch (err) {
+      console.error('[KoraCash] Lecture de la file des retraits impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Lecture des retraits impossible.' });
+    }
+  });
+
+  app.post('/api/katika/cash/withdrawal-settings', express.json(), async (req, res) => {
+    const parsed = parseWithdrawalSettingsPatch(req.body);
+    if (!parsed.ok || !parsed.patch) {
+      return res.status(400).json({ success: false, error: parsed.error || 'Corps de requête invalide.' });
+    }
+    try {
+      const settings = await updateWithdrawalSettings(parsed.patch, (req as any).katikaUser?.email as string | undefined);
+      res.json({ success: true, settings });
+    } catch (err) {
+      console.error('[KoraCash] Enregistrement des réglages de retrait impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Enregistrement des réglages impossible.' });
+    }
+  });
+
+  app.post('/api/katika/cash/withdrawals/:id/:action', express.json(), async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const actor = String((req as any).katikaUser?.email || 'katika');
+    const deps = createLiveWithdrawalDeps();
+    const id = req.params.id;
+    try {
+      switch (req.params.action) {
+        case 'approve':
+          return sendWithdrawalResult(res, await approveWithdrawal(deps, { id, actor }));
+        case 'reject':
+          return sendWithdrawalResult(res, await rejectWithdrawal(deps, { id, actor, note: req.body?.note }));
+        case 'recheck':
+          return sendWithdrawalResult(res, await recheckWithdrawal(deps, { id }));
+        case 'resolve':
+          return sendWithdrawalResult(res, await resolveWithdrawal(deps, { id, outcome: req.body?.outcome, actor }));
+        default:
+          return res.status(404).json({ success: false, error: 'Action inconnue.' });
+      }
+    } catch (err) {
+      console.error('[KoraCash] Action sur un retrait impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Action impossible.' });
     }
   });
 

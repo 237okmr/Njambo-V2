@@ -88,12 +88,52 @@ export interface DepositUi {
   maxAmount: number | null;
 }
 
+/** Montant net annoncé avant confirmation. Même calcul que le serveur (server/cash/withdrawalRules.ts), qui reste seul juge. */
+export function quoteWithdrawal(amount: number, feePercent: number): { fee: number; net: number } {
+  const fee = Math.ceil(Math.round(amount * feePercent * 100) / 10000);
+  return { fee, net: amount - fee };
+}
+
+/** Texte du suivi d'une demande de retrait. */
+export function withdrawalStatusLabel(status: string): string {
+  switch (status) {
+    case 'AWAITING_APPROVAL':
+      return 'En attente de validation';
+    case 'HOLDING':
+    case 'READY':
+    case 'SENDING':
+    case 'PROCESSING':
+      return 'En cours d’envoi';
+    case 'REVIEW':
+      return 'En vérification';
+    case 'REFUNDING':
+      return 'Remboursement en cours';
+    case 'SUCCESS':
+      return 'Envoyé';
+    case 'FAILED':
+      return 'Échoué, argent rendu';
+    case 'CANCELLED':
+      return 'Annulé, argent rendu';
+    default:
+      return 'En cours';
+  }
+}
+
+/** Numéro enregistré (237677123412) affiché lisiblement : 6 77 12 34 12. */
+export function formatPhone(phone: string): string {
+  const local = phone.startsWith('237') ? phone.slice(3) : phone;
+  if (local.length !== 9) return phone;
+  return `${local[0]} ${local.slice(1, 3)} ${local.slice(3, 5)} ${local.slice(5, 7)} ${local.slice(7)}`;
+}
+
 /** Libellés selon l'environnement et la méthode : en démo, seul le paiement Campay de test est proposé. */
-export function getDepositUi(environment: KoraCashEnvironment, depositMode: KoraCashDepositMode = 'SIMULATED'): DepositUi {
+export function getDepositUi(environment: KoraCashEnvironment, depositMode: KoraCashDepositMode = 'SIMULATED', canWithdraw: boolean = false): DepositUi {
   if (environment === 'DEMO') {
     if (depositMode === 'CAMPAY') {
       return {
-        banner: 'Mode démo : paiement de test avec Campay. Attention : ton compte Mobile Money est réellement débité du montant choisi, mais ce solde de test ne peut pas être retiré.',
+        banner: canWithdraw
+          ? 'Mode démo : paiement de test avec Campay. Attention : ton compte Mobile Money est réellement débité du montant choisi. Tu peux retirer ce solde vers un numéro vérifié.'
+          : 'Mode démo : paiement de test avec Campay. Attention : ton compte Mobile Money est réellement débité du montant choisi, mais ce solde de test ne peut pas être retiré.',
         buttonLabel: 'Payer par Mobile Money (test)',
         canDeposit: true,
         needsPhone: true,

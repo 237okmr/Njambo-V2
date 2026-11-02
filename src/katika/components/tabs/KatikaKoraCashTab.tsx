@@ -19,6 +19,7 @@ import { useKatikaAuth } from '../../context/KatikaAuthContext';
 import { ProviderKeysPanel } from '../../cash/ProviderKeysPanel';
 import { KatikaDemoCleanupCard } from '../../cash/KatikaDemoCleanupCard';
 import { KatikaCampayDepositsCard } from '../../cash/KatikaCampayDepositsCard';
+import { KatikaWithdrawalsCard } from '../../cash/KatikaWithdrawalsCard';
 
 const SUB_SECTIONS: { id: KoraCashSubSection; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: 'GENERAL', label: 'Général', icon: Power },
@@ -47,7 +48,7 @@ const PLANNED_FIELDS: Record<Exclude<KoraCashSubSection, 'GENERAL' | 'PROVIDERS'
     'Règle d\'arrondi',
   ],
   DEPOSITS_WITHDRAWALS: [
-    'Montants minimum et maximum de dépôt et de retrait',
+    'Montants minimum et maximum de dépôt et de retrait en argent réel',
     'Condition de jeu minimale par palier de dépôt',
     'Délai d\'attente pour les comptes neufs',
   ],
@@ -263,6 +264,7 @@ export const KatikaKoraCashTab: React.FC = () => {
       <div className="flex-1 min-w-0">
         {activeSection === 'GENERAL' && renderGeneral()}
         {activeSection === 'PROVIDERS' && <ProviderKeysPanel />}
+        {activeSection === 'DEPOSITS_WITHDRAWALS' && <KatikaWithdrawalsCard />}
         {activeSection === 'WALLETS_TRANSACTIONS' && <KatikaCampayDepositsCard />}
         {activeSection === 'WALLETS_TRANSACTIONS' && <KatikaDemoCleanupCard />}
         {activeSection !== 'GENERAL' && activeSection !== 'PROVIDERS' && renderPlaceholder(activeSection)}

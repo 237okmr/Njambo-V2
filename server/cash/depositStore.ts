@@ -10,6 +10,8 @@ import { recordServerReads } from '../katika/readBudget';
 import type { CampayReadingInfo } from './campayRules';
 import { applyMovement } from './walletLedger';
 import { CashWallet } from './cashTypes';
+import { verifyPhoneFromDeposit } from './phoneBookStore';
+import { getWithdrawalSettings } from './withdrawalStore';
 import {
   DepositDoc,
   DepositEnvironment,
@@ -24,7 +26,7 @@ import {
 export const CASH_DEPOSITS_COLLECTION = 'cash_deposits';
 
 /** Crée un dépôt en attente. Le montant doit avoir été validé par parseDepositAmount avant l'appel. */
-export async function createDeposit(uid: string, amount: number, mode: DepositMode, environment: DepositEnvironment = 'DEMO'): Promise<DepositDoc> {
+export async function createDeposit(uid: string, amount: number, mode: DepositMode, environment: DepositEnvironment = 'DEMO', phone?: string): Promise<DepositDoc> {
   const now = Date.now();
   const deposit: DepositDoc = {
     id: newDepositId(),
@@ -35,6 +37,7 @@ export async function createDeposit(uid: string, amount: number, mode: DepositMo
     status: 'PENDING',
     createdAt: now,
     updatedAt: now,
+    ...(phone ? { phone } : {}),
   };
   await getFirebaseAdminAppDb().collection(CASH_DEPOSITS_COLLECTION).doc(deposit.id).create(deposit);
   return deposit;
@@ -196,6 +199,16 @@ export async function confirmDeposit(id: string, providerRef?: string): Promise<
     tx.set(ref, next);
     return next;
   });
+
+  // Le dépôt a réussi depuis ce numéro : il devient vérifié. Un souci ici ne remet jamais le crédit en cause.
+  if (existing.phone) {
+    try {
+      const settings = await getWithdrawalSettings();
+      await verifyPhoneFromDeposit(existing.uid, existing.phone, existing.campayOperator, settings.maxPhones);
+    } catch (err) {
+      console.warn('[KoraCash] Vérification du numéro impossible.', { depositId: existing.id, error: err instanceof Error ? err.message : String(err) });
+    }
+  }
 
   return { deposit, credited: movement.applied, wallet: movement.wallet };
 }

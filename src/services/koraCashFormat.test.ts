@@ -12,6 +12,9 @@ import {
   parseTypedAmount,
   resolveEntryState,
   getDepositUi,
+  formatPhone,
+  quoteWithdrawal,
+  withdrawalStatusLabel,
 } from './koraCashFormat';
 
 describe('Kora Cash joueur — format et saisie', () => {
@@ -98,5 +101,29 @@ describe('Kora Cash joueur — format et saisie', () => {
     assert.equal(simulated.maxAmount, null);
     assert.deepEqual(simulated.quickAmounts, QUICK_DEPOSIT_AMOUNTS);
     assert.equal(parseTypedAmount('20').ok, false);
+  });
+});
+
+describe('Kora Cash — retrait : affichage', () => {
+  it('annonce le même net que le serveur', () => {
+    assert.deepEqual(quoteWithdrawal(1000, 0), { fee: 0, net: 1000 });
+    assert.deepEqual(quoteWithdrawal(1001, 2), { fee: 21, net: 980 });
+    assert.deepEqual(quoteWithdrawal(1000, 1.5), { fee: 15, net: 985 });
+  });
+
+  it('dit clairement où en est une demande', () => {
+    assert.equal(withdrawalStatusLabel('AWAITING_APPROVAL'), 'En attente de validation');
+    assert.equal(withdrawalStatusLabel('PROCESSING'), 'En cours d’envoi');
+    assert.equal(withdrawalStatusLabel('REVIEW'), 'En vérification');
+    assert.equal(withdrawalStatusLabel('FAILED'), 'Échoué, argent rendu');
+  });
+
+  it('affiche le numéro lisiblement', () => {
+    assert.equal(formatPhone('237677123412'), '6 77 12 34 12');
+  });
+
+  it('ne promet le retrait dans le bandeau que si le retrait est ouvert', () => {
+    assert.match(getDepositUi('DEMO', 'CAMPAY').banner, /ne peut pas être retiré/);
+    assert.match(getDepositUi('DEMO', 'CAMPAY', true).banner, /Tu peux retirer/);
   });
 });

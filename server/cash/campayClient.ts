@@ -9,6 +9,19 @@ import { getProviderCredentials } from './cashSecrets';
 import { getEngineConfig } from '../engine/engineConfig';
 import { PARAM_BY_KEY } from '../engine/engineParams';
 import type { CampayDeps, CollectResult, TransactionRead } from './campayDeposits';
+import type { WithdrawSendResult, WithdrawalDeps } from './withdrawals';
+import { applyMovement } from './walletLedger';
+import { isVerifiedPhone } from './phoneBookStore';
+import {
+  acquireWithdrawalSlot,
+  createWithdrawal,
+  getWithdrawal,
+  getWithdrawalSettings,
+  hasWithdrawalHold,
+  releaseWithdrawalSlot,
+  sumDailyWithdrawals,
+  transitionWithdrawal,
+} from './withdrawalStore';
 import {
   attachCampayReference,
   confirmDeposit,
@@ -212,6 +225,49 @@ export async function startCampayCollect(params: { amount: number; phone: string
   }
 }
 
+/**
+ * Demande un retrait à Campay, sur le bac à sable uniquement : aucun chemin vers le retrait réel n'existe ici.
+ * Distingue refus net (rien n'est parti), acceptation et issue incertaine (l'argent est peut-être parti).
+ */
+export async function startCampayWithdraw(params: { amount: number; phone: string; withdrawalId: string }): Promise<WithdrawSendResult> {
+  let token: string | null = null;
+  try {
+    const creds = await getProviderCredentials('campay', 'demo');
+    if (!creds) return { kind: 'REJECTED', message: 'Le retrait par Mobile Money n\'est pas disponible pour le moment.' };
+    token = await resolveDemoToken(creds);
+  } catch {
+    // Rien n'a encore été demandé à Campay : l'échec est sans risque.
+    return { kind: 'REJECTED', message: 'Campay est injoignable pour le moment. Réessaie dans un instant.' };
+  }
+  if (!token) return { kind: 'REJECTED', message: 'Le retrait par Mobile Money n\'est pas disponible pour le moment.' };
+
+  try {
+    const res = await fetch(`${CAMPAY_DEMO_BASE_URL}/api/withdraw/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Token ${token}` },
+      body: JSON.stringify({
+        amount: String(params.amount),
+        to: params.phone,
+        description: `Retrait Kora Cash demo ${params.withdrawalId}`,
+        external_reference: params.withdrawalId,
+      }),
+      signal: AbortSignal.timeout(providerTimeoutMs()),
+    });
+    const data = await res.json().catch(() => ({}));
+    console.log('[Campay] Retrait : statut HTTP', res.status, 'retrait', params.withdrawalId);
+    if (res.ok && typeof data?.reference === 'string' && data.reference) {
+      return { kind: 'ACCEPTED', reference: data.reference };
+    }
+    if (res.status >= 400 && res.status < 500) {
+      const detail = typeof data?.message === 'string' && data.message ? data.message : `Erreur ${res.status}`;
+      return { kind: 'REJECTED', message: `Campay a refusé le retrait : ${detail}` };
+    }
+    return { kind: 'UNKNOWN', message: `Réponse inattendue de Campay (statut ${res.status}).` };
+  } catch {
+    return { kind: 'UNKNOWN', message: 'Aucune réponse de Campay.' };
+  }
+}
+
 /** Relit une transaction chez Campay par sa référence. Ne renvoie que le statut, le montant et les références. */
 export async function readCampayTransaction(reference: string): Promise<TransactionRead> {
   try {
@@ -248,6 +304,28 @@ async function getCampayWebhookKey(): Promise<string | null> {
   const creds = await getProviderCredentials('campay', 'demo');
   const key = creds?.webhook_key;
   return typeof key === 'string' && key !== '' ? key : null;
+}
+
+/** Branche le service de retrait sur la vraie base de données et le vrai Campay (bac à sable). */
+export function createLiveWithdrawalDeps(): WithdrawalDeps {
+  return {
+    getSettings: getWithdrawalSettings,
+    isVerifiedPhone,
+    createWithdrawal,
+    getWithdrawal,
+    transition: transitionWithdrawal,
+    acquireSlot: acquireWithdrawalSlot,
+    releaseSlot: releaseWithdrawalSlot,
+    sumDaily: sumDailyWithdrawals,
+    applyMovement: async (m) => {
+      await applyMovement({ ...m, lockedDelta: 0, environment: 'DEMO' });
+    },
+    hasHold: (id) => hasWithdrawalHold(id, 'DEMO'),
+    sendToCampay: startCampayWithdraw,
+    readTransaction: readCampayTransaction,
+    getWebhookKey: getCampayWebhookKey,
+    nowMs: () => Date.now(),
+  };
 }
 
 /** Branche le service campayDeposits sur la vraie base de données et le vrai Campay (bac à sable). */
