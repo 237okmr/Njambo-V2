@@ -283,6 +283,22 @@ export function invalidateKatikaMemoryCache(): void {
   cachedPlayersData = null;
 }
 
+/** Rangs dynamiques calculés par le serveur (uid vers rang). Vide si la lecture échoue : l'ancien titre reste affiché. */
+async function getDynamicRankTitles(): Promise<Record<string, string>> {
+  try {
+    const res = await fetch('/api/leaderboard/cached');
+    const data = res.ok ? await res.json() : null;
+    const titles: Record<string, string> = {};
+    (Array.isArray(data?.users) ? data.users : []).forEach((u: any) => {
+      if (u?.uid && u.dynamicRank?.titleId) titles[u.uid] = u.dynamicRank.titleId;
+    });
+    return titles;
+  } catch (e) {
+    console.warn('[KatikaService] Lecture des rangs impossible :', e);
+    return {};
+  }
+}
+
 async function getCachedUsers(): Promise<any[]> {
   const now = Date.now();
   if (cachedUsersData && now - cachedUsersData.timestamp < MEMORY_CACHE_TTL_MS) {
@@ -422,7 +438,7 @@ export const KatikaService = {
       LEGENDE_KORA: 0,
     };
     try {
-      const usersList = await getCachedUsers();
+      const [usersList, dynamicRanks] = await Promise.all([getCachedUsers(), getDynamicRankTitles()]);
       registeredUsersCount = usersList.length;
       usersList.forEach((u: any) => {
         if (u.email || u.isGuest === false) {
@@ -430,7 +446,7 @@ export const KatikaService = {
         } else {
           guestUsersCount++;
         }
-        const t = u.honorificTitleId || 'APPRENTI';
+        const t = dynamicRanks[u.id || u.uid] || u.honorificTitleId || 'APPRENTI';
         if (honorificPyramid[t] !== undefined) honorificPyramid[t]++;
         else honorificPyramid['APPRENTI']++;
       });
@@ -1001,8 +1017,9 @@ export const KatikaService = {
 
     // 1. Synchronisation prioritaire depuis la collection officielle Firestore /users (avec cache mémoire 30s)
     let cachedUsers: any[] = [];
+    let dynamicRanks: Record<string, string> = {};
     try {
-      cachedUsers = await getCachedUsers();
+      [cachedUsers, dynamicRanks] = await Promise.all([getCachedUsers(), getDynamicRankTitles()]);
     } catch (e) {
       console.warn('[KatikaService] Firestore /users fetch fallback to cache/records:', e);
     }
@@ -1024,7 +1041,7 @@ export const KatikaService = {
         email: u.email || undefined,
         photoURL: u.photoURL || null,
         avatarId: u.avatarId || 'lion',
-        honorificTitleId: u.honorificTitleId || 'APPRENTI',
+        honorificTitleId: dynamicRanks[uId] || u.honorificTitleId || 'APPRENTI',
         isGuest: u.isGuest ?? (u.email ? false : true),
         authProvider: u.authProvider || (u.email ? 'google.com' : undefined),
         isBot: Boolean(u.isBot),

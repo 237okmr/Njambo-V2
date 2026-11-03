@@ -20,7 +20,7 @@ export type ParamGroup =
   | 'rangs'
   | 'katika';
 export type ParamEffect = 'immediate' | 'next_room' | 'next_connection';
-export type ParamUnit = 's' | 'ms' | 'min' | 'jours' | '%' | 'points' | '';
+export type ParamUnit = 's' | 'ms' | 'min' | 'h' | 'jours' | '%' | 'points' | '';
 
 export interface ParamDef {
   key: string;
@@ -93,6 +93,11 @@ export const ENGINE_PARAMS: ParamDef[] = [
     key: 'rankConfirmedMinWins', label: 'Victoires pour le rang Joueur Confirmé', unit: '',
     min: 0, max: 1000, default: 2, group: 'rangs', scope: 'both', effect: 'immediate',
     help: 'Objectif fixe : victoires à obtenir pour devenir Joueur Confirmé.',
+  },
+  {
+    key: 'rankMessageCooldownHours', label: 'Délai entre deux messages de rang', unit: 'h',
+    min: 1, max: 720, default: 24, group: 'rangs', scope: 'client', effect: 'immediate', allowZero: true,
+    help: 'Le rang change toujours aussitôt. Ce délai limite seulement les messages, sauf pour un nouveau meilleur rang. 0 : aucun délai.',
   },
   {
     key: 'rankRefreshMinutes', label: 'Actualisation des rangs des joueurs', unit: 'min',

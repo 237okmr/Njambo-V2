@@ -3,6 +3,7 @@
  * Le serveur reste seul juge : ce rang ne sert qu'à l'affichage.
  */
 
+import { RankMemory } from './rankChanges';
 import { PlayerRank, TierSummary } from './rankTiers';
 
 const STORAGE_KEY = 'njambo_dynamic_rank_v1';
@@ -40,5 +41,25 @@ export async function fetchRankSnapshot(uid: string): Promise<RankSnapshot | nul
     return snapshot;
   } catch {
     return null;
+  }
+}
+
+const MEMORY_KEY = 'njambo_rank_memory_v1';
+
+export function readRankMemory(uid: string): RankMemory | null {
+  try {
+    const raw = localStorage.getItem(MEMORY_KEY);
+    const parsed = raw ? (JSON.parse(raw) as RankMemory) : null;
+    return parsed && parsed.uid === uid ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+export function writeRankMemory(memory: RankMemory): void {
+  try {
+    localStorage.setItem(MEMORY_KEY, JSON.stringify(memory));
+  } catch {
+    // stockage indisponible : la comparaison reprendra au prochain lancement
   }
 }

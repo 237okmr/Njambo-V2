@@ -11,7 +11,7 @@ import { getPublicParamNumber } from './publicConfig';
  * (notificationHistoryMaxItems, réglable dans katika).
  */
 
-export type NotificationKind = 'DIRECT_INVITE' | 'FRIEND_REQUEST';
+export type NotificationKind = 'DIRECT_INVITE' | 'FRIEND_REQUEST' | 'RANK_CHANGE';
 export type NotificationOutcome = 'ACCEPTED' | 'DECLINED';
 
 export interface HistoryNotification {
@@ -108,7 +108,7 @@ export function countUnread(items: HistoryNotification[]): number {
  * une invitation expirée ou déjà traitée ne l'est plus (aucun bouton d'action).
  */
 export function isActionable(item: HistoryNotification, now: number): boolean {
-  if (item.outcome) return false;
+  if (item.outcome || item.kind === 'RANK_CHANGE') return false;
   if (item.kind === 'DIRECT_INVITE') return typeof item.expiresAt === 'number' && item.expiresAt > now;
   return true;
 }
@@ -124,7 +124,7 @@ function sanitizeList(raw: unknown): HistoryNotification[] {
       !!item &&
       typeof item === 'object' &&
       typeof (item as HistoryNotification).id === 'string' &&
-      ((item as HistoryNotification).kind === 'DIRECT_INVITE' || (item as HistoryNotification).kind === 'FRIEND_REQUEST') &&
+      ['DIRECT_INVITE', 'FRIEND_REQUEST', 'RANK_CHANGE'].includes((item as HistoryNotification).kind) &&
       typeof (item as HistoryNotification).createdAt === 'number'
   );
 }

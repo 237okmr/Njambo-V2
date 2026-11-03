@@ -37,7 +37,7 @@ const EFFECT_LABELS: Record<ParamDef['effect'], string> = {
   next_connection: 'S\'applique à la prochaine connexion des joueurs',
 };
 
-const UNIT_LABELS: Record<string, string> = { s: 's', ms: 'ms', min: 'min', jours: 'j', '%': '%', points: 'points', '': '' };
+const UNIT_LABELS: Record<string, string> = { s: 's', ms: 'ms', min: 'min', h: 'h', jours: 'j', '%': '%', points: 'points', '': '' };
 
 interface KatikaParamsPanelProps {
   config: KatikaGameConfig;

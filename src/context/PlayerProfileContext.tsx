@@ -43,6 +43,8 @@ interface PlayerProfileContextValue {
   nextTitle: HonorificTitle | null;
   progressPercent: number;
   rankProgress: RankProgress;
+  /** Dernière réponse du serveur : déclenche les annonces de changement de rang. */
+  liveRank: RankSnapshot | null;
   rankTiers: TierSummary[];
   rankConfirmedGoal: ConfirmedGoal;
   isLoggedIn: boolean;
@@ -148,12 +150,15 @@ export const PlayerProfileProvider: React.FC<{ children: ReactNode }> = ({ child
   const isGuestProfile = !profile || profile.isGuest;
   const rankUid = isGuestProfile ? '' : profile.uid;
   const [rankSnapshot, setRankSnapshot] = useState<RankSnapshot | null>(() => readStoredRank(rankUid));
+  const [liveRank, setLiveRank] = useState<RankSnapshot | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     setRankSnapshot(readStoredRank(rankUid));
     fetchRankSnapshot(rankUid).then((snapshot) => {
-      if (!cancelled && snapshot) setRankSnapshot(snapshot);
+      if (cancelled || !snapshot) return;
+      setRankSnapshot(snapshot);
+      setLiveRank(snapshot);
     });
     return () => {
       cancelled = true;
@@ -419,6 +424,7 @@ export const PlayerProfileProvider: React.FC<{ children: ReactNode }> = ({ child
         nextTitle,
         progressPercent: isNaN(progressPercent) ? 0 : progressPercent,
         rankProgress: rankView.rankProgress,
+        liveRank,
         rankTiers: rankView.rankTiers,
         rankConfirmedGoal: rankView.rankConfirmedGoal,
         isLoggedIn: Boolean(profile && !profile.isGuest),

@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { BellOff, CheckCheck, ChevronRight, Swords, Trash2, UserPlus } from 'lucide-react';
+import { Trophy, BellOff, CheckCheck, ChevronRight, Swords, Trash2, UserPlus } from 'lucide-react';
 import { NativeScreenHeader } from '../common/NativeScreenHeader';
 import { PlayerAvatar } from '../profile/PlayerAvatar';
 import { useNotificationHistory } from '../../hooks/useNotificationHistory';
@@ -48,7 +48,7 @@ const NotificationRow: React.FC<NotificationRowProps> = ({ item, now, onOpen, on
         ? { label: 'Refusée', className: 'bg-rose-500/10 text-rose-300 border-rose-500/30' }
         : null;
 
-  const KindIcon = item.kind === 'DIRECT_INVITE' ? Swords : UserPlus;
+  const KindIcon = item.kind === 'DIRECT_INVITE' ? Swords : item.kind === 'RANK_CHANGE' ? Trophy : UserPlus;
 
   return (
     <motion.li
@@ -105,11 +105,11 @@ const NotificationRow: React.FC<NotificationRowProps> = ({ item, now, onOpen, on
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
               {!item.read && <span className="h-2 w-2 shrink-0 rounded-full bg-amber-400" aria-label="Non lue" />}
-              <span className={`truncate text-sm ${item.read ? 'font-bold text-slate-300' : 'font-black text-white'}`}>
+              <span className={`${item.kind === 'RANK_CHANGE' ? '' : 'truncate '}text-sm ${item.read ? 'font-bold text-slate-300' : 'font-black text-white'}`}>
                 {item.title}
               </span>
             </div>
-            <span className="block truncate text-xs text-slate-400">{item.body}</span>
+            <span className={`block ${item.kind === 'RANK_CHANGE' ? '' : 'truncate '}text-xs text-slate-400`}>{item.body}</span>
             <div className="mt-1 flex items-center gap-1.5">
               <span className="text-xs font-medium text-slate-500">{formatRelativeTime(item.createdAt, now)}</span>
               {statusTag && (

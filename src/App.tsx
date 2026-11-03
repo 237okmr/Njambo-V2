@@ -46,6 +46,7 @@ import { UpdateNotificationBanner } from './components/UpdateNotificationBanner'
 import { PlayerProfileProvider, usePlayerProfile } from './context/PlayerProfileContext';
 import { InvitationsProvider, useInvitations } from './context/InvitationsContext';
 import { useNotificationHistoryBridge } from './hooks/useNotificationHistoryBridge';
+import { useRankAnnouncements } from './hooks/useRankAnnouncements';
 import { notificationNavigation } from './services/notificationNavigation';
 import { notificationScreen, useNotificationScreenOpen } from './hooks/useNotificationHistory';
 import { NotificationHistoryScreen } from './components/notifications/NotificationHistoryScreen';
@@ -156,6 +157,7 @@ function GameApp() {
 
   // Screen Routing
   const [currentScreen, setCurrentScreen] = useState<'HOME' | 'GAME'>('HOME');
+  useRankAnnouncements(currentScreen === 'HOME');
 
   // Game Settings State
   const [opponentCount, setOpponentCount] = useState<number>(() => {

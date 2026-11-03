@@ -28,6 +28,7 @@ import { usePlayerProfile } from '../../context/PlayerProfileContext';
 import { PlayerAvatar } from './PlayerAvatar';
 import { ProfileDetailsSection } from './ProfileDetailsSection';
 import { RankTitleId, rankConditionLabel, rankGoalLabel } from '../../services/rankTiers';
+import { readRankMemory } from '../../services/rankClient';
 import { formatCompactNumber } from '../../utils/leaderboardDisplay';
 import { ProfileSettingsTab } from './ProfileSettingsTab';
 import { AvatarPickerBottomSheet } from './AvatarPickerBottomSheet';
@@ -133,6 +134,8 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
   }, [stats, safeProfile.stats]);
 
   const safeTitle = currentTitle && currentTitle.title ? currentTitle : HONORIFIC_TITLES[0];
+  const bestTitleId = isLoggedIn ? readRankMemory(safeProfile.uid)?.bestTitleId : undefined;
+  const bestTitle = HONORIFIC_TITLES.find((t) => t.id === bestTitleId) ?? null;
   const safeHistory = Array.isArray(history) ? history : [];
 
   // Editing display name
@@ -602,6 +605,16 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
               </div>
 
 
+
+              {/* Meilleur rang atteint, gardé même si le rang actuel a baissé */}
+              {bestTitle && bestTitle.id !== safeTitle.id && (
+                <div id="profile-best-rank" className="-mt-2 px-3.5 py-2.5 rounded-xl bg-slate-900/70 border border-slate-800 flex items-center justify-between gap-3">
+                  <span className="text-xs text-slate-400">Meilleur rang atteint</span>
+                  <span className={`text-sm font-bold text-right ${bestTitle.colorClass}`}>
+                    {bestTitle.badge} {bestTitle.title}
+                  </span>
+                </div>
+              )}
 
               {/* Comment se joue le rang */}
               <p className="-mt-2 px-1 text-xs text-slate-400">Ton rang suit ta place parmi les joueurs : il monte et il peut redescendre.</p>
