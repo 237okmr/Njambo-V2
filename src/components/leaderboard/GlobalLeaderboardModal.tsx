@@ -48,7 +48,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
   onChallengePlayer,
   onOpenProfile,
 }) => {
-  const { isLoggedIn, loginWithGoogle, profile, progressPercent, currentTitle, nextTitle } = usePlayerProfile();
+  const { isLoggedIn, loginWithGoogle, profile, rankProgress, nextTitle } = usePlayerProfile();
   const [activeCategory, setActiveCategory] = useState<LeaderboardCategory>('WINS');
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [userRank, setUserRank] = useState<CurrentUserRankSummary | null>(null);
@@ -602,7 +602,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
             category={activeCategory}
             entry={entries.find((e) => e.isCurrentUser) ?? null}
             nextTitle={nextTitle}
-            progressPercent={progressPercent}
+            progress={rankProgress}
             onClose={() => setIsPositionOpen(false)}
             onLocate={handleLocateMe}
             onOpenProfile={onOpenProfile}

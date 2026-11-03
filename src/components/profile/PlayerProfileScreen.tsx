@@ -27,6 +27,8 @@ import {
 import { usePlayerProfile } from '../../context/PlayerProfileContext';
 import { PlayerAvatar } from './PlayerAvatar';
 import { ProfileDetailsSection } from './ProfileDetailsSection';
+import { RankTitleId, rankConditionLabel, rankGoalLabel } from '../../services/rankTiers';
+import { formatCompactNumber } from '../../utils/leaderboardDisplay';
 import { ProfileSettingsTab } from './ProfileSettingsTab';
 import { AvatarPickerBottomSheet } from './AvatarPickerBottomSheet';
 import { ConnectionDiagnosticModal } from '../common/ConnectionDiagnosticModal';
@@ -84,6 +86,9 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
     currentTitle,
     nextTitle,
     progressPercent,
+    rankProgress,
+    rankTiers,
+    rankConfirmedGoal,
     isLoggedIn,
     isSyncing,
     syncMessage,
@@ -553,7 +558,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     <span className="text-3xl sm:text-4xl">{safeTitle.badge}</span>
                     <div>
                       <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">
-                        Ton grade actuel
+                        Ton rang actuel
                       </span>
                       <h2 className={`text-lg sm:text-xl font-black ${safeTitle.colorClass}`}>
                         {safeTitle.title} ({safeTitle.subtitle})
@@ -561,9 +566,6 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                     </div>
                   </div>
 
-                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-slate-900/80 border border-slate-700 text-amber-300">
-                    Actif ✓
-                  </span>
                 </div>
 
                 <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
@@ -575,7 +577,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                   <div className="space-y-1.5 pt-2">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-300 flex items-center gap-1.5">
-                        Prochain grade :{' '}
+                        Prochain rang :{' '}
                         <strong className={`font-bold ${nextTitle.colorClass}`}>{nextTitle.title}</strong>
                       </span>
                       <span className="font-bold text-amber-400">{progressPercent}%</span>
@@ -587,16 +589,22 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                         style={{ width: `${progressPercent}%` }}
                       />
                     </div>
+                    <p className="text-xs text-slate-300">
+                      {rankGoalLabel(rankProgress)}
+                    </p>
                   </div>
                 ) : (
                   <div className="text-xs text-amber-300 font-semibold flex items-center gap-1.5 pt-1">
                     <Crown className="w-4 h-4 text-amber-400" />
-                    Tu as atteint le rang suprême de Légende Kora !
+                    Tu tiens le rang suprême de Légende du Kora !
                   </div>
                 )}
               </div>
 
 
+
+              {/* Comment se joue le rang */}
+              <p className="-mt-2 px-1 text-xs text-slate-400">Ton rang suit ta place parmi les joueurs : il monte et il peut redescendre.</p>
 
               {/* Score de Maîtrise Highlight Banner */}
               <div className="bg-gradient-to-r from-amber-950/60 via-slate-900 to-amber-950/40 border-2 border-amber-500/40 rounded-2xl p-4 sm:p-5 shadow-lg space-y-3">
@@ -943,7 +951,7 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                               </span>
                             </div>
                             <p className="text-xs text-slate-400 leading-snug">
-                              {t.description}
+                              {rankConditionLabel(t.id as RankTitleId, rankTiers, rankConfirmedGoal)}
                             </p>
                           </div>
                         </div>
@@ -952,16 +960,16 @@ export const PlayerProfileScreen: React.FC<PlayerProfileScreenProps> = ({
                           {isUnlocked ? (
                             <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-lg flex items-center gap-1">
                               <Check className="w-3 h-3" />
-                              Obtenu
+                              {t.id === safeTitle.id ? 'Ton rang' : 'Dépassé'}
                             </span>
                           ) : isNext ? (
                             <span className="text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1 rounded-lg">
-                              En cours ({progressPercent}%)
+                              {rankProgress.pointsToNext !== null ? `Encore ${formatCompactNumber(rankProgress.pointsToNext)}` : `${progressPercent} %`}
                             </span>
                           ) : (
                             <span className="text-xs text-slate-500 bg-slate-800 px-2.5 py-1 rounded-lg flex items-center gap-1">
                               <Lock className="w-3 h-3" />
-                              Verrouillé
+                              À conquérir
                             </span>
                           )}
                         </div>

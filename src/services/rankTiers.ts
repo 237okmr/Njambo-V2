@@ -37,6 +37,9 @@ export interface TierSummary {
   titleId: CompetitiveTierId;
   /** Nombre de places à ce palier et au-dessus. */
   places: number;
+  /** Places déjà prises à ce palier et au-dessus. */
+  holders: number;
+  topPercent: number;
   minScore: number;
   /** Score du dernier joueur de ce palier : à dépasser pour l'atteindre quand les places sont prises. */
   cutoffScore: number | null;
@@ -157,6 +160,103 @@ export function computeRanks(
   return {
     ranks,
     totalPlayers,
-    tiers: COMPETITIVE_TIERS.map((tier) => ({ titleId: tier, places: places[tier], minScore: settings.minScore[tier], cutoffScore: cutoff[tier] })),
+    tiers: COMPETITIVE_TIERS.map((tier) => ({
+      titleId: tier,
+      places: places[tier],
+      holders: taken[tier],
+      topPercent: settings.topPercent[tier],
+      minScore: settings.minScore[tier],
+      cutoffScore: cutoff[tier],
+    })),
   };
+}
+
+const RANK_LADDER: RankTitleId[] = ['APPRENTI', 'CONFIRME', 'CHASSEUR_KORA', 'MAITRE_POSITION', 'MAITRE_NJAMBO', 'LEGENDE_KORA'];
+
+export interface ConfirmedGoal {
+  minGames: number;
+  minWins: number;
+}
+
+export interface RankProgressInput {
+  titleId: RankTitleId;
+  masteryScore: number;
+  gamesPlayed: number;
+  gamesWon: number;
+  isGuest: boolean;
+  inactivitySteps: number;
+  tiers: TierSummary[];
+  confirmed: ConfirmedGoal;
+}
+
+export interface RankProgress {
+  nextTitleId: RankTitleId | null;
+  percent: number;
+  /** Points à gagner pour le palier suivant, quand c'est un palier disputé. */
+  pointsToNext: number | null;
+  gamesLeft: number;
+  winsLeft: number;
+  /** Invité : les paliers disputés demandent un compte Google. */
+  needsLogin: boolean;
+  /** Rang perdu par inactivité : rejouer suffit à le retrouver. */
+  needsToPlay: boolean;
+}
+
+/** Ce qui sépare le joueur du palier suivant, d'après son score à jour et les places du moment. */
+export function rankProgress(input: RankProgressInput): RankProgress {
+  const index = RANK_LADDER.indexOf(input.titleId);
+  const nextTitleId = index >= 0 && index < RANK_LADDER.length - 1 ? RANK_LADDER[index + 1] : null;
+  const progress: RankProgress = { nextTitleId, percent: 100, pointsToNext: null, gamesLeft: 0, winsLeft: 0, needsLogin: false, needsToPlay: false };
+  if (!nextTitleId) return progress;
+
+  if (nextTitleId === 'CONFIRME') {
+    const { minGames, minWins } = input.confirmed;
+    const share = (done: number, goal: number) => (goal > 0 ? Math.min(1, done / goal) : 1);
+    return {
+      ...progress,
+      percent: Math.round(((share(input.gamesPlayed, minGames) + share(input.gamesWon, minWins)) / 2) * 100),
+      gamesLeft: Math.max(0, minGames - input.gamesPlayed),
+      winsLeft: Math.max(0, minWins - input.gamesWon),
+    };
+  }
+
+  if (input.isGuest) return { ...progress, percent: 0, needsLogin: true };
+
+  const tier = input.tiers.find((t) => t.titleId === nextTitleId);
+  const needsToPlay = input.inactivitySteps > 0;
+  if (!tier) return { ...progress, percent: 0, needsToPlay };
+
+  // Places libres : le minimum suffit. Sinon, il faut passer devant le dernier joueur du palier.
+  const target = tier.holders < tier.places || tier.cutoffScore === null ? tier.minScore : Math.max(tier.minScore, Math.floor(tier.cutoffScore) + 1);
+  const pointsToNext = Math.max(1, Math.ceil(target - input.masteryScore));
+  return {
+    ...progress,
+    percent: target > 0 ? Math.min(99, Math.max(0, Math.round((input.masteryScore / target) * 100))) : 0,
+    pointsToNext,
+    needsToPlay,
+  };
+}
+
+/** Condition d'un rang, en toutes lettres. */
+export function rankConditionLabel(titleId: RankTitleId, tiers: TierSummary[], confirmed: ConfirmedGoal): string {
+  if (titleId === 'APPRENTI') return 'Dès le départ';
+  if (titleId === 'CONFIRME') return `${confirmed.minGames} parties et ${confirmed.minWins} victoires`;
+  const tier = tiers.find((t) => t.titleId === titleId);
+  return tier ? `Top ${tier.topPercent} % et ${tier.minScore.toLocaleString('fr-FR')} points` : 'Réservé aux meilleurs joueurs';
+}
+
+/** La phrase qui dit au joueur quoi faire pour le palier suivant. */
+export function rankGoalLabel(progress: RankProgress): string {
+  if (progress.needsLogin) return 'Connecte-toi avec Google pour viser les rangs supérieurs.';
+  if (progress.needsToPlay) return 'Tu as perdu du terrain faute de partie : rejoue pour retrouver ta place.';
+  if (progress.pointsToNext !== null) return `Encore ${formatPoints(progress.pointsToNext)} pour y arriver.`;
+  const goals: string[] = [];
+  if (progress.gamesLeft > 0) goals.push(`${progress.gamesLeft} ${progress.gamesLeft > 1 ? 'parties' : 'partie'}`);
+  if (progress.winsLeft > 0) goals.push(`${progress.winsLeft} ${progress.winsLeft > 1 ? 'victoires' : 'victoire'}`);
+  return goals.length > 0 ? `Encore ${goals.join(' et ')}.` : 'Encore un peu de patience : ton rang arrive.';
+}
+
+function formatPoints(points: number): string {
+  const rounded = points >= 1000 ? `${String(Math.round(points / 100) / 10).replace('.', ',')} k` : String(points);
+  return `${rounded} ${points > 1 ? 'points' : 'point'}`;
 }

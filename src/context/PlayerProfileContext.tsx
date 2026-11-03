@@ -11,6 +11,9 @@ import React, {
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { setLocalPlayerName } from '../services/identity';
+import { getPublicParamNumber } from '../services/publicConfig';
+import { ConfirmedGoal, RankProgress, RankTitleId, TierSummary, rankProgress } from '../services/rankTiers';
+import { RankSnapshot, fetchRankSnapshot, readStoredRank } from '../services/rankClient';
 import {
   PlayerProfile,
   PlayerStats,
@@ -24,7 +27,6 @@ import {
 } from '../types/playerProfile';
 import {
   playerProfileService,
-  computeHonorificTitle,
   DEFAULT_PLAYER_STATS,
 } from '../services/playerProfileService';
 import { FriendService } from '../services/friendService';
@@ -40,6 +42,9 @@ interface PlayerProfileContextValue {
   currentTitle: HonorificTitle;
   nextTitle: HonorificTitle | null;
   progressPercent: number;
+  rankProgress: RankProgress;
+  rankTiers: TierSummary[];
+  rankConfirmedGoal: ConfirmedGoal;
   isLoggedIn: boolean;
   isSyncing: boolean;
   syncMessage: string | null;
@@ -139,10 +144,55 @@ export const PlayerProfileProvider: React.FC<{ children: ReactNode }> = ({ child
     if (offlineQueueCount > 0) flushOfflineQueue();
   }, 120000);
 
-  // Derive honorific title
-  const { currentTitle, nextTitle, progressPercent } = useMemo(() => {
-    return computeHonorificTitle(profile?.stats || DEFAULT_PLAYER_STATS);
-  }, [profile?.stats]);
+  // Rang dynamique : donné par le serveur pour un compte Google, objectifs fixes jusqu'à Confirmé pour un invité.
+  const isGuestProfile = !profile || profile.isGuest;
+  const rankUid = isGuestProfile ? '' : profile.uid;
+  const [rankSnapshot, setRankSnapshot] = useState<RankSnapshot | null>(() => readStoredRank(rankUid));
+
+  useEffect(() => {
+    let cancelled = false;
+    setRankSnapshot(readStoredRank(rankUid));
+    fetchRankSnapshot(rankUid).then((snapshot) => {
+      if (!cancelled && snapshot) setRankSnapshot(snapshot);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // Relu à l'ouverture du profil et du Palmarès : les places bougent avec les autres joueurs.
+  }, [rankUid, isProfileModalOpen, isLeaderboardOpen]);
+
+  const rankView = useMemo(() => {
+    const stats = profile?.stats || DEFAULT_PLAYER_STATS;
+    const confirmed = {
+      minGames: getPublicParamNumber('rankConfirmedMinGames'),
+      minWins: getPublicParamNumber('rankConfirmedMinWins'),
+    };
+    const gamesPlayed = stats.gamesPlayed || 0;
+    const gamesWon = stats.gamesWon || 0;
+    const baseTitleId: RankTitleId = gamesPlayed >= confirmed.minGames && gamesWon >= confirmed.minWins ? 'CONFIRME' : 'APPRENTI';
+    const titleId = (!isGuestProfile && rankSnapshot?.uid === rankUid && rankSnapshot.rank?.titleId) || baseTitleId;
+    const tiers = rankSnapshot?.tiers ?? [];
+    const progress = rankProgress({
+      titleId,
+      masteryScore: stats.masteryScore || 0,
+      gamesPlayed,
+      gamesWon,
+      isGuest: isGuestProfile,
+      inactivitySteps: rankSnapshot?.rank?.inactivitySteps ?? 0,
+      tiers,
+      confirmed,
+    });
+    const findTitle = (id: string | null) => HONORIFIC_TITLES.find((t) => t.id === id) ?? null;
+    return {
+      currentTitle: findTitle(titleId) ?? HONORIFIC_TITLES[0],
+      nextTitle: findTitle(progress.nextTitleId),
+      progressPercent: progress.percent,
+      rankProgress: progress,
+      rankTiers: tiers,
+      rankConfirmedGoal: confirmed,
+    };
+  }, [profile?.stats, isGuestProfile, rankUid, rankSnapshot]);
+  const { currentTitle, nextTitle, progressPercent } = rankView;
 
   // Sync with auth changes and reconcile cloud state on app startup / page refresh
   useEffect(() => {
@@ -368,6 +418,9 @@ export const PlayerProfileProvider: React.FC<{ children: ReactNode }> = ({ child
         currentTitle: currentTitle || HONORIFIC_TITLES[0],
         nextTitle,
         progressPercent: isNaN(progressPercent) ? 0 : progressPercent,
+        rankProgress: rankView.rankProgress,
+        rankTiers: rankView.rankTiers,
+        rankConfirmedGoal: rankView.rankConfirmedGoal,
         isLoggedIn: Boolean(profile && !profile.isGuest),
         isSyncing,
         syncMessage,

@@ -86,13 +86,18 @@ export const ENGINE_PARAMS: ParamDef[] = [
   },
   {
     key: 'rankConfirmedMinGames', label: 'Parties pour le rang Joueur Confirmé', unit: '',
-    min: 0, max: 1000, default: 5, group: 'rangs', scope: 'server', effect: 'immediate',
+    min: 0, max: 1000, default: 5, group: 'rangs', scope: 'both', effect: 'immediate',
     help: 'Objectif fixe : parties à jouer pour devenir Joueur Confirmé.',
   },
   {
     key: 'rankConfirmedMinWins', label: 'Victoires pour le rang Joueur Confirmé', unit: '',
-    min: 0, max: 1000, default: 2, group: 'rangs', scope: 'server', effect: 'immediate',
+    min: 0, max: 1000, default: 2, group: 'rangs', scope: 'both', effect: 'immediate',
     help: 'Objectif fixe : victoires à obtenir pour devenir Joueur Confirmé.',
+  },
+  {
+    key: 'rankRefreshMinutes', label: 'Actualisation des rangs des joueurs', unit: 'min',
+    min: 5, max: 1440, default: 60, group: 'rangs', scope: 'server', effect: 'immediate',
+    help: 'Âge maximal du classement utilisé pour le rang affiché dans le jeu. Plus cette durée est courte, plus le serveur consomme de lectures Firestore.',
   },
   {
     key: 'rankInactivityDays', label: 'Inactivité avant de perdre un rang', unit: 'jours',

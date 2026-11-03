@@ -59,6 +59,7 @@ export interface KatikaEngineConfig {
   pushTestCooldownSeconds?: number;
   leaderboardServerCacheSeconds?: number;
   leaderboardForceMinSeconds?: number;
+  rankRefreshMinutes?: number;
   copilotMaxRequestsPerHour?: number;
   /** Réservé : bouton général Kora Cash (mode à argent réel, à venir). Faux tant que Kora Cash n'est pas ouvert. */
   koraCashEnabled?: boolean;

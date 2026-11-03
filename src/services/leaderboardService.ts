@@ -14,9 +14,11 @@ import {
   CurrentUserRankSummary,
   PublicPlayerProfileData,
 } from '../types/leaderboard';
-import { computeHonorificTitle, computeMasteryScore, DEFAULT_PLAYER_STATS, playerProfileService, applyStatsFallback } from './playerProfileService';
+import { computeMasteryScore, DEFAULT_PLAYER_STATS, playerProfileService, applyStatsFallback } from './playerProfileService';
 import { FriendService } from './friendService';
 import { AvatarOptionId, HONORIFIC_TITLES } from '../types/playerProfile';
+import { computeRanks, rankSettingsFromConfig } from './rankTiers';
+import { getParamDefaults } from '../../server/engine/engineParams';
 import { getPlayerId } from './identity';
 import { formatMasteryScore, isEligibleLeaderboardUser, LEADERBOARD_POLICY } from './masteryConfig';
 
@@ -211,6 +213,18 @@ export class LeaderboardService {
     entries: LeaderboardEntry[];
     currentUserRank: CurrentUserRankSummary | null;
   } {
+    // Secours (lecture directe, ancien cache) : même règle, avec les réglages par défaut.
+    const fallbackRanks = rawUsers.every((u) => u.dynamicRank)
+      ? null
+      : computeRanks(
+          rawUsers.map((u) => {
+            const s = applyStatsFallback(u.stats || DEFAULT_PLAYER_STATS, u.scoreVersion);
+            return { uid: u.uid, masteryScore: s.masteryScore || 0, gamesPlayed: s.partiesPlayed || s.gamesPlayed || 0, gamesWon: s.partiesWon || s.gamesWon || 0 };
+          }),
+          rankSettingsFromConfig(getParamDefaults() as Record<string, number>),
+          Date.now()
+        ).ranks;
+
     const formatted: LeaderboardEntry[] = rawUsers.map((u) => {
       const stats = applyStatsFallback(u.stats || DEFAULT_PLAYER_STATS, u.scoreVersion);
       const gamesWon = stats.partiesWon || stats.gamesWon || 0;
@@ -223,7 +237,8 @@ export class LeaderboardService {
       const chips = u.chips !== undefined ? u.chips : 1000;
       const biggestPotWon = stats.biggestPotWon || 0;
 
-      const { currentTitle } = computeHonorificTitle(stats);
+      const rankTitleId = u.dynamicRank?.titleId ?? fallbackRanks?.[u.uid]?.titleId;
+      const currentTitle = HONORIFIC_TITLES.find((t) => t.id === rankTitleId) ?? HONORIFIC_TITLES[0];
       const isCurrentUser = !isGuest && u.uid === currentUserId;
 
       let soloGamesWon = stats.soloGamesWon || 0;

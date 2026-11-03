@@ -501,13 +501,10 @@ async function startServer() {
     );
   }
 
-  app.get('/api/leaderboard/cached', async (req, res) => {
-    try {
-      const force = req.query.force === 'true';
-      const timeframe = (req.query.timeframe as string) || 'ALL'; // 'ALL' | 'WEEK' | 'MONTH'
-
+  // Lit le classement si le cache a dépassé maxAgeMs. Lectures Firestore comptées : le Palmarès et le rang ont chacun leur durée.
+  async function refreshLeaderboardCacheIfNeeded(force: boolean, maxAgeMs: number): Promise<void> {
       const leaderboardCacheAgeMs = Date.now() - leaderboardCacheTimestamp;
-      const leaderboardTtlMs = Number(getEngineConfig().leaderboardServerCacheSeconds ?? 300) * 1000;
+      const leaderboardTtlMs = maxAgeMs;
       const leaderboardForceMinMs = Number(getEngineConfig().leaderboardForceMinSeconds ?? 60) * 1000;
       if ((force && leaderboardCacheAgeMs > leaderboardForceMinMs) || leaderboardCacheAgeMs > leaderboardTtlMs || cachedLeaderboardUsers.length === 0) {
         if (db) {
@@ -976,6 +973,28 @@ async function startServer() {
           }
         }
       }
+  }
+
+  // Rang du joueur, sans la liste : appelé à l'ouverture du jeu, il ne relit le classement que selon rankRefreshMinutes.
+  app.get('/api/leaderboard/my-rank', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      await refreshLeaderboardCacheIfNeeded(false, Number(getEngineConfig().rankRefreshMinutes ?? 60) * 60 * 1000);
+      const result = computeLeaderboardRanks();
+      const uid = typeof req.query.uid === 'string' ? req.query.uid : '';
+      res.json({ success: true, rank: result.ranks[uid] ?? null, tiers: result.tiers, totalPlayers: result.totalPlayers });
+    } catch (err: any) {
+      console.warn('[Leaderboard] Lecture du rang impossible.', err?.message || err);
+      res.status(500).json({ success: false, error: 'Lecture du rang impossible.' });
+    }
+  });
+
+  app.get('/api/leaderboard/cached', async (req, res) => {
+    try {
+      const force = req.query.force === 'true';
+      const timeframe = (req.query.timeframe as string) || 'ALL'; // 'ALL' | 'WEEK' | 'MONTH'
+
+      await refreshLeaderboardCacheIfNeeded(force, Number(getEngineConfig().leaderboardServerCacheSeconds ?? 300) * 1000);
 
       // Filter by timeframe if requested
       let resultUsers = [...cachedLeaderboardUsers];

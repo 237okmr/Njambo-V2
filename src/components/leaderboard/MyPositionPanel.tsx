@@ -3,7 +3,8 @@ import { motion } from 'motion/react';
 import { ChevronRight, ChevronUp, Crosshair, X } from 'lucide-react';
 import { CurrentUserRankSummary, LeaderboardCategory, LeaderboardEntry } from '../../types/leaderboard';
 import { HonorificTitle } from '../../types/playerProfile';
-import { leaderboardGapLabel, leaderboardMetric } from '../../utils/leaderboardDisplay';
+import { RankProgress } from '../../services/rankTiers';
+import { formatCompactNumber, leaderboardGapLabel, leaderboardMetric } from '../../utils/leaderboardDisplay';
 
 const CATEGORY_LABELS: Record<LeaderboardCategory, string> = {
   WINS: 'Ton score',
@@ -33,14 +34,14 @@ interface MyPositionPanelProps {
   category: LeaderboardCategory;
   entry: LeaderboardEntry | null;
   nextTitle: HonorificTitle | null;
-  progressPercent: number;
+  progress: RankProgress;
   onClose: () => void;
   onLocate: () => void;
   onOpenProfile?: () => void;
 }
 
 /** Panneau ouvert à la demande : la position ne prend plus de place sur la liste. */
-export const MyPositionPanel: React.FC<MyPositionPanelProps> = ({ rank, category, entry, nextTitle, progressPercent, onClose, onLocate, onOpenProfile }) => {
+export const MyPositionPanel: React.FC<MyPositionPanelProps> = ({ rank, category, entry, nextTitle, progress, onClose, onLocate, onOpenProfile }) => {
   const metric = entry ? leaderboardMetric(entry, category) : null;
   return (
     <motion.div
@@ -93,11 +94,14 @@ export const MyPositionPanel: React.FC<MyPositionPanelProps> = ({ rank, category
 
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between gap-2 text-xs text-slate-400">
-            <span className="truncate">{nextTitle ? `Prochain palier : ${nextTitle.title}` : 'Palier le plus haut atteint'}</span>
-            <span className="font-bold font-mono text-amber-400 shrink-0">{progressPercent} %</span>
+            <span className="min-w-0">
+              {nextTitle ? `Prochain palier : ${nextTitle.title}` : 'Palier le plus haut atteint'}
+              {nextTitle && progress.pointsToNext !== null && ` · encore ${formatCompactNumber(progress.pointsToNext)} ${progress.pointsToNext > 1 ? 'points' : 'point'}`}
+            </span>
+            <span className="font-bold font-mono text-amber-400 shrink-0">{progress.percent} %</span>
           </div>
           <div className="h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
-            <div className="h-full bg-gradient-to-r from-amber-500 to-amber-300 rounded-full" style={{ width: `${progressPercent}%` }} />
+            <div className="h-full bg-gradient-to-r from-amber-500 to-amber-300 rounded-full" style={{ width: `${progress.percent}%` }} />
           </div>
         </div>
 

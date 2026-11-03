@@ -380,7 +380,7 @@ export const HONORIFIC_TITLES: HonorificTitle[] = [
     colorClass: 'text-amber-400',
     glowClass: 'from-amber-500/20 to-amber-700/10',
     borderClass: 'border-amber-500/40',
-    description: 'A infligé son premier Kora magistral et fait trembler la table.',
+    description: 'Entre dans la course aux places et fait trembler la table.',
     requirements: { minKoras: 1 },
   },
   {
@@ -391,7 +391,7 @@ export const HONORIFIC_TITLES: HonorificTitle[] = [
     colorClass: 'text-purple-400',
     glowClass: 'from-purple-500/20 to-purple-700/10',
     borderClass: 'border-purple-500/40',
-    description: 'Domine la table par son sens du jeu et sa régularité de victoires.',
+    description: 'Tient sa place parmi les meilleurs par son sens du jeu.',
     requirements: { minGames: 15, minWins: 8 },
   },
   {
@@ -402,7 +402,7 @@ export const HONORIFIC_TITLES: HonorificTitle[] = [
     colorClass: 'text-yellow-300',
     glowClass: 'from-yellow-500/30 to-amber-700/20',
     borderClass: 'border-yellow-400/60',
-    description: 'Pilier redouté, collectionneur de Koras et expert du bluff.',
+    description: 'Pilier redouté, parmi les tout meilleurs joueurs.',
     requirements: { minGames: 30, minWins: 15, minKoras: 3 },
   },
   {
@@ -413,7 +413,7 @@ export const HONORIFIC_TITLES: HonorificTitle[] = [
     colorClass: 'text-amber-300',
     glowClass: 'from-amber-400/40 to-yellow-600/30',
     borderClass: 'border-amber-300 shadow-amber-500/30 shadow-lg',
-    description: 'Le sommet absolu : champion de prestige aux gains colossaux.',
+    description: 'Le sommet absolu : la place la plus disputée du jeu.',
     requirements: { minGames: 50, minWins: 30, minKoras: 5, minPotWon: 500 },
   },
 ];
