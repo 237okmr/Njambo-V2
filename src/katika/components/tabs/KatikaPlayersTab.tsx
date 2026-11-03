@@ -1,3 +1,4 @@
+import { useIsCompactScreen } from '../../hooks/useIsCompactScreen';
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Users, 
@@ -43,6 +44,7 @@ import { db } from '../../../lib/firebase';
 import { tikaFetch } from '../../services/tikaFetch';
 
 export const KatikaPlayersTab: React.FC = () => {
+  const compactScreen = useIsCompactScreen();
   const [players, setPlayers] = useState<KatikaPlayer[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -945,7 +947,9 @@ export const KatikaPlayersTab: React.FC = () => {
         </div>
       </div>
 
-      {/* Filtres de Préférence & Options de Tri */}
+      {/* Préférence et tri : repliés sur téléphone pour laisser la place à la liste */}
+      <details key={compactScreen ? 'compact' : 'large'} open={!compactScreen} className="group">
+        <summary className="lg:hidden min-h-[44px] flex items-center px-4 rounded-xl bg-slate-900/90 border border-slate-800 text-sm text-slate-200 cursor-pointer">Préférence et tri</summary>
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 p-4 rounded-xl bg-slate-900/90 border border-slate-800 -mt-2">
         {/* Play Preference */}
         <div className="flex items-center gap-2 flex-wrap text-xs">
@@ -996,6 +1000,7 @@ export const KatikaPlayersTab: React.FC = () => {
           </div>
         </div>
       </div>
+      </details>
 
       {/* Sur téléphone : une carte par joueur, qui ouvre son dossier */}
       <ul className="lg:hidden flex flex-col gap-3">

@@ -54,10 +54,10 @@ export const KatikaHeader: React.FC<KatikaHeaderProps> = ({
           <div className="flex items-center gap-2">
             <span className="font-bold tracking-tight text-white text-base">KATIKA</span>
             <span className="hidden lg:inline text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 font-mono border border-amber-500/30 font-medium">
-              CONTROL COCKPIT
+              ADMINISTRATION
             </span>
           </div>
-          <p className="hidden lg:block text-[11px] text-slate-400">Plateforme de commandement & supervision Njambo Kora</p>
+          <p className="hidden lg:block text-[11px] text-slate-400">Administration de Njambo Kora</p>
         </div>
       </div>
 
@@ -66,10 +66,11 @@ export const KatikaHeader: React.FC<KatikaHeaderProps> = ({
         {/* WS Server Health & Latency */}
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/60 border border-slate-700/50 text-xs">
           <Server className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="hidden lg:inline text-slate-400">Serveur WS :</span>
-          <span className="font-mono text-emerald-300 font-medium flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping inline-block" />
-            Connecté
+          <span className="hidden lg:inline text-slate-400">Serveur :</span>
+          {/* 999 ms = aucune réponse : on ne prétend pas que le serveur est en ligne */}
+          <span className={`font-mono font-medium flex items-center gap-1 ${latency >= 999 ? 'text-red-300' : 'text-emerald-300'}`}>
+            <span className={`w-1.5 h-1.5 rounded-full inline-block ${latency >= 999 ? 'bg-red-400' : 'bg-emerald-400'}`} />
+            {latency >= 999 ? 'Injoignable' : 'En ligne'}
           </span>
           <div className="pl-2 border-l border-slate-700 flex items-center gap-1 text-[11px] font-mono text-slate-300">
             <Activity className="w-3 h-3 text-cyan-400" />
@@ -90,19 +91,13 @@ export const KatikaHeader: React.FC<KatikaHeaderProps> = ({
           title="Activer/Désactiver le mode maintenance global"
         >
           <Power className={`w-3.5 h-3.5 ${isMaintenanceMode ? 'text-amber-400 animate-spin' : 'text-slate-400'}`} />
-          <span>{isMaintenanceMode ? 'Maintenance ON' : 'Mode Normal'}</span>
+          <span>{isMaintenanceMode ? 'Maintenance en cours' : 'Jeu ouvert'}</span>
         </button>
-
-        {/* PC Station Verification Info */}
-        <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/40 border border-slate-700/40 text-xs text-slate-400 font-mono">
-          <Monitor className="w-3.5 h-3.5 text-slate-400" />
-          <span>PC Station</span>
-        </div>
 
         {/* Katika Admin Profile & Logout */}
         <div className="hidden lg:flex items-center gap-3 pl-3 border-l border-slate-800">
           <div className="text-right text-xs">
-            <div className="font-medium text-slate-100">{user?.displayName || 'Katika Master'}</div>
+            <div className="font-medium text-slate-100">{user?.displayName || 'Administrateur'}</div>
             <div className="text-[11px] text-amber-400/90 font-mono">{user?.email}</div>
           </div>
           <button

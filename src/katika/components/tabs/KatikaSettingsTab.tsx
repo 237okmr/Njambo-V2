@@ -124,23 +124,17 @@ export const KatikaSettingsTab: React.FC<KatikaSettingsTabProps> = ({ onConfigUp
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Sliders className="w-4 h-4 text-amber-400" />
-            <h2 className="text-sm font-bold text-white tracking-wide">Paramétrage Moteur & Système Katika</h2>
+            <h2 className="text-sm font-bold text-white tracking-wide">Réglages de Njambo Kora</h2>
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/25">
               <Crown className="w-3 h-3 text-amber-400" />
               Administrateur Katika
             </span>
           </div>
           <p className="text-[11px] text-slate-400 leading-relaxed">
-            Centre de contrôle global régissant le rythme de jeu, les délais des parties, le multijoueur et l'économie en direct.
+            Chaque réglage explique son effet. Dans « Tous les réglages », cherche un réglage par son nom.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-start md:self-auto">
-          <span className="text-[10px] font-mono px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Synchronisation Solo & WebSocket active
-          </span>
-        </div>
       </div>
 
       {/* Top Banner Feedback */}
@@ -157,16 +151,16 @@ export const KatikaSettingsTab: React.FC<KatikaSettingsTabProps> = ({ onConfigUp
       )}
 
       {/* Internal Settings Sub-navigation Bar (Tabs Internes) */}
-      <div className="flex items-center gap-1 border-b border-slate-800 pb-px text-xs overflow-x-auto whitespace-nowrap scrollbar-none">
+      <div className="flex flex-wrap items-center gap-1 border-b border-slate-800 pb-px text-sm lg:text-xs">
         {[
-          { id: 'ENGINE_PACING', label: 'Délais & rythme', icon: Clock },
-          { id: 'MULTI_AI', label: 'Multijoueur & Tables', icon: Users },
-          { id: 'ECONOMY', label: 'Économie & Système', icon: Coins },
-          { id: 'RULES', label: 'Règles & Variantes', icon: Trophy },
-          { id: 'BROADCAST', label: 'Message Global', icon: Megaphone },
-          { id: 'AI_CONFIG', label: 'Assistant IA', icon: Bot },
-          { id: 'PWA_POLICY', label: 'Versions PWA', icon: ShieldCheck },
-          ...(isOwner ? [{ id: 'SECURITY_AUDIT', label: 'Audit Sécurité & Règles', icon: ShieldCheck }] : []),
+          { id: 'ENGINE_PACING', label: 'Tous les réglages', icon: Clock },
+          { id: 'MULTI_AI', label: 'Tables', icon: Users },
+          { id: 'RULES', label: 'Règles du jeu', icon: Trophy },
+          { id: 'ECONOMY', label: 'Jetons et économie', icon: Coins },
+          { id: 'BROADCAST', label: 'Message aux joueurs', icon: Megaphone },
+          { id: 'AI_CONFIG', label: 'Copilote', icon: Bot },
+          { id: 'PWA_POLICY', label: "Mises à jour de l'appli", icon: ShieldCheck },
+          ...(isOwner ? [{ id: 'SECURITY_AUDIT', label: 'Vérification des profils', icon: ShieldCheck }] : []),
           ...(isOwner ? [{ id: 'ADMINS', label: 'Administrateurs', icon: Crown }] : []),
         ].map((tab) => {
           const Icon = tab.icon;
@@ -176,7 +170,7 @@ export const KatikaSettingsTab: React.FC<KatikaSettingsTabProps> = ({ onConfigUp
               key={tab.id}
               type="button"
               onClick={() => setSettingsSubTab(tab.id as any)}
-              className={`flex items-center gap-2 px-4 py-3 font-medium transition-all relative border-b-2 cursor-pointer ${
+              className={`min-h-[44px] flex items-center gap-2 px-3 lg:px-4 py-2 lg:py-3 font-medium transition-all relative border-b-2 cursor-pointer ${
                 isActive
                   ? 'border-amber-500 text-amber-400 bg-amber-500/5'
                   : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-850/30'
@@ -198,7 +192,7 @@ export const KatikaSettingsTab: React.FC<KatikaSettingsTabProps> = ({ onConfigUp
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-cyan-400" />
-                <h3 className="text-sm font-bold text-white">Rythme & Délais du Moteur de Jeu</h3>
+                <h3 className="text-sm font-bold text-white">Tous les réglages</h3>
               </div>
               <span className="text-[11px] font-mono text-cyan-400 bg-cyan-950/40 border border-cyan-800/40 px-2 py-0.5 rounded">
                 Appliqué au Solo & Multijoueur
