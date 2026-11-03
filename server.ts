@@ -100,6 +100,8 @@ import { verifyFirebaseIdToken, setAdminUserClaim, getFirebaseAdminAuth, getFire
 import { ADMIN_TEMPLATES, isAllowed, isTemplateId, KatikaPermission, PERMISSION_LABELS, routeRequirement, sanitizePermissions } from './server/katika/adminRights';
 import { adminRegistry, listAdminEntries, readAdminEntry, writeAdminEntry } from './server/katika/adminRegistry';
 import { sanitizeRankTitles, summarizeUsers } from './server/katika/usersSummary';
+import { createAiLimiter } from './server/katika/aiLimiter';
+import { deleteThread, listThreads, sanitizeThread, saveThread, threadsToPrune } from './server/katika/copilotThreads';
 import { isActivityFailure, katikaActivityData, toActivityBucket, readStopThreshold } from './server/katika/activityData';
 import { DASHBOARD_MAX_RECORDS, isDashboardFailure, katikaDashboardData, readWarnThreshold, toDashboardPart } from './server/katika/dashboardData';
 import { buildClientAudit, katikaAuditStore, mergeAuditLogs } from './server/katika/auditStore';
@@ -2690,12 +2692,8 @@ async function startServer() {
     };
   }
 
-  // In-memory rate limiter for Copilote Katika AI queries (protection against quota bursts)
-  const aiRequestTimestamps: number[] = [];
-  let isAiRequestRunning = false;
-
-  // Plafond horaire : réglage katika « copilotMaxRequestsPerHour » (relu à chaque requête).
-  // La variable d'environnement KATIKA_AI_MAX_PER_HOUR ne sert plus qu'au démarrage, tant que katika n'a rien enregistré.
+  // Limites du copilote : plafond commun, plafond par admin, une demande à la fois par admin (server/katika/aiLimiter.ts).
+  // Plafond commun : réglage katika « copilotMaxRequestsPerHour » ; KATIKA_AI_MAX_PER_HOUR ne sert que tant que katika n'a rien enregistré.
   function getMaxAiPerHour(): number {
     const fromKatika = Number(RoomManager.getEngineConfig().copilotMaxRequestsPerHour);
     if (Number.isFinite(fromKatika) && fromKatika > 0) {
@@ -2711,74 +2709,77 @@ async function startServer() {
     return 20;
   }
 
-  type AiRateLimitResult =
-    | { allowed: true }
-    | { allowed: false; status: 429; message: string; retryAfterMinutes: number };
-
-  function checkAiRateLimit(): AiRateLimitResult {
-    const now = Date.now();
-    // delay-ok: définition de la limite « par heure » du copilote (maxPerHour), pas un délai de jeu
-    const windowMs = 60 * 60 * 1000; // 1 heure glissante
-    const maxPerHour = getMaxAiPerHour();
-
-    // Purge des requêtes antérieures à 1 heure
-    while (aiRequestTimestamps.length > 0 && aiRequestTimestamps[0] <= now - windowMs) {
-      aiRequestTimestamps.shift();
-    }
-
-    // 1. Limite de concurrence : 1 seule requête IA active simultanément
-    if (isAiRequestRunning) {
-      return {
-        allowed: false,
-        status: 429,
-        message: 'Limite du copilote atteinte : une requête IA est déjà en cours, patiente quelques secondes.',
-        // delay-ok: indication affichée avec le message « réessaie dans 1 min », pas un délai appliqué
-        retryAfterMinutes: 1,
-      };
-    }
-
-    // 2. Limite de volume horaire
-    if (aiRequestTimestamps.length >= maxPerHour) {
-      const oldestTimestamp = aiRequestTimestamps[0];
-      const waitMs = oldestTimestamp + windowMs - now;
-      const waitMin = Math.max(1, Math.ceil(waitMs / 60000));
-      return {
-        allowed: false,
-        status: 429,
-        message: `Limite du copilote atteinte, réessaie dans ${waitMin} min.`,
-        retryAfterMinutes: waitMin,
-      };
-    }
-
-    return { allowed: true };
+  function engineNumber(key: string): number {
+    const value = Number((RoomManager.getEngineConfig() as unknown as Record<string, unknown>)[key]);
+    return Number.isFinite(value) && value > 0 ? value : Number(PARAM_BY_KEY[key].default);
   }
 
-  // Jauge de quota affichée dans le copilote : requêtes utilisées sur l'heure glissante, plafond, attente avant libération.
-  function getAiQuotaStatus(): { used: number; max: number; resetInMinutes: number } {
-    const now = Date.now();
-    // delay-ok: définition de la fenêtre « par heure » du quota, pas un délai de jeu
-    const windowMs = 60 * 60 * 1000;
-    const recent = aiRequestTimestamps.filter((t) => t > now - windowMs);
-    const resetInMinutes = recent.length > 0 ? Math.max(1, Math.ceil((recent[0] + windowMs - now) / 60000)) : 0;
-    return { used: recent.length, max: getMaxAiPerHour(), resetInMinutes };
-  }
-
-  app.get('/api/katika/ai-quota', (_req, res) => {
-    res.json({ success: true, ...getAiQuotaStatus() });
+  const aiLimiter = createAiLimiter({
+    now: () => Date.now(),
+    maxPerHour: getMaxAiPerHour,
+    maxPerAdminPerHour: () => engineNumber('copilotMaxRequestsPerAdminPerHour'),
+    maxConcurrent: () => engineNumber('copilotMaxConcurrent'),
   });
 
-  function acquireAiSlot(): void {
-    isAiRequestRunning = true;
-    aiRequestTimestamps.push(Date.now());
+  const aiUser = (req: any): { uid: string; isOwner: boolean } => ({ uid: req.katikaUser.uid, isOwner: req.katikaUser.isOwner === true });
+
+  function checkAiRateLimit(req: any) {
+    const { uid, isOwner } = aiUser(req);
+    return aiLimiter.check(uid, isOwner);
   }
 
-  function releaseAiSlot(): void {
-    isAiRequestRunning = false;
+  app.get('/api/katika/ai-quota', (req, res) => {
+    const { uid, isOwner } = aiUser(req);
+    res.json({ success: true, ...aiLimiter.status(uid, isOwner) });
+  });
+
+  function acquireAiSlot(req: any): void {
+    aiLimiter.acquire(aiUser(req).uid);
   }
+
+  function releaseAiSlot(req: any): void {
+    aiLimiter.release(aiUser(req).uid);
+  }
+
+  // Discussions du copilote : chaque admin ne lit et n'écrit que les siennes (server/katika/copilotThreads.ts).
+  app.get('/api/katika/copilot/threads', async (req, res) => {
+    try {
+      const threads = await listThreads((req as any).katikaUser.uid, engineNumber('katikaCopilotMaxThreads'));
+      res.json({ success: true, threads });
+    } catch (err: any) {
+      console.error('[Copilote] Lecture des discussions impossible :', err?.message || err);
+      res.status(500).json({ success: false, error: 'Discussions indisponibles pour le moment.' });
+    }
+  });
+
+  app.put('/api/katika/copilot/threads/:id', express.json({ limit: '2mb' }), async (req, res) => {
+    const uid = (req as any).katikaUser.uid;
+    const thread = sanitizeThread({ ...(req.body?.thread || {}), id: req.params.id }, engineNumber('katikaCopilotMaxMessages'));
+    if (!thread) return res.status(400).json({ success: false, error: 'Discussion invalide.' });
+    try {
+      await saveThread(uid, thread);
+      const all = await listThreads(uid, Number.MAX_SAFE_INTEGER);
+      const pruned = threadsToPrune(all, engineNumber('katikaCopilotMaxThreads'));
+      await Promise.all(pruned.map((id) => deleteThread(uid, id)));
+      res.json({ success: true, pruned });
+    } catch (err: any) {
+      console.error('[Copilote] Enregistrement de la discussion impossible :', err?.message || err);
+      res.status(500).json({ success: false, error: 'Discussion non enregistrée.' });
+    }
+  });
+
+  app.delete('/api/katika/copilot/threads/:id', async (req, res) => {
+    try {
+      await deleteThread((req as any).katikaUser.uid, String(req.params.id));
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: 'Suppression impossible.' });
+    }
+  });
 
   // AI Assistant Chat Route (Read-only advisor, text + multimodal screenshot support)
   app.post('/api/katika/ai-chat', async (req, res) => {
-    const rateCheck = checkAiRateLimit();
+    const rateCheck = checkAiRateLimit(req);
     if (rateCheck.allowed === false) {
       res.setHeader('Retry-After', String(rateCheck.retryAfterMinutes * 60));
       return res.status(429).json({ success: false, error: rateCheck.message });
@@ -2793,12 +2794,12 @@ async function startServer() {
         ? metricsSnapshot
         : buildServerMetricsSnapshot();
 
-      acquireAiSlot();
+      acquireAiSlot(req);
       try {
         const reply = await handleAdminChatMessage({ message, image, history, recentTopics, config, metricsSnapshot: effectiveSnapshot });
         res.json({ success: true, reply });
       } finally {
-        releaseAiSlot();
+        releaseAiSlot(req);
       }
     } catch (err: unknown) {
       console.error('[Katika AI Chat API] Handler error:', err);
@@ -2809,7 +2810,7 @@ async function startServer() {
 
   // AI Assistant Chat Route (Streaming via Server-Sent Events)
   app.post('/api/katika/ai-chat-stream', async (req, res) => {
-    const rateCheck = checkAiRateLimit();
+    const rateCheck = checkAiRateLimit(req);
     if (rateCheck.allowed === false) {
       res.setHeader('Retry-After', String(rateCheck.retryAfterMinutes * 60));
       res.status(429);
@@ -2838,7 +2839,7 @@ async function startServer() {
         ? metricsSnapshot
         : buildServerMetricsSnapshot();
 
-      acquireAiSlot();
+      acquireAiSlot(req);
       try {
         await streamAdminChatMessage(
           { message, image, history, recentTopics, config, metricsSnapshot: effectiveSnapshot },
@@ -2847,7 +2848,7 @@ async function startServer() {
           }
         );
       } finally {
-        releaseAiSlot();
+        releaseAiSlot(req);
       }
 
       res.write('data: [DONE]\n\n');
@@ -2862,7 +2863,7 @@ async function startServer() {
 
   // Dedicated AI Social Visual V2 Generation Route
   app.post('/api/katika/ai-visual', async (req, res) => {
-    const rateCheck = checkAiRateLimit();
+    const rateCheck = checkAiRateLimit(req);
     if (rateCheck.allowed === false) {
       res.setHeader('Retry-After', String(rateCheck.retryAfterMinutes * 60));
       return res.status(429).json({ success: false, error: rateCheck.message });
@@ -2874,7 +2875,7 @@ async function startServer() {
         return res.status(400).json({ success: false, error: 'Un brief texte ou un identifiant de recette est requis.' });
       }
 
-      acquireAiSlot();
+      acquireAiSlot(req);
       try {
         const result = await generateVisualVariants({
           brief: brief || '',
@@ -2884,9 +2885,7 @@ async function startServer() {
         });
 
         // Compteur horaire : un appel Gemini = une requête comptée (acquireAiSlot a déjà compté la première).
-        for (let i = 1; i < result.callsMade; i++) {
-          aiRequestTimestamps.push(Date.now());
-        }
+        aiLimiter.count(aiUser(req).uid, Math.max(0, result.callsMade - 1));
 
         if (result.variants.length === 0) {
           const status = result.quotaExceeded ? 429 : 502;
@@ -2910,7 +2909,7 @@ async function startServer() {
           needsReview: first.needsReview,
         });
       } finally {
-        releaseAiSlot();
+        releaseAiSlot(req);
       }
     } catch (err: unknown) {
       console.error('[Katika AI Visual API] Handler error:', err);

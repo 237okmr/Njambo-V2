@@ -1,5 +1,9 @@
+import { getPublicParamNumber } from '../../services/publicConfig';
 import { CopilotSettingsService } from './copilotSettingsService';
 import { tikaFetch } from './tikaFetch';
+import { auth } from '../../lib/firebase';
+import { mergeThreads, pendingChanges, textOnlyThread, ThreadSyncState } from './copilotThreadsSync';
+import { KATIKA_AUTHORIZED_EMAIL } from '../../utils/adminAccess';
 import type { KoraMoment } from '../../../server/engine/koraMoment';
 import { buildLocalRemixVariants, shouldFallbackToLocalRemix } from '../visual/localRemix';
 import { getMemeHistory, recordMemeHistory } from '../data/memeBank';
@@ -52,6 +56,7 @@ const PREF_STORAGE_KEY = 'katika_ai_assistant_prefs';
 const HISTORY_STORAGE_KEY = 'katika_ai_assistant_history_v1';
 const THREADS_STORAGE_KEY = 'katika_ai_assistant_threads_v2';
 const ACTIVE_THREAD_ID_KEY = 'katika_ai_assistant_active_thread_id_v2';
+const SYNC_STATE_KEY = 'katika_copilot_sync_v1';
 
 export const DEFAULT_PREFERENCES: ChatBotPreferences = {
   tone: 'balanced',
@@ -60,6 +65,60 @@ export const DEFAULT_PREFERENCES: ChatBotPreferences = {
   temperatureMode: 'balanced',
   disableStreaming: false,
 };
+
+/** Copie locale séparée par compte : deux admins sur le même navigateur ne voient pas les discussions l'un de l'autre. */
+function accountKey(base: string): string {
+  return `${base}_${auth.currentUser?.uid || 'sans-compte'}`;
+}
+
+function readSyncState(): ThreadSyncState {
+  try {
+    const raw = localStorage.getItem(accountKey(SYNC_STATE_KEY));
+    const parsed = raw ? JSON.parse(raw) : null;
+    return parsed && typeof parsed.synced === 'object' ? parsed : { synced: {} };
+  } catch {
+    return { synced: {} };
+  }
+}
+
+function writeSyncState(state: ThreadSyncState): void {
+  try {
+    localStorage.setItem(accountKey(SYNC_STATE_KEY), JSON.stringify(state));
+  } catch {
+    // stockage indisponible : la prochaine synchronisation renverra ce qui manque
+  }
+}
+
+let pushChain: Promise<void> = Promise.resolve();
+
+/** Envoie au serveur les discussions modifiées et retire celles supprimées ; un échec n'empêche pas de continuer en local. */
+function pushThreads(threads: ChatThread[]): void {
+  pushChain = pushChain.then(async () => {
+    const state = readSyncState();
+    const { toSave, toDelete } = pendingChanges(threads, state);
+    for (const thread of toSave) {
+      try {
+        const res = await tikaFetch(`/api/katika/copilot/threads/${encodeURIComponent(thread.id)}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ thread: textOnlyThread(thread) }),
+        });
+        if (res.ok) state.synced[thread.id] = thread.updatedAt;
+      } catch {
+        // hors ligne : nouvel essai au prochain changement
+      }
+    }
+    for (const id of toDelete) {
+      try {
+        const res = await tikaFetch(`/api/katika/copilot/threads/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        if (res.ok) delete state.synced[id];
+      } catch {
+        // hors ligne : nouvel essai au prochain changement
+      }
+    }
+    writeSyncState(state);
+  });
+}
 
 export const AiAdminChatClient = {
   getPreferences(): ChatBotPreferences {
@@ -96,7 +155,10 @@ export const AiAdminChatClient = {
   // Multi-thread management
   getThreads(): ChatThread[] {
     try {
-      const stored = localStorage.getItem(THREADS_STORAGE_KEY);
+      let stored = localStorage.getItem(accountKey(THREADS_STORAGE_KEY));
+      // Anciennes discussions de ce navigateur (avant la séparation par compte) : reprises pour le propriétaire seulement.
+      const isOwner = (auth.currentUser?.email || '').toLowerCase() === KATIKA_AUTHORIZED_EMAIL.toLowerCase();
+      if (!stored && isOwner) stored = localStorage.getItem(THREADS_STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored) as ChatThread[];
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -134,10 +196,29 @@ export const AiAdminChatClient = {
   },
 
   saveThreads(threads: ChatThread[]): void {
+    const textOnly = threads.map(textOnlyThread);
     try {
-      localStorage.setItem(THREADS_STORAGE_KEY, JSON.stringify(threads));
+      localStorage.setItem(accountKey(THREADS_STORAGE_KEY), JSON.stringify(textOnly));
+      localStorage.removeItem(THREADS_STORAGE_KEY);
     } catch (e) {
       console.warn('[AI Assistant] Error saving threads:', e);
+    }
+    pushThreads(textOnly);
+  },
+
+  /** Discussions du serveur réunies avec la copie locale ; null si le serveur est injoignable. */
+  async pullThreads(local: ChatThread[]): Promise<ChatThread[] | null> {
+    try {
+      const res = await tikaFetch('/api/katika/copilot/threads');
+      const body = await res.json().catch(() => null);
+      if (!res.ok || !body?.success || !Array.isArray(body.threads)) return null;
+      const state = readSyncState();
+      const merged = mergeThreads(local, body.threads as ChatThread[], state);
+      for (const t of body.threads as ChatThread[]) state.synced[t.id] = t.updatedAt;
+      writeSyncState(state);
+      return merged;
+    } catch {
+      return null;
     }
   },
 
@@ -203,55 +284,20 @@ export const AiAdminChatClient = {
     history: Array<{ role: 'user' | 'model'; text: string }>;
     recentTopics: string[];
   } {
-    const valid = (messages || []).filter(
-      (m) => !m.isError && m.content && m.content.trim().length > 0
+    // Mémoire : les derniers messages de la discussion (réglage katika), raccourcis ; le serveur garde les tours complets.
+    const limit = Math.max(2, getPublicParamNumber('copilotHistoryMessages'));
+    const valid = (messages || []).filter((m) => !m.isError && m.content && m.content.trim().length > 0);
+    const recent = valid.slice(-limit);
+    const history = recent.map((m) =>
+      m.role === 'user'
+        ? { role: 'user' as const, text: m.content.trim().slice(0, 600) }
+        : { role: 'model' as const, text: this.cleanClientHistoryItem(m.content) }
     );
-
-    let lastAssistantIdx = -1;
-    for (let i = valid.length - 1; i >= 0; i--) {
-      if (valid[i].role === 'assistant') {
-        lastAssistantIdx = i;
-        break;
-      }
-    }
-
-    let lastUserIdx = -1;
-    if (lastAssistantIdx !== -1) {
-      for (let i = lastAssistantIdx - 1; i >= 0; i--) {
-        if (valid[i].role === 'user') {
-          lastUserIdx = i;
-          break;
-        }
-      }
-    }
-
-    if (lastAssistantIdx === -1 || lastUserIdx === -1) {
-      return { history: [], recentTopics: [] };
-    }
-
-    const userMsg = valid[lastUserIdx];
-    const assistantMsg = valid[lastAssistantIdx];
-
-    const cleanUserText = (userMsg.content || '').trim().slice(0, 300);
-    const cleanAssistantText = this.cleanClientHistoryItem(assistantMsg.content || '');
-
-    const history: Array<{ role: 'user' | 'model'; text: string }> = [
-      { role: 'user', text: cleanUserText },
-      { role: 'model', text: cleanAssistantText },
-    ];
-
-    const priorUserMsgs: string[] = [];
-    for (let i = 0; i < lastUserIdx; i++) {
-      if (valid[i].role === 'user') {
-        const cleaned = valid[i].content.trim().replace(/\n+/g, ' ').slice(0, 120);
-        if (cleaned) {
-          priorUserMsgs.push(cleaned);
-        }
-      }
-    }
-
-    const recentTopics = priorUserMsgs.slice(-2);
-
+    const older = valid.slice(0, -limit).filter((m) => m.role === 'user');
+    const recentTopics = older
+      .slice(-2)
+      .map((m) => m.content.trim().replace(/\n+/g, ' ').slice(0, 120))
+      .filter(Boolean);
     return { history, recentTopics };
   },
 

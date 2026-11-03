@@ -862,6 +862,30 @@ function cleanHistoryText(text: string): string {
   return cleaned;
 }
 
+/** Nombre de messages précédents relus par l'IA (réglage katika copilotHistoryMessages). */
+function historyLimit(): number {
+  const value = Number((getEngineConfig() as unknown as Record<string, unknown>).copilotHistoryMessages);
+  return Number.isFinite(value) && value >= 2 ? Math.floor(value) : 12;
+}
+
+/**
+ * Garde les derniers messages en tours complets : la suite commence par un message de l'admin, alterne admin et IA,
+ * et finit par une réponse de l'IA (Gemini refuse une suite qui ne respecte pas cet ordre).
+ */
+export function alternatingHistory(history: AdminChatHistoryItem[], max: number): AdminChatHistoryItem[] {
+  const recent = (Array.isArray(history) ? history : [])
+    .filter((h) => h && (h.role === 'user' || h.role === 'model') && typeof h.text === 'string' && h.text.trim())
+    .slice(-Math.max(2, max));
+  const out: AdminChatHistoryItem[] = [];
+  for (const item of recent) {
+    const expected = out.length === 0 ? 'user' : out[out.length - 1].role === 'user' ? 'model' : 'user';
+    if (item.role === expected) out.push(item);
+    else if (item.role === 'user') out[out.length - 1] = item; // deux messages de l'admin d'affilée : on garde le plus récent
+  }
+  if (out.length > 0 && out[out.length - 1].role === 'user') out.pop();
+  return out;
+}
+
 export function buildContents(
   message: string,
   image?: AdminChatImage,
@@ -869,34 +893,9 @@ export function buildContents(
 ): Array<{ role: 'user' | 'model'; parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> }> {
   const contents: Array<{ role: 'user' | 'model'; parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> }> = [];
 
-  // Prendre au plus les 2 derniers éléments
-  const rawRecent = history.slice(-2);
-
-  // Ignorer tout élément de rôle 'model' placé en tête (l'historique commence toujours par 'user' et alterne strictement)
-  const validHistory: AdminChatHistoryItem[] = [];
-  for (const item of rawRecent) {
-    if (validHistory.length === 0) {
-      if (item.role === 'user') {
-        validHistory.push(item);
-      }
-    } else {
-      const expectedRole = validHistory[validHistory.length - 1].role === 'user' ? 'model' : 'user';
-      if (item.role === expectedRole) {
-        validHistory.push(item);
-      }
-    }
-  }
-
-  // Si l'historique forme une paire complète [user, model], on l'ajoute avant le tour courant
-  if (validHistory.length === 2 && validHistory[0].role === 'user' && validHistory[1].role === 'model') {
-    contents.push({
-      role: 'user',
-      parts: [{ text: cleanHistoryText(validHistory[0].text) }],
-    });
-    contents.push({
-      role: 'model',
-      parts: [{ text: cleanHistoryText(validHistory[1].text) }],
-    });
+  // Mémoire : les derniers messages de la discussion (nombre réglable dans katika), en tours complets qui commencent par l'admin.
+  for (const item of alternatingHistory(history, historyLimit())) {
+    contents.push({ role: item.role, parts: [{ text: cleanHistoryText(item.text) }] });
   }
 
   // Tour courant (rôle 'user')

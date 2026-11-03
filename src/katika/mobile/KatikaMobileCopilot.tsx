@@ -27,8 +27,7 @@ import {
   Download,
   Smartphone,
   Sliders,
-  BookOpen,
-} from 'lucide-react';
+  BookOpen, Pin } from 'lucide-react';
 import { useKatikaAiChat } from '../context/KatikaAiChatContext';
 import { useKatikaAuth, KATIKA_AUTHORIZED_EMAIL } from '../context/KatikaAuthContext';
 import { KatikaChatMessageRenderer } from '../components/KatikaChatMessageRenderer';
@@ -77,6 +76,7 @@ export const KatikaMobileCopilot: React.FC<{ onBack?: () => void }> = ({ onBack 
     createThread,
     selectThread,
     deleteThread,
+    togglePinThread,
     messages,
     isLoading,
     errorMessage,
@@ -93,6 +93,7 @@ export const KatikaMobileCopilot: React.FC<{ onBack?: () => void }> = ({ onBack 
   } = useKatikaAiChat();
 
   const [inputVal, setInputVal] = useState('');
+  const [threadSearch, setThreadSearch] = useState('');
   const [showSocialModal, setShowSocialModal] = useState(false);
   const [showMomentPicker, setShowMomentPicker] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
@@ -861,9 +862,24 @@ export const KatikaMobileCopilot: React.FC<{ onBack?: () => void }> = ({ onBack 
                 <span>Nouvelle discussion</span>
               </button>
 
-              {/* Threads list */}
-              <div className="space-y-1.5 max-h-[60vh] overflow-y-auto">
-                {threads.map((t) => {
+              <input
+                type="search"
+                value={threadSearch}
+                onChange={(e) => setThreadSearch(e.target.value)}
+                placeholder="Rechercher une discussion"
+                aria-label="Rechercher une discussion"
+                className="w-full min-h-[44px] px-3 rounded-xl bg-slate-950 border border-slate-700 text-base text-white outline-none focus:border-amber-500"
+              />
+
+              {/* Threads list : épinglées d'abord, recherche dans le titre et le texte */}
+              <div className="space-y-1.5 max-h-[55vh] overflow-y-auto">
+                {threads
+                  .filter((t) => {
+                    const q = threadSearch.trim().toLowerCase();
+                    return !q || t.title.toLowerCase().includes(q) || t.messages.some((m) => m.content.toLowerCase().includes(q));
+                  })
+                  .sort((a, b) => Number(!!b.isPinned) - Number(!!a.isPinned) || b.updatedAt - a.updatedAt)
+                  .map((t) => {
                   const isActive = t.id === activeThreadId;
                   return (
                     <div
@@ -872,23 +888,35 @@ export const KatikaMobileCopilot: React.FC<{ onBack?: () => void }> = ({ onBack 
                         selectThread(t.id);
                         setShowThreadDrawer(false);
                       }}
-                      className={`p-2.5 rounded-xl text-xs flex items-center justify-between transition cursor-pointer ${
+                      className={`min-h-[48px] pl-3 rounded-xl text-sm flex items-center justify-between transition cursor-pointer ${
                         isActive
                           ? 'bg-amber-500/15 border border-amber-500/50 text-amber-300 font-semibold'
                           : 'bg-slate-950/60 border border-slate-800/80 text-slate-300 hover:bg-slate-800'
                       }`}
                     >
-                      <span className="truncate flex-1 pr-2">{t.title}</span>
+                      <span className="truncate flex-1 pr-2">{t.isPinned ? '📌 ' : ''}{t.title}</span>
+                      <button
+                        type="button"
+                        aria-label={t.isPinned ? 'Désépingler' : 'Épingler'}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          togglePinThread(t.id);
+                        }}
+                        className={`w-11 h-11 flex items-center justify-center ${t.isPinned ? 'text-amber-400' : 'text-slate-500 hover:text-amber-300'}`}
+                      >
+                        <Pin className="w-4 h-4" />
+                      </button>
                       {threads.length > 1 && (
                         <button
                           type="button"
+                          aria-label="Supprimer la discussion"
                           onClick={(e) => {
                             e.stopPropagation();
                             deleteThread(t.id);
                           }}
-                          className="text-slate-500 hover:text-red-400 p-1"
+                          className="w-11 h-11 flex items-center justify-center text-slate-500 hover:text-red-400"
                         >
-                          <Trash2 className="w-3 h-3" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       )}
                     </div>
@@ -899,7 +927,7 @@ export const KatikaMobileCopilot: React.FC<{ onBack?: () => void }> = ({ onBack 
 
             {/* Bottom info */}
             <div className="pt-3 border-t border-slate-800 text-[10px] text-slate-500 flex items-center justify-between">
-              <span>{threads.length} fil(s) sauvegardé(s)</span>
+              <span>{threads.length} discussion(s), retrouvées sur tes autres appareils</span>
               <span className="font-mono text-amber-400">Katika AI</span>
             </div>
           </div>

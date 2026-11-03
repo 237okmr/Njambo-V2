@@ -573,6 +573,31 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Plafond de requêtes IA du copilote Katika sur une heure glissante (protège le quota Gemini gratuit). Un visuel compte pour 1 à 3 requêtes selon les relances.',
   },
   {
+    key: 'copilotMaxRequestsPerAdminPerHour', label: 'Requêtes IA par heure pour chaque admin ajouté', unit: '',
+    min: 1, max: 200, default: 10, group: 'katika', scope: 'server', effect: 'immediate',
+    help: 'Plafond propre à chaque admin ajouté, pour qu\'un seul ne puisse pas épuiser le quota commun. Le propriétaire n\'a que le plafond commun.',
+  },
+  {
+    key: 'copilotMaxConcurrent', label: 'Demandes IA traitées en même temps', unit: '',
+    min: 1, max: 5, default: 2, group: 'katika', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Nombre de demandes au copilote traitées en même temps pour tous les admins. Chaque admin n\'a qu\'une demande à la fois.',
+  },
+  {
+    key: 'copilotHistoryMessages', label: 'Mémoire du copilote (messages précédents relus)', unit: '',
+    min: 2, max: 30, default: 12, group: 'katika', scope: 'both', effect: 'immediate', advanced: true,
+    help: 'Nombre de messages précédents de la discussion envoyés à l\'IA avec chaque question. Plus : meilleure mémoire, mais plus de quota consommé par question.',
+  },
+  {
+    key: 'katikaCopilotMaxThreads', label: 'Discussions gardées par admin', unit: '',
+    min: 5, max: 100, default: 30, group: 'katika', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Au-delà, les discussions les plus anciennes non épinglées sont supprimées. Chaque discussion gardée coûte une lecture à l\'ouverture du copilote.',
+  },
+  {
+    key: 'katikaCopilotMaxMessages', label: 'Messages gardés par discussion', unit: '',
+    min: 10, max: 200, default: 60, group: 'katika', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Seuls les messages les plus récents de chaque discussion sont gardés pour la retrouver sur un autre appareil.',
+  },
+  {
     key: 'copilotAiTimeoutSeconds', label: 'Délai maximal d\'une réponse de l\'IA du copilote', unit: 's',
     min: 15, max: 180, default: 60, group: 'katika', scope: 'server', effect: 'immediate', advanced: true,
     help: 'Temps maximal accordé à l\'IA pour un essai. Passé ce délai, l\'appel est abandonné et le copilote se libère ; le modèle de secours peut prendre le relais, donc une demande peut durer jusqu\'à deux ou trois fois ce délai.',

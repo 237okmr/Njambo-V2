@@ -236,6 +236,20 @@ export const KatikaAiChatProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return () => document.removeEventListener('visibilitychange', refreshIfOld);
   }, [metricsNeeded, refreshLiveMetrics]);
 
+  // Discussions retrouvées depuis le serveur à l'ouverture : celles écrites sur un autre appareil apparaissent ici.
+  useEffect(() => {
+    let cancelled = false;
+    AiAdminChatClient.pullThreads(AiAdminChatClient.getThreads()).then((merged) => {
+      if (cancelled || !merged || merged.length === 0) return;
+      setThreads(merged);
+      AiAdminChatClient.saveThreads(merged);
+      setActiveThreadId((current) => (merged.some((t) => t.id === current) ? current : merged[0].id));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const updatePreferences = useCallback((newPrefs: Partial<ChatBotPreferences>) => {
     setPrefs((prev) => {
       const updated = { ...prev, ...newPrefs };

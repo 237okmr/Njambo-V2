@@ -21,7 +21,8 @@ export const KatikaAiQuotaGauge: React.FC<KatikaAiQuotaGaugeProps> = ({ refreshK
       const response = await tikaFetch('/api/katika/ai-quota');
       const data = await response.json();
       if (response.ok && data.success) {
-        setStatus({ used: data.used, max: data.max, resetInMinutes: data.resetInMinutes });
+        // Admin ajouté : sa propre limite compte d'abord ; propriétaire : le plafond commun.
+        setStatus(typeof data.myMax === 'number' ? { used: data.mine, max: data.myMax, resetInMinutes: data.resetInMinutes } : { used: data.used, max: data.max, resetInMinutes: data.resetInMinutes });
       }
     } catch {
       // La jauge est un confort : en cas d'erreur réseau, elle reste simplement masquée.

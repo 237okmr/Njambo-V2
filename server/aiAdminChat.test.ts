@@ -9,6 +9,7 @@ import {
   detectIntents,
   buildSystemInstruction,
   buildContents,
+  alternatingHistory,
 } from './aiAdminChat.js';
 
 describe('aiAdminChat - computeMaxOutputTokens', () => {
@@ -439,7 +440,7 @@ describe('aiAdminChat - buildContents', () => {
     assert.equal(contents[0].parts[0].text, 'Quelle est la santé du jeu ?');
   });
 
-  it('conserve au plus le dernier échange complet [user, model] suivi du message courant', () => {
+  it('garde les échanges récents en tours complets, suivis du message courant', () => {
     const history: Array<{ role: 'user' | 'model'; text: string }> = [
       { role: 'user', text: 'Question 1' },
       { role: 'model', text: 'Réponse 1' },
@@ -447,13 +448,32 @@ describe('aiAdminChat - buildContents', () => {
       { role: 'model', text: 'Réponse 2 avec 3 points' },
     ];
     const contents = buildContents('développe le point 2', undefined, history);
-    assert.equal(contents.length, 3);
-    assert.equal(contents[0].role, 'user');
-    assert.equal(contents[0].parts[0].text, 'Question 2');
-    assert.equal(contents[1].role, 'model');
-    assert.equal(contents[1].parts[0].text, 'Réponse 2 avec 3 points');
-    assert.equal(contents[2].role, 'user');
-    assert.equal(contents[2].parts[0].text, 'développe le point 2');
+    assert.equal(contents.length, 5);
+    assert.deepEqual(contents.map((c) => c.role), ['user', 'model', 'user', 'model', 'user']);
+    assert.equal(contents[0].parts[0].text, 'Question 1');
+    assert.equal(contents[3].parts[0].text, 'Réponse 2 avec 3 points');
+    assert.equal(contents[4].parts[0].text, 'développe le point 2');
+  });
+
+  it('ne garde que le nombre de messages réglé, en commençant par une question', () => {
+    const history = Array.from({ length: 40 }, (_, i) => ({ role: (i % 2 === 0 ? 'user' : 'model') as 'user' | 'model', text: `m${i}` }));
+    const kept = alternatingHistory(history, 12);
+    assert.equal(kept.length, 12);
+    assert.equal(kept[0].role, 'user');
+    assert.equal(kept[11].text, 'm39');
+  });
+
+  it('une question restée sans réponse ne casse pas l’alternance', () => {
+    const kept = alternatingHistory(
+      [
+        { role: 'user', text: 'q1' },
+        { role: 'user', text: 'q2' },
+        { role: 'model', text: 'r2' },
+        { role: 'user', text: 'q3' },
+      ],
+      12
+    );
+    assert.deepEqual(kept.map((h) => h.text), ['q2', 'r2']);
   });
 
   it('ignore un message model placé en tête d’historique', () => {

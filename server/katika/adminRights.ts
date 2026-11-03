@@ -92,6 +92,7 @@ const ROUTE_TABLE: Array<[method: string, pattern: RegExp, requirement: RouteReq
   ['*', /^\/notes(\/[^/]+)?$/, any('notes.use')],
 
   ['POST', /^\/copilot-settings$/, any('copilot.use')],
+  ['*', /^\/copilot\/threads(\/[^/]+)?$/, any('copilot.use')],
   ['GET', /^\/(ai-quota|moments)$/, any('copilot.use')],
   ['POST', /^\/(ai-chat|ai-chat-stream|ai-visual)$/, any('copilot.use')],
 
