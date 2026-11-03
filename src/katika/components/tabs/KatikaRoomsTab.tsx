@@ -221,7 +221,7 @@ export const KatikaRoomsTab: React.FC = () => {
           )}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           {/* Status Filter Tabs */}
           <div className="flex items-center bg-slate-850 p-1 rounded-lg border border-slate-700/60 text-xs">
             {(['ALL', 'IN_GAME', 'WAITING'] as const).map((st) => (
@@ -281,8 +281,37 @@ export const KatikaRoomsTab: React.FC = () => {
         </div>
       )}
 
+      {/* Sur téléphone : une carte par table */}
+      <ul className="lg:hidden flex flex-col gap-3">
+        {filteredRooms.length === 0 ? (
+          <li className="rounded-xl border border-slate-800 bg-slate-900/80 p-4 text-sm text-slate-400">Aucune table ne correspond.</li>
+        ) : (
+          filteredRooms.map((room) => (
+            <li key={room.roomId} className="rounded-xl border border-slate-800 bg-slate-900/80 p-4 flex flex-col gap-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-mono font-bold text-amber-400">{room.roomId}</span>
+                <span className={`text-xs px-2 py-1 rounded-full ${room.status === 'IN_GAME' ? 'bg-emerald-500/15 text-emerald-300' : 'bg-amber-500/15 text-amber-200'}`}>
+                  {room.status === 'IN_GAME' ? 'Manche en cours' : room.status === 'WAITING' ? 'En attente' : 'Terminée'}
+                </span>
+              </div>
+              <div className="text-sm text-slate-200">{room.roomName}</div>
+              <div className="text-sm text-slate-400">
+                {room.currentPlayersCount}/{room.maxPlayers} joueurs{room.status === 'IN_GAME' ? ` · tour ${room.currentTrickNumber ?? 1} sur 5` : ''}
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedRoom(room)}
+                className="min-h-[44px] rounded-xl bg-slate-800 hover:bg-slate-700 text-sm text-slate-100"
+              >
+                Regarder et agir
+              </button>
+            </li>
+          ))
+        )}
+      </ul>
+
       {/* CRM Rooms Table */}
-      <div className="rounded-xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-lg">
+      <div className="hidden lg:block rounded-xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-lg">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>

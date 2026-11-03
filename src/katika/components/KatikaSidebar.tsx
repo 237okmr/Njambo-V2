@@ -9,7 +9,8 @@ import {
   ExternalLink,
   ShieldAlert,
   Bot,
-  Wallet
+  Wallet,
+  Home
 } from 'lucide-react';
 import { KatikaTab } from '../types/katika';
 
@@ -34,7 +35,8 @@ export const KatikaSidebar: React.FC<KatikaSidebarProps> = ({
     {
       title: '📡 Supervision & Live',
       items: [
-        { id: 'DASHBOARD', label: 'Tableau de Bord', icon: LayoutDashboard },
+        { id: 'HOME', label: 'Accueil', icon: Home },
+        { id: 'DASHBOARD', label: 'Statistiques', icon: LayoutDashboard },
         { id: 'ROOMS', label: 'Salons & Tables en direct', icon: Dices },
         { id: 'LOGS', label: "Journal d'Audit & Alertes", icon: ScrollText },
       ],
@@ -67,7 +69,7 @@ export const KatikaSidebar: React.FC<KatikaSidebarProps> = ({
   ];
 
   return (
-    <aside className="w-64 bg-slate-900/95 border-r border-slate-800/90 flex flex-col justify-between select-none h-[calc(100vh-4rem)] sticky top-16 z-40">
+    <aside className="hidden lg:flex w-64 bg-slate-900/95 border-r border-slate-800/90 flex-col justify-between select-none h-[calc(100vh-4rem)] sticky top-16 z-40">
       {/* Top Nav List */}
       <div className="p-3 space-y-4">
         {groups

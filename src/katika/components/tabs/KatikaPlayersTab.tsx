@@ -997,8 +997,37 @@ export const KatikaPlayersTab: React.FC = () => {
         </div>
       </div>
 
+      {/* Sur téléphone : une carte par joueur, qui ouvre son dossier */}
+      <ul className="lg:hidden flex flex-col gap-3">
+        {sortedAndPreferenceFilteredPlayers.length === 0 ? (
+          <li className="rounded-xl border border-slate-800 bg-slate-900/80 p-4 text-sm text-slate-400">Aucun joueur ne correspond.</li>
+        ) : (
+          sortedAndPreferenceFilteredPlayers.map((player) => {
+            const alert = player.antifraudAlerts.highAbandonRisk || player.antifraudAlerts.collusionRisk || player.antifraudAlerts.spamAntiFairplayRisk || !!player.isAntiJeuRisk;
+            return (
+              <li key={player.id}>
+                <button
+                  type="button"
+                  onClick={() => setDossierPlayer(player)}
+                  className="w-full text-left rounded-xl border border-slate-800 bg-slate-900/80 p-4 flex items-center gap-3 min-h-[64px]"
+                >
+                  <PlayerAvatar avatarId={(player.avatarId as AvatarOptionId) || 'lion'} size="md" />
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-sm font-semibold text-white truncate">{player.name}</span>
+                    <span className="block text-xs text-slate-400">
+                      {player.status === 'BANNED' ? 'Banni' : player.status === 'WARNED' ? 'Averti' : 'Actif'} · {player.totalGames} partie(s) · {player.chipsBalance.toLocaleString('fr-FR')} jetons
+                    </span>
+                  </span>
+                  {alert && <span className="text-xs px-2 py-1 rounded-full bg-red-500/15 text-red-300 shrink-0">Alerte</span>}
+                </button>
+              </li>
+            );
+          })
+        )}
+      </ul>
+
       {/* Players Table */}
-      <div className="rounded-xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-lg">
+      <div className="hidden lg:block rounded-xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-lg">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>

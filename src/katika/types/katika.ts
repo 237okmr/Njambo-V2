@@ -2,7 +2,7 @@ import type { KatikaDataQuality } from '../services/dataQuality';
 import { GameTelemetryRecord } from '../../services/telemetryService';
 import { AIDifficulty } from '../../types';
 
-export type KatikaTab = 'DASHBOARD' | 'ROOMS' | 'MATCHES' | 'PLAYERS' | 'SETTINGS' | 'LOGS' | 'AI_ASSISTANT' | 'KORA_CASH';
+export type KatikaTab = 'HOME' | 'DASHBOARD' | 'ROOMS' | 'MATCHES' | 'PLAYERS' | 'SETTINGS' | 'LOGS' | 'AI_ASSISTANT' | 'KORA_CASH';
 
 export type KatikaDashboardSubTab = 'LIVE' | 'BUSINESS' | 'GAMEPLAY';
 

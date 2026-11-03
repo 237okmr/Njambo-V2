@@ -44,7 +44,7 @@ export const KatikaHeader: React.FC<KatikaHeaderProps> = ({
   useVisibleInterval(pingServer, getPublicParamNumber('katikaHealthRefreshSeconds') * 1000);
 
   return (
-    <header className="h-16 border-b border-slate-800/90 bg-slate-900/90 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-50 select-none">
+    <header className="h-14 lg:h-16 border-b border-slate-800/90 bg-slate-900/90 backdrop-blur-md px-4 lg:px-6 flex items-center justify-between sticky top-0 z-50 select-none">
       {/* Brand & Katika Shield */}
       <div className="flex items-center gap-3">
         <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shadow-inner">
@@ -53,11 +53,11 @@ export const KatikaHeader: React.FC<KatikaHeaderProps> = ({
         <div>
           <div className="flex items-center gap-2">
             <span className="font-bold tracking-tight text-white text-base">KATIKA</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 font-mono border border-amber-500/30 font-medium">
+            <span className="hidden lg:inline text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 font-mono border border-amber-500/30 font-medium">
               CONTROL COCKPIT
             </span>
           </div>
-          <p className="text-[11px] text-slate-400">Plateforme de commandement & supervision Njambo Kora</p>
+          <p className="hidden lg:block text-[11px] text-slate-400">Plateforme de commandement & supervision Njambo Kora</p>
         </div>
       </div>
 
@@ -66,7 +66,7 @@ export const KatikaHeader: React.FC<KatikaHeaderProps> = ({
         {/* WS Server Health & Latency */}
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/60 border border-slate-700/50 text-xs">
           <Server className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="text-slate-400">Serveur WS :</span>
+          <span className="hidden lg:inline text-slate-400">Serveur WS :</span>
           <span className="font-mono text-emerald-300 font-medium flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping inline-block" />
             Connecté
@@ -82,7 +82,7 @@ export const KatikaHeader: React.FC<KatikaHeaderProps> = ({
           type="button"
           id="katika-quick-maintenance-toggle"
           onClick={onToggleMaintenance}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 cursor-pointer ${
+          className={`hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 cursor-pointer ${
             isMaintenanceMode
               ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 hover:bg-amber-500/30 shadow-inner'
               : 'bg-slate-800/80 text-slate-300 border-slate-700/70 hover:bg-slate-700'
@@ -100,7 +100,7 @@ export const KatikaHeader: React.FC<KatikaHeaderProps> = ({
         </div>
 
         {/* Katika Admin Profile & Logout */}
-        <div className="flex items-center gap-3 pl-3 border-l border-slate-800">
+        <div className="hidden lg:flex items-center gap-3 pl-3 border-l border-slate-800">
           <div className="text-right text-xs">
             <div className="font-medium text-slate-100">{user?.displayName || 'Katika Master'}</div>
             <div className="text-[11px] text-amber-400/90 font-mono">{user?.email}</div>

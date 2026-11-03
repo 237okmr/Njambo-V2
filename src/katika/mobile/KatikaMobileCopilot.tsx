@@ -68,7 +68,7 @@ const MOBILE_QUICK_PROMPTS = [
   },
 ];
 
-export const KatikaMobileCopilot: React.FC = () => {
+export const KatikaMobileCopilot: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const { logout, user } = useKatikaAuth();
   const {
     threads,
@@ -339,6 +339,16 @@ export const KatikaMobileCopilot: React.FC = () => {
       {/* Top Mobile App Bar */}
       <header className="shrink-0 h-12 bg-slate-900/90 border-b border-slate-800 backdrop-blur px-3.5 flex items-center justify-between z-30">
         <div className="flex items-center gap-2.5 min-w-0">
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              aria-label="Retour à katika"
+              className="w-11 h-11 -ml-2 flex items-center justify-center rounded-xl text-slate-300 hover:bg-slate-800 shrink-0"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          )}
           <div className="relative">
             <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
               <Bot className="w-5 h-5" />

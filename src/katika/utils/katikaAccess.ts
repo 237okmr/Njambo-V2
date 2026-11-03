@@ -5,6 +5,7 @@ import type { KatikaTab } from '../types/katika';
  * le serveur refuse de toute façon ce qui n'est pas permis (server/katika/adminRights.ts).
  */
 export const TAB_PERMISSION: Record<KatikaTab, string> = {
+  HOME: 'dashboard.view',
   DASHBOARD: 'dashboard.view',
   ROOMS: 'rooms.view',
   MATCHES: 'matches.view',
