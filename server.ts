@@ -102,7 +102,7 @@ import { isDashboardFailure, katikaDashboardData, readWarnThreshold, toDashboard
 import { getReadBudget } from './server/katika/readBudget';
 import { getClientReads, recordClientReads } from './server/katika/clientReads';
 import { computeRepairPlan } from './server/profileRepair';
-import { collection, getDocs, query, limit, orderBy, startAfter } from 'firebase/firestore';
+import { collection, getCountFromServer, getDocs, query, limit, orderBy, startAfter } from 'firebase/firestore';
 import { db } from './src/lib/firebase';
 import {
   computeMasteryScoreFromStats,
@@ -112,6 +112,7 @@ import {
   isEligibleLeaderboardUser,
   LEADERBOARD_POLICY,
 } from './src/services/masteryConfig';
+import { computeRanks, rankSettingsFromConfig, withPublicRanks } from './src/services/rankTiers';
 
 const PORT = process.env.NODE_ENV === 'production'
   ? Number(process.env.PORT || 8080)
@@ -475,10 +476,29 @@ async function startServer() {
   // Leaderboard Server Cache (60s cache to respect Firestore Quotas while keeping leaderboard fresh)
   let cachedLeaderboardUsers: any[] = [];
   let leaderboardCacheTimestamp = 0;
+  // Rangs dynamiques : limite de ce qu'on sait de l'activité, et nombre réel de joueurs au-delà de ceux lus.
+  let leaderboardUnknownActivitySince = 0;
+  let leaderboardTotalPlayers = 0;
   // TTL du cache serveur du Palmarès : leaderboardServerCacheSeconds (katika), relu à chaque lecture.
 
   function calculateMasteryScore(stats: any): number {
     return computeMasteryScoreFromStats(stats);
+  }
+
+  // Rangs calculés sur le classement général, à chaque réponse : un réglage Katika s'applique tout de suite.
+  function computeLeaderboardRanks() {
+    return computeRanks(
+      cachedLeaderboardUsers.map((u) => ({
+        uid: u.uid,
+        masteryScore: u.stats?.masteryScore || 0,
+        gamesPlayed: u.stats?.gamesPlayed || 0,
+        gamesWon: u.stats?.gamesWon || 0,
+        lastGameAt: u.lastGameAt,
+      })),
+      rankSettingsFromConfig(getEngineConfig() as unknown as Record<string, number>),
+      Date.now(),
+      { unknownActivitySince: leaderboardUnknownActivitySince, totalPlayers: leaderboardTotalPlayers }
+    );
   }
 
   app.get('/api/leaderboard/cached', async (req, res) => {
@@ -666,6 +686,7 @@ async function startServer() {
 
             // 5. Agrégation des statistiques par creatorUid avec plafonds journaliers en fuseau Africa/Douala
             const gameStatsByPlayer = new Map<string, any>();
+            const lastGameAtByPlayer = new Map<string, number>();
             // delay-ok: définition de la période « Semaine » du Palmarès, pas un délai
             const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
             // delay-ok: définition de la période « Mois » du Palmarès, pas un délai
@@ -694,6 +715,8 @@ async function startServer() {
               }
 
               const gameTime = g.createdAt || g.timestamp || 0;
+              // Toute fiche prouve que le joueur a joué, même si elle ne compte pas pour les statistiques.
+              lastGameAtByPlayer.set(creatorUid, Math.max(lastGameAtByPlayer.get(creatorUid) || 0, gameTime));
               const isMultiplayer = g.mode === 'MULTIPLAYER';
               const isCorroborated = !isMultiplayer || corroboratedRecordIds.has(id);
 
@@ -924,6 +947,25 @@ async function startServer() {
               }
             }
 
+            usersMap.forEach((u) => {
+              u.lastGameAt = lastGameAtByPlayer.get(u.uid);
+            });
+
+            // Lecture plafonnée : si elle est pleine, l'absence de fiche ne prouve une inactivité que jusqu'à la plus ancienne lue.
+            const oldestReadRecordAt = validRecords.reduce((oldest, { data: g }) => Math.min(oldest, g.createdAt || g.timestamp || now), now);
+            leaderboardUnknownActivitySince = recordsSnapDocs.length >= maxRecords ? oldestReadRecordAt : now - MAX_WINDOW_AGE_MS;
+
+            // Lecture plafonnée : au-delà, le nombre de joueurs vient d'un simple comptage.
+            leaderboardTotalPlayers = usersMap.size;
+            if (usersSnapDocs.length >= maxUsers) {
+              try {
+                const counted = await getCountFromServer(collection(db, 'users'));
+                leaderboardTotalPlayers = Math.max(usersMap.size, counted.data().count);
+              } catch (countErr) {
+                console.warn('[Leaderboard Server] Comptage des joueurs impossible.', countErr);
+              }
+            }
+
             cachedLeaderboardUsers = Array.from(usersMap.values()).sort(
               (a, b) => (b.stats?.masteryScore || 0) - (a.stats?.masteryScore || 0)
             );
@@ -962,10 +1004,17 @@ async function startServer() {
         resultUsers = resultUsers.filter((u) => isEligibleLeaderboardUser(u.uid, u));
       }
 
-      res.json({ success: true, users: resultUsers, timestamp: leaderboardCacheTimestamp, timeframe });
+      const rankResult = computeLeaderboardRanks();
+      res.json({
+        success: true,
+        users: withPublicRanks(resultUsers, rankResult.ranks),
+        rankTiers: { tiers: rankResult.tiers, totalPlayers: rankResult.totalPlayers },
+        timestamp: leaderboardCacheTimestamp,
+        timeframe,
+      });
     } catch (err: any) {
       console.warn('[Leaderboard Cache API] Error:', err.message);
-      res.json({ success: true, users: cachedLeaderboardUsers, timestamp: leaderboardCacheTimestamp || Date.now() });
+      res.json({ success: true, users: withPublicRanks(cachedLeaderboardUsers, {}), timestamp: leaderboardCacheTimestamp || Date.now() });
     }
   });
 

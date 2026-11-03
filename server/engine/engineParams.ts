@@ -17,9 +17,10 @@ export type ParamGroup =
   | 'notifications'
   | 'caches-et-mises-a-jour'
   | 'interface'
+  | 'rangs'
   | 'katika';
 export type ParamEffect = 'immediate' | 'next_room' | 'next_connection';
-export type ParamUnit = 's' | 'ms' | 'min' | 'jours' | '';
+export type ParamUnit = 's' | 'ms' | 'min' | 'jours' | '%' | 'points' | '';
 
 export interface ParamDef {
   key: string;
@@ -42,6 +43,63 @@ export interface ParamDef {
 }
 
 export const ENGINE_PARAMS: ParamDef[] = [
+  // ===== Groupe rangs =====
+  {
+    key: 'rankLegendTopPercent', label: 'Places au rang Légende du Kora', unit: '%',
+    min: 1, max: 100, default: 1, group: 'rangs', scope: 'server', effect: 'immediate',
+    help: 'Part des joueurs classés qui peut atteindre ce rang ou un rang supérieur (au moins une place).',
+  },
+  {
+    key: 'rankLegendMinScore', label: 'Score minimum pour Légende du Kora', unit: 'points',
+    min: 0, max: 100000, default: 1000, group: 'rangs', scope: 'server', effect: 'immediate',
+    help: 'Score de Maîtrise à atteindre, en plus de la place, même si le joueur est premier.',
+  },
+  {
+    key: 'rankMasterTopPercent', label: 'Places au rang Maître Njambo', unit: '%',
+    min: 1, max: 100, default: 5, group: 'rangs', scope: 'server', effect: 'immediate',
+    help: 'Part des joueurs classés qui peut atteindre ce rang ou un rang supérieur (au moins une place).',
+  },
+  {
+    key: 'rankMasterMinScore', label: 'Score minimum pour Maître Njambo', unit: 'points',
+    min: 0, max: 100000, default: 300, group: 'rangs', scope: 'server', effect: 'immediate',
+    help: 'Score de Maîtrise à atteindre, en plus de la place, même si le joueur est premier.',
+  },
+  {
+    key: 'rankPositionTopPercent', label: 'Places au rang Maître de Position', unit: '%',
+    min: 1, max: 100, default: 15, group: 'rangs', scope: 'server', effect: 'immediate',
+    help: 'Part des joueurs classés qui peut atteindre ce rang ou un rang supérieur (au moins une place).',
+  },
+  {
+    key: 'rankPositionMinScore', label: 'Score minimum pour Maître de Position', unit: 'points',
+    min: 0, max: 100000, default: 100, group: 'rangs', scope: 'server', effect: 'immediate',
+    help: 'Score de Maîtrise à atteindre, en plus de la place, même si le joueur est premier.',
+  },
+  {
+    key: 'rankHunterTopPercent', label: 'Places au rang Chasseur de Kora', unit: '%',
+    min: 1, max: 100, default: 35, group: 'rangs', scope: 'server', effect: 'immediate',
+    help: 'Part des joueurs classés qui peut atteindre ce rang ou un rang supérieur (au moins une place).',
+  },
+  {
+    key: 'rankHunterMinScore', label: 'Score minimum pour Chasseur de Kora', unit: 'points',
+    min: 0, max: 100000, default: 25, group: 'rangs', scope: 'server', effect: 'immediate',
+    help: 'Score de Maîtrise à atteindre, en plus de la place, même si le joueur est premier.',
+  },
+  {
+    key: 'rankConfirmedMinGames', label: 'Parties pour le rang Joueur Confirmé', unit: '',
+    min: 0, max: 1000, default: 5, group: 'rangs', scope: 'server', effect: 'immediate',
+    help: 'Objectif fixe : parties à jouer pour devenir Joueur Confirmé.',
+  },
+  {
+    key: 'rankConfirmedMinWins', label: 'Victoires pour le rang Joueur Confirmé', unit: '',
+    min: 0, max: 1000, default: 2, group: 'rangs', scope: 'server', effect: 'immediate',
+    help: 'Objectif fixe : victoires à obtenir pour devenir Joueur Confirmé.',
+  },
+  {
+    key: 'rankInactivityDays', label: 'Inactivité avant de perdre un rang', unit: 'jours',
+    min: 1, max: 365, default: 14, group: 'rangs', scope: 'server', effect: 'immediate',
+    allowZero: true,
+    help: 'Après cette durée sans partie, le joueur perd un rang, puis un autre à chaque nouvelle période, sans passer sous Joueur Confirmé. Son score ne change pas. 0 : aucune perte.',
+  },
   // ===== Groupe partie =====
   {
     key: 'turnTimerSeconds', label: 'Chrono de tour (défaut des nouvelles tables)', unit: 's',

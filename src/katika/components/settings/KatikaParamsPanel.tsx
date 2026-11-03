@@ -15,6 +15,7 @@ const GROUP_LABELS: Record<ParamGroup, string> = {
   notifications: 'Notifications',
   'caches-et-mises-a-jour': 'Caches et mises à jour',
   interface: 'Interface',
+  rangs: 'Rangs du Palmarès',
   katika: 'Katika (administration)',
 };
 
@@ -26,6 +27,7 @@ const GROUP_ORDER: ParamGroup[] = [
   'notifications',
   'caches-et-mises-a-jour',
   'interface',
+  'rangs',
   'katika',
 ];
 
@@ -35,7 +37,7 @@ const EFFECT_LABELS: Record<ParamDef['effect'], string> = {
   next_connection: 'S\'applique à la prochaine connexion des joueurs',
 };
 
-const UNIT_LABELS: Record<string, string> = { s: 's', ms: 'ms', min: 'min', jours: 'j', '': '' };
+const UNIT_LABELS: Record<string, string> = { s: 's', ms: 'ms', min: 'min', jours: 'j', '%': '%', points: 'points', '': '' };
 
 interface KatikaParamsPanelProps {
   config: KatikaGameConfig;
