@@ -8,6 +8,8 @@ interface ReadBudgetData {
   freeLimit: number;
   warnAt: number;
   warning: boolean;
+  stopAt?: number;
+  blocked?: boolean;
   partialDay: boolean;
   countingSince: number;
 }
@@ -96,6 +98,11 @@ export const KatikaReadBudget: React.FC = () => {
           {data.warning && (
             <div className="text-[11px] text-red-300">
               Seuil d'alerte atteint : le quota gratuit approche. Les téléphones des joueurs lisent aussi Firestore et ne sont pas comptés ici.
+            </div>
+          )}
+          {data.blocked && (
+            <div className="text-[11px] text-red-300 font-semibold">
+              Pare-feu actif ({fmt(data.stopAt ?? 0)} lectures atteintes) : katika garde ses derniers chiffres pour laisser le quota au jeu. Le jeu et Kora Cash ne sont pas bloqués.
             </div>
           )}
           {data.partialDay && (

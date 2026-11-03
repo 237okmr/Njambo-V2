@@ -3,7 +3,7 @@ import { getFirebaseAdminAppDb } from '../firebaseAdmin';
 import { getEngineConfig } from '../engine/engineConfig';
 import { PARAM_BY_KEY } from '../engine/engineParams';
 import { getDoualaDateKey } from '../../src/services/masteryConfig';
-import { recordServerReads } from './readBudget';
+import { getReadBudget, recordServerReads } from './readBudget';
 
 /**
  * Données brutes de l'activité du jeu pour le tableau de bord katika (journal des parties, fiches de manche, présence quotidienne).
@@ -42,9 +42,11 @@ export interface ActivityDataDeps {
   cacheMs: () => number;
   /** Lecture réelle des trois sources. */
   readAll: (window: ActivityReadWindow) => Promise<ActivityRawData>;
+  /** Vrai si le pare-feu retient les grosses lectures : on garde alors le dernier résultat connu. */
+  readsBlocked?: () => boolean;
 }
 
-export type ActivityFailureCode = 'QUOTA' | 'READ_FAILED';
+export type ActivityFailureCode = 'QUOTA' | 'READ_FAILED' | 'READ_LIMIT';
 
 export interface ActivityDataSuccess {
   ok: true;
@@ -70,6 +72,9 @@ export function isActivityFailure(result: ActivityDataResult): result is Activit
 
 export const QUOTA_MESSAGE =
   "Le quota gratuit de lectures Firestore du jour est atteint. Il se renouvelle chaque nuit (minuit, heure du Pacifique : 8 h ou 9 h à Yaoundé selon la saison).";
+
+export const READ_LIMIT_MESSAGE =
+  "Pare-feu de lectures actif : les chiffres ne sont plus relus aujourd'hui pour laisser le quota au jeu. Le seuil se règle dans katika (Pare-feu : arrêt des grosses lectures de katika).";
 
 /** Reconnaît le refus de quota de Firestore (code gRPC 8 « RESOURCE_EXHAUSTED » ou message « Quota exceeded »). */
 export function isQuotaError(err: unknown): boolean {
@@ -116,6 +121,12 @@ export function createActivityDataService(deps: ActivityDataDeps) {
     const ttl = deps.cacheMs();
     if (cached && ttl > 0 && nowMs - cached.fetchedAt < ttl) {
       return { ok: true, data: cached.data, fetchedAt: cached.fetchedAt, fromCache: true, stale: false, staleMessage: '' };
+    }
+    if (deps.readsBlocked?.()) {
+      if (cached) {
+        return { ok: true, data: cached.data, fetchedAt: cached.fetchedAt, fromCache: true, stale: true, staleMessage: READ_LIMIT_MESSAGE };
+      }
+      return { ok: false, code: 'READ_LIMIT', message: READ_LIMIT_MESSAGE };
     }
     try {
       const data = await deps.readAll(activityWindowFor(bucket, nowMs));
@@ -187,8 +198,23 @@ function cacheMsFromRegistry(): number {
   return Math.round(seconds * 1000);
 }
 
+function stopAtFromRegistry(): number {
+  const cfg = getEngineConfig() as unknown as Record<string, unknown>;
+  const configured = Number(cfg.katikaReadStopCount);
+  return Number.isFinite(configured) && configured >= 0 ? configured : Number(PARAM_BY_KEY.katikaReadStopCount.default);
+}
+
+/** Seuil du pare-feu de lectures, lu dans le registre (réglable dans katika). */
+export const readStopThreshold = stopAtFromRegistry;
+
+/** Vrai si le pare-feu retient aujourd'hui les grosses lectures de katika. */
+export function katikaReadsBlocked(): boolean {
+  return getReadBudget(0, stopAtFromRegistry()).blocked;
+}
+
 export const katikaActivityData = createActivityDataService({
   now: () => Date.now(),
   cacheMs: cacheMsFromRegistry,
   readAll: readAllFromFirestore,
+  readsBlocked: katikaReadsBlocked,
 });

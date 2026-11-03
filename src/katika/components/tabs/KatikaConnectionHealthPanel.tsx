@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Wifi, RefreshCw } from 'lucide-react';
+import { useVisibleInterval } from '../../hooks/useVisibleInterval';
+import { getPublicParamNumber } from '../../../services/publicConfig';
 
 interface ConnectionMetrics {
   connections: number;
@@ -19,7 +21,7 @@ interface ConnectionMetrics {
 
 /**
  * Santé des connexions du jour, lue depuis /api/health (mesures agrégées par jour côté serveur, voir
- * server/rooms/connectionMetrics.ts). Se rafraîchit toutes les 30 s. Aucune donnée sensible : uniquement
+ * server/rooms/connectionMetrics.ts). Se rafraîchit au rythme réglé dans katika, écran visible. Aucune donnée sensible : uniquement
  * des compteurs et des identifiants de joueur déjà pseudonymes.
  */
 export const KatikaConnectionHealthPanel: React.FC = () => {
@@ -44,9 +46,9 @@ export const KatikaConnectionHealthPanel: React.FC = () => {
 
   useEffect(() => {
     refresh();
-    const interval = setInterval(refresh, 30000);
-    return () => clearInterval(interval);
   }, []);
+
+  useVisibleInterval(refresh, getPublicParamNumber('katikaHealthRefreshSeconds') * 1000);
 
   let totalDisconnections = 0;
   if (metrics) {

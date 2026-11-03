@@ -85,6 +85,7 @@ export const KatikaAiAssistantTab: React.FC = () => {
     metricsSnapshot,
     loadingMetrics,
     refreshLiveMetrics,
+    registerMetricsConsumer,
     prefs,
     updatePreferences,
     sendMessage,
@@ -150,6 +151,8 @@ export const KatikaAiAssistantTab: React.FC = () => {
   const renameInputRef = useRef<HTMLInputElement>(null);
 
   // Mark alerts as consulted upon entering the dedicated tab
+  useEffect(() => registerMetricsConsumer(), [registerMetricsConsumer]);
+
   useEffect(() => {
     markAlertAsRead();
   }, [markAlertAsRead]);

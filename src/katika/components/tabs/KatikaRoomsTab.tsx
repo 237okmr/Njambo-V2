@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useVisibleInterval } from '../../hooks/useVisibleInterval';
+import { getPublicParamNumber } from '../../../services/publicConfig';
 import { 
   Dices, 
   Search, 
@@ -78,12 +80,10 @@ export const KatikaRoomsTab: React.FC = () => {
 
   useEffect(() => {
     fetchRooms();
-    // Auto-poll live rooms telemetry every 3 seconds for real-time spectator view
-    const interval = setInterval(() => {
-      fetchRooms(true);
-    }, 3000);
-    return () => clearInterval(interval);
   }, []);
+
+  // Mise à jour des tables au rythme réglé dans katika, seulement quand l'écran est visible
+  useVisibleInterval(() => fetchRooms(true), getPublicParamNumber('katikaRoomsRefreshSeconds') * 1000);
 
   const filteredRooms = useMemo(() => {
     return rooms.filter((r) => {

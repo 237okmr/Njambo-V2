@@ -1,8 +1,19 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { createReadBudget, FIRESTORE_FREE_DAILY_READS, quotaDayKey } from './readBudget';
+import { createReadBudget, FIRESTORE_FREE_DAILY_READS, isReadStopReached, quotaDayKey } from './readBudget';
 
 describe('Compteur de lectures Firestore (katika)', () => {
+  it('le pare-feu se déclenche au seuil, et 0 le coupe', () => {
+    assert.equal(isReadStopReached(44999, 45000), false);
+    assert.equal(isReadStopReached(45000, 45000), true);
+    assert.equal(isReadStopReached(49000, 0), false);
+    const now = Date.UTC(2026, 9, 31, 12, 0, 0);
+    const b = createReadBudget(() => now);
+    b.record(100);
+    assert.equal(b.snapshot(40000, now, 50).blocked, true);
+    assert.equal(b.snapshot(40000, now).blocked, false);
+  });
+
   it('le jour de quota suit l\'heure du Pacifique (minuit Pacifique = 07 h ou 08 h UTC)', () => {
     // 1er novembre 2026 : l'heure d'été américaine finit le 1er novembre à 2 h, donc le 31 octobre minuit = 07:00 UTC.
     assert.equal(quotaDayKey(Date.UTC(2026, 9, 31, 6, 59, 0)), '2026-10-30');

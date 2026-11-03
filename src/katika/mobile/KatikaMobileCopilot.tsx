@@ -83,6 +83,7 @@ export const KatikaMobileCopilot: React.FC = () => {
     metricsSnapshot,
     loadingMetrics,
     refreshLiveMetrics,
+    registerMetricsConsumer,
     sendMessage,
     clearHistory,
     anomalies,
@@ -126,7 +127,9 @@ export const KatikaMobileCopilot: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const speechRecognitionRef = useRef<any>(null);
 
-  // Sync PWA Identity on mount
+  // Sync PWA Identity on mount
+  useEffect(() => registerMetricsConsumer(), [registerMetricsConsumer]);
+
   useEffect(() => {
     setPwaIdentity('COPILOT');
   }, []);

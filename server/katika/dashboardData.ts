@@ -1,7 +1,7 @@
 import { getFirebaseAdminAppDb } from '../firebaseAdmin';
 import { getEngineConfig } from '../engine/engineConfig';
 import { PARAM_BY_KEY } from '../engine/engineParams';
-import { isQuotaError, QUOTA_MESSAGE } from './activityData';
+import { isQuotaError, katikaReadsBlocked, QUOTA_MESSAGE, READ_LIMIT_MESSAGE } from './activityData';
 import type { ActivityFailureCode } from './activityData';
 import { recordServerReads } from './readBudget';
 
@@ -41,6 +41,8 @@ export interface DashboardDataDeps {
   /** Durée de conservation en millisecondes ; 0 = aucun cache. */
   cacheMs: () => number;
   readPart: (part: DashboardPart) => Promise<AnyDoc[]>;
+  /** Vrai si le pare-feu retient les grosses lectures : on garde alors le dernier résultat connu. */
+  readsBlocked?: () => boolean;
 }
 
 export interface DashboardDataSuccess {
@@ -74,6 +76,12 @@ export function createDashboardDataService(deps: DashboardDataDeps) {
     const ttl = deps.cacheMs();
     if (cached && ttl > 0 && nowMs - cached.fetchedAt < ttl) {
       return { ok: true, docs: cached.docs, fetchedAt: cached.fetchedAt, fromCache: true, stale: false, staleMessage: '' };
+    }
+    if (deps.readsBlocked?.()) {
+      if (cached) {
+        return { ok: true, docs: cached.docs, fetchedAt: cached.fetchedAt, fromCache: true, stale: true, staleMessage: READ_LIMIT_MESSAGE };
+      }
+      return { ok: false, code: 'READ_LIMIT', message: READ_LIMIT_MESSAGE };
     }
     try {
       const docs = await deps.readPart(part);
@@ -128,6 +136,7 @@ export const katikaDashboardData = createDashboardDataService({
   now: () => Date.now(),
   cacheMs: cacheMsFromRegistry,
   readPart: readPartFromFirestore,
+  readsBlocked: katikaReadsBlocked,
 });
 
 function warnAtFromRegistry(): number {

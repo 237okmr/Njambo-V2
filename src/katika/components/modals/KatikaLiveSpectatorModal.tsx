@@ -95,6 +95,7 @@ export const KatikaLiveSpectatorModal: React.FC<KatikaLiveSpectatorModalProps> =
   useEffect(() => {
     if (autoRefreshInterval <= 0) return;
     const intervalId = setInterval(async () => {
+      if (document.visibilityState === 'hidden') return;
       setIsAutoRefreshing(true);
       try {
         await onRefresh();

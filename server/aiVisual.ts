@@ -8,6 +8,7 @@ import {
   VISUAL_PATTERNS,
 } from '../src/katika/visual/visualSpec';
 import { isTransitoryError } from './aiAdminChat';
+import { copilotAiTimeoutMs, runWithDeadline } from './aiDeadline';
 import { getEngineConfig } from './engine/engineConfig';
 import { buildMoneyRulesBlock, isKoraCashEnabled } from '../src/katika/visual/moneyPolicy';
 import { applyVariantChecks } from '../src/katika/visual/variantCheck';
@@ -202,19 +203,22 @@ export async function generateVisualVariants({
       callsMade++;
 
       try {
-        const response = await ai.models.generateContent({
-          model: modelName,
-          contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          config: {
-            systemInstruction: systemPrompt,
-            temperature: attempt === 0 ? 0.9 : 0.6,
-            topP: 0.95,
-            maxOutputTokens: 3200,
-            responseMimeType: 'application/json',
-            responseSchema: VISUAL_VARIANTS_JSON_SCHEMA as any,
-            thinkingConfig: resolveThinkingConfig(modelName),
-          },
-        });
+        const response = await runWithDeadline(copilotAiTimeoutMs(), (abortSignal) =>
+          ai.models.generateContent({
+            model: modelName,
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            config: {
+              systemInstruction: systemPrompt,
+              temperature: attempt === 0 ? 0.9 : 0.6,
+              topP: 0.95,
+              maxOutputTokens: 3200,
+              responseMimeType: 'application/json',
+              responseSchema: VISUAL_VARIANTS_JSON_SCHEMA as any,
+              thinkingConfig: resolveThinkingConfig(modelName),
+              abortSignal,
+            },
+          })
+        );
 
         const rawText = response.text || '';
         const variants = rawText.trim() ? applyVariantChecks(parseVariants(rawText, validationContext)) : [];

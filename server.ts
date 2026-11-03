@@ -97,7 +97,7 @@ import { totalDeduction } from './server/cash/demoCleanupRules';
 import { DepositError } from './server/cash/depositRules';
 import { CashLedgerError } from './server/cash/cashTypes';
 import { verifyFirebaseIdToken, listAdminUsers, setAdminUserClaim, getFirebaseAdminDb, getFirebaseAdminAppDb } from './server/firebaseAdmin';
-import { isActivityFailure, katikaActivityData, toActivityBucket } from './server/katika/activityData';
+import { isActivityFailure, katikaActivityData, toActivityBucket, readStopThreshold } from './server/katika/activityData';
 import { isDashboardFailure, katikaDashboardData, readWarnThreshold, toDashboardPart } from './server/katika/dashboardData';
 import { getReadBudget } from './server/katika/readBudget';
 import { getClientReads, recordClientReads } from './server/katika/clientReads';
@@ -1940,7 +1940,7 @@ async function startServer() {
   // Jauge des lectures Firestore faites par le serveur aujourd'hui
   app.get('/api/katika/read-budget', (_req, res) => {
     res.set('Cache-Control', 'no-store');
-    res.json({ success: true, budget: getReadBudget(readWarnThreshold()) });
+    res.json({ success: true, budget: getReadBudget(readWarnThreshold(), readStopThreshold()) });
   });
 
   // Lectures Firestore déclarées par les téléphones aujourd'hui, par type de document

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import {
   AiAdminChatClient,
   ChatMessage,
@@ -11,6 +11,7 @@ import {
   KatikaDetectedAnomaly,
 } from '../services/katikaMetricsSnapshot';
 import { buildLocalHealthReport } from '../utils/localReports';
+import { getPublicParamNumber } from '../../services/publicConfig';
 import type { KoraMoment } from '../../../server/engine/koraMoment';
 
 interface SendMessageOptions {
@@ -59,6 +60,8 @@ interface KatikaAiChatContextType {
   metricsSnapshot: KatikaMetricsSnapshot | null;
   loadingMetrics: boolean;
   refreshLiveMetrics: () => Promise<void>;
+  /** Signale qu'un écran du copilote est affiché : le résumé n'est calculé que dans ce cas. Renvoie la fonction de fin. */
+  registerMetricsConsumer: () => () => void;
 
   // Preferences
   prefs: ChatBotPreferences;
@@ -74,6 +77,9 @@ const KatikaAiChatContext = createContext<KatikaAiChatContextType | null>(null);
 const BUBBLE_STATE_KEY = 'katika_ai_bubble_open';
 const LAST_SEEN_ALERT_KEY = 'katika_ai_last_seen_alert_ts';
 const DISMISSED_ANOMALIES_KEY = 'katika_ai_dismissed_anomalies_fp';
+
+/** Âge maximal du résumé des chiffres, réglable dans katika. */
+const snapshotMaxAgeMs = (): number => getPublicParamNumber('copilotSnapshotMaxAgeSeconds') * 1000;
 
 export const KatikaAiChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // 1. Multi-Thread State
@@ -198,36 +204,37 @@ export const KatikaAiChatProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [isBubbleOpen]);
 
-  // Fetch initial et intervalle périodique (300 secondes = 5 min), mis en pause si l'onglet est inactif
-  useEffect(() => {
-    refreshLiveMetrics();
+  // Le résumé relit joueurs et parties : il n'est calculé que si un écran du copilote est affiché, jamais à l'ouverture de katika.
+  const metricsConsumers = useRef(0);
+  const [hasMetricsConsumer, setHasMetricsConsumer] = useState(false);
+  const metricsNeeded = isBubbleOpen || hasMetricsConsumer;
+  const snapshotTimestamp = useRef<number | null>(null);
+  snapshotTimestamp.current = metricsSnapshot?.timestamp ?? null;
 
-    const interval = setInterval(() => {
-      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
-        return; // Pause du rafraîchissement si l'onglet est masqué
-      }
-      refreshLiveMetrics();
-    }, 300000); // 300s au lieu de 60s
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        setMetricsSnapshot((currentSnap) => {
-          // Si le dernier snapshot date de plus de 120 secondes, on rafraîchit à la réactivation
-          if (!currentSnap || Date.now() - currentSnap.timestamp > 120000) {
-            refreshLiveMetrics();
-          }
-          return currentSnap;
-        });
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
+  const registerMetricsConsumer = useCallback(() => {
+    metricsConsumers.current += 1;
+    setHasMetricsConsumer(true);
     return () => {
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      metricsConsumers.current -= 1;
+      if (metricsConsumers.current === 0) setHasMetricsConsumer(false);
     };
-  }, [refreshLiveMetrics]);
+  }, []);
+
+  useEffect(() => {
+    if (!metricsNeeded) return;
+
+    const refreshIfOld = () => {
+      if (document.visibilityState === 'hidden') return;
+      const takenAt = snapshotTimestamp.current;
+      if (takenAt === null || Date.now() - takenAt > snapshotMaxAgeMs()) {
+        void refreshLiveMetrics();
+      }
+    };
+
+    refreshIfOld();
+    document.addEventListener('visibilitychange', refreshIfOld);
+    return () => document.removeEventListener('visibilitychange', refreshIfOld);
+  }, [metricsNeeded, refreshLiveMetrics]);
 
   const updatePreferences = useCallback((newPrefs: Partial<ChatBotPreferences>) => {
     setPrefs((prev) => {
@@ -388,7 +395,7 @@ export const KatikaAiChatProvider: React.FC<{ children: React.ReactNode }> = ({ 
         const shouldFetchMetrics = options.includeMetrics !== false && (!isVisualCreativePrompt || asksForStatsExplicitly);
 
         if (shouldFetchMetrics) {
-          if (!snapshotToSend || Date.now() - snapshotToSend.timestamp > 30000) {
+          if (!snapshotToSend || Date.now() - snapshotToSend.timestamp > snapshotMaxAgeMs()) {
             try {
               snapshotToSend = await KatikaMetricsSnapshotProvider.buildSnapshot();
               setMetricsSnapshot(snapshotToSend);
@@ -525,7 +532,7 @@ export const KatikaAiChatProvider: React.FC<{ children: React.ReactNode }> = ({ 
         const errorReply: ChatMessage = {
           id: `err_${Date.now()}`,
           role: 'assistant',
-          content: `⚠️ **Erreur lors de la génération** : ${errMsg}\n\nVérifiez que votre clé \`GEMINI_API_KEY\` est bien configurée dans les paramètres de votre environnement.`,
+          content: `⚠️ **Erreur lors de la génération** : ${errMsg}${errMsg.includes('GEMINI_API_KEY') ? '\n\nVérifiez que votre clé \`GEMINI_API_KEY\` est bien configurée dans les paramètres de votre environnement.' : ''}`,
           timestamp: Date.now(),
           isError: true,
         };
@@ -576,7 +583,7 @@ export const KatikaAiChatProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
       // Récupérer le snapshot local (ou rafraîchir si expiré)
       let currentSnap = metricsSnapshot;
-      if (!currentSnap || Date.now() - currentSnap.timestamp > 30000) {
+      if (!currentSnap || Date.now() - currentSnap.timestamp > snapshotMaxAgeMs()) {
         try {
           currentSnap = await KatikaMetricsSnapshotProvider.buildSnapshot();
           setMetricsSnapshot(currentSnap);
@@ -729,6 +736,7 @@ ${messagesMd}
       metricsSnapshot,
       loadingMetrics,
       refreshLiveMetrics,
+      registerMetricsConsumer,
       prefs,
       updatePreferences,
       exportThreadToMarkdown,
@@ -760,6 +768,7 @@ ${messagesMd}
       metricsSnapshot,
       loadingMetrics,
       refreshLiveMetrics,
+      registerMetricsConsumer,
       prefs,
       updatePreferences,
       exportThreadToMarkdown,

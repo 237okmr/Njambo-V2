@@ -279,7 +279,7 @@ export function roundRect(
   ctx.arcTo(x + w, y, x + w, y + h, radius);
   ctx.arcTo(x + w, y + h, x, y + h, radius);
   ctx.arcTo(x, y + h, x, y, radius);
-  ctx.arcTo(x, y + w, x, y, radius);
+  ctx.arcTo(x, y, x + w, y, radius);
   ctx.closePath();
   if (fill) ctx.fill();
   if (stroke) ctx.stroke();
@@ -2557,6 +2557,21 @@ export async function renderSocialVisualToCanvas(
 }
 
 /**
+ * Refuse d'exporter une image où rien n'a été dessiné : mieux vaut une erreur claire qu'un fichier vide.
+ */
+export function assertCanvasPainted(canvas: HTMLCanvasElement): void {
+  const ctx = canvas.getContext('2d');
+  if (!ctx || canvas.width === 0 || canvas.height === 0) {
+    throw new Error('Visuel vide : le dessin a échoué.');
+  }
+  const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  for (let i = 3; i < data.length; i += 4) {
+    if (data[i] !== 0) return;
+  }
+  throw new Error('Visuel vide : le dessin a échoué.');
+}
+
+/**
  * Generates PNG data URL directly from SocialVisualCardData
  */
 export async function renderSocialVisualDataUrl(
@@ -2565,6 +2580,7 @@ export async function renderSocialVisualDataUrl(
 ): Promise<string> {
   const canvas = document.createElement('canvas');
   await renderSocialVisualToCanvas(canvas, data, format);
+  assertCanvasPainted(canvas);
   return canvas.toDataURL('image/png');
 }
 

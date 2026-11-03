@@ -23,6 +23,44 @@ function harness(opts: { cacheMs?: number; failWith?: unknown } = {}) {
   return { state, service: createDashboardDataService(deps) };
 }
 
+describe('Pare-feu de lectures', () => {
+  function firewalled() {
+    const state = { blocked: false, reads: 0 };
+    const service = createDashboardDataService({
+      now: () => 5_000_000 + state.reads * 1_000_000,
+      cacheMs: () => 0,
+      readPart: async () => {
+        state.reads += 1;
+        return [{ id: `lecture-${state.reads}` }];
+      },
+      readsBlocked: () => state.blocked,
+    });
+    return { state, service };
+  }
+
+  it('sans chiffres connus, refuse de lire et le dit clairement', async () => {
+    const { state, service } = firewalled();
+    state.blocked = true;
+    const result = await service.get('users');
+    assert.equal(result.ok, false);
+    assert.equal(state.reads, 0);
+    if (result.ok === false) assert.equal(result.code, 'READ_LIMIT');
+  });
+
+  it('garde les derniers chiffres connus, marqués comme anciens, sans relire', async () => {
+    const { state, service } = firewalled();
+    await service.get('users');
+    state.blocked = true;
+    const result = await service.get('users');
+    assert.equal(state.reads, 1);
+    assert.equal(result.ok, true);
+    if (result.ok === true) {
+      assert.equal(result.stale, true);
+      assert.deepEqual(result.docs, [{ id: 'lecture-1' }]);
+    }
+  });
+});
+
 describe('Indicateurs katika — format des données', () => {
   it('accepte seulement users et records', () => {
     assert.equal(toDashboardPart('users'), 'users');

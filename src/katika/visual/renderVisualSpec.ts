@@ -4,6 +4,7 @@ import {
   drawRotatedPlayingCard,
   getPaletteStyle,
   roundRect,
+  assertCanvasPainted,
   PaletteStyle,
   ensureAntonFontLoaded,
 } from '../utils/socialVisualCanvasRenderer';
@@ -697,6 +698,7 @@ export async function renderVisualSpecToCanvas(
 export async function renderSpecToDataUrl(spec: VisualSpec): Promise<string> {
   const canvas = document.createElement('canvas');
   await renderVisualSpecToCanvas(canvas, spec);
+  assertCanvasPainted(canvas);
   return canvas.toDataURL('image/png');
 }
 

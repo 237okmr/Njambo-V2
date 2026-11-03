@@ -1,6 +1,7 @@
 import { GoogleGenAI, ThinkingLevel } from '@google/genai';
 import { getEngineConfig } from './engine/engineConfig';
 import { buildEconomyRuleForChat, isKoraCashEnabled } from '../src/katika/visual/moneyPolicy';
+import { copilotAiTimeoutMs, runWithDeadline } from './aiDeadline';
 
 export interface AdminChatImage {
   data: string; // base64 without prefix or with prefix stripped
@@ -936,17 +937,20 @@ export async function handleAdminChatMessage(payload: AdminChatRequest): Promise
     const { temperature, topP, thinkingConfig } = resolveGenerationParameters(message, intents, config, modelName);
 
     try {
-      const response = await ai.models.generateContent({
-        model: modelName,
-        contents,
-        config: {
-          systemInstruction,
-          temperature,
-          topP,
-          thinkingConfig,
-          maxOutputTokens,
-        },
-      });
+      const response = await runWithDeadline(copilotAiTimeoutMs(), (abortSignal) =>
+        ai.models.generateContent({
+          model: modelName,
+          contents,
+          config: {
+            systemInstruction,
+            temperature,
+            topP,
+            thinkingConfig,
+            maxOutputTokens,
+            abortSignal,
+          },
+        })
+      );
 
       const candidate = response.candidates?.[0];
       const finishReason = candidate?.finishReason;
@@ -1019,30 +1023,34 @@ export async function streamAdminChatMessage(
     let finishReason: string | undefined = undefined;
 
     try {
-      const responseStream = await ai.models.generateContentStream({
-        model: modelName,
-        contents,
-        config: {
-          systemInstruction,
-          temperature,
-          topP,
-          thinkingConfig,
-          maxOutputTokens,
-        },
-      });
+      await runWithDeadline(copilotAiTimeoutMs(), async (abortSignal) => {
+        const responseStream = await ai.models.generateContentStream({
+          model: modelName,
+          contents,
+          config: {
+            systemInstruction,
+            temperature,
+            topP,
+            thinkingConfig,
+            maxOutputTokens,
+            abortSignal,
+          },
+        });
 
-      for await (const chunk of responseStream) {
-        const candidate = chunk.candidates?.[0];
-        if (candidate?.finishReason) {
-          finishReason = candidate.finishReason;
+        for await (const chunk of responseStream) {
+          if (abortSignal.aborted) return;
+          const candidate = chunk.candidates?.[0];
+          if (candidate?.finishReason) {
+            finishReason = candidate.finishReason;
+          }
+          const chunkText = chunk.text;
+          if (chunkText) {
+            fullText += chunkText;
+            hasEmittedChunk = true;
+            onChunk(chunkText);
+          }
         }
-        const chunkText = chunk.text;
-        if (chunkText) {
-          fullText += chunkText;
-          hasEmittedChunk = true;
-          onChunk(chunkText);
-        }
-      }
+      });
 
       if (finishReason === 'MAX_TOKENS') {
         if (intents.wantsSocial) {

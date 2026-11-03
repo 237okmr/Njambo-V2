@@ -8,6 +8,8 @@ import {
   Server
 } from 'lucide-react';
 import { useKatikaAuth } from '../context/KatikaAuthContext';
+import { useVisibleInterval } from '../hooks/useVisibleInterval';
+import { getPublicParamNumber } from '../../services/publicConfig';
 
 interface KatikaHeaderProps {
   isMaintenanceMode: boolean;
@@ -22,24 +24,24 @@ export const KatikaHeader: React.FC<KatikaHeaderProps> = ({
   const [latency, setLatency] = useState<number>(12);
 
   // Real ping probe to measure actual server latency
-  useEffect(() => {
-    const pingServer = async () => {
-      const start = performance.now();
-      try {
-        const res = await fetch('/api/health', { cache: 'no-store' });
-        if (res.ok) {
-          const duration = Math.round(performance.now() - start);
-          setLatency(Math.max(1, duration));
-        }
-      } catch {
-        setLatency(999);
+  const pingServer = async () => {
+    const start = performance.now();
+    try {
+      const res = await fetch('/api/health', { cache: 'no-store' });
+      if (res.ok) {
+        const duration = Math.round(performance.now() - start);
+        setLatency(Math.max(1, duration));
       }
-    };
+    } catch {
+      setLatency(999);
+    }
+  };
 
+  useEffect(() => {
     pingServer();
-    const interval = setInterval(pingServer, 5000);
-    return () => clearInterval(interval);
   }, []);
+
+  useVisibleInterval(pingServer, getPublicParamNumber('katikaHealthRefreshSeconds') * 1000);
 
   return (
     <header className="h-16 border-b border-slate-800/90 bg-slate-900/90 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-50 select-none">

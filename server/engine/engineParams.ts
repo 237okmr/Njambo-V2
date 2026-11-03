@@ -568,6 +568,26 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Plafond de requêtes IA du copilote Katika sur une heure glissante (protège le quota Gemini gratuit). Un visuel compte pour 1 à 3 requêtes selon les relances.',
   },
   {
+    key: 'copilotAiTimeoutSeconds', label: 'Délai maximal d\'une réponse de l\'IA du copilote', unit: 's',
+    min: 15, max: 180, default: 60, group: 'katika', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Temps maximal accordé à l\'IA pour un essai. Passé ce délai, l\'appel est abandonné et le copilote se libère ; le modèle de secours peut prendre le relais, donc une demande peut durer jusqu\'à deux ou trois fois ce délai.',
+  },
+  {
+    key: 'copilotSnapshotMaxAgeSeconds', label: 'Âge maximal du résumé envoyé au copilote', unit: 's',
+    min: 30, max: 1800, default: 120, group: 'katika', scope: 'client', effect: 'immediate', advanced: true,
+    help: 'Le résumé des chiffres est recalculé seulement quand le copilote est ouvert ou reçoit une question, et s\'il est plus ancien que cette durée. Plus long : moins de lectures, mais des chiffres moins frais.',
+  },
+  {
+    key: 'katikaRoomsRefreshSeconds', label: 'Rythme d\'actualisation des tables en direct', unit: 's',
+    min: 3, max: 60, default: 5, group: 'katika', scope: 'client', effect: 'next_connection', advanced: true,
+    help: 'Fréquence de mise à jour de l\'onglet Tables de katika, seulement quand il est à l\'écran. S\'applique à la prochaine ouverture de l\'onglet.',
+  },
+  {
+    key: 'katikaHealthRefreshSeconds', label: 'Rythme de la mesure de santé du serveur', unit: 's',
+    min: 10, max: 300, default: 30, group: 'katika', scope: 'client', effect: 'next_connection', advanced: true,
+    help: 'Fréquence de la mesure de latence et de la santé des connexions dans katika, seulement quand l\'écran est visible. S\'applique à la prochaine ouverture de katika.',
+  },
+  {
     key: 'cashProviderTimeoutSeconds', label: 'Délai maximal d\'un appel au prestataire de paiement', unit: 's',
     min: 5, max: 60, default: 20, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
     help: 'Temps maximal accordé à une réponse de Campay (création d\'un dépôt, relecture d\'un paiement) avant d\'abandonner l\'appel. Un dépôt dont l\'appel échoue ainsi reste en attente : il n\'est jamais perdu.',
@@ -601,6 +621,11 @@ export const ENGINE_PARAMS: ParamDef[] = [
     key: 'katikaReadWarnCount', label: 'Seuil d\'alerte des lectures Firestore du jour', unit: '',
     min: 1000, max: 50000, default: 40000, group: 'katika', scope: 'server', effect: 'immediate', advanced: true,
     help: 'Nombre de lectures Firestore faites par le serveur pour katika, au-delà duquel le tableau de bord affiche une alerte. Le palier gratuit de Firestore est de 50 000 lectures par jour pour tout le projet (téléphones des joueurs compris).',
+  },
+  {
+    key: 'katikaReadStopCount', label: 'Pare-feu : arrêt des grosses lectures de katika', unit: '',
+    min: 1000, max: 50000, default: 45000, group: 'katika', scope: 'server', effect: 'immediate', advanced: true, allowZero: true,
+    help: 'Au-delà de ce nombre de lectures faites par le serveur aujourd\'hui, le tableau de bord et le copilote gardent leurs derniers chiffres connus au lieu de relire joueurs et parties, pour laisser le quota au jeu. Le jeu et Kora Cash ne sont jamais bloqués. Le compteur repart de zéro si le serveur redémarre et ne voit pas les lectures des téléphones. 0 = pare-feu coupé.',
   },
 ];
 

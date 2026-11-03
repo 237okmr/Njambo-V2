@@ -28,10 +28,19 @@ export interface ReadBudgetSnapshot {
   /** Seuil d'alerte réglé dans katika. */
   warnAt: number;
   warning: boolean;
+  /** Seuil du pare-feu réglé dans katika (0 = coupé). */
+  stopAt: number;
+  /** Vrai si le pare-feu retient les grosses lectures de katika. */
+  blocked: boolean;
   /** Vrai si le serveur a démarré pendant ce jour de quota : les lectures faites avant son démarrage ne sont pas comptées. */
   partialDay: boolean;
   /** Début du comptage, en millisecondes. */
   countingSince: number;
+}
+
+/** Vrai si le pare-feu doit retenir les grosses lectures ; un seuil à 0 le coupe. */
+export function isReadStopReached(reads: number, stopAt: number): boolean {
+  return stopAt > 0 && reads >= stopAt;
 }
 
 export function createReadBudget(now: () => number = () => Date.now()) {
@@ -55,7 +64,7 @@ export function createReadBudget(now: () => number = () => Date.now()) {
       const n = Number.isFinite(count) ? Math.max(1, Math.floor(count)) : 1;
       reads += n;
     },
-    snapshot(warnAt: number, startedAtMs: number): ReadBudgetSnapshot {
+    snapshot(warnAt: number, startedAtMs: number, stopAt: number = 0): ReadBudgetSnapshot {
       rollIfNeeded();
       return {
         day,
@@ -63,6 +72,8 @@ export function createReadBudget(now: () => number = () => Date.now()) {
         freeLimit: FIRESTORE_FREE_DAILY_READS,
         warnAt,
         warning: reads >= warnAt,
+        stopAt,
+        blocked: isReadStopReached(reads, stopAt),
         partialDay: quotaDayKey(startedAtMs) === day,
         countingSince,
       };
@@ -78,6 +89,6 @@ export function recordServerReads(count: number): void {
   budget.record(count);
 }
 
-export function getReadBudget(warnAt: number): ReadBudgetSnapshot {
-  return budget.snapshot(warnAt, processStartedAt);
+export function getReadBudget(warnAt: number, stopAt: number = 0): ReadBudgetSnapshot {
+  return budget.snapshot(warnAt, processStartedAt, stopAt);
 }
