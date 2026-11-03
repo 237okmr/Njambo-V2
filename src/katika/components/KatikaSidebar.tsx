@@ -14,12 +14,15 @@ import {
 import { KatikaTab } from '../types/katika';
 
 interface KatikaSidebarProps {
+  /** Onglets visibles pour le compte connecté (le serveur refuse de toute façon le reste). */
+  visibleTabs?: KatikaTab[];
   currentTab: KatikaTab;
   onSelectTab: (tab: KatikaTab) => void;
   isMaintenanceMode: boolean;
 }
 
 export const KatikaSidebar: React.FC<KatikaSidebarProps> = ({
+  visibleTabs,
   currentTab,
   onSelectTab,
   isMaintenanceMode,
@@ -67,7 +70,10 @@ export const KatikaSidebar: React.FC<KatikaSidebarProps> = ({
     <aside className="w-64 bg-slate-900/95 border-r border-slate-800/90 flex flex-col justify-between select-none h-[calc(100vh-4rem)] sticky top-16 z-40">
       {/* Top Nav List */}
       <div className="p-3 space-y-4">
-        {groups.map((group, groupIdx) => (
+        {groups
+          .map((group) => ({ ...group, items: group.items.filter((item) => !visibleTabs || visibleTabs.includes(item.id)) }))
+          .filter((group) => group.items.length > 0)
+          .map((group, groupIdx) => (
           <div key={groupIdx} className="space-y-1">
             <div className="px-3 py-1.5 text-[10px] font-mono tracking-wider text-slate-500 uppercase">
               {group.title}

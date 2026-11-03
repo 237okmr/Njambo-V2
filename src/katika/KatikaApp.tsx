@@ -1,3 +1,4 @@
+import { canSeeTab, firstAllowedTab } from './utils/katikaAccess';
 import React, { useEffect, useState } from 'react';
 import { KatikaAuthProvider, useKatikaAuth, KATIKA_AUTHORIZED_EMAIL } from './context/KatikaAuthContext';
 import { KatikaLogin } from './components/KatikaLogin';
@@ -22,10 +23,13 @@ import { KatikaAiChatProvider } from './context/KatikaAiChatContext';
 import { KatikaAiFloatingBubble } from './components/KatikaAiFloatingBubble';
 import { Loader2, MonitorOff, Maximize2, ArrowLeft, Bot, Sparkles } from 'lucide-react';
 
+const TAB_ORDER: KatikaTab[] = ['DASHBOARD', 'ROOMS', 'LOGS', 'PLAYERS', 'MATCHES', 'AI_ASSISTANT', 'SETTINGS', 'KORA_CASH'];
+
 const KatikaWorkspace: React.FC = () => {
-  const { user } = useKatikaAuth();
+  const { user, access } = useKatikaAuth();
   const sessionEmail = user?.email || '';
-  const [currentTab, setCurrentTab] = useState<KatikaTab>('DASHBOARD');
+  const visibleTabs = TAB_ORDER.filter((tab) => canSeeTab(access, tab));
+  const [currentTab, setCurrentTab] = useState<KatikaTab>(() => firstAllowedTab(access, TAB_ORDER) ?? 'DASHBOARD');
   const [config, setConfig] = useState<KatikaGameConfig | null>(null);
 
   useEffect(() => {
@@ -35,14 +39,14 @@ const KatikaWorkspace: React.FC = () => {
   useEffect(() => {
     const handleNavigation = (e: Event) => {
       const customEvent = e as CustomEvent<KatikaNavigationEventDetail>;
-      if (customEvent.detail && customEvent.detail.tab) {
+      if (customEvent.detail && customEvent.detail.tab && canSeeTab(access, customEvent.detail.tab)) {
         setCurrentTab(customEvent.detail.tab);
       }
     };
 
     window.addEventListener(KATIKA_NAVIGATE_EVENT, handleNavigation);
     return () => window.removeEventListener(KATIKA_NAVIGATE_EVENT, handleNavigation);
-  }, []);
+  }, [access]);
 
   const handleToggleMaintenance = async () => {
     if (!config) return;
@@ -65,6 +69,7 @@ const KatikaWorkspace: React.FC = () => {
         {/* Cockpit Layout: Sidebar + Main Area */}
         <div className="flex-1 flex overflow-hidden">
           <KatikaSidebar 
+            visibleTabs={visibleTabs}
             currentTab={currentTab} 
             onSelectTab={setCurrentTab}
             isMaintenanceMode={config?.isMaintenanceMode || false}
@@ -101,30 +106,36 @@ const KatikaWorkspace: React.FC = () => {
                 </div>
               </div>
 
+              {visibleTabs.length === 0 && (
+                <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-6 text-sm text-slate-300">
+                  Ton compte a accès à katika, mais aucun droit ne lui est encore donné. Demande au propriétaire de régler tes droits.
+                </div>
+              )}
+
               {/* Tab Content Render */}
-              {currentTab === 'DASHBOARD' && <KatikaDashboardTab onNavigateTab={setCurrentTab} />}
-              {currentTab === 'ROOMS' && <KatikaRoomsTab />}
-              {currentTab === 'MATCHES' && <KatikaMatchesTab />}
-              {currentTab === 'PLAYERS' && <KatikaPlayersTab />}
-              {currentTab === 'SETTINGS' && (
+              {visibleTabs.includes('DASHBOARD') && currentTab === 'DASHBOARD' && <KatikaDashboardTab onNavigateTab={setCurrentTab} />}
+              {visibleTabs.includes('ROOMS') && currentTab === 'ROOMS' && <KatikaRoomsTab />}
+              {visibleTabs.includes('MATCHES') && currentTab === 'MATCHES' && <KatikaMatchesTab />}
+              {visibleTabs.includes('PLAYERS') && currentTab === 'PLAYERS' && <KatikaPlayersTab />}
+              {visibleTabs.includes('SETTINGS') && currentTab === 'SETTINGS' && (
                 <div className="space-y-6">
                   <KatikaSettingsTab onConfigUpdated={setConfig} />
                   <KatikaLegacyRecordsPanel />
                 </div>
               )}
-              {currentTab === 'LOGS' && <KatikaLogsTab />}
-              {currentTab === 'AI_ASSISTANT' && <KatikaAiAssistantTab />}
-              {currentTab === 'KORA_CASH' && <KatikaKoraCashTab />}
+              {visibleTabs.includes('LOGS') && currentTab === 'LOGS' && <KatikaLogsTab />}
+              {visibleTabs.includes('AI_ASSISTANT') && currentTab === 'AI_ASSISTANT' && <KatikaAiAssistantTab />}
+              {visibleTabs.includes('KORA_CASH') && currentTab === 'KORA_CASH' && <KatikaKoraCashTab />}
 
             </div>
           </main>
         </div>
 
         {/* Global Floating AI Assistant Bubble & Panel across all Katika pages */}
-        <KatikaAiFloatingBubble
+        {canSeeTab(access, 'AI_ASSISTANT') && <KatikaAiFloatingBubble
           currentTab={currentTab}
           onNavigateTab={setCurrentTab}
-        />
+        />}
       </div>
     </KatikaAiChatProvider>
   );
@@ -144,7 +155,7 @@ const isCopilotPath = (): boolean => {
 };
 
 const KatikaGate: React.FC = () => {
-  const { isAuthorized, loading } = useKatikaAuth();
+  const { isAuthorized, loading, access } = useKatikaAuth();
   const [isCopilotMode, setIsCopilotMode] = useState<boolean>(() => isCopilotPath());
   const [isDesktopSize, setIsDesktopSize] = useState<boolean>(true);
   const [isMobileDevice, setIsMobileDevice] = useState<boolean>(false);
@@ -200,6 +211,14 @@ const KatikaGate: React.FC = () => {
   if (isCopilotMode) {
     if (!isAuthorized) {
       return <KatikaMobileLogin />;
+    }
+
+    if (!canSeeTab(access, 'AI_ASSISTANT')) {
+      return (
+        <div className="min-h-screen w-full bg-slate-950 text-slate-200 flex items-center justify-center p-6 text-center text-sm">
+          Ton compte n'a pas le droit d'utiliser le Copilote. Demande au propriétaire de régler tes droits.
+        </div>
+      );
     }
 
     return (
