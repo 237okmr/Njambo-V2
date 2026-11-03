@@ -53,6 +53,7 @@ export interface KatikaEngineConfig {
   joinPushEnabled?: boolean;
   joinCodeAttemptWindowSeconds?: number;
   friendPresenceFreshSeconds?: number;
+  friendListCacheSeconds?: number;
   userPresenceRetentionMinutes?: number;
   joinPushCooldownSeconds?: number;
   serverWsPingIntervalSeconds?: number;

@@ -387,6 +387,14 @@ export function computeHonorificTitle(rawStats?: Partial<PlayerStats> | null): {
   return { currentTitle, nextTitle, progressPercent: isNaN(progressPercent) ? 0 : progressPercent };
 }
 
+interface ConsolidatedStats {
+  stats: PlayerStats;
+  history: PlayerGameHistoryItem[];
+  chips: number;
+}
+
+const consolidatedStatsInFlight = new Map<string, Promise<ConsolidatedStats | null>>();
+
 export const playerProfileService = {
   /**
    * Initializes or loads the current player profile from localStorage with full schema guarantees.
@@ -1434,11 +1442,18 @@ export const playerProfileService = {
    * Real-time consolidation of player stats from Firestore /users/{uid} and /users/{uid}/history.
    * Caches result locally for offline tolerance and resilience (Lot 3 - B).
    */
-  async fetchConsolidatedStats(userId: string): Promise<{
-    stats: PlayerStats;
-    history: PlayerGameHistoryItem[];
-    chips: number;
-  } | null> {
+  fetchConsolidatedStats(userId: string): Promise<ConsolidatedStats | null> {
+    // Au démarrage, deux effets la demandent en même temps : ils partagent la même lecture (profil + 15 parties).
+    const running = consolidatedStatsInFlight.get(userId);
+    if (running) return running;
+    const started = this.readConsolidatedStats(userId).finally(() => {
+      consolidatedStatsInFlight.delete(userId);
+    });
+    consolidatedStatsInFlight.set(userId, started);
+    return started;
+  },
+
+  async readConsolidatedStats(userId: string): Promise<ConsolidatedStats | null> {
     try {
       const userRef = doc(db, 'users', userId);
       const snap = await getDoc(userRef);

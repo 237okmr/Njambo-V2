@@ -347,6 +347,11 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Un ami est considéré en ligne si son dernier signal de présence date de moins de cette durée. Doit rester supérieur au rythme du signal de présence des joueurs.',
   },
   {
+    key: 'friendListCacheSeconds', label: 'Mémoire de la liste d\'amis confirmés', unit: 's',
+    min: 0, max: 600, default: 60, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true, allowZero: true,
+    help: 'Durée pendant laquelle le serveur réutilise la liste d\'amis d\'un joueur pour répondre à la présence des amis, au lieu de la relire dans Firestore à chaque rafraîchissement. 0 = relue à chaque fois (coûteux en lectures).',
+  },
+  {
     key: 'userPresenceRetentionMinutes', label: 'Conservation de la présence d\'un joueur inactif', unit: 'min',
     min: 5, max: 120, default: 15, group: 'caches-et-mises-a-jour', scope: 'server', effect: 'immediate', advanced: true,
     help: 'Au-delà de cette durée sans signal, la présence mémorisée d\'un joueur est supprimée de la mémoire du serveur.',

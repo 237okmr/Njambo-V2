@@ -28,6 +28,7 @@ import { recordMultiplayerPartie } from './gameRecordStore';
 import { recordPresenceSeen } from './presenceDaily';
 import { shouldBotAcceptBetIncrease, BOT_BET_INCREASE_AGREE_EMOTES, BOT_BET_INCREASE_DECLINE_EMOTES } from '../../src/utils/ai';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { recordServerReads } from '../katika/readBudget';
 import { db } from '../../src/lib/firebase';
 import { scheduleRoomSnapshot, deleteRoomSnapshot, saveRoomSnapshotNow, flushAllPendingSnapshots, loadRoomsAtBoot, hashReconnectToken } from './roomSnapshotStore';
 import { recordReconnection, recordIdentitySubstitution, recordRejectedInvalidIdentifier, recordSeatReleased, recordRoomRestored, recordRelayTriggered, recordAuthTimeout, recordAuthTokenInvalid } from './connectionMetrics';
@@ -59,6 +60,7 @@ export class RoomManager {
   private static playerIdToToken = new Map<string, string>(); // playerId -> reconnectToken
   private static roomPlayerTokens = new Map<string, Map<string, string>>(); // roomCode -> (playerId -> reconnectToken)
   private static userPresences = new Map<string, UserPresence>(); // playerId -> UserPresence
+  private static confirmedFriendsCache = new Map<string, { ids: Set<string>; fetchedAt: number }>(); // playerId -> amis confirmés lus dans Firestore
   private static pendingInvitations = new Map<string, GameInvitation>(); // inviteId -> GameInvitation
   private static lastDirectInviteTimestamps = new Map<string, number>(); // "fromUserId_toUserId" -> timestamp
   private static lastEmoteTimestamps = new Map<string, number>(); // playerId -> lastEmoteTimestamp
@@ -5827,19 +5829,29 @@ export class RoomManager {
       return;
     }
 
-    // Vérification en base Firestore : ne retenir que les vrais amis confirmés (status === 'ACCEPTED')
-    const confirmedFriendIds = new Set<string>();
-    try {
-      const friendsRef = collection(db, 'users', client.playerId, 'friends');
-      const q = query(friendsRef, where('status', '==', 'ACCEPTED'));
-      const snapshot = await getDocs(q);
-      snapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        const fId = data?.friendUid || docSnap.id;
-        if (fId) confirmedFriendIds.add(fId);
-      });
-    } catch (err) {
-      console.error('[RoomManager] Erreur lors de la récupération des amis pour la présence:', err);
+    // Vérification en base Firestore : ne retenir que les vrais amis confirmés (status === 'ACCEPTED').
+    // La liste est gardée friendListCacheSeconds : l'écran Social redemande la présence toutes les quelques secondes.
+    const cacheMs = Number(this.engineConfig.friendListCacheSeconds ?? 60) * 1000;
+    const cachedFriends = this.confirmedFriendsCache.get(client.playerId);
+    let confirmedFriendIds = new Set<string>();
+    if (cachedFriends && cacheMs > 0 && now - cachedFriends.fetchedAt < cacheMs) {
+      confirmedFriendIds = cachedFriends.ids;
+    } else {
+      try {
+        const friendsRef = collection(db, 'users', client.playerId, 'friends');
+        const q = query(friendsRef, where('status', '==', 'ACCEPTED'));
+        const snapshot = await getDocs(q);
+        recordServerReads(snapshot.size);
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          const fId = data?.friendUid || docSnap.id;
+          if (fId) confirmedFriendIds.add(fId);
+        });
+        this.confirmedFriendsCache.set(client.playerId, { ids: confirmedFriendIds, fetchedAt: now });
+      } catch (err) {
+        console.error('[RoomManager] Erreur lors de la récupération des amis pour la présence:', err);
+        if (cachedFriends) confirmedFriendIds = cachedFriends.ids;
+      }
     }
 
     for (const friendId of friendUserIds) {
