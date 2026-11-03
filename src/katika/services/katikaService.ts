@@ -1728,19 +1728,14 @@ export const KatikaService = {
   },
 
   // --- Kora Cash (Argent Réel) : configuration lue et écrite par le serveur (routes /api/katika/cash/config), hors registre de délais ---
+  /** Lève une erreur si la lecture échoue : une panne ne doit jamais s'afficher comme « Kora Cash désactivé ». */
   getKoraCashConfig: async (): Promise<KatikaKoraCashConfig> => {
-    try {
-      const response = await tikaFetch('/api/katika/cash/config');
-      if (response.ok) {
-        const data = await response.json();
-        if (data?.success && data.config) {
-          return { ...DEFAULT_KORA_CASH_CONFIG, ...(data.config as Partial<KatikaKoraCashConfig>) };
-        }
-      }
-    } catch (e) {
-      console.warn('[KatikaService] Could not read Kora Cash config from server:', e);
+    const response = await tikaFetch('/api/katika/cash/config');
+    const data = await response.json().catch(() => null);
+    if (!response.ok || !data?.success || !data.config) {
+      throw new Error(data?.error || `Lecture de la configuration Kora Cash impossible (erreur ${response.status}).`);
     }
-    return { ...DEFAULT_KORA_CASH_CONFIG };
+    return { ...DEFAULT_KORA_CASH_CONFIG, ...(data.config as Partial<KatikaKoraCashConfig>) };
   },
 
   updateKoraCashConfig: async (

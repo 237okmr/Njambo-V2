@@ -30,6 +30,12 @@ export async function getKoraCashConfig(): Promise<KoraCashConfigData> {
   }
 }
 
+/** Lecture pour Katika : une panne remonte au lieu de se déguiser en « Kora Cash désactivé ». */
+export async function readKoraCashConfigStrict(): Promise<KoraCashConfigData> {
+  const snap = await getFirebaseAdminAppDb().collection(KORA_CASH_CONFIG_COLLECTION).doc(KORA_CASH_CONFIG_DOC).get();
+  return normalizeStoredConfig(snap.exists ? snap.data() : undefined);
+}
+
 /** Enregistrement strict : si Firestore échoue, l'erreur remonte (la route répond 500 et katika l'affiche). Jamais de faux « enregistré ». */
 export async function updateKoraCashConfig(patch: KoraCashConfigPatch, actorEmail?: string): Promise<KoraCashConfigData> {
   const db = getFirebaseAdminAppDb();

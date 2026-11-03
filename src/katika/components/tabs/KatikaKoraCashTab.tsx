@@ -90,12 +90,16 @@ export const KatikaKoraCashTab: React.FC = () => {
 
   useEffect(() => {
     let isMounted = true;
-    KatikaService.getKoraCashConfig().then((cfg) => {
-      if (isMounted) {
-        setConfig(cfg);
-        setLoading(false);
-      }
-    });
+    KatikaService.getKoraCashConfig()
+      .then((cfg) => {
+        if (isMounted) setConfig(cfg);
+      })
+      .catch((err) => {
+        if (isMounted) setErrorMessage(`${err instanceof Error ? err.message : 'Lecture impossible.'} L’état affiché n’est pas celui enregistré.`);
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
     return () => {
       isMounted = false;
     };

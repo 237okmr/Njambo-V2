@@ -73,11 +73,17 @@ export const ProviderKeysPanel: React.FC = () => {
     setTestResult(null);
     try {
       const res = await tikaFetch(`/api/katika/cash/providers/${provider}/${environment}`);
-      if (!res.ok) {
-        throw new Error(`Erreur HTTP ${res.status}`);
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.error || `Erreur HTTP ${res.status}`);
       }
-      const data = await res.json();
-      if (data.success && data.credentials) {
+      if (data.masterKeyConfigured === false) {
+        setFeedback({
+          type: 'error',
+          message: 'La clé maître CASH_SECRETS_MASTER_KEY manque sur le serveur : aucun identifiant ne peut être enregistré ni lu. Ajoute-la dans les secrets d’AI Studio, puis republie.',
+        });
+      }
+      if (data.credentials) {
         setMaskedFields(data.credentials.fields || {});
         setUpdatedAt(data.credentials.updatedAt || null);
         setUpdatedBy(data.credentials.updatedBy || null);
@@ -88,6 +94,7 @@ export const ProviderKeysPanel: React.FC = () => {
       }
     } catch (err: any) {
       console.warn('[ProviderKeysPanel] Échec chargement identifiants masqués:', err);
+      setFeedback({ type: 'error', message: `${err?.message || 'Lecture impossible.'} Les identifiants affichés ne reflètent pas ce qui est enregistré.` });
       setMaskedFields({});
       setUpdatedAt(null);
       setUpdatedBy(null);
@@ -105,9 +112,13 @@ export const ProviderKeysPanel: React.FC = () => {
 
   // Charge le prestataire actif (config Kora Cash, onglet Général) une seule fois au montage
   useEffect(() => {
-    KatikaService.getKoraCashConfig().then((cfg) => {
-      setActiveProviderId(cfg.activeProviderId);
-    });
+    KatikaService.getKoraCashConfig()
+      .then((cfg) => {
+        setActiveProviderId(cfg.activeProviderId);
+      })
+      .catch(() => {
+        // L'onglet Général affiche déjà l'erreur de lecture : ici, le prestataire actif reste simplement inconnu.
+      });
   }, []);
 
   const handleSetActiveProvider = async () => {
@@ -168,7 +179,7 @@ export const ProviderKeysPanel: React.FC = () => {
         body: JSON.stringify({ fields: payload }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({ success: false, error: `Erreur HTTP ${res.status}` }));
       if (data.success) {
         // Règle stricte : vider immédiatement les valeurs en mémoire
         setInputs({});

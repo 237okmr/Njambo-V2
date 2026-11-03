@@ -12,6 +12,11 @@ if (!MASTER_KEY_RAW || MASTER_KEY_RAW.trim() === '') {
   console.error('[CashSecrets] Variable CASH_SECRETS_MASTER_KEY absente au démarrage. Écriture de secrets désactivée.');
 }
 
+/** Vrai si la clé maître est présente sur ce serveur. Ne dit jamais rien de sa valeur. */
+export function isCashSecretsKeyConfigured(): boolean {
+  return getDerivedKey() !== null;
+}
+
 function getDerivedKey(): Buffer | null {
   const raw = process.env.CASH_SECRETS_MASTER_KEY;
   if (!raw || raw.trim() === '') {

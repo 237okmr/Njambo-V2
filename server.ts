@@ -22,7 +22,7 @@ import { saveSoloPartieBatch, enableGameRecording } from './server/rooms/gameRec
 import { runLegacyAction, createFirestoreLegacyStore } from './server/rooms/legacyRecords';
 import { isKoraMoment } from './src/katika/visual/situation';
 import { pushService, buildGameUrl } from './server/pushService';
-import { saveProviderCredentials, getProviderCredentialsMasked } from './server/cash/cashSecrets';
+import { saveProviderCredentials, getProviderCredentialsMasked, isCashSecretsKeyConfigured } from './server/cash/cashSecrets';
 import { testCampayConnection, createLiveCampayDeps, createLiveWithdrawalDeps, readCampayBalance } from './server/cash/campayClient';
 import {
   getFinancePeriods,
@@ -57,7 +57,7 @@ import {
 import { getWithdrawalSettings, listPlayerWithdrawals, listRecentWithdrawals, updateWithdrawalSettings } from './server/cash/withdrawalStore';
 import { addPhone, listPhones, removePhone } from './server/cash/phoneBookStore';
 import { maskPhone } from './server/cash/phoneBookRules';
-import { getKoraCashConfig, updateKoraCashConfig } from './server/cash/cashConfigStore';
+import { getKoraCashConfig, readKoraCashConfigStrict, updateKoraCashConfig } from './server/cash/cashConfigStore';
 import { parseConfigPatch, toPublicStatus } from './server/cash/cashConfigRules';
 import { getWallet, listPlayerLedger } from './server/cash/walletLedger';
 import { toPublicMovements } from './server/cash/cashHistoryRules';
@@ -1962,8 +1962,14 @@ async function startServer() {
     if (!['campay', 'notchpay'].includes(provider) || !['demo', 'live'].includes(environment)) {
       return res.status(400).json({ success: false, error: 'Paramètres invalides.' });
     }
-    const masked = await getProviderCredentialsMasked(provider as any, environment as any);
-    res.json({ success: true, credentials: masked });
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const masked = await getProviderCredentialsMasked(provider as any, environment as any);
+      res.json({ success: true, credentials: masked, masterKeyConfigured: isCashSecretsKeyConfigured() });
+    } catch (err) {
+      console.error('[KoraCash] Lecture des identifiants impossible.', errorText(err));
+      res.status(500).json({ success: false, error: `Lecture des identifiants impossible : ${errorText(err)}` });
+    }
   });
 
   app.post('/api/katika/cash/providers/:provider/:environment', express.json(), async (req, res) => {
@@ -1979,8 +1985,14 @@ async function startServer() {
     // req.katikaAdminUid ailleurs dans ce fichier, utilise la variable
     // réellement posée par le middleware d'auth Katika existant.
     const adminUid = (req as any).katikaUser?.uid || (req as any).katikaAdminUid || 'unknown';
-    await saveProviderCredentials(provider as any, environment as any, fields, adminUid);
-    res.json({ success: true });
+    // Toute erreur revient à Katika : sans réponse, l'écran attendrait indéfiniment.
+    try {
+      await saveProviderCredentials(provider as any, environment as any, fields, adminUid);
+      res.json({ success: true });
+    } catch (err) {
+      console.error('[KoraCash] Enregistrement des identifiants impossible.', errorText(err));
+      res.status(500).json({ success: false, error: `Enregistrement impossible : ${errorText(err)}` });
+    }
   });
 
   app.post('/api/katika/cash/providers/:provider/:environment/test', async (req, res) => {
@@ -1988,9 +2000,18 @@ async function startServer() {
     if (provider !== 'campay') {
       return res.status(400).json({ success: false, error: 'Seul Campay est testable dans ce lot.' });
     }
-    const result = await testCampayConnection(environment as any);
-    res.json({ success: result.ok, message: result.message });
+    try {
+      const result = await testCampayConnection(environment as any);
+      res.json({ success: result.ok, message: result.message });
+    } catch (err) {
+      res.status(500).json({ success: false, message: `Test impossible : ${errorText(err)}` });
+    }
   });
+
+  // Texte d'erreur montré à l'admin Katika : jamais de secret dedans (cashSecrets ne met aucune valeur dans ses erreurs).
+  function errorText(err: unknown): string {
+    return (err instanceof Error ? err.message : String(err)).slice(0, 300);
+  }
 
   // Kora Cash — correction des soldes fictifs de démo : aperçu (ne modifie rien), puis application confirmée par l'admin.
   app.get('/api/katika/cash/demo-cleanup', async (_req, res) => {
@@ -2317,12 +2338,13 @@ async function startServer() {
 
   // Kora Cash — configuration générale (activation, prestataire actif, environnement), réservée à l'admin Katika.
   app.get('/api/katika/cash/config', async (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
     try {
-      const config = await getKoraCashConfig();
+      const config = await readKoraCashConfigStrict();
       res.json({ success: true, config });
     } catch (err) {
       console.error('[KoraCash] Lecture de la configuration impossible.', err);
-      res.status(500).json({ success: false, error: 'Lecture de la configuration Kora Cash impossible.' });
+      res.status(500).json({ success: false, error: `Lecture de la configuration Kora Cash impossible : ${errorText(err)}` });
     }
   });
 
