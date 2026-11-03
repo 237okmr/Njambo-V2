@@ -19,12 +19,13 @@ import {
   Radio
 } from 'lucide-react';
 import { KatikaAuditLog } from '../../types/katika';
-import { KatikaService } from '../../services/katikaService';
+import { KatikaService, getAuditLogsNotice } from '../../services/katikaService';
 import { KATIKA_NAVIGATE_EVENT, KatikaNavigationEventDetail } from '../../utils/katikaNavigation';
 import { KatikaConnectionHealthPanel } from './KatikaConnectionHealthPanel';
 
 export const KatikaLogsTab: React.FC = () => {
   const [logs, setLogs] = useState<KatikaAuditLog[]>([]);
+  const [logsNotice, setLogsNotice] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [severityFilter, setSeverityFilter] = useState<'ALL' | 'CRITICAL' | 'WARNING' | 'INFO'>('ALL');
@@ -49,6 +50,7 @@ export const KatikaLogsTab: React.FC = () => {
     try {
       const data = await KatikaService.getAuditLogs();
       setLogs(data);
+      setLogsNotice(getAuditLogsNotice());
     } catch (err) {
       console.error('Failed to load audit logs:', err);
     } finally {
@@ -199,6 +201,12 @@ export const KatikaLogsTab: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {logsNotice && (
+        <div role="status" className="rounded-xl border border-amber-500/40 bg-amber-950/30 text-amber-200 p-3 text-xs">
+          {logsNotice}
+        </div>
+      )}
 
       {/* Audit Logs Table */}
       <div className="rounded-xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-lg">

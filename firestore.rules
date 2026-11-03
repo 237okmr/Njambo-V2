@@ -418,6 +418,11 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Journal d'audit durable de katika : lu et écrit uniquement par le serveur (SDK admin), immuable pour tout le monde
+    match /katika_audit_logs/{logId} {
+      allow read, write: if false;
+    }
+
     // Config moteur persistée : lue et écrite uniquement par le serveur (SDK admin)
     match /server_config/{docId} {
       allow read, write: if false;

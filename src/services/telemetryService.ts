@@ -1,3 +1,4 @@
+import type { DataSourceInfo, RecordsSourceInfo } from '../katika/services/dataQuality';
 import {
   collection,
   doc,
@@ -97,6 +98,14 @@ export interface GlobalMancheCounts {
 }
 
 const LOCAL_STORAGE_KEY = 'njambo_telemetry_game_records';
+
+// État de la dernière lecture : katika doit savoir si ses chiffres viennent du serveur ou d'un repli.
+let lastRecordsRead: RecordsSourceInfo = { status: 'unavailable' };
+let lastTotalsRead: DataSourceInfo = { status: 'unavailable' };
+
+export function getTelemetryReadStatus(): { records: RecordsSourceInfo; totals: DataSourceInfo } {
+  return { records: lastRecordsRead, totals: lastTotalsRead };
+}
 const WRITE_ERRORS_STORAGE_KEY = 'njambo_telemetry_write_errors';
 const MAX_STORED_WRITE_ERRORS = 20;
 
@@ -388,6 +397,7 @@ export const telemetryService = {
       const totalCompleted = Math.max(0, totalStarted - totalInProgress - totalAbandoned);
       const completionRate = totalStarted > 0 ? Math.round((totalCompleted / totalStarted) * 100) : 100;
 
+      lastTotalsRead = { status: 'ok', fetchedAt: Date.now() };
       return {
         totalStarted,
         totalCompleted,
@@ -397,6 +407,7 @@ export const telemetryService = {
       };
     } catch (err) {
       console.warn('[TelemetryService] Could not query getCountFromServer, fallback to cache:', err);
+      lastTotalsRead = { status: 'unavailable', message: err instanceof Error ? err.message : String(err) };
       try {
         const local = localStorage.getItem(LOCAL_STORAGE_KEY);
         const localList: GameTelemetryRecord[] = local ? JSON.parse(local) : [];
@@ -437,6 +448,14 @@ export const telemetryService = {
         throw new Error(body && body.error ? body.error : 'Lecture serveur des fiches de manche impossible.');
       }
       const serverDocs: Array<Omit<GameTelemetryRecord, 'id'> & { id: string }> = body.docs.slice(0, maxCount);
+      const maxDocs = typeof body.maxDocs === 'number' ? body.maxDocs : undefined;
+      lastRecordsRead = {
+        status: body.stale ? 'stale' : 'ok',
+        fetchedAt: Number(body.fetchedAt) || Date.now(),
+        message: body.staleMessage || undefined,
+        capped: maxDocs !== undefined && body.docs.length >= maxDocs,
+        maxDocs,
+      };
       if (serverDocs.length > 0) {
         serverDocs.forEach((docSnap) => {
           const rawData = docSnap as Omit<GameTelemetryRecord, 'id'>;
@@ -463,6 +482,7 @@ export const telemetryService = {
       }
     } catch (err) {
       console.warn('[TelemetryService] Could not query Firestore records, falling back to cache:', err);
+      lastRecordsRead = { status: 'unavailable', message: err instanceof Error ? err.message : String(err) };
     }
 
     // 2. Merge with Local Cache

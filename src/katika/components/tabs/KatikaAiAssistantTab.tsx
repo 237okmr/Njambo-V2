@@ -1,3 +1,4 @@
+import { KatikaDataNotice } from '../KatikaDataNotice';
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Bot,
@@ -917,6 +918,7 @@ Consignes de restitution :
               id="katika-ai-metrics-preview-panel"
               className="p-4 bg-slate-950/95 border-b border-blue-500/20 text-xs shrink-0 max-h-56 overflow-y-auto space-y-3 animate-in fade-in duration-150"
             >
+              {metricsSnapshot.dataQuality && <div className="mb-2"><KatikaDataNotice summary={metricsSnapshot.dataQuality} /></div>}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 font-bold text-slate-200">
                   <Activity className="w-4 h-4 text-blue-400" />

@@ -645,7 +645,8 @@ export const KatikaAiFloatingBubble: React.FC<KatikaAiFloatingBubbleProps> = ({
                 <ShieldCheck className="w-3 h-3 text-amber-400/80" />
                 Mode consultation • Entrée pour envoyer
               </span>
-              {metricsSnapshot?.summary && (
+              {metricsSnapshot?.summary && metricsSnapshot.dataQuality?.level === 'UNAVAILABLE' && <span>Chiffres indisponibles</span>}
+              {metricsSnapshot?.summary && metricsSnapshot.dataQuality?.level !== 'UNAVAILABLE' && (
                 <span>
                   {metricsSnapshot.summary.totalManches} manches • {metricsSnapshot.summary.connectedPlayers} en ligne
                 </span>

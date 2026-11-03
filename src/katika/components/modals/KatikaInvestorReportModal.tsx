@@ -22,6 +22,9 @@ import {
 } from 'lucide-react';
 import { KatikaKPIs } from '../../types/katika';
 
+import { KatikaDataNotice } from '../KatikaDataNotice';
+import { summarizeDataQuality } from '../../services/dataQuality';
+
 interface KatikaInvestorReportModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -38,6 +41,8 @@ export const KatikaInvestorReportModal: React.FC<KatikaInvestorReportModalProps>
   const [copied, setCopied] = useState<boolean>(false);
 
   if (!isOpen) return null;
+
+  const reliability = summarizeDataQuality(kpis.dataQuality);
 
   const reportDate = new Date().toLocaleDateString('fr-FR', {
     day: '2-digit',
@@ -60,7 +65,7 @@ export const KatikaInvestorReportModal: React.FC<KatikaInvestorReportModalProps>
 📊 RAPPORT D'ENGAGEMENT ET DE TRACTION INVESTISSEUR — NJAMBO KORA
 Généré le ${reportDate} à ${reportTime} (${rangeLabel})
 Plateforme d'Analytics : Katika Network Engine
-
+${reliability.notices.map((n) => `⚠️ ${n}\n`).join('')}
 1. TRACTION & VOLUME
 • Total Manches Jouées : ${kpis.totalGamesPlayed}
 • Parties / Donnes disputées : ${kpis.totalPartiesDisputed ? kpis.totalPartiesDisputed : '—'}
@@ -224,6 +229,8 @@ Plateforme d'Analytics : Katika Network Engine
               </div>
             </div>
           </div>
+
+          <KatikaDataNotice summary={reliability} />
 
           {/* KPI Highlight Grid (Top 4 Investor Figures) */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

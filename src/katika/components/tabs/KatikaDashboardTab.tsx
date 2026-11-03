@@ -45,6 +45,8 @@ import { fetchActivitySummary } from '../../services/activityService';
 import type { ActivitySummary } from '../../services/activityService';
 import { KatikaActivityCards } from '../KatikaActivityCards';
 import { KatikaReadBudget } from '../KatikaReadBudget';
+import { KatikaDataNotice } from '../KatikaDataNotice';
+import { summarizeDataQuality } from '../../services/dataQuality';
 import { KatikaActivityPlayers } from '../KatikaActivityPlayers';
 import { KatikaInvestorReportModal } from '../modals/KatikaInvestorReportModal';
 import { navigateToKatikaTab } from '../../utils/katikaNavigation';
@@ -347,6 +349,8 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
           </button>
         </div>
       </div>
+
+      <KatikaDataNotice summary={summarizeDataQuality(kpis.dataQuality)} refreshedAt={lastRefreshed} />
 
       <KatikaReadBudget />
 

@@ -150,6 +150,7 @@ export class RoomManager {
   }> = [];
 
   // Audit Logs Central Store
+  private static auditSink: ((log: typeof RoomManager.auditLogs[number]) => void) | null = null;
   private static auditLogs: Array<{
     id: string;
     timestamp: number;
@@ -329,6 +330,12 @@ export class RoomManager {
     if (this.auditLogs.length > 500) {
       this.auditLogs.pop();
     }
+    this.auditSink?.(log);
+  }
+
+  /** Branche la conservation durable du journal (voir server/katika/auditStore.ts). */
+  public static setAuditSink(sink: (log: typeof RoomManager.auditLogs[number]) => void): void {
+    this.auditSink = sink;
   }
 
   public static getAuditLogs() {

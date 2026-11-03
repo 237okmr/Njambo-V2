@@ -63,7 +63,7 @@ function getGenAIClient(): GoogleGenAI {
 }
 
 /**
- * Intelligently analyzes user question and formats the complete, certified real
+ * Intelligently analyzes user question and formats the real
  * metrics and KPIs in a compact, structured Markdown table (< 800 tokens).
  * Strictly anchors the AI to real telemetry and forbids extrapolation.
  */
@@ -228,12 +228,35 @@ export function detectIntents(msg: string, previousUserMsg?: string): DetectedIn
  * Économise 60% à 75% des tokens d'entrée en n'injectant que les modules strictement
  * requis par la question de l'administrateur.
  */
+/** Dit à l'IA la date du relevé et ce qu'il ne couvre pas, pour qu'elle ne présente jamais une panne comme un vrai zéro. */
+export function buildDataReliabilitySection(snapshot: any): string {
+  const quality = snapshot?.dataQuality;
+  const takenAt = Number(snapshot?.timestamp);
+  const date = Number.isFinite(takenAt) && takenAt > 0
+    ? new Intl.DateTimeFormat('fr-FR', { timeZone: 'Africa/Douala', dateStyle: 'short', timeStyle: 'short' }).format(new Date(takenAt))
+    : 'inconnue';
+  const notices: string[] = Array.isArray(quality?.notices)
+    ? quality.notices
+        .filter((n: unknown): n is string => typeof n === 'string')
+        .slice(0, 6)
+        .map((n: string) => `- ${n.replace(/[\r\n]+/g, ' ').slice(0, 300)}`)
+    : [];
+  const level = quality?.level === 'OK' ? 'COMPLET' : quality?.level === 'PARTIAL' ? 'PARTIEL' : quality?.level === 'UNAVAILABLE' ? 'INDISPONIBLE' : 'NON PRÉCISÉ';
+  const instruction =
+    level === 'COMPLET'
+      ? 'Consigne : cite la date du relevé si tu donnes un chiffre.'
+      : level === 'INDISPONIBLE'
+      ? "Consigne : la lecture de l'historique a échoué. Dis-le clairement, ne donne aucun chiffre d'historique, ne conclus ni à zéro ni à l'absence de problème."
+      : "Consigne : précise que ces chiffres sont partiels ou anciens et ne tire aucune conclusion ferme de ce qu'ils ne couvrent pas.";
+  return `### FIABILITÉ DES DONNÉES\nRELEVÉ:${date} (Africa/Douala) | NIVEAU:${level}\n${notices.length > 0 ? `${notices.join('\n')}\n` : ''}${instruction}`;
+}
+
 function buildContextualMetricsSection(message: string, snapshot: any, intents?: DetectedIntents): string {
   if (!snapshot || typeof snapshot !== 'object') {
     return `
 ---
-### 📊 MÉTRIQUES OPÉRATIONNELLES RÉELLES (0 PARTIE ENREGISTRÉE)
-Aucune donnée de télémétrie enregistrée pour le moment. Tous les compteurs sont à 0.
+### CHIFFRES NON TRANSMIS
+Aucun chiffre n'a été transmis pour cette demande. N'en donne aucun et ne conclus pas à zéro.
 ---`;
   }
 
@@ -293,6 +316,13 @@ Aucune donnée de télémétrie enregistrée pour le moment. Tous les compteurs 
 
   const asksForStats = /chiffre|stat|kpi|partie|manche|podium|top|score|taux|combien/i.test(message);
 
+  if (snapshot.dataQuality?.level === 'UNAVAILABLE' && !(isPureSocialVisual && !asksForStats)) {
+    return `
+---
+EN_DIRECT: JOUEURS_EN_LIGNE:${summary.connectedPlayers ?? 0} | TABLES_ACTIVES:${summary.activeRooms ?? 0}
+${buildDataReliabilitySection(snapshot)}`;
+  }
+
   let baselineKpis = '';
   if (isPureSocialVisual && !asksForStats) {
     baselineKpis = 'Aucune métrique système requise pour ce contenu créatif.';
@@ -305,7 +335,7 @@ KORA:${koraCount} (taux: ${koraRate}%) | DBL_KORA:${doubleKoraCount} (taux: ${do
   } else {
     baselineKpis = `
 ---
-### 📊 KPIS CLÉS DU SYSTÈME (DONNÉES CERTIFIÉES EN DIRECT - FORMAT TSV/PIPE COMPACT) :
+### 📊 KPIS CLÉS DU SYSTÈME (FORMAT TSV/PIPE COMPACT) :
 PARTIES_TOTAL:${totalParties} | MANCHES_TOTAL:${totalManches} | JOUEURS_EN_LIGNE:${summary.connectedPlayers ?? 0} | TABLES_ACTIVES:${summary.activeRooms ?? 0} | SANTÉ:${completionRate}% (${healthStatus})
 KORA:${koraCount} (taux: ${koraRate}%) | DBL_KORA:${doubleKoraCount} (taux: ${doubleKoraRate}%) | VICTOIRE_SIMPLE:${simpleVictoryCount} | 3_SEPTS:${threeSevensCount} | MOINS_21:${under21Count}
 JETONS_DISTRIBUÉS:${totalChipsWon.toLocaleString('fr-FR')} | POT_MOYEN:${avgPotPerGame.toLocaleString('fr-FR')} | MAX_POT:${highestPotWon.toLocaleString('fr-FR')}
@@ -316,7 +346,7 @@ MOTEUR_CONFIG: Timer:${config.turnTimerSeconds ?? 15}s | Grâce:${(config as any
 ANOMALIES_DÉTECTÉES:${anomalies.length}`;
   }
 
-  let sections = baselineKpis;
+  let sections = isPureSocialVisual && !asksForStats ? baselineKpis : `${baselineKpis}\n\n${buildDataReliabilitySection(snapshot)}`;
 
   // 1. Module AUDIENCE (DAU/WAU/MAU, stickiness, rétention J+1/J+7/J+30, 3 heures de pointe)
   const ret = allTime.retentionEngagement || snapshot.retentionEngagement || {};
@@ -791,7 +821,7 @@ Règles du jeu : 31 cartes (♥ ♦ ♣ de 3 à 10, ♠ de 3 à 9 ; ni As, Roi, 
 
 Règles de fonctionnement :
 1. Lecture seule absolue : conseiller analytique sans action directe en base ni ban automatique. L'administrateur valide et agit manuellement via les liens #katika-nav.
-2. Ancrage factuel : Pour tout audit, analyse technique ou diagnostic (#m_ pour un match, #log_ pour un log, #p_ pour un joueur, #table_ pour une table, #note_ pour une note de carnet), chaque fait doit citer son identifiant réel source. Si un compteur est à 0 ou une donnée introuvable, indique qu'aucune donnée n'est enregistrée. Si le nombre de joueurs humains actifs est inférieur à 10 ou celui des parties inférieur à 30, signale que les ratios sont peu significatifs avant toute conclusion. Pour tout classement, utilise le classement Palmarès (Score de Maîtrise) tel que fourni dans les données. Pour la création de visuels créatifs, mèmes ou marketing, concentre-toi sur l'impact visuel et les règles du jeu sans imposer de rapport de métriques si non sollicité, MAIS INTERDICTION ABSOLUE d'inventer des pseudos ou scores de joueurs fictifs (si aucun joueur réel n'est fourni, formule le visuel sous forme de défi communautaire ou de trône vacant).
+2. Ancrage factuel : Pour tout audit, analyse technique ou diagnostic (#m_ pour un match, #log_ pour un log, #p_ pour un joueur, #table_ pour une table, #note_ pour une note de carnet), chaque fait doit citer son identifiant réel source. Si un compteur est à 0 ou une donnée introuvable, indique qu'aucune donnée n'est enregistrée, sauf si la rubrique FIABILITÉ DES DONNÉES signale une lecture impossible ou partielle : suis alors sa consigne. Si le nombre de joueurs humains actifs est inférieur à 10 ou celui des parties inférieur à 30, signale que les ratios sont peu significatifs avant toute conclusion. Pour tout classement, utilise le classement Palmarès (Score de Maîtrise) tel que fourni dans les données. Pour la création de visuels créatifs, mèmes ou marketing, concentre-toi sur l'impact visuel et les règles du jeu sans imposer de rapport de métriques si non sollicité, MAIS INTERDICTION ABSOLUE d'inventer des pseudos ou scores de joueurs fictifs (si aucun joueur réel n'est fourni, formule le visuel sous forme de défi communautaire ou de trône vacant).
 3. ${buildEconomyRuleForChat(isKoraCashEnabled(getEngineConfig()))}
 4. Liens et confidentialité : tout lien de jeu proposé doit comporter des paramètres UTM (?utm_source=...&utm_medium=social&utm_campaign=...). Ne cite jamais d'adresse email ni d'adresse IP.
 5. Navigation #katika-nav : [Table {code}](#katika-nav:ROOMS:{code}), [Joueur {id}](#katika-nav:PLAYERS:{id}), [Moteur](#katika-nav:SETTINGS), [Audit](#katika-nav:LOGS:{query}), [Matches](#katika-nav:MATCHES:{query}), [KPIs](#katika-nav:DASHBOARD).
@@ -803,9 +833,9 @@ Directives de réponse :
 - Pas de préambule, ne reformule pas la question. Rédige en français soigné en Markdown.${recentTopicsLine}
 
 DATE : ${doualaDate} (Africa/Douala). Les expressions relatives (aujourd'hui, cette semaine) se calculent depuis cette date.
-=== DONNÉES RÉELLES DE TÉLÉMÉTRIE EN DIRECT ===
+=== DONNÉES DU JEU (voir date et fiabilité) ===
 ${metricsSection}
-=== FIN DES DONNÉES DE TÉLÉMÉTRIE ===`;
+=== FIN DES DONNÉES DU JEU ===`;
 }
 
 /**

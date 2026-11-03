@@ -1081,7 +1081,7 @@ export const KatikaPlayersTab: React.FC = () => {
                               <span>•</span>
                               <span className="flex items-center gap-0.5">
                                 <Globe className="w-2.5 h-2.5" />
-                                {player.ipAddress || '197.234.xx.xx'}
+                                {player.ipAddress || 'IP non enregistrée'}
                               </span>
                             </div>
                           </div>
@@ -1492,7 +1492,7 @@ export const KatikaPlayersTab: React.FC = () => {
 
                         <div className="text-xs text-slate-400 flex items-center gap-2 flex-wrap font-mono">
                           <span>•</span>
-                          <span>IP : {dossierPlayer.ipAddress || '197.234.12.88'}</span>
+                          <span>IP : {dossierPlayer.ipAddress || 'non enregistrée'}</span>
                           <span>•</span>
                           <span>Inscrit le : {new Date(dossierPlayer.firstJoined).toLocaleDateString()}</span>
                           <span>•</span>

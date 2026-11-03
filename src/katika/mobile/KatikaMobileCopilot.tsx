@@ -355,7 +355,7 @@ export const KatikaMobileCopilot: React.FC = () => {
             <div className="flex items-center gap-1.5 text-[11px] text-slate-300 font-mono whitespace-nowrap overflow-hidden">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
               <span className="truncate">
-                {loadingMetrics ? 'Actualisation…' : `${activeRooms} salons · ${connectedPlayers} joueurs`}
+                {loadingMetrics ? 'Actualisation…' : !metricsSnapshot ? 'Chiffres non chargés' : metricsSnapshot.dataQuality?.level === 'UNAVAILABLE' ? 'Chiffres indisponibles' : `${activeRooms} salons · ${connectedPlayers} joueurs`}
               </span>
               <KatikaAiQuotaGauge refreshKey={`${messages.length}-${isLoading ? 'busy' : 'idle'}`} />
             </div>

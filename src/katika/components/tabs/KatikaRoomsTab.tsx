@@ -60,10 +60,15 @@ export const KatikaRoomsTab: React.FC = () => {
     onConfirm: () => Promise<void>;
   } | null>(null);
 
+  const [roomsError, setRoomsError] = useState<string | null>(null);
+  const [roomsReadAt, setRoomsReadAt] = useState<Date | null>(null);
+
   const fetchRooms = async (silent: boolean = false) => {
     if (!silent) setLoading(true);
     try {
       const data = await KatikaService.getLiveRooms();
+      setRoomsError(null);
+      setRoomsReadAt(new Date());
       setRooms(data);
       // Synchronize selectedRoom with fresh telemetry if modal is open
       setSelectedRoom((prev) => {
@@ -73,6 +78,7 @@ export const KatikaRoomsTab: React.FC = () => {
       });
     } catch (err) {
       console.error('Failed to load live rooms:', err);
+      setRoomsError(err instanceof Error ? err.message : 'Tables en direct indisponibles.');
     } finally {
       if (!silent) setLoading(false);
     }
@@ -265,6 +271,15 @@ export const KatikaRoomsTab: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {roomsError && (
+        <div role="status" className="rounded-xl border border-red-500/40 bg-red-950/40 text-red-200 p-3 text-xs">
+          {roomsError}{' '}
+          {roomsReadAt
+            ? `La liste ci-dessous date de ${roomsReadAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.`
+            : "Une liste vide ne veut pas dire qu'il n'y a aucune table."}
+        </div>
+      )}
 
       {/* CRM Rooms Table */}
       <div className="rounded-xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-lg">

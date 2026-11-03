@@ -98,7 +98,8 @@ import { DepositError } from './server/cash/depositRules';
 import { CashLedgerError } from './server/cash/cashTypes';
 import { verifyFirebaseIdToken, listAdminUsers, setAdminUserClaim, getFirebaseAdminDb, getFirebaseAdminAppDb } from './server/firebaseAdmin';
 import { isActivityFailure, katikaActivityData, toActivityBucket, readStopThreshold } from './server/katika/activityData';
-import { isDashboardFailure, katikaDashboardData, readWarnThreshold, toDashboardPart } from './server/katika/dashboardData';
+import { DASHBOARD_MAX_RECORDS, isDashboardFailure, katikaDashboardData, readWarnThreshold, toDashboardPart } from './server/katika/dashboardData';
+import { buildClientAudit, katikaAuditStore, mergeAuditLogs } from './server/katika/auditStore';
 import { getReadBudget } from './server/katika/readBudget';
 import { getClientReads, recordClientReads } from './server/katika/clientReads';
 import { computeRepairPlan } from './server/profileRepair';
@@ -147,6 +148,7 @@ async function startServer() {
   const server = http.createServer(app);
 
   // Initialize Room Cleanup Interval (2h public / 24h private / 15m bots)
+  RoomManager.setAuditSink((log) => katikaAuditStore.persist(log));
   RoomManager.initRoomCleanupInterval();
 
   // Arrêt propre : on tente de sauvegarder toutes les tables modifiées avant que le processus ne se ferme
@@ -1802,18 +1804,22 @@ async function startServer() {
   });
 
   // Audit Logs API
-  app.get('/api/katika/audit-logs', (req, res) => {
+  app.get('/api/katika/audit-logs', async (req, res) => {
+    const history = await katikaAuditStore.getHistory();
     res.json({
       status: 'ok',
-      logs: RoomManager.getAuditLogs(),
+      logs: mergeAuditLogs(RoomManager.getAuditLogs(), history.logs),
+      durable: { loaded: history.loaded, message: history.message },
       timestamp: Date.now(),
     });
   });
 
+  // L'auteur est le compte connecté, jamais une valeur envoyée par le navigateur.
   app.post('/api/katika/audit-logs', express.json(), (req, res) => {
-    const { log } = req.body || {};
-    if (log && log.summary) {
-      RoomManager.addAuditLog(log);
+    const actor = String((req as any).katikaUser?.email || 'katika');
+    const entry = buildClientAudit(req.body?.log, actor, Date.now());
+    if (entry) {
+      RoomManager.addAuditLog(entry);
     }
     res.json({ success: true });
   });
@@ -1930,6 +1936,7 @@ async function startServer() {
     return res.json({
       success: true,
       docs: result.docs,
+      maxDocs: part === 'records' ? DASHBOARD_MAX_RECORDS : null,
       fetchedAt: result.fetchedAt,
       fromCache: result.fromCache,
       stale: result.stale,
@@ -2445,6 +2452,11 @@ async function startServer() {
 
     return {
       timestamp: Date.now(),
+      // Repli du serveur : il ne connaît que ce qui s'est passé depuis son dernier démarrage.
+      dataQuality: {
+        level: 'PARTIAL',
+        notices: ['Chiffres d\'historique limités à la période depuis le dernier démarrage du serveur : ce n\'est pas un cumul.'],
+      },
       summary: {
         connectedPlayers: telemetry.connectedSockets,
         activeRooms: telemetry.activeRooms,

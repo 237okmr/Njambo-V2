@@ -141,7 +141,9 @@ export async function generateVisualVariants({
     : [primaryModel, 'gemini-3.1-flash-lite'];
 
   // N'injecter les métriques dans le prompt que si le brief demande explicitement des chiffres ou des stats
-  const asksForStats = /chiffre|stat|kpi|partie|manche|podium|top|score|taux|combien|joueur|champion|palmar[eè]s/i.test(brief);
+  // Lecture ratée : les compteurs sont faux, ils ne servent ni au prompt ni à la vérification du visuel.
+  const statsUnavailable = metricsSnapshot?.dataQuality?.level === 'UNAVAILABLE';
+  const asksForStats = !statsUnavailable && /chiffre|stat|kpi|partie|manche|podium|top|score|taux|combien|joueur|champion|palmar[eè]s/i.test(brief);
 
   // Extraire les vrais joueurs humains si disponibles
   const isBotEntity = (name: string, id: string) => {

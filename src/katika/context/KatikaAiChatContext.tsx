@@ -633,8 +633,9 @@ export const KatikaAiChatProvider: React.FC<{ children: React.ReactNode }> = ({ 
         timeStyle: 'medium',
       });
 
+      const reliabilityNotes = (metricsSnapshot?.dataQuality?.notices || []).map((n) => `- ⚠️ ${n}\n`).join('');
       const kpisSummary = metricsSnapshot?.summary
-        ? `- **Total Manches :** ${metricsSnapshot.summary.totalManches}
+        ? `${reliabilityNotes}- **Total Manches :** ${metricsSnapshot.summary.totalManches}
 - **Total Parties :** ${metricsSnapshot.summary.totalParties}
 - **Joueurs en direct :** ${metricsSnapshot.summary.connectedPlayers}
 - **Ratio Kora / Double Kora :** ${metricsSnapshot.kpis?.allTime?.koraCount ?? 0} / ${metricsSnapshot.kpis?.allTime?.doubleKoraCount ?? 0}
@@ -662,7 +663,7 @@ export const KatikaAiChatProvider: React.FC<{ children: React.ReactNode }> = ({ 
 **Discussion :** ${thread.title}
 **Date du rapport :** ${dateStr}
 **Identifiant de Session :** \`${thread.id}\`
-**Statut de Sécurité :** Mode Lecture Seule Certifié (Aucune altération directe du jeu)
+**Statut de Sécurité :** Mode lecture seule (aucune altération directe du jeu)
 
 ---
 

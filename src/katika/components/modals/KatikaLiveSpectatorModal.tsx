@@ -108,28 +108,6 @@ export const KatikaLiveSpectatorModal: React.FC<KatikaLiveSpectatorModalProps> =
     return () => clearInterval(intervalId);
   }, [autoRefreshInterval, onRefresh]);
 
-  // Anti-Collusion: Detect stable IP sharing patterns
-  const playersWithSameIP = useMemo(() => {
-    const ipMap: Record<string, string> = {};
-    room.players.forEach((p) => {
-      let seed = 0;
-      const nameStr = p.name || '';
-      for (let i = 0; i < nameStr.length; i++) {
-        seed += nameStr.charCodeAt(i);
-      }
-      const ipLastOctet = (seed % 3) + 10; // Semi-stable local IP suffix
-      ipMap[p.id || p.name] = `197.156.24.${ipLastOctet}`;
-    });
-
-    const ipCounts: Record<string, number> = {};
-    Object.values(ipMap).forEach((ip) => {
-      ipCounts[ip] = (ipCounts[ip] || 0) + 1;
-    });
-
-    const sharedIps = Object.keys(ipCounts).filter((ip) => ipCounts[ip] > 1);
-    return { ipMap, sharedIps };
-  }, [room.players]);
-
   useEffect(() => {
     setSecondsRemaining(room.turnRemainingSeconds ?? 15);
   }, [room.turnRemainingSeconds, room.currentTrickNumber, room.activePlayerName]);
@@ -554,8 +532,6 @@ export const KatikaLiveSpectatorModal: React.FC<KatikaLiveSpectatorModalProps> =
 
                 const isDisconnected = !player.connected;
                 const isStalling = isCurrentTurn && room.status === 'IN_GAME' && secondsRemaining <= 4;
-                const playerIp = playersWithSameIP.ipMap[player.id || player.name];
-                const isCollusionRisk = player.isHuman && playersWithSameIP.sharedIps.includes(playerIp);
 
                 // Played card in current trick
                 const playedCardObj = room.tableCards?.find((tc) => tc.playerName === player.name);
@@ -635,12 +611,6 @@ export const KatikaLiveSpectatorModal: React.FC<KatikaLiveSpectatorModalProps> =
                             {isStalling && (
                               <span className="text-[8px] font-black px-1 py-0.2 bg-amber-500 text-slate-950 rounded animate-bounce">
                                 LENT
-                              </span>
-                            )}
-                            {isCollusionRisk && (
-                              <span className="text-[8px] font-black px-1 py-0.2 bg-red-600/30 text-red-200 border border-red-500/40 rounded flex items-center gap-0.5">
-                                <ShieldAlert className="w-2.5 h-2.5 text-red-400" />
-                                <span>IP</span>
                               </span>
                             )}
                           </div>

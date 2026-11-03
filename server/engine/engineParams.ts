@@ -623,6 +623,16 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Nombre de lectures Firestore faites par le serveur pour katika, au-delà duquel le tableau de bord affiche une alerte. Le palier gratuit de Firestore est de 50 000 lectures par jour pour tout le projet (téléphones des joueurs compris).',
   },
   {
+    key: 'katikaAuditMaxAutomaticPerDay', label: 'Événements automatiques conservés par jour dans le journal', unit: '',
+    min: 50, max: 5000, default: 500, group: 'katika', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Plafond quotidien d\'écritures dans le journal durable pour les alertes automatiques (forfaits, connexions). Les actions des admins ne sont jamais limitées. Au-delà, l\'événement reste en mémoire et le journal le signale.',
+  },
+  {
+    key: 'katikaAuditLoadCount', label: 'Lignes d\'historique relues par le journal', unit: '',
+    min: 50, max: 500, default: 200, group: 'katika', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Nombre de lignes relues dans Firestore à la première ouverture du journal après un démarrage du serveur. Chaque ligne compte pour une lecture.',
+  },
+  {
     key: 'katikaReadStopCount', label: 'Pare-feu : arrêt des grosses lectures de katika', unit: '',
     min: 1000, max: 50000, default: 45000, group: 'katika', scope: 'server', effect: 'immediate', advanced: true, allowZero: true,
     help: 'Au-delà de ce nombre de lectures faites par le serveur aujourd\'hui, le tableau de bord et le copilote gardent leurs derniers chiffres connus au lieu de relire joueurs et parties, pour laisser le quota au jeu. Le jeu et Kora Cash ne sont jamais bloqués. Le compteur repart de zéro si le serveur redémarre et ne voit pas les lectures des téléphones. 0 = pare-feu coupé.',

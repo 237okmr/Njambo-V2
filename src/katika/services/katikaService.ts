@@ -1,9 +1,10 @@
+import type { DataSourceInfo } from './dataQuality';
 import { KatikaKPIs, KatikaLiveRoom, KatikaPlayer, KatikaGameConfig, KatikaAuditLog, KatikaKoraCashConfig } from '../types/katika';
 import { tikaFetch } from './tikaFetch';
-import { telemetryService, GameTelemetryRecord, GlobalMancheCounts } from '../../services/telemetryService';
+import { telemetryService, GameTelemetryRecord, GlobalMancheCounts, getTelemetryReadStatus } from '../../services/telemetryService';
 import { collection, getDocs, getDoc, doc, setDoc, updateDoc, deleteDoc, deleteField, query, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { playerProfileService, computeMasteryScore } from '../../services/playerProfileService';
+import { computeMasteryScore } from '../../services/playerProfileService';
 import { computeEventMasteryScore, getDoualaDateKey, MASTERY_CONFIG } from '../../services/masteryConfig';
 import { PlayerGameHistoryItem } from '../../types/playerProfile';
 import { setBotTimingConfig, setBotDialogueConfig } from '../../utils/ai';
@@ -242,24 +243,8 @@ setBotDialogueConfig({
   botEmoteCriticalBypassLimit: mockConfig.botEmoteCriticalBypassLimit !== false,
 });
 
-let mockAuditLogs: KatikaAuditLog[] = [
-  {
-    id: 'log-1',
-    timestamp: Date.now() - 1000 * 60 * 5,
-    type: 'AUTH',
-    severity: 'INFO',
-    actor: '237okmr@gmail.com',
-    summary: 'Session Katika Master active - Télémétrie en temps réel connectée',
-  },
-  {
-    id: 'log-2',
-    timestamp: Date.now() - 1000 * 60 * 20,
-    type: 'KATIKA_ACTION',
-    severity: 'INFO',
-    actor: 'Katika Engine',
-    summary: 'Synchronisation directe avec le serveur WebSocket de jeu',
-  }
-];
+// Actions de cette session dont l'envoi au serveur n'est pas encore confirmé : jamais d'entrée inventée.
+let mockAuditLogs: KatikaAuditLog[] = [];
 
 // --- Système de Cache Mémoire (TTL 30 secondes) pour optimiser les lectures Firestore & Télémétrie ---
 interface MemoryCacheEntry<T> {
@@ -299,6 +284,14 @@ async function getDynamicRankTitles(): Promise<Record<string, string>> {
   }
 }
 
+let usersReadInfo: DataSourceInfo = { status: 'unavailable' };
+
+function usersFallbackInfo(savedUsers: any[], reason: string): DataSourceInfo {
+  return savedUsers.length > 0
+    ? { status: 'stale', message: `Copie gardée dans ce navigateur. ${reason}` }
+    : { status: 'unavailable', message: reason };
+}
+
 async function getCachedUsers(): Promise<any[]> {
   const now = Date.now();
   if (cachedUsersData && now - cachedUsersData.timestamp < MEMORY_CACHE_TTL_MS) {
@@ -319,6 +312,11 @@ async function getCachedUsers(): Promise<any[]> {
     const res = await tikaFetch('/api/katika/dashboard-data?part=users');
     const body = res.ok ? await res.json() : null;
     if (body && body.success && Array.isArray(body.docs)) {
+      usersReadInfo = {
+        status: body.stale ? 'stale' : 'ok',
+        fetchedAt: Number(body.fetchedAt) || now,
+        message: body.staleMessage || undefined,
+      };
       if (body.docs.length > 0) {
         usersList = body.docs;
         try {
@@ -329,9 +327,11 @@ async function getCachedUsers(): Promise<any[]> {
       }
     } else {
       console.warn('[KatikaService] Lecture serveur des joueurs impossible :', body && body.error ? body.error : res.status);
+      usersReadInfo = usersFallbackInfo(usersList, body && body.error ? String(body.error) : `Réponse ${res.status} du serveur.`);
     }
   } catch (e) {
     console.warn('[KatikaService] Could not fetch users from server:', e);
+    usersReadInfo = usersFallbackInfo(usersList, 'Serveur injoignable.');
   }
 
   cachedUsersData = {
@@ -387,6 +387,13 @@ async function getCachedGlobalCounts(): Promise<GlobalMancheCounts> {
   return counts;
 }
 
+// État de la dernière lecture du journal, affiché par l'onglet Journal.
+let auditLogsNotice = '';
+
+export function getAuditLogsNotice(): string {
+  return auditLogsNotice;
+}
+
 export const KatikaService = {
   getKPIs: async (timeRange: 'ALL' | '7D' | '24H' | 'TODAY' = 'ALL'): Promise<KatikaKPIs> => {
     const cacheKey = `kpis_${timeRange}`;
@@ -404,11 +411,13 @@ export const KatikaService = {
     let liveBetProposalsActive = 0;
     let liveCapacityVotesActive = 0;
     let liveKoraHunterAlertsActive = 0;
+    let liveInfo: DataSourceInfo = { status: 'unavailable', message: 'Serveur injoignable.' };
 
     // 1. Query Server WebSocket Telemetry
     try {
       const response = await tikaFetch('/api/katika/live-metrics');
       if (response.ok) {
+        liveInfo = { status: 'ok', fetchedAt: Date.now() };
         const data = await response.json();
         if (data.telemetry) {
           liveSockets = data.telemetry.connectedSockets || 0;
@@ -501,18 +510,24 @@ export const KatikaService = {
       // server history optional
     }
 
+    const oldestReadAt = records.length > 0 ? Math.min(...records.map((r) => r.createdAt || Date.now())) : undefined;
+    let rangeStartMs = 0;
+
     // Filter by time range if specified
     const now = Date.now();
     if (timeRange === 'TODAY') {
       const startOfToday = new Date();
       startOfToday.setHours(0, 0, 0, 0);
       const cutoff = startOfToday.getTime();
+      rangeStartMs = cutoff;
       records = records.filter(r => r.createdAt >= cutoff);
     } else if (timeRange === '24H') {
       const cutoff = now - 24 * 60 * 60 * 1000;
+      rangeStartMs = cutoff;
       records = records.filter(r => r.createdAt >= cutoff);
     } else if (timeRange === '7D') {
       const cutoff = now - 7 * 24 * 60 * 60 * 1000;
+      rangeStartMs = cutoff;
       records = records.filter(r => r.createdAt >= cutoff);
     }
 
@@ -889,6 +904,14 @@ export const KatikaService = {
       googleUsersCount,
       guestUsersCount,
       honorificPyramid,
+      dataQuality: {
+        range: timeRange,
+        rangeStartMs,
+        live: liveInfo,
+        users: usersReadInfo,
+        records: { ...getTelemetryReadStatus().records, oldestAt: oldestReadAt },
+        totals: getTelemetryReadStatus().totals,
+      },
     };
 
     cachedKPIsMap.set(cacheKey, { data: kpisResult, timestamp: Date.now() });
@@ -900,6 +923,7 @@ export const KatikaService = {
       const response = await tikaFetch('/api/katika/live-metrics');
       if (response.ok) {
         const data = await response.json();
+        if (data.telemetry && !Array.isArray(data.telemetry.roomsList)) return [];
         if (data.telemetry && Array.isArray(data.telemetry.roomsList)) {
           return data.telemetry.roomsList.map((r: any) => ({
             roomId: r.id,
@@ -945,8 +969,8 @@ export const KatikaService = {
       console.warn('[KatikaService] Could not fetch live rooms from server:', e);
     }
 
-    // Return exact zero rooms if server has no active tables
-    return [];
+    // Une panne n'est pas « aucune table » : c'est à l'écran de le dire.
+    throw new Error('Tables en direct indisponibles : serveur injoignable.');
   },
 
   getPlayers: async (): Promise<KatikaPlayer[]> => {
@@ -1085,75 +1109,6 @@ export const KatikaService = {
         firstJoined: u.createdAt || Date.now(),
       };
     });
-
-    // Register or sync active local player from profile service so victories and stats are accurate
-    try {
-      const localProfile = playerProfileService.getLocalProfile();
-      const activeName = localProfile.displayName || localStorage.getItem('njambo_player_name') || 'Joueur (Vous)';
-      const activeUid = localProfile.uid || localStorage.getItem('njambo_player_id') || 'usr_local';
-
-      if (activeUid && !isKnownBot(activeName, activeUid)) {
-        const stats = localProfile.stats || ({} as any);
-        const gamesWon = stats.partiesWon || stats.gamesWon || 0;
-        const gamesPlayed = Math.max(stats.partiesPlayed || stats.gamesPlayed || 0, gamesWon);
-        const winRate = gamesPlayed > 0 ? Math.round((gamesWon / gamesPlayed) * 100) : 0;
-        const koraCount = stats.koraCount || 0;
-        const doubleKoraCount = stats.doubleKoraCount || 0;
-
-        if (playerMap[activeUid]) {
-          playerMap[activeUid].name = activeName;
-          playerMap[activeUid].isHuman = true;
-          playerMap[activeUid].victories = Math.max(playerMap[activeUid].victories, gamesWon);
-          playerMap[activeUid].totalGames = Math.max(playerMap[activeUid].totalGames, gamesPlayed);
-          playerMap[activeUid].koraCount = Math.max(playerMap[activeUid].koraCount, koraCount);
-          playerMap[activeUid].doubleKoraCount = Math.max(playerMap[activeUid].doubleKoraCount, doubleKoraCount);
-          playerMap[activeUid].winRate = playerMap[activeUid].totalGames > 0
-            ? Math.round((playerMap[activeUid].victories / playerMap[activeUid].totalGames) * 100)
-            : winRate;
-        } else {
-          playerMap[activeUid] = {
-            id: activeUid,
-            name: activeName,
-            isHuman: true,
-            chipsBalance: localProfile.chips ?? 5000,
-            totalGames: gamesPlayed,
-            victories: gamesWon,
-            defeats: Math.max(0, gamesPlayed - gamesWon),
-            winRate,
-            chipsWon: stats.fortune || 0,
-            chipsLost: 0,
-            totalPartiesPlayed: gamesPlayed,
-            totalPartiesWon: gamesWon,
-            totalManchesPlayed: gamesPlayed,
-            totalManchesWon: gamesWon,
-            koraCount,
-            doubleKoraCount,
-            status: 'ACTIVE',
-            warningsCount: 0,
-            abandonCount: 0,
-            abandonRate: 0,
-            forfeitsCount: 0,
-            recentForfeitsInLastHour: 0,
-            isAntiJeuRisk: false,
-            winsByFormat: {
-              twoPlayers: { wins: 0, total: 0 },
-              threePlayers: { wins: 0, total: 0 },
-              fourPlayers: { wins: 0, total: 0 },
-            },
-            antifraudAlerts: {
-              highAbandonRisk: false,
-              collusionRisk: false,
-              spamAntiFairplayRisk: false,
-            },
-            recentMatches: [],
-            lastActive: Date.now(),
-            firstJoined: Date.now() - 1000 * 60 * 60 * 24 * 7,
-          };
-        }
-      }
-    } catch (err) {
-      console.warn('[KatikaService] Local profile sync warning:', err);
-    }
 
     // Helper to get or initialize a player safely
     const ensurePlayer = (pId: string, pName: string, isHumanHint?: boolean) => {
@@ -1824,6 +1779,7 @@ export const KatikaService = {
       if (res.ok) {
         const data = await res.json();
         if (data.logs && Array.isArray(data.logs)) {
+          auditLogsNotice = typeof data.durable?.message === 'string' ? data.durable.message : '';
           // Merge local mock logs if any unique ones exist
           const merged = [...data.logs];
           mockAuditLogs.forEach((ml) => {
@@ -1838,6 +1794,7 @@ export const KatikaService = {
     } catch (e) {
       console.warn('[KatikaService] Could not reach audit-logs endpoint:', e);
     }
+    auditLogsNotice = 'Journal indisponible : serveur injoignable. Seules les actions de cette session sont affichées.';
     return [...mockAuditLogs];
   },
 

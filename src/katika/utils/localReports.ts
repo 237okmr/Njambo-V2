@@ -20,6 +20,7 @@ export function buildLocalHealthReport(snapshot: KatikaMetricsSnapshot | null): 
 
   let report = `### 🩺 Bilan de Santé Opérationnel du Serveur Njambo Kora
 *Généré instantanément en local le ${dateStr}*
+${snapshot.dataQuality && snapshot.dataQuality.level !== 'OK' ? `\n> ⚠️ **Chiffres ${snapshot.dataQuality.level === 'UNAVAILABLE' ? 'indisponibles' : 'à lire avec prudence'}**\n${snapshot.dataQuality.notices.map((n) => `> - ${n}`).join('\n')}\n` : ''}
 
 ---
 

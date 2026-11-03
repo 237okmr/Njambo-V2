@@ -1,3 +1,4 @@
+import type { KatikaDataQuality } from '../services/dataQuality';
 import { GameTelemetryRecord } from '../../services/telemetryService';
 import { AIDifficulty } from '../../types';
 
@@ -75,6 +76,8 @@ export interface KatikaAbandonmentMetrics {
 }
 
 export interface KatikaKPIs {
+  /** D'où viennent ces chiffres : un 0 lu en base n'est pas une lecture ratée. */
+  dataQuality?: KatikaDataQuality;
   connectedPlayersCount: number;
   activeRoomsCount: number;
   totalGamesPlayed: number; // Nombre total de Manches (succession de parties jusqu'à la victoire finale)

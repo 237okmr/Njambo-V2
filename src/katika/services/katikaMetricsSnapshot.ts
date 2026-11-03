@@ -1,3 +1,4 @@
+import { DataQualitySummary, summarizeDataQuality } from './dataQuality';
 import { KatikaService, isKnownBot } from './katikaService';
 import { KatikaKPIs, KatikaLiveRoom, KatikaPlayer, KatikaAuditLog, KatikaGameConfig } from '../types/katika';
 import { AdminNotesService } from './adminNotesService';
@@ -51,6 +52,8 @@ export interface KatikaDetectedAnomaly {
 
 export interface KatikaMetricsSnapshot {
   timestamp: number;
+  /** Fiabilité du relevé : transmise au copilote pour qu'il ne présente jamais une panne comme un vrai zéro. */
+  dataQuality: DataQualitySummary;
   formattedDate: string;
   summary: {
     connectedPlayers: number;
@@ -159,6 +162,7 @@ export const KatikaMetricsSnapshotProvider = {
    * Dynamically includes all fields without discarding newly added properties.
    */
   async buildSnapshot(): Promise<KatikaMetricsSnapshot> {
+    const unavailableParts: string[] = [];
     const [
       allKpis,
       kpis24h,
@@ -174,8 +178,14 @@ export const KatikaMetricsSnapshotProvider = {
       }),
       KatikaService.getKPIs('24H').catch(() => undefined),
       KatikaService.getKPIs('7D').catch(() => undefined),
-      KatikaService.getLiveRooms().catch(() => []),
-      KatikaService.getPlayers().catch(() => []),
+      KatikaService.getLiveRooms().catch(() => {
+        unavailableParts.push('Tables en direct');
+        return [];
+      }),
+      KatikaService.getPlayers().catch(() => {
+        unavailableParts.push('Liste des joueurs');
+        return [];
+      }),
       KatikaService.getAuditLogs().catch(() => []),
       KatikaService.getConfig().catch(() => ({} as KatikaGameConfig)),
     ]);
@@ -495,7 +505,15 @@ export const KatikaMetricsSnapshotProvider = {
       console.warn('[Snapshot] Error loading admin notes (rules might not be deployed yet):', e);
     }
 
+    const quality = summarizeDataQuality(allKpis.dataQuality);
+    const dataQuality: DataQualitySummary = {
+      ...quality,
+      level: quality.level === 'OK' && unavailableParts.length > 0 ? 'PARTIAL' : quality.level,
+      notices: [...quality.notices, ...unavailableParts.map((part) => `${part} : lecture impossible.`)],
+    };
+
     return {
+      dataQuality,
       timestamp: Date.now(),
       formattedDate: new Date().toISOString(),
       summary: {
