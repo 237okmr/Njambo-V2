@@ -68,6 +68,12 @@ describe('Droits des administrateurs de katika', () => {
     assert.equal(allowed(community, 'POST', '/rooms/AB12/close'), false);
   });
 
+  it('le tableau de bord reçoit des totaux, pas la liste des joueurs', () => {
+    const viewer: KatikaAccess = { isOwner: false, permissions: ['dashboard.view'] };
+    assert.equal(allowed(viewer, 'POST', '/users-summary'), true);
+    assert.equal(allowed(viewer, 'GET', '/player-history/abc'), false);
+  });
+
   it('Kora Cash : voir et agir sont deux droits distincts', () => {
     const viewer: KatikaAccess = { isOwner: false, permissions: ['cash.view'] };
     assert.equal(allowed(viewer, 'GET', '/cash/withdrawals'), true);

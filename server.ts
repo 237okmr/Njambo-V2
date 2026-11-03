@@ -99,6 +99,7 @@ import { CashLedgerError } from './server/cash/cashTypes';
 import { verifyFirebaseIdToken, setAdminUserClaim, getFirebaseAdminAuth, getFirebaseAdminAppDb } from './server/firebaseAdmin';
 import { ADMIN_TEMPLATES, isAllowed, isTemplateId, KatikaPermission, PERMISSION_LABELS, routeRequirement, sanitizePermissions } from './server/katika/adminRights';
 import { adminRegistry, listAdminEntries, readAdminEntry, writeAdminEntry } from './server/katika/adminRegistry';
+import { sanitizeRankTitles, summarizeUsers } from './server/katika/usersSummary';
 import { isActivityFailure, katikaActivityData, toActivityBucket, readStopThreshold } from './server/katika/activityData';
 import { DASHBOARD_MAX_RECORDS, isDashboardFailure, katikaDashboardData, readWarnThreshold, toDashboardPart } from './server/katika/dashboardData';
 import { buildClientAudit, katikaAuditStore, mergeAuditLogs } from './server/katika/auditStore';
@@ -2026,6 +2027,10 @@ async function startServer() {
     if (!part) {
       return res.status(400).json({ success: false, error: 'Ensemble de données inconnu.' });
     }
+    // Les fiches des joueurs ne partent que vers un admin qui a le droit de voir les joueurs.
+    if (part === 'users' && !isAllowed((req as any).katikaUser, { anyOf: ['players.view'] })) {
+      return res.status(403).json({ success: false, error: 'Tu n\'as pas le droit de voir les joueurs.' });
+    }
     const result = await katikaDashboardData.get(part);
     res.set('Cache-Control', 'no-store');
     if (isDashboardFailure(result)) {
@@ -2037,6 +2042,22 @@ async function startServer() {
       maxDocs: part === 'records' ? DASHBOARD_MAX_RECORDS : null,
       fetchedAt: result.fetchedAt,
       fromCache: result.fromCache,
+      stale: result.stale,
+      staleMessage: result.staleMessage,
+    });
+  });
+
+  // Totaux du dossier des joueurs pour le tableau de bord, calculés par le serveur : jamais la liste des joueurs.
+  app.post('/api/katika/users-summary', express.json(), async (req, res) => {
+    const result = await katikaDashboardData.get('users');
+    res.set('Cache-Control', 'no-store');
+    if (isDashboardFailure(result)) {
+      return res.status(503).json({ success: false, code: result.code, error: result.message });
+    }
+    return res.json({
+      success: true,
+      summary: summarizeUsers(result.docs, sanitizeRankTitles(req.body?.rankTitles)),
+      fetchedAt: result.fetchedAt,
       stale: result.stale,
       staleMessage: result.staleMessage,
     });

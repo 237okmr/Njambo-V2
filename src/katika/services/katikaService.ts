@@ -288,7 +288,7 @@ let usersReadInfo: DataSourceInfo = { status: 'unavailable' };
 
 function usersFallbackInfo(savedUsers: any[], reason: string): DataSourceInfo {
   return savedUsers.length > 0
-    ? { status: 'stale', message: `Copie gardée dans ce navigateur. ${reason}` }
+    ? { status: 'stale', message: `Derniers chiffres lus pendant cette session. ${reason}` }
     : { status: 'unavailable', message: reason };
 }
 
@@ -298,14 +298,12 @@ async function getCachedUsers(): Promise<any[]> {
     return cachedUsersData.data;
   }
 
-  let usersList: any[] = [];
-  const savedUsers = localStorage.getItem('katika_users_cache');
-  if (savedUsers) {
-    try {
-      usersList = JSON.parse(savedUsers);
-    } catch (e) {
-      /* ignore */
-    }
+  // Plus aucune copie du dossier des joueurs dans le navigateur : il reste en mémoire le temps de l'écran.
+  let usersList: any[] = cachedUsersData?.data ?? [];
+  try {
+    localStorage.removeItem('katika_users_cache');
+  } catch (e) {
+    /* ignore */
   }
   try {
     // Lecture faite par le serveur (gardée en mémoire, durée réglable dans katika) pour ménager le quota gratuit de Firestore.
@@ -317,14 +315,7 @@ async function getCachedUsers(): Promise<any[]> {
         fetchedAt: Number(body.fetchedAt) || now,
         message: body.staleMessage || undefined,
       };
-      if (body.docs.length > 0) {
-        usersList = body.docs;
-        try {
-          localStorage.setItem('katika_users_cache', JSON.stringify(usersList));
-        } catch (e) {
-          /* ignore */
-        }
-      }
+      usersList = body.docs;
     } else {
       console.warn('[KatikaService] Lecture serveur des joueurs impossible :', body && body.error ? body.error : res.status);
       usersReadInfo = usersFallbackInfo(usersList, body && body.error ? String(body.error) : `Réponse ${res.status} du serveur.`);
@@ -453,19 +444,25 @@ export const KatikaService = {
       MAITRE_NJAMBO: 0,
       LEGENDE_KORA: 0,
     };
+    let usersInfo: DataSourceInfo = { status: 'unavailable', message: 'Serveur injoignable.' };
     try {
-      const [usersList, dynamicRanks] = await Promise.all([getCachedUsers(), getDynamicRankTitles()]);
-      registeredUsersCount = usersList.length;
-      usersList.forEach((u: any) => {
-        if (u.email || u.isGuest === false) {
-          googleUsersCount++;
-        } else {
-          guestUsersCount++;
-        }
-        const t = dynamicRanks[u.id || u.uid] || u.honorificTitleId || 'APPRENTI';
-        if (honorificPyramid[t] !== undefined) honorificPyramid[t]++;
-        else honorificPyramid['APPRENTI']++;
+      // Le serveur ne renvoie que des totaux : la liste des joueurs reste réservée au droit « voir les joueurs ».
+      const rankTitles = await getDynamicRankTitles();
+      const res = await tikaFetch('/api/katika/users-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rankTitles }),
       });
+      const body = await res.json().catch(() => null);
+      if (res.ok && body?.success && body.summary) {
+        registeredUsersCount = body.summary.registered;
+        googleUsersCount = body.summary.google;
+        guestUsersCount = body.summary.guests;
+        Object.assign(honorificPyramid, body.summary.pyramid);
+        usersInfo = { status: body.stale ? 'stale' : 'ok', fetchedAt: Number(body.fetchedAt) || Date.now(), message: body.staleMessage || undefined };
+      } else {
+        usersInfo = { status: 'unavailable', message: body?.error || `Réponse ${res.status} du serveur.` };
+      }
     } catch (e) {
       console.warn('[KatikaService] Could not compute user demographics:', e);
     }
@@ -915,7 +912,7 @@ export const KatikaService = {
         range: timeRange,
         rangeStartMs,
         live: liveInfo,
-        users: usersReadInfo,
+        users: usersInfo,
         records: { ...getTelemetryReadStatus().records, oldestAt: oldestReadAt },
         totals: getTelemetryReadStatus().totals,
       },

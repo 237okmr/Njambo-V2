@@ -69,6 +69,7 @@ const ROUTE_TABLE: Array<[method: string, pattern: RegExp, requirement: RouteReq
 
   ['GET', /^\/(read-budget|client-reads|activity-data)$/, any('dashboard.view')],
   ['GET', /^\/dashboard-data$/, any('dashboard.view', 'players.view', 'matches.view')],
+  ['POST', /^\/users-summary$/, any('dashboard.view')],
   ['GET', /^\/live-metrics$/, any('dashboard.view', 'rooms.view')],
   ['GET', /^\/game-history$/, any('dashboard.view', 'matches.view', 'players.view')],
   ['POST', /^\/matches$/, 'OWNER'],
