@@ -2,20 +2,16 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Trophy,
-  Crown,
-  Medal,
   Flame,
   Coins,
   Percent,
   Search,
   RotateCw,
   X,
-  ChevronRight,
   ShieldCheck,
   UserPlus,
   Swords,
   Share2,
-  Sparkles,
   Info,
   Check,
 } from 'lucide-react';
@@ -27,9 +23,10 @@ import {
   PublicPlayerProfileData,
 } from '../../types/leaderboard';
 import { LeaderboardService } from '../../services/leaderboardService';
-import { SoloDailyGauge } from '../common/SoloDailyGauge';
 import { FriendService } from '../../services/friendService';
 import { PlayerAvatar } from '../profile/PlayerAvatar';
+import { LeaderboardCard, LeaderboardPodium } from './LeaderboardCards';
+import { MyPositionBar, MyPositionPanel } from './MyPositionPanel';
 import { HeadToHeadModal } from '../rivalry/HeadToHeadModal';
 import { usePlayerProfile } from '../../context/PlayerProfileContext';
 import { GoogleIcon } from '../common/GoogleIcon';
@@ -68,6 +65,8 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
   const [selectedModeFilter, setSelectedModeFilter] = useState<'ALL' | 'MULTIPLAYER' | 'SOLO'>('ALL');
   const [selectedTimeframe, setSelectedTimeframe] = useState<LeaderboardTimeframe>('ALL');
   const [showMasteryHelp, setShowMasteryHelp] = useState<boolean>(false);
+  const [isPositionOpen, setIsPositionOpen] = useState<boolean>(false);
+  const [highlightedUid, setHighlightedUid] = useState<string | null>(null);
 
   // Mémorisation des filtres pour l'onglet Fortune (CHIPS)
   const savedTimeframeRef = React.useRef<LeaderboardTimeframe>('ALL');
@@ -124,8 +123,30 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
   }, [isOpen, selectedPlayer, activeCategory, onClose]);
 
   useBackLayer(isOpen && Boolean(selectedPlayer), () => setSelectedPlayer(null));
+  useBackLayer(isOpen && isPositionOpen, () => setIsPositionOpen(false));
+
+  // Montre la carte du joueur : les filtres sont retirés, car ils peuvent la masquer.
+  const handleLocateMe = () => {
+    setIsPositionOpen(false);
+    setSearchQuery('');
+    setSelectedModeFilter('ALL');
+    const me = entries.find((e) => e.isCurrentUser);
+    if (!me || !baseEligibleEntries.some((e) => e.uid === me.uid)) {
+      setActionSuccessMessage("Tu n'apparais pas encore dans cette liste.");
+      setTimeout(() => setActionSuccessMessage(null), 3000);
+      return;
+    }
+    setHighlightedUid(me.uid);
+    // Attend le rendu sans filtres pour trouver la carte.
+    setTimeout(() => document.getElementById(`leaderboard-player-${me.uid}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+    setTimeout(() => setHighlightedUid(null), 2500);
+  };
 
   const handleBackClick = () => {
+    if (isPositionOpen) {
+      setIsPositionOpen(false);
+      return;
+    }
     if (selectedPlayer) {
       setSelectedPlayer(null);
       return;
@@ -251,271 +272,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
     }
   };
 
-  const renderPodiumScore = (player: LeaderboardEntry) => {
-    if (activeCategory === 'CHIPS') {
-      const fortune = player.fortune ?? player.scoreValue ?? 0;
-      const gains = player.multiplayerGains ?? 0;
-      const pertes = player.multiplayerPertes ?? 0;
-
-      let colorClass = 'text-slate-400';
-      let sign = '';
-      if (fortune > 0) {
-        colorClass = 'text-emerald-400';
-        sign = '+';
-      } else if (fortune < 0) {
-        colorClass = 'text-rose-400';
-        sign = '';
-      }
-
-      return (
-        <div className="flex flex-col items-center gap-0.5">
-          <span className={`font-mono font-black text-sm sm:text-base ${colorClass}`}>
-            {sign}{fortune.toLocaleString('fr-FR')} jetons
-          </span>
-          <span className="text-xs text-slate-500 whitespace-nowrap">
-            G:{gains} · P:{pertes}
-          </span>
-          <span className="text-xs text-slate-600 font-bold tracking-wider uppercase">
-            🌐 Multijoueur
-          </span>
-        </div>
-      );
-    }
-
-    if (activeCategory === 'KORAS') {
-      return (
-        <div className="flex flex-col items-center gap-1">
-          <span className="font-mono font-black text-sm sm:text-base text-amber-400">
-            {player.koraCount + player.doubleKoraCount * 2} Koras
-          </span>
-          <div className="flex gap-0.5 flex-wrap justify-center max-w-[80px]">
-            <span className="px-1 py-0.2 rounded bg-amber-500/10 text-amber-400 text-xs font-black border border-amber-500/20 whitespace-nowrap">
-              👑 {player.koraCount} K.
-            </span>
-            <span className="px-1 py-0.2 rounded bg-slate-500/10 text-slate-400 text-xs font-black border border-slate-500/20 whitespace-nowrap">
-              💎 {player.doubleKoraCount} D.
-            </span>
-          </div>
-        </div>
-      );
-    }
-
-    if (activeCategory === 'WIN_RATE') {
-      return (
-        <div className="flex flex-col items-center">
-          <span className="font-mono font-black text-sm sm:text-base text-amber-400">
-            {player.winRate}%
-          </span>
-          <span className="text-xs text-slate-500 whitespace-nowrap mt-0.5">
-            {player.gamesWon}/{player.gamesPlayed} j.
-          </span>
-        </div>
-      );
-    }
-
-    // Default: WINS (Score de Maîtrise)
-    const mastery = player.masteryScore ?? player.scoreValue ?? 0;
-    return (
-      <div className="flex flex-col items-center gap-1">
-        <div className="flex flex-col items-center">
-          <span className="font-mono font-black text-sm sm:text-base text-amber-400 flex items-center gap-1">
-            <span className="text-xs">⭐</span>
-            <span>{mastery.toLocaleString('fr-FR')}</span>
-            <span className="text-xs font-bold text-amber-300/90">points</span>
-          </span>
-          <span className="text-xs text-slate-500 whitespace-nowrap uppercase tracking-wider font-bold">
-            Score de Maîtrise
-          </span>
-        </div>
-        <div className="flex items-center justify-center gap-1 flex-wrap text-xs font-mono">
-          {player.manchesWon !== undefined && player.manchesWon > 0 && (
-            <span className="px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300 font-bold whitespace-nowrap">
-              🏆 {player.manchesWon}m
-            </span>
-          )}
-          <span className="px-1.5 py-0.5 rounded bg-slate-800/80 border border-slate-700/50 text-slate-300 whitespace-nowrap">
-            🃏 {player.partiesWon || player.gamesWon}d
-          </span>
-        </div>
-      </div>
-    );
-  };
-
-  const renderScoreValue = (player: LeaderboardEntry) => {
-    if (activeCategory === 'CHIPS') {
-      const fortune = player.fortune ?? player.scoreValue ?? 0;
-      const gains = player.multiplayerGains ?? 0;
-      const pertes = player.multiplayerPertes ?? 0;
-
-      let colorClass = 'text-slate-400';
-      let sign = '';
-      if (fortune > 0) {
-        colorClass = 'text-emerald-400';
-        sign = '+';
-      } else if (fortune < 0) {
-        colorClass = 'text-rose-400';
-        sign = '';
-      }
-
-      return (
-        <div className="flex flex-col items-center">
-          <span className={`font-mono font-black text-xs ${colorClass}`}>
-            {sign}{fortune.toLocaleString('fr-FR')} jetons
-          </span>
-          <span className="text-xs text-slate-500 whitespace-nowrap mt-0.5">
-            Gains : {gains} jetons · Pertes : {pertes} jetons
-          </span>
-          <span className="text-xs text-slate-600 font-bold tracking-wider mt-0.5 uppercase">
-            🌐 Multijoueur
-          </span>
-        </div>
-      );
-    }
-
-    if (activeCategory === 'KORAS') {
-      const totalPoints = player.koraCount + player.doubleKoraCount * 2;
-      return (
-        <div className="flex flex-col items-center gap-1">
-          <span className="font-mono font-black text-xs text-amber-400">
-            {totalPoints} Koras
-          </span>
-          <div className="flex gap-1 flex-wrap justify-center max-w-[120px]">
-            <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded bg-amber-500/10 text-amber-400 text-xs font-bold border border-amber-500/20 whitespace-nowrap">
-              👑 {player.koraCount} K.
-            </span>
-            <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded bg-slate-500/10 text-slate-400 text-xs font-bold border border-slate-500/20 whitespace-nowrap">
-              💎 {player.doubleKoraCount} D.
-            </span>
-          </div>
-        </div>
-      );
-    }
-
-    if (activeCategory === 'WIN_RATE') {
-      return (
-        <div className="flex flex-col items-center">
-          <span className="font-mono font-black text-xs text-amber-400">
-            {player.winRate}%
-          </span>
-          <span className="text-xs text-slate-500 whitespace-nowrap mt-0.5">
-            {player.gamesWon}/{player.gamesPlayed} parties
-          </span>
-        </div>
-      );
-    }
-
-    // Default: WINS (Score de Maîtrise)
-    const mastery = player.masteryScore ?? player.scoreValue ?? 0;
-    return (
-      <div className="flex flex-col items-center gap-1">
-        <span className="font-mono font-black text-xs sm:text-sm text-amber-400 flex items-center gap-1">
-          <span>⭐</span>
-          <span>{mastery.toLocaleString('fr-FR')} points</span>
-        </span>
-        <div className="flex flex-col items-center gap-0.5 text-xs">
-          {(player.manchesWon !== undefined && player.manchesWon > 0) && (
-            <div className="flex items-center gap-1 px-1.2 py-0.2 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300 whitespace-nowrap">
-              <span>🏆</span>
-              <span className="font-mono font-bold text-xs">{player.manchesWon}</span>
-              <span className="text-xs opacity-75 font-medium">{player.manchesWon > 1 ? 'manches' : 'manche'}</span>
-            </div>
-          )}
-          <div className="flex items-center gap-1 px-1.2 py-0.2 rounded bg-slate-800/40 border border-slate-800/50 text-slate-300 whitespace-nowrap">
-            <span>🃏</span>
-            <span className="font-mono font-bold text-xs">{player.partiesWon || player.gamesWon}</span>
-            <span className="text-xs opacity-75 font-medium">parties</span>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderPursuerScore = (player: LeaderboardEntry) => {
-    if (activeCategory === 'CHIPS') {
-      const fortune = player.fortune ?? player.scoreValue ?? 0;
-      const gains = player.multiplayerGains ?? 0;
-      const pertes = player.multiplayerPertes ?? 0;
-
-      let colorClass = 'text-slate-400';
-      let sign = '';
-      if (fortune > 0) {
-        colorClass = 'text-emerald-400';
-        sign = '+';
-      } else if (fortune < 0) {
-        colorClass = 'text-rose-400';
-        sign = '';
-      }
-
-      return (
-        <div className="text-right shrink-0 flex flex-col items-end">
-          <span className={`font-mono font-black text-xs sm:text-sm ${colorClass}`}>
-            {sign}{fortune.toLocaleString('fr-FR')} jetons
-          </span>
-          <span className="text-xs text-slate-500 mt-0.5">
-            Gains : {gains} jetons · Pertes : {pertes} jetons
-          </span>
-          <span className="text-xs text-slate-600 font-bold uppercase mt-0.5">
-            🌐 Multijoueur
-          </span>
-        </div>
-      );
-    }
-
-    if (activeCategory === 'KORAS') {
-      const totalPoints = player.koraCount + player.doubleKoraCount * 2;
-      return (
-        <div className="text-right shrink-0 flex flex-col items-end gap-1">
-          <span className="font-mono font-black text-xs sm:text-sm text-amber-400">
-            {totalPoints} Koras
-          </span>
-          <div className="flex gap-1.5 flex-wrap justify-end">
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 text-xs font-bold border border-amber-500/20 whitespace-nowrap">
-              👑 {player.koraCount} Kora
-            </span>
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-500/10 text-slate-300 text-xs font-bold border border-slate-500/20 whitespace-nowrap">
-              💎 {player.doubleKoraCount} Double
-            </span>
-          </div>
-        </div>
-      );
-    }
-
-    if (activeCategory === 'WIN_RATE') {
-      return (
-        <div className="text-right shrink-0 flex flex-col items-end">
-          <span className="font-mono font-black text-xs sm:text-sm text-amber-400">
-            {player.winRate}%
-          </span>
-          <span className="text-xs text-slate-500 mt-0.5">
-            {player.gamesWon}/{player.gamesPlayed} parties
-          </span>
-        </div>
-      );
-    }
-
-    // Default: WINS (Score de Maîtrise)
-    const mastery = player.masteryScore ?? player.scoreValue ?? 0;
-    return (
-      <div className="text-right shrink-0 flex flex-col items-end gap-1">
-        <div className="text-xs sm:text-sm font-black font-mono text-amber-400 flex items-center gap-1">
-          <span className="text-xs">⭐</span>
-          <span>{mastery.toLocaleString('fr-FR')} points</span>
-        </div>
-        <div className="flex flex-col items-end gap-0.5 text-xs">
-          <div className="flex items-center gap-1.5 text-slate-400">
-            {(player.manchesWon !== undefined && player.manchesWon > 0) && (
-              <span className="px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300 font-medium">
-                🏆 {player.manchesWon} {player.manchesWon > 1 ? 'manches' : 'manche'}
-              </span>
-            )}
-            <span className="px-1.5 py-0.5 rounded bg-slate-800/60 border border-slate-700/60 text-slate-300 font-medium">
-              🃏 {player.partiesWon || player.gamesWon} { (player.partiesWon || player.gamesWon) > 1 ? 'parties' : 'partie' }
-            </span>
-          </div>
-        </div>
-      </div>
-    );
-  };
+  const handleSelectEntry = (player: LeaderboardEntry) => setSelectedPlayer(LeaderboardService.getPublicPlayerProfile(player));
 
   const categoryTabs: SegmentTab<LeaderboardCategory>[] = useMemo(
     () => [
@@ -593,6 +350,25 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
         onChange={(cat) => setActiveCategory(cat)}
         ariaLabel="Catégories du palmarès"
       />
+
+      {/* Ta place, sur une seule ligne : le classement garde tout l'écran */}
+      {!isLoggedIn || profile?.isGuest ? (
+        <div className="shrink-0 px-3 sm:px-6 py-1.5 bg-slate-900/90 border-b border-slate-800/80">
+          <div className="max-w-2xl mx-auto flex items-center justify-between gap-2">
+            <span className="text-xs text-slate-300 min-w-0">Invité : ton score n'est pas classé.</span>
+            <button
+              type="button"
+              onClick={loginWithGoogle}
+              className="min-h-11 px-3 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-black text-xs flex items-center justify-center gap-2 cursor-pointer shrink-0 active:scale-95"
+            >
+              <GoogleIcon className="w-4 h-4 shrink-0" />
+              <span>Sauvegarder avec Google</span>
+            </button>
+          </div>
+        </div>
+      ) : userRank ? (
+        <MyPositionBar rank={userRank} onOpen={() => setIsPositionOpen(true)} />
+      ) : null}
 
       {/* MAIN CONTAINER */}
       <main className="flex-1 overflow-y-auto custom-dark-scrollbar max-w-2xl w-full mx-auto p-3 sm:p-5 space-y-4">
@@ -743,13 +519,6 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
               </div>
             </button>
 
-            {/* Quick compact summary pills when not expanded */}
-            {!showMasteryHelp && (
-              <div className="px-3 pb-2 pt-0 text-xs text-slate-300">
-                <span>Gagne des points à chaque manche et partie. Le multijoueur rapporte le plus.</span>
-              </div>
-            )}
-
             {/* Full detailed breakdown when expanded */}
             {showMasteryHelp && (
               <div className="p-3 pt-0 border-t border-amber-500/15 space-y-2 text-xs text-slate-400">
@@ -791,83 +560,9 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
           </div>
         )}
 
-        {/* PODIUM (TOP 3) - Balanced, symmetric cards for same height & width */}
+        {/* Podium : les trois premiers */}
         {!searchQuery.trim() && selectedModeFilter === 'ALL' && entries.length >= 3 && top3.length >= 3 && (
-          <div className="pt-2 pb-1">
-            <div className="grid grid-cols-3 items-end gap-1.5 xs:gap-2 sm:gap-3 max-w-lg mx-auto">
-              {/* 2nd Place (Silver) */}
-              <div
-                onClick={() => setSelectedPlayer(LeaderboardService.getPublicPlayerProfile(top3[1]))}
-                className="flex flex-col items-center justify-between p-1.5 xs:p-2.5 sm:p-3 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 cursor-pointer transition hover:scale-102 h-56 relative shadow-lg"
-              >
-                <div className="flex flex-col items-center w-full min-w-0">
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-slate-800 text-slate-300 text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow border border-slate-700 whitespace-nowrap">
-                    🥈 #2 ARGENT
-                  </div>
-                  <div className="mt-2.5 shrink-0">
-                    <PlayerAvatar avatarId={top3[1].avatarId} size="md" photoURL={top3[1].photoURL} />
-                  </div>
-                  <span className="text-xs font-bold text-white mt-2 truncate max-w-full text-center">
-                    {top3[1].displayName}
-                  </span>
-                  <span className="text-xs text-slate-400 mt-0.5 truncate max-w-full text-center">
-                    {top3[1].title.badge} {top3[1].title.title}
-                  </span>
-                </div>
-                <div className="flex flex-col items-center gap-1 w-full mt-auto">
-                  {renderPodiumScore(top3[1])}
-                </div>
-              </div>
-
-              {/* 1st Place (Gold) - Slightly Elevated but Balanced */}
-              <div
-                onClick={() => setSelectedPlayer(LeaderboardService.getPublicPlayerProfile(top3[0]))}
-                className="flex flex-col items-center justify-between p-1.5 xs:p-2.5 sm:p-3 rounded-2xl bg-gradient-to-b from-amber-500/15 to-slate-900/95 border-2 border-amber-400 cursor-pointer transition hover:scale-105 h-56 relative shadow-xl shadow-amber-500/5 z-10"
-              >
-                <div className="flex flex-col items-center w-full min-w-0">
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-slate-950 text-xs font-black px-2 py-0.5 rounded-full flex items-center gap-1 shadow whitespace-nowrap">
-                    <Crown className="w-2.5 h-2.5 fill-slate-950" /> #1 MAÎTRE
-                  </div>
-                  <div className="mt-2.5 shrink-0">
-                    <PlayerAvatar avatarId={top3[0].avatarId} size="lg" photoURL={top3[0].photoURL} />
-                  </div>
-                  <span className="text-xs sm:text-sm font-black text-amber-300 mt-2 truncate max-w-full text-center">
-                    {top3[0].displayName}
-                  </span>
-                  <span className="text-xs font-bold text-amber-400/80 mt-0.5 truncate max-w-full text-center">
-                    {top3[0].title.badge} {top3[0].title.title}
-                  </span>
-                </div>
-                <div className="flex flex-col items-center gap-1 w-full mt-auto">
-                  {renderPodiumScore(top3[0])}
-                </div>
-              </div>
-
-              {/* 3rd Place (Bronze) */}
-              <div
-                onClick={() => setSelectedPlayer(LeaderboardService.getPublicPlayerProfile(top3[2]))}
-                className="flex flex-col items-center justify-between p-1.5 xs:p-2.5 sm:p-3 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 cursor-pointer transition hover:scale-102 h-56 relative shadow-lg"
-              >
-                <div className="flex flex-col items-center w-full min-w-0">
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-800 text-slate-300 text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow border border-slate-700/80 whitespace-nowrap">
-                    🥉 #3 BRONZE
-                  </div>
-                  <div className="mt-2.5 shrink-0">
-                    <PlayerAvatar avatarId={top3[2].avatarId} size="md" photoURL={top3[2].photoURL} />
-                  </div>
-                  <span className="text-xs font-bold text-white mt-2 truncate max-w-full text-center">
-                    {top3[2].displayName}
-                  </span>
-                  <span className="text-xs text-slate-400 mt-0.5 truncate max-w-full text-center">
-                    {top3[2].title.badge} {top3[2].title.title}
-                  </span>
-                </div>
-                <div className="flex flex-col items-center gap-1 w-full mt-auto">
-                  {renderPodiumScore(top3[2])}
-                </div>
-              </div>
-            </div>
-          </div>
+          <LeaderboardPodium players={top3} category={activeCategory} highlightedUid={highlightedUid} onSelect={handleSelectEntry} />
         )}
 
         {/* LIST OF RANKED PLAYERS */}
@@ -892,187 +587,28 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
               </p>
             </div>
           ) : (
-            (entries.length >= 3 && !searchQuery.trim() && selectedModeFilter === 'ALL' ? restEntries : filteredEntries).map((player) => {
-              return (
-                <div
-                  key={player.uid}
-                  onClick={() => setSelectedPlayer(LeaderboardService.getPublicPlayerProfile(player))}
-                  className={`p-3 rounded-xl border flex items-center justify-between gap-3 transition cursor-pointer hover:border-slate-600 ${
-                    player.isCurrentUser
-                      ? 'bg-amber-500/10 border-amber-500/50 shadow-md shadow-amber-500/5'
-                      : 'bg-slate-900/70 border-slate-800/80'
-                  }`}
-                >
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    {/* Rank badge */}
-                    <span
-                      className={`w-7 h-7 rounded-lg flex items-center justify-center font-mono font-black text-xs shrink-0 ${
-                        player.rank <= 3
-                          ? 'bg-amber-500 text-slate-950'
-                          : player.rank <= 10
-                          ? 'bg-slate-800 text-amber-400 border border-slate-700'
-                          : 'bg-slate-950 text-slate-400 border border-slate-900'
-                      }`}
-                    >
-                      #{player.rank}
-                    </span>
-
-                    {/* Avatar */}
-                    <PlayerAvatar
-                      avatarId={player.avatarId}
-                      photoURL={player.photoURL}
-                      size="sm"
-                      className="w-9 h-9 shrink-0"
-                    />
-
-                    {/* Name & Title */}
-                    <div className="flex flex-col min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span
-                          className={`text-xs sm:text-sm font-bold truncate ${
-                            player.isCurrentUser ? 'text-amber-300' : 'text-white'
-                          }`}
-                        >
-                          {player.displayName}
-                        </span>
-                        {player.isCurrentUser && (
-                          <span className="text-xs font-black px-1.5 py-0.2 rounded bg-amber-500 text-slate-950">
-                            Toi
-                          </span>
-                        )}
-                        <span className="text-xs text-slate-500 font-mono">
-                          {player.friendCode}
-                        </span>
-                      </div>
-                      <span className={`text-xs font-medium ${player.title.colorClass}`}>
-                        {player.title.badge} {player.title.title}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Score value / Fortune */}
-                  {renderPursuerScore(player)}
-                </div>
-              );
-            })
+            (entries.length >= 3 && !searchQuery.trim() && selectedModeFilter === 'ALL' ? restEntries : filteredEntries).map((player) => (
+              <LeaderboardCard key={player.uid} player={player} category={activeCategory} isHighlighted={highlightedUid === player.uid} onSelect={handleSelectEntry} />
+            ))
           )}
         </div>
       </main>
 
-      {/* STICKY BOTTOM BAR: Either Official Rank for logged in users OR Certification Callout for guests */}
-      {(!isLoggedIn || profile?.isGuest) ? (
-        <footer className="px-3 py-2 border-t border-amber-500/30 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 backdrop-blur-md shrink-0 z-20 shadow-2xl">
-          <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
-            <span className="text-xs text-slate-300 min-w-0">
-              Invité : ton score n'est pas classé.
-            </span>
-            <button
-              type="button"
-              onClick={loginWithGoogle}
-              className="h-10 px-3 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-black text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg transition-all shrink-0 active:scale-95"
-            >
-              <GoogleIcon className="w-4 h-4 shrink-0" />
-              <span>Sauvegarder avec Google</span>
-            </button>
-          </div>
-        </footer>
-      ) : userRank ? (
-        <footer className="p-3 sm:p-4 border-t border-slate-800 bg-slate-900/95 backdrop-blur-md shrink-0 z-20 shadow-xl">
-          <div className="max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="flex items-center gap-3 w-full sm:w-auto min-w-0">
-              {/* Grand Rank Visual */}
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-amber-500 to-amber-500 text-slate-950 font-black text-lg flex items-center justify-center shadow-lg border border-amber-400 shrink-0">
-                #{userRank.rank}
-              </div>
-              <div className="flex flex-col min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-black text-white">Ta position au Palmarès</span>
-                  <span className="text-xs font-mono text-amber-400">
-                    (Rang #{userRank.rank}/{userRank.totalRankedPlayers})
-                  </span>
-                </div>
-                
-                {/* Dynamically Computed Points Gap to Next Player */}
-                <div className="text-xs text-slate-400 truncate flex items-center gap-1 flex-wrap mt-0.5">
-                  {userRank.nextPlayerName ? (
-                    <>
-                      <span>Écart :</span>
-                      <span className="text-amber-400 font-bold font-mono">
-                        +{userRank.pointsToNextRank.toLocaleString('fr-FR')}
-                        {activeCategory === 'CHIPS' ? ' jetons' : activeCategory === 'WINS' ? ' points' : activeCategory === 'KORAS' ? ' Koras' : '%'}
-                      </span>
-                      <span className="text-slate-500">pour dépasser</span>
-                      <span className="text-slate-200 font-bold truncate max-w-[90px]" title={userRank.nextPlayerName}>
-                        {userRank.nextPlayerName}
-                      </span>
-                      <span className="text-slate-500 font-mono text-xs bg-slate-950 px-1 py-0.2 rounded border border-slate-800 shrink-0">
-                        #{userRank.rank - 1}
-                      </span>
-                    </>
-                  ) : (
-                    <span className="text-emerald-400 font-black tracking-wide flex items-center gap-1">
-                      👑 Tu es au sommet du Palmarès !
-                    </span>
-                  )}
-                </div>
-
-                {/* Jauge des points solo du jour */}
-                <div className="mt-1.5 w-full sm:w-64">
-                  <SoloDailyGauge soloDaily={profile?.soloDaily} compact />
-                </div>
-
-                {/* Honorific Title progress bar (Highly Visible) */}
-                <div className="flex items-center gap-2 mt-1.5 w-full sm:w-64">
-                  <div className="flex-1 h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
-                    <div
-                      className="h-full bg-gradient-to-r from-amber-500 via-amber-400 to-amber-300 rounded-full transition-all duration-500"
-                      style={{ width: `${progressPercent}%` }}
-                    />
-                  </div>
-                  <span className="text-xs text-amber-400 font-bold font-mono shrink-0">
-                    {progressPercent}%
-                  </span>
-                  <span className="text-xs text-slate-400 truncate max-w-[100px]" title={nextTitle ? `Prochain titre : ${nextTitle.title}` : 'Max'}>
-                    vers {nextTitle ? nextTitle.title : 'MAX'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end shrink-0">
-              {/* Highlight own stats */}
-              <div className="px-3 py-1 bg-slate-950 rounded-lg border border-slate-800 text-center sm:text-right min-w-[80px]">
-                <div className="text-xs text-slate-500 uppercase font-black">{activeCategory === 'CHIPS' ? 'Ta fortune' : activeCategory === 'WINS' ? 'Ton score' : activeCategory === 'KORAS' ? 'Tes Koras' : 'Ton ratio'}</div>
-                <div className={`text-xs font-black font-mono ${
-                  activeCategory === 'CHIPS'
-                    ? ((profile?.stats?.fortune || 0) > 0 ? 'text-emerald-400' : (profile?.stats?.fortune || 0) < 0 ? 'text-rose-400' : 'text-slate-400')
-                    : 'text-amber-400'
-                }`}>
-                  {activeCategory === 'CHIPS'
-                    ? `${(profile?.stats?.fortune || 0) > 0 ? '+' : ''}${(profile?.stats?.fortune || 0).toLocaleString('fr-FR')} jetons`
-                    : activeCategory === 'WINS'
-                    ? `${profile?.stats?.masteryScore || 0} points`
-                    : activeCategory === 'KORAS'
-                    ? `${(profile?.stats?.koraCount || 0) + (profile?.stats?.doubleKoraCount || 0) * 2} points`
-                    : `${profile?.stats?.winRate || 0}%`
-                  }
-                </div>
-              </div>
-
-              {onOpenProfile && (
-                <button
-                  type="button"
-                  onClick={onOpenProfile}
-                  className="h-9 px-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold text-xs flex items-center gap-1 cursor-pointer transition shrink-0"
-                >
-                  <span>Profil</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-          </div>
-        </footer>
-      ) : null}
+      {/* Panneau « Ma position » */}
+      <AnimatePresence>
+        {isPositionOpen && userRank && (
+          <MyPositionPanel
+            rank={userRank}
+            category={activeCategory}
+            entry={entries.find((e) => e.isCurrentUser) ?? null}
+            nextTitle={nextTitle}
+            progressPercent={progressPercent}
+            onClose={() => setIsPositionOpen(false)}
+            onLocate={handleLocateMe}
+            onOpenProfile={onOpenProfile}
+          />
+        )}
+      </AnimatePresence>
 
       {/* PUBLIC PLAYER PROFILE MODAL (INSPECT OVERLAY) */}
       <AnimatePresence>
@@ -1120,13 +656,13 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                 <div>
                   <div className="text-xs font-bold text-slate-400">Score de Maîtrise</div>
                   <div className="text-sm font-black text-amber-400 font-mono">
-                    {selectedPlayer.masteryScore ?? 0} points
+                    {(selectedPlayer.masteryScore ?? 0).toLocaleString('fr-FR')} points
                   </div>
                 </div>
                 <div>
                   <div className="text-xs font-bold text-slate-400">Manches / Parties</div>
                   <div className="text-sm font-black text-slate-200 font-mono">
-                    {selectedPlayer.manchesWon ?? 0}m · {selectedPlayer.partiesWon || selectedPlayer.gamesWon}d
+                    {selectedPlayer.manchesWon ?? 0} manches · {selectedPlayer.partiesWon || selectedPlayer.gamesWon} parties
                   </div>
                 </div>
                 <div>
@@ -1172,7 +708,7 @@ export const GlobalLeaderboardModal: React.FC<GlobalLeaderboardModalProps> = ({
                   className="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 text-xs font-black flex items-center justify-center gap-1.5 cursor-pointer shadow transition"
                 >
                   <Swords className="w-3.5 h-3.5 text-amber-400" />
-                  <span>⚔️ Face-à-face et rivalité</span>
+                  <span>Face-à-face et rivalité</span>
                 </button>
 
                 <div className="grid grid-cols-2 gap-2">

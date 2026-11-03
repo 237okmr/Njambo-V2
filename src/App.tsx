@@ -3169,6 +3169,10 @@ function GameApp() {
           <GlobalLeaderboardModal
             isOpen={true}
             onClose={() => setIsLeaderboardOpen(false)}
+            onOpenProfile={() => {
+              setIsLeaderboardOpen(false);
+              setIsProfileModalOpen(true);
+            }}
           />
         )}
       </AnimatePresence>
