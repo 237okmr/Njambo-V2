@@ -628,6 +628,11 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Nombre de lectures Firestore faites par le serveur pour katika, au-delà duquel le tableau de bord affiche une alerte. Le palier gratuit de Firestore est de 50 000 lectures par jour pour tout le projet (téléphones des joueurs compris).',
   },
   {
+    key: 'katikaRightsCacheSeconds', label: 'Délai d\'application d\'un changement de droits', unit: 's',
+    min: 10, max: 600, default: 60, group: 'katika', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Le serveur relit la fiche d\'un administrateur ajouté au plus une fois par période : un retrait ou un changement de droits s\'applique en moins de ce délai. Plus court : plus de lectures Firestore (une par admin actif et par période).',
+  },
+  {
     key: 'katikaAuditMaxAutomaticPerDay', label: 'Événements automatiques conservés par jour dans le journal', unit: '',
     min: 50, max: 5000, default: 500, group: 'katika', scope: 'server', effect: 'immediate', advanced: true,
     help: 'Plafond quotidien d\'écritures dans le journal durable pour les alertes automatiques (forfaits, connexions). Les actions des admins ne sont jamais limitées. Au-delà, l\'événement reste en mémoire et le journal le signale.',

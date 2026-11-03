@@ -387,6 +387,13 @@ async function getCachedGlobalCounts(): Promise<GlobalMancheCounts> {
   return counts;
 }
 
+/** Action sur un joueur faite par le serveur ; une erreur est remontée à l'écran. */
+async function playerRequest(url: string, method: 'POST' | 'DELETE'): Promise<void> {
+  const res = await tikaFetch(url, { method });
+  const body = await res.json().catch(() => null);
+  if (!res.ok || !body?.success) throw new Error(body?.error || 'Action impossible.');
+}
+
 // État de la dernière lecture du journal, affiché par l'onglet Journal.
 let auditLogsNotice = '';
 
@@ -1504,19 +1511,6 @@ export const KatikaService = {
     }
 
     try {
-      if (db) {
-        await setDoc(doc(db, 'users', playerId), {
-          stats: {
-            totalChipsWon: player.chipsBalance,
-          },
-          updatedAt: Date.now(),
-        }, { merge: true });
-      }
-    } catch (e) {
-      console.warn('[KatikaService] Could not persist chips to Firestore users collection:', e);
-    }
-
-    try {
       await tikaFetch('/api/katika/player-chips', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1552,79 +1546,20 @@ export const KatikaService = {
 
   validateUserForLeaderboard: async (playerId: string): Promise<void> => {
     invalidateKatikaMemoryCache();
-    if (db) {
-      try {
-        await setDoc(doc(db, 'users', playerId), {
-          isGuest: false,
-          authProvider: 'google.com',
-          isBot: false,
-          updatedAt: Date.now(),
-        }, { merge: true });
-      } catch (err) {
-        console.error('[KatikaService] Error validating user for leaderboard in Firestore:', err);
-        throw err;
-      }
-    }
-
-    const logItem: KatikaAuditLog = {
-      id: `log-val-${Date.now()}`,
-      timestamp: Date.now(),
-      type: 'KATIKA_ACTION',
-      severity: 'INFO',
-      actor: 'Katika Master',
-      summary: `Validation manuelle Palmarès pour le compte ${playerId}`,
-      details: { playerId, action: 'VALIDATE_LEADERBOARD', authProvider: 'google.com', isGuest: false },
-    };
-    mockAuditLogs.unshift(logItem);
+    // Le serveur fait l'écriture et l'inscrit au journal sous le nom de l'admin connecté.
+    await playerRequest(`/api/katika/players/${encodeURIComponent(playerId)}/leaderboard-validate`, 'POST');
   },
 
   markUserAsBot: async (playerId: string): Promise<void> => {
     invalidateKatikaMemoryCache();
-    if (db) {
-      try {
-        await setDoc(doc(db, 'users', playerId), {
-          isBot: true,
-          updatedAt: Date.now(),
-        }, { merge: true });
-      } catch (err) {
-        console.error('[KatikaService] Error marking user as bot in Firestore:', err);
-        throw err;
-      }
-    }
-
-    const logItem: KatikaAuditLog = {
-      id: `log-bot-${Date.now()}`,
-      timestamp: Date.now(),
-      type: 'KATIKA_ACTION',
-      severity: 'WARNING',
-      actor: 'Katika Master',
-      summary: `Compte ${playerId} marqué comme BOT / Simulateur`,
-      details: { playerId, action: 'MARK_AS_BOT', isBot: true },
-    };
-    mockAuditLogs.unshift(logItem);
+    // Le serveur fait l'écriture et l'inscrit au journal sous le nom de l'admin connecté.
+    await playerRequest(`/api/katika/players/${encodeURIComponent(playerId)}/mark-bot`, 'POST');
   },
 
   deleteUserFromDatabase: async (playerId: string): Promise<void> => {
     invalidateKatikaMemoryCache();
-    if (db) {
-      try {
-        await deleteDoc(doc(db, 'users', playerId));
-      } catch (err) {
-        console.error('[KatikaService] Error deleting user in Firestore:', err);
-        throw err;
-      }
-    }
-
-    const logItem: KatikaAuditLog = {
-      id: `log-del-${Date.now()}`,
-      timestamp: Date.now(),
-      type: 'KATIKA_ACTION',
-      severity: 'CRITICAL',
-      actor: 'Katika Master',
-      summary: `Suppression définitive du compte ${playerId} de la base /users`,
-      details: { playerId, action: 'DELETE_USER' },
-    };
-    mockAuditLogs.unshift(logItem);
+    // Le serveur fait l'écriture et l'inscrit au journal sous le nom de l'admin connecté.
+    await playerRequest(`/api/katika/players/${encodeURIComponent(playerId)}`, 'DELETE');
   },
 
   getConfig: async (): Promise<KatikaGameConfig> => {

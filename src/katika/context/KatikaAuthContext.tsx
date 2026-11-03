@@ -9,13 +9,35 @@ import {
   browserLocalPersistence
 } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
+import { tikaFetch } from '../services/tikaFetch';
 
 import { KATIKA_AUTHORIZED_EMAIL } from '../../utils/adminAccess';
 
 export { KATIKA_AUTHORIZED_EMAIL };
 
+/** Droits du compte connecté, lus sur le serveur. Ils ne servent qu'à l'affichage : le serveur reste seul juge. */
+export interface KatikaAccess {
+  isOwner: boolean;
+  permissions: string[];
+}
+
+/** Le propriétaire est reconnu tout de suite ; un autre compte n'entre que si le serveur lui reconnaît une fiche active. */
+async function resolveAccess(user: User): Promise<KatikaAccess | null> {
+  const email = (user.email || '').trim().toLowerCase();
+  if (email === KATIKA_AUTHORIZED_EMAIL.toLowerCase()) return { isOwner: true, permissions: [] };
+  try {
+    const res = await tikaFetch('/api/katika/me');
+    if (!res.ok) return null;
+    const body = await res.json();
+    return body?.success ? { isOwner: false, permissions: Array.isArray(body.permissions) ? body.permissions : [] } : null;
+  } catch {
+    return null;
+  }
+}
+
 interface KatikaAuthContextType {
   user: User | null;
+  access: KatikaAccess | null;
   loading: boolean;
   isAuthorized: boolean;
   loginError: string | null;
@@ -27,6 +49,7 @@ const KatikaAuthContext = createContext<KatikaAuthContextType | null>(null);
 
 export const KatikaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [access, setAccess] = useState<KatikaAccess | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [loginError, setLoginError] = useState<string | null>(null);
 
@@ -39,12 +62,10 @@ export const KatikaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         try {
-          const idTokenResult = await currentUser.getIdTokenResult();
-          const normalizedEmail = (currentUser.email || '').trim().toLowerCase();
-          const isOwner = normalizedEmail === KATIKA_AUTHORIZED_EMAIL.toLowerCase();
-          const isSecondaryAdmin = idTokenResult.claims.admin === true;
+          const granted = await resolveAccess(currentUser);
 
-          if (isOwner || isSecondaryAdmin) {
+          if (granted) {
+            setAccess(granted);
             setUser(currentUser);
             setLoginError(null);
             setLoading(false);
@@ -84,16 +105,15 @@ export const KatikaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const credential = await signInWithPopup(auth, provider);
       
       const email = (credential.user?.email || '').trim().toLowerCase();
-      const idTokenResult = await credential.user.getIdTokenResult(true);
-      const isOwner = email === KATIKA_AUTHORIZED_EMAIL.toLowerCase();
-      const isSecondaryAdmin = idTokenResult.claims.admin === true;
+      const granted = await resolveAccess(credential.user);
 
-      if (!isOwner && !isSecondaryAdmin) {
+      if (!granted) {
         setUser(null);
         setLoginError(`Accès refusé : l'adresse ${email} n'est pas autorisée sur la station Katika Master.`);
         setLoading(false);
         return;
       }
+      setAccess(granted);
       setUser(credential.user);
     } catch (err: any) {
       if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
@@ -112,6 +132,7 @@ export const KatikaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       // ignore
     }
     setUser(null);
+    setAccess(null);
     window.location.replace('/');
   };
 
@@ -121,12 +142,13 @@ export const KatikaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const value = useMemo(() => ({
     user,
+    access,
     loading,
     isAuthorized,
     loginError,
     loginWithGoogle,
     logout
-  }), [user, loading, isAuthorized, loginError]);
+  }), [user, access, loading, isAuthorized, loginError]);
 
   return (
     <KatikaAuthContext.Provider value={value}>

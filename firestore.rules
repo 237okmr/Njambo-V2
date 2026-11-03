@@ -17,11 +17,12 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == uid;
     }
 
+    // Accès direct à la base : propriétaire seul. Les admins ajoutés passent par le serveur, qui vérifie leurs droits
+    // (server/katika/adminRights.ts) et applique un retrait en moins d'une minute.
     function isAdmin() {
       return isAuthenticated()
         && request.auth.token.get('email_verified', false) == true
-        && (request.auth.token.get('email', '') == '237okmr@gmail.com'
-            || request.auth.token.get('admin', false) == true);
+        && request.auth.token.get('email', '') == '237okmr@gmail.com';
     }
 
     // ===== Helpers : profil =====
@@ -333,14 +334,14 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Carnet de bord et backlog admin (Katika Admin Notes)
+    // Carnet de bord et backlog admin (Katika Admin Notes) : lu et écrit par le serveur seulement
     match /katika_admin_notes/{id} {
-      allow read, write: if isAdmin();
+      allow read, write: if false;
     }
 
-    // Administrateurs Katika (registre des administrateurs secondaires et audit)
+    // Registre des administrateurs ajoutés et de leurs droits : serveur seulement
     match /katika_admins/{uid} {
-      allow read, write: if isAdmin();
+      allow read, write: if false;
     }
 
     // Enregistrements de parties

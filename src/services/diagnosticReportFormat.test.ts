@@ -49,8 +49,8 @@ describe('compte d’administration', () => {
     assert.equal(isAdminIdentity(` ${KATIKA_AUTHORIZED_EMAIL.toUpperCase()} `), true);
   });
 
-  it('reconnaît un administrateur désigné par son jeton', () => {
-    assert.equal(isAdminIdentity('autre@example.com', { admin: true }), true);
+  it('l’ancien droit global du jeton ne donne plus accès : les admins ajoutés passent par le serveur', () => {
+    assert.equal(isAdminIdentity('autre@example.com', { admin: true }), false);
   });
 
   it('refuse tout autre compte, et un drapeau qui n’est pas exactement vrai', () => {

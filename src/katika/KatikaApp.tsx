@@ -23,6 +23,8 @@ import { KatikaAiFloatingBubble } from './components/KatikaAiFloatingBubble';
 import { Loader2, MonitorOff, Maximize2, ArrowLeft, Bot, Sparkles } from 'lucide-react';
 
 const KatikaWorkspace: React.FC = () => {
+  const { user } = useKatikaAuth();
+  const sessionEmail = user?.email || '';
   const [currentTab, setCurrentTab] = useState<KatikaTab>('DASHBOARD');
   const [config, setConfig] = useState<KatikaGameConfig | null>(null);
 
@@ -95,7 +97,7 @@ const KatikaWorkspace: React.FC = () => {
                 </div>
 
                 <div className="text-xs font-mono px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400">
-                  Session : <span className="text-amber-400">{KATIKA_AUTHORIZED_EMAIL}</span>
+                  Session : <span className="text-amber-400">{sessionEmail}</span>
                 </div>
               </div>
 

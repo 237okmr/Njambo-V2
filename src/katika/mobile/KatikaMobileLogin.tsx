@@ -76,9 +76,9 @@ export const KatikaMobileLogin: React.FC = () => {
         <div className="w-full bg-slate-900/90 border border-slate-800 rounded-xl p-3 text-left flex items-start gap-3 shadow-inner">
           <Lock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
           <div className="space-y-0.5 text-[11px]">
-            <span className="text-slate-400">Compte administratif vérifié :</span>
+            <span className="text-slate-400">Accès réservé :</span>
             <div className="font-mono text-amber-300 font-semibold truncate">
-              {KATIKA_AUTHORIZED_EMAIL}
+              comptes Google autorisés par le propriétaire
             </div>
           </div>
         </div>

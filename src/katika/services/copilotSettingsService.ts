@@ -1,3 +1,4 @@
+import { tikaFetch } from './tikaFetch';
 import { doc, getDoc, setDoc, updateDoc, deleteField, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import {
@@ -102,6 +103,17 @@ function notifyListeners(settings: KatikaCopilotSettings): void {
   });
 }
 
+/** Écriture par le serveur : le document est fermé en écriture aux navigateurs, le serveur vérifie les droits. */
+async function saveRemoteSettings(settings: KatikaCopilotSettings): Promise<void> {
+  const res = await tikaFetch('/api/katika/copilot-settings', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ settings }),
+  });
+  const body = await res.json().catch(() => null);
+  if (!res.ok || !body?.success) throw new Error(body?.error || 'Réglages non enregistrés.');
+}
+
 // Initialise un abonnement temps-réel avec Firestore si disponible
 let firestoreSubscribed = false;
 
@@ -145,7 +157,7 @@ export function initCopilotSettingsSync(): () => void {
         } else {
           // Document n'existe pas encore dans Firestore, on sauvegarde les défauts nettoyés
           const cleaned = cleanSettingsForStorage(inMemorySettings);
-          setDoc(docRef, cleaned).catch((err) => {
+          saveRemoteSettings(cleaned).catch((err) => {
             console.warn('[CopilotSettingsService] Création doc initial échouée:', err);
           });
         }
@@ -220,8 +232,7 @@ export const CopilotSettingsService = {
 
     // 2. Synchronisation distante dans Firestore
     try {
-      const docRef = doc(db, SETTINGS_COLLECTION, SETTINGS_DOC_ID);
-      await setDoc(docRef, updated, { merge: true });
+      await saveRemoteSettings(updated);
     } catch (err) {
       console.warn('[CopilotSettingsService] Sauvegarde Firestore différée ou échouée (sauvegardé en local):', err);
     }

@@ -161,26 +161,7 @@ export class RoomManager {
     actor: string;
     summary: string;
     details?: Record<string, any>;
-  }> = [
-    {
-      id: 'log-1',
-      // delay-ok: horodatage d'exemple du journal d'audit initial, pas un délai de jeu
-      timestamp: Date.now() - 1000 * 60 * 5,
-      type: 'AUTH',
-      severity: 'INFO',
-      actor: 'Katika Master',
-      summary: 'Session Katika Master active - Serveur centralisé connecté',
-    },
-    {
-      id: 'log-2',
-      // delay-ok: horodatage d'exemple du journal d'audit initial, pas un délai de jeu
-      timestamp: Date.now() - 1000 * 60 * 20,
-      type: 'KATIKA_ACTION',
-      severity: 'INFO',
-      actor: 'Katika Engine',
-      summary: 'Système d\'audit et sanctions serveur initialisé',
-    }
-  ];
+  }> = [];
 
   // Sanctions and Chip Overrides Central Store
   private static playerSanctions = new Map<string, {
@@ -344,7 +325,7 @@ export class RoomManager {
     return [...this.auditLogs];
   }
 
-  public static banPlayer(playerId: string, reason: string, banType: 'TEMPORARY' | 'PERMANENT', expiresAt?: number | null): void {
+  public static banPlayer(playerId: string, reason: string, banType: 'TEMPORARY' | 'PERMANENT', expiresAt?: number | null, actor: string = 'Katika Master'): void {
     this.playerSanctions.set(playerId, {
       status: 'BANNED',
       bannedReason: reason,
@@ -375,13 +356,13 @@ export class RoomManager {
       timestamp: Date.now(),
       type: 'KATIKA_ACTION',
       severity: 'CRITICAL',
-      actor: 'Katika Master',
+      actor,
       summary: `Sanction joueur (${playerId}) : BANNED (${banType})`,
       details: { playerId, reason, banType, expiresAt },
     });
   }
 
-  public static updatePlayerChips(playerId: string, newBalance: number, reason: string): void {
+  public static updatePlayerChips(playerId: string, newBalance: number, reason: string, actor: string = 'Katika Master'): void {
     this.playerChipOverrides.set(playerId, Math.max(0, newBalance));
 
     this.addAuditLog({
@@ -389,7 +370,7 @@ export class RoomManager {
       timestamp: Date.now(),
       type: 'KATIKA_ACTION',
       severity: 'WARNING',
-      actor: 'Katika Master',
+      actor,
       summary: `Ajustement jetons pour (${playerId}) ➔ ${newBalance} FCFA`,
       details: { playerId, newBalance, reason },
     });
@@ -5550,7 +5531,7 @@ export class RoomManager {
   /**
    * Katika Master Admin: Send admin message to a room or specific player
    */
-  public static adminSendMessage(roomCode: string, playerId: string | undefined, message: string): boolean {
+  public static adminSendMessage(roomCode: string, playerId: string | undefined, message: string, actor: string = 'Katika Master'): boolean {
     const room = this.rooms.get(roomCode);
     if (!room) return false;
 
@@ -5592,7 +5573,7 @@ export class RoomManager {
       timestamp: Date.now(),
       type: 'KATIKA_ACTION',
       severity: 'INFO',
-      actor: 'Katika Master',
+      actor,
       summary: `Message administratif envoyé sur la table ${roomCode}${playerId ? ` au joueur (${playerId})` : ''} : "${message}"`,
       details: { roomCode, playerId, message },
     });

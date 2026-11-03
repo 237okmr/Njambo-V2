@@ -96,7 +96,9 @@ import { previewDemoCleanup, applyDemoCleanup } from './server/cash/demoCleanup'
 import { totalDeduction } from './server/cash/demoCleanupRules';
 import { DepositError } from './server/cash/depositRules';
 import { CashLedgerError } from './server/cash/cashTypes';
-import { verifyFirebaseIdToken, listAdminUsers, setAdminUserClaim, getFirebaseAdminDb, getFirebaseAdminAppDb } from './server/firebaseAdmin';
+import { verifyFirebaseIdToken, setAdminUserClaim, getFirebaseAdminAuth, getFirebaseAdminAppDb } from './server/firebaseAdmin';
+import { ADMIN_TEMPLATES, isAllowed, isTemplateId, KatikaPermission, PERMISSION_LABELS, routeRequirement, sanitizePermissions } from './server/katika/adminRights';
+import { adminRegistry, listAdminEntries, readAdminEntry, writeAdminEntry } from './server/katika/adminRegistry';
 import { isActivityFailure, katikaActivityData, toActivityBucket, readStopThreshold } from './server/katika/activityData';
 import { DASHBOARD_MAX_RECORDS, isDashboardFailure, katikaDashboardData, readWarnThreshold, toDashboardPart } from './server/katika/dashboardData';
 import { buildClientAudit, katikaAuditStore, mergeAuditLogs } from './server/katika/auditStore';
@@ -1518,196 +1520,160 @@ async function startServer() {
     }
 
     const email = (verified.email || '').toLowerCase().trim();
-    const isAuthorizedAdmin =
-      verified.emailVerified === true &&
-      (email === KATIKA_ADMIN_EMAIL || verified.admin === true);
-
-    if (!isAuthorizedAdmin) {
-      console.warn(
-        `[Katika Admin Auth] Refus d'accès 401: Compte non administrateur (uid: ${verified.uid}, email: ${email || 'aucun'}, emailVerified: ${verified.emailVerified}, adminClaim: ${verified.admin})`,
-        { path: req.path }
-      );
-      return res.status(401).json({
-        success: false,
-        error: 'Accès refusé. Seul le compte administrateur autorisé avec un email vérifié peut accéder à Katika Master.',
-      });
+    if (verified.emailVerified !== true) {
+      return res.status(401).json({ success: false, error: 'Accès refusé : adresse e-mail non vérifiée.' });
     }
 
-    (req as any).katikaUser = {
-      uid: verified.uid,
-      email,
-      isOwner: email === KATIKA_ADMIN_EMAIL,
-      isSecondaryAdmin: verified.admin === true,
-    };
+    // Le propriétaire a tous les droits ; un admin ajouté n'a que ceux de sa fiche, relue régulièrement (server/katika/adminRegistry.ts).
+    const isOwner = email === KATIKA_ADMIN_EMAIL;
+    let permissions: KatikaPermission[] = [];
+    if (!isOwner) {
+      let entry;
+      try {
+        entry = await adminRegistry.get(verified.uid);
+      } catch (err) {
+        console.warn('[Katika Admin Auth] Fiche admin illisible.', err instanceof Error ? err.message : String(err));
+        return res.status(503).json({ success: false, error: 'Droits illisibles pour le moment, réessaie dans un instant.' });
+      }
+      if (!entry || entry.status !== 'ACTIVE') {
+        console.warn(`[Katika Admin Auth] Refus 401 : compte sans accès katika (uid: ${verified.uid}).`, { path: req.path });
+        return res.status(401).json({ success: false, error: 'Accès refusé : ce compte n\'a pas accès à katika.' });
+      }
+      permissions = entry.permissions;
+    }
 
+    // Refus par défaut : une route non classée dans server/katika/adminRights.ts est réservée au propriétaire.
+    if (!isAllowed({ isOwner, permissions }, routeRequirement(req.method, req.path))) {
+      console.warn(`[Katika Admin Auth] Refus 403 ${req.method} ${req.path} (uid: ${verified.uid}).`);
+      return res.status(403).json({ success: false, error: 'Tu n\'as pas le droit de faire cette action.' });
+    }
+
+    (req as any).katikaUser = { uid: verified.uid, email, isOwner, permissions };
     return next();
   });
 
-  // Admin Management Endpoints (Reserved exclusively for KATIKA_ADMIN_EMAIL owner)
-  app.get('/api/katika/admins', async (req, res) => {
+  // Droits du compte connecté : l'écran s'en sert pour n'afficher que ce qui est permis (le serveur reste seul juge).
+  app.get('/api/katika/me', (req, res) => {
     const user = (req as any).katikaUser;
-    if (!user || !user.isOwner) {
-      console.warn(`[Katika Admin Auth] Refus 403 GET /api/katika/admins pour l'utilisateur non-propriétaire: ${user?.email || 'anonyme'}`);
-      return res.status(403).json({
-        success: false,
-        error: 'Droits insuffisants : la gestion des administrateurs est strictement réservée au propriétaire (KATIKA_ADMIN_EMAIL).'
-      });
-    }
+    res.json({ success: true, uid: user.uid, email: user.email, isOwner: user.isOwner, permissions: user.permissions });
+  });
 
+  // Gestion des administrateurs : propriétaire seul (classé OWNER dans server/katika/adminRights.ts).
+  app.get('/api/katika/admins', async (_req, res) => {
     try {
-      const authAdmins = await listAdminUsers();
-
-      const firestoreAdminsMap = new Map<string, any>();
-      try {
-        const db = getFirebaseAdminDb();
-        const snapshot = await db.collection('katika_admins').get();
-        snapshot.forEach(doc => {
-          firestoreAdminsMap.set(doc.id, doc.data());
-        });
-      } catch (fsErr) {
-        console.warn('[Katika Admins] Impossible d\'interroger Firestore tika_admins:', fsErr);
-      }
-
-      const adminsList = authAdmins.map(admin => {
-        const fsData = firestoreAdminsMap.get(admin.uid) || {};
-        return {
-          uid: admin.uid,
-          email: admin.email || fsData.email || '',
-          grantedAt: fsData.grantedAt || admin.creationTime || new Date().toISOString(),
-          grantedBy: fsData.grantedBy || KATIKA_ADMIN_EMAIL,
-          status: fsData.status || 'ACTIVE',
-        };
-      });
-
-      return res.json({
-        success: true,
-        admins: adminsList,
-        timestamp: Date.now()
-      });
+      const admins = await listAdminEntries();
+      res.json({ success: true, admins, templates: ADMIN_TEMPLATES, permissionLabels: PERMISSION_LABELS, timestamp: Date.now() });
     } catch (err: any) {
-      console.error('[Katika Admins] Erreur lors de la récupération des administrateurs:', err);
-      return res.status(500).json({ success: false, error: err?.message || 'Erreur serveur interne.' });
+      console.error('[Katika Admins] Lecture du registre impossible :', err);
+      res.status(500).json({ success: false, error: 'Lecture des administrateurs impossible.' });
     }
   });
 
+  /** Droits demandés : liste explicite, sinon ceux du modèle (lecture seule par défaut). */
+  function requestedRights(body: any): { template: string; permissions: KatikaPermission[] } {
+    if (Array.isArray(body?.permissions)) {
+      return { template: isTemplateId(body.template) ? body.template : 'CUSTOM', permissions: sanitizePermissions(body.permissions) };
+    }
+    const template = isTemplateId(body?.template) ? body.template : 'READ_ONLY';
+    return { template, permissions: [...ADMIN_TEMPLATES[template].permissions] };
+  }
+
   app.post('/api/katika/admins', express.json(), async (req, res) => {
-    const user = (req as any).katikaUser;
-    if (!user || !user.isOwner) {
-      console.warn(`[Katika Admin Auth] Refus 403 POST /api/katika/admins pour l'utilisateur non-propriétaire: ${user?.email || 'anonyme'}`);
-      return res.status(403).json({
-        success: false,
-        error: 'Droits insuffisants : la gestion des administrateurs est strictly réservée au propriétaire (KATIKA_ADMIN_EMAIL).'
-      });
-    }
-
-    const { email, reason } = req.body || {};
-    const targetEmail = (email || '').trim().toLowerCase();
-
+    const owner = (req as any).katikaUser;
+    const targetEmail = String(req.body?.email || '').trim().toLowerCase();
     if (!targetEmail) {
-      return res.status(400).json({ success: false, error: 'L\'adresse e-mail de l\'utilisateur à nommer administrateur est requise.' });
+      return res.status(400).json({ success: false, error: 'L\'adresse e-mail est requise.' });
     }
-
     if (targetEmail === KATIKA_ADMIN_EMAIL) {
-      return res.status(400).json({ success: false, error: 'Le propriétaire est déjà administrateur principal.' });
+      return res.status(400).json({ success: false, error: 'Le propriétaire a déjà tous les droits.' });
     }
-
     try {
-      const grantedUser = await setAdminUserClaim({ email: targetEmail }, true);
-
-      const grantedAt = new Date().toISOString();
-      const adminRecord = {
-        uid: grantedUser.uid,
-        email: grantedUser.email || targetEmail,
-        grantedAt,
-        grantedBy: KATIKA_ADMIN_EMAIL,
-        status: 'ACTIVE',
-        updatedAt: grantedAt,
-        reason: reason || 'Privilège administrateur accordé depuis Katika Master'
+      const account = await getFirebaseAdminAuth().getUserByEmail(targetEmail);
+      const { template, permissions } = requestedRights(req.body);
+      const now = new Date().toISOString();
+      const entry = {
+        uid: account.uid,
+        email: account.email || targetEmail,
+        status: 'ACTIVE' as const,
+        template: template as any,
+        permissions,
+        grantedAt: now,
+        grantedBy: owner.email,
+        updatedAt: now,
+        reason: String(req.body?.reason || '').slice(0, 300) || undefined,
       };
-
-      try {
-        const db = getFirebaseAdminDb();
-        await db.collection('katika_admins').doc(grantedUser.uid).set(adminRecord, { merge: true });
-      } catch (fsErr) {
-        console.warn('[Katika Admins] Warning setting firestore doc tika_admins:', fsErr);
-      }
-
+      await writeAdminEntry(entry);
       RoomManager.addAuditLog({
         id: 'adm_grant_' + Date.now().toString(36),
         timestamp: Date.now(),
-        type: 'KATIKA_ACTION',
-        severity: 'INFO',
-        actor: 'Propriétaire Katika (' + KATIKA_ADMIN_EMAIL + ')',
-        summary: `Privilège administrateur accordé à ${grantedUser.email || targetEmail}`,
-        details: { uid: grantedUser.uid, email: grantedUser.email || targetEmail, grantedBy: KATIKA_ADMIN_EMAIL }
+        type: 'CONFIG_CHANGE',
+        severity: 'WARNING',
+        actor: owner.email,
+        summary: `Accès katika accordé à ${entry.email} (${permissions.length} droit(s))`,
+        details: { uid: entry.uid, email: entry.email, template, permissions },
       });
-
-      return res.json({
-        success: true,
-        admin: adminRecord
-      });
+      return res.json({ success: true, admin: entry });
     } catch (err: any) {
-      console.error('[Katika Admins] Erreur lors de l\'octroi du rôle admin:', err);
-      if (err.code === 'auth/user-not-found') {
+      console.error('[Katika Admins] Ajout impossible :', err);
+      if (err?.code === 'auth/user-not-found') {
         return res.status(404).json({
           success: false,
-          error: `Aucun compte Firebase Auth n'a été trouvé pour l'adresse e-mail « ${targetEmail} ». L'utilisateur doit d'abord créer son compte.`
+          error: `Aucun compte Google connu pour « ${targetEmail} » : la personne doit d'abord se connecter une fois au jeu.`,
         });
       }
-      return res.status(500).json({ success: false, error: err?.message || 'Erreur lors de la modification des privilèges.' });
+      return res.status(500).json({ success: false, error: err?.message || 'Ajout impossible.' });
+    }
+  });
+
+  app.put('/api/katika/admins/:uid', express.json(), async (req, res) => {
+    const owner = (req as any).katikaUser;
+    try {
+      const current = await readAdminEntry(String(req.params.uid));
+      if (!current) return res.status(404).json({ success: false, error: 'Administrateur introuvable.' });
+      const { template, permissions } = requestedRights(req.body);
+      const entry = { ...current, template: template as any, permissions, updatedAt: new Date().toISOString() };
+      await writeAdminEntry(entry);
+      RoomManager.addAuditLog({
+        id: 'adm_rights_' + Date.now().toString(36),
+        timestamp: Date.now(),
+        type: 'CONFIG_CHANGE',
+        severity: 'WARNING',
+        actor: owner.email,
+        summary: `Droits katika modifiés pour ${current.email}`,
+        details: { uid: current.uid, before: current.permissions, after: permissions },
+      });
+      return res.json({ success: true, admin: entry });
+    } catch (err: any) {
+      console.error('[Katika Admins] Modification impossible :', err);
+      return res.status(500).json({ success: false, error: err?.message || 'Modification impossible.' });
     }
   });
 
   app.delete('/api/katika/admins/:uid', async (req, res) => {
-    const user = (req as any).katikaUser;
-    if (!user || !user.isOwner) {
-      console.warn(`[Katika Admin Auth] Refus 403 DELETE /api/katika/admins pour l'utilisateur non-propriétaire: ${user?.email || 'anonyme'}`);
-      return res.status(403).json({
-        success: false,
-        error: 'Droits insuffisants : la gestion des administrateurs est strictement réservée au propriétaire (KATIKA_ADMIN_EMAIL).'
-      });
-    }
-
-    const { uid } = req.params;
-    if (!uid) {
-      return res.status(400).json({ success: false, error: 'UID de l\'administrateur à révoquer manquant.' });
-    }
-
+    const owner = (req as any).katikaUser;
+    const uid = String(req.params.uid || '');
     try {
-      const revokedUser = await setAdminUserClaim({ uid }, false);
-
-      const revokedAt = new Date().toISOString();
-
-      try {
-        const db = getFirebaseAdminDb();
-        await db.collection('katika_admins').doc(uid).set({
-          status: 'REVOKED',
-          revokedAt,
-          revokedBy: KATIKA_ADMIN_EMAIL,
-          updatedAt: revokedAt
-        }, { merge: true });
-      } catch (fsErr) {
-        console.warn('[Katika Admins] Warning updating firestore doc tika_admins on revoke:', fsErr);
-      }
-
+      const current = await readAdminEntry(uid);
+      if (!current) return res.status(404).json({ success: false, error: 'Administrateur introuvable.' });
+      const now = new Date().toISOString();
+      await writeAdminEntry({ ...current, status: 'REVOKED', permissions: [], revokedAt: now, revokedBy: owner.email, updatedAt: now });
+      // Ancien droit global (claim « admin ») : retiré s'il existe encore, sans bloquer le retrait si l'opération échoue.
+      setAdminUserClaim({ uid }, false).catch((err) =>
+        console.warn('[Katika Admins] Ancien droit global non retiré :', err instanceof Error ? err.message : String(err))
+      );
       RoomManager.addAuditLog({
         id: 'adm_revoke_' + Date.now().toString(36),
         timestamp: Date.now(),
-        type: 'KATIKA_ACTION',
+        type: 'CONFIG_CHANGE',
         severity: 'WARNING',
-        actor: 'Propriétaire Katika (' + KATIKA_ADMIN_EMAIL + ')',
-        summary: `Privilège administrateur révoqué pour ${revokedUser.email || uid}`,
-        details: { uid, email: revokedUser.email, revokedBy: KATIKA_ADMIN_EMAIL }
+        actor: owner.email,
+        summary: `Accès katika retiré à ${current.email}`,
+        details: { uid, email: current.email },
       });
-
-      return res.json({
-        success: true,
-        uid,
-        email: revokedUser.email
-      });
+      return res.json({ success: true, uid, email: current.email });
     } catch (err: any) {
-      console.error('[Katika Admins] Erreur lors de la révocation du rôle admin:', err);
-      return res.status(500).json({ success: false, error: err?.message || 'Erreur lors de la révocation du rôle administrateur.' });
+      console.error('[Katika Admins] Retrait impossible :', err);
+      return res.status(500).json({ success: false, error: err?.message || 'Retrait impossible.' });
     }
   });
 
@@ -1802,6 +1768,112 @@ async function startServer() {
     }
   });
 
+  // Actions sur un joueur, faites par le serveur : un admin ajouté n'a aucun accès direct à la base.
+  async function playerAction(req: any, res: any, action: 'VALIDATE' | 'BOT' | 'DELETE') {
+    const uid = String(req.params.uid || '').trim();
+    if (!uid || uid.length > 128 || uid.includes('/')) {
+      return res.status(400).json({ success: false, error: 'Identifiant joueur invalide.' });
+    }
+    try {
+      const ref = getFirebaseAdminAppDb().collection('users').doc(uid);
+      if (action === 'DELETE') await ref.delete();
+      else if (action === 'BOT') await ref.set({ isBot: true, updatedAt: Date.now() }, { merge: true });
+      else await ref.set({ isGuest: false, authProvider: 'google.com', isBot: false, updatedAt: Date.now() }, { merge: true });
+      RoomManager.addAuditLog({
+        id: `adm_player_${action.toLowerCase()}_${Date.now().toString(36)}`,
+        timestamp: Date.now(),
+        type: 'KATIKA_ACTION',
+        severity: action === 'DELETE' ? 'CRITICAL' : 'WARNING',
+        actor: req.katikaUser.email,
+        summary:
+          action === 'DELETE'
+            ? `Suppression définitive du compte ${uid} de la base /users`
+            : action === 'BOT'
+            ? `Compte ${uid} marqué comme robot`
+            : `Validation manuelle Palmarès pour le compte ${uid}`,
+        details: { playerId: uid, action },
+      });
+      return res.json({ success: true, uid });
+    } catch (err: any) {
+      console.error('[Katika] Action joueur impossible :', err);
+      return res.status(500).json({ success: false, error: err?.message || 'Action impossible.' });
+    }
+  }
+  app.post('/api/katika/players/:uid/leaderboard-validate', (req, res) => playerAction(req, res, 'VALIDATE'));
+  app.post('/api/katika/players/:uid/mark-bot', (req, res) => playerAction(req, res, 'BOT'));
+  app.delete('/api/katika/players/:uid', (req, res) => playerAction(req, res, 'DELETE'));
+
+  // Carnet de bord : lu et écrit par le serveur (collection fermée aux téléphones).
+  const notesRef = () => getFirebaseAdminAppDb().collection('katika_admin_notes');
+  const NOTE_TYPES = ['BUG', 'FEEDBACK', 'IDEE', 'ROADMAP', 'TACHE'];
+  const NOTE_PRIORITIES = ['P1', 'P2', 'P3'];
+  const NOTE_STATUSES = ['OUVERT', 'EN_COURS', 'FAIT'];
+  function cleanNotePatch(body: any): Record<string, unknown> {
+    const patch: Record<string, unknown> = {};
+    if (NOTE_TYPES.includes(body?.type)) patch.type = body.type;
+    if (typeof body?.title === 'string') patch.title = body.title.trim().slice(0, 120);
+    if (typeof body?.details === 'string') patch.details = body.details.trim().slice(0, 600);
+    if (NOTE_PRIORITIES.includes(body?.priority)) patch.priority = body.priority;
+    if (NOTE_STATUSES.includes(body?.status)) patch.status = body.status;
+    if (typeof body?.source === 'string') patch.source = body.source.trim().slice(0, 120);
+    return patch;
+  }
+  app.get('/api/katika/notes', async (_req, res) => {
+    try {
+      const snap = await notesRef().orderBy('createdAt', 'desc').limit(100).get();
+      recordServerReads(snap.size);
+      res.json({ success: true, notes: snap.docs.map((d) => ({ id: d.id, ...d.data() })) });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err?.message || 'Lecture du carnet impossible.' });
+    }
+  });
+  app.post('/api/katika/notes', express.json(), async (req, res) => {
+    const patch = cleanNotePatch(req.body);
+    if (!patch.title) return res.status(400).json({ success: false, error: 'Titre requis.' });
+    const now = Date.now();
+    const id = `n_${now.toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+    const note = { type: 'TACHE', priority: 'P2', status: 'OUVERT', ...patch, createdAt: now, updatedAt: now, createdBy: (req as any).katikaUser.email };
+    try {
+      await notesRef().doc(id).set(note);
+      res.json({ success: true, note: { id, ...note } });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err?.message || 'Création impossible.' });
+    }
+  });
+  app.patch('/api/katika/notes/:id', express.json(), async (req, res) => {
+    try {
+      await notesRef().doc(String(req.params.id)).update({ ...cleanNotePatch(req.body), updatedAt: Date.now() });
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err?.message || 'Modification impossible.' });
+    }
+  });
+  app.delete('/api/katika/notes/:id', async (req, res) => {
+    try {
+      await notesRef().doc(String(req.params.id)).delete();
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err?.message || 'Suppression impossible.' });
+    }
+  });
+
+  // Réglages du copilote (liens, ton, hashtags) : document lisible par tous, écrit par le serveur seulement. Jamais de clé.
+  app.post('/api/katika/copilot-settings', express.json(), async (req, res) => {
+    const settings = req.body?.settings;
+    if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
+      return res.status(400).json({ success: false, error: 'Réglages invalides.' });
+    }
+    const { geminiApiKey, apiKey, ...clean } = settings as Record<string, unknown>;
+    const json = JSON.stringify(clean);
+    if (json.length > 20000) return res.status(400).json({ success: false, error: 'Réglages trop volumineux.' });
+    try {
+      await getFirebaseAdminAppDb().collection('katika_settings').doc('copilot_config').set(JSON.parse(json), { merge: true });
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err?.message || 'Enregistrement impossible.' });
+    }
+  });
+
   app.get('/api/katika/live-metrics', (req, res) => {
     const telemetry = RoomManager.getLiveTelemetry();
     res.json({
@@ -1865,7 +1937,7 @@ async function startServer() {
     if (!playerId) {
       return res.status(400).json({ success: false, error: 'playerId manquant' });
     }
-    RoomManager.banPlayer(playerId, reason || 'Sanction administrative', banType || 'PERMANENT', expiresAt);
+    RoomManager.banPlayer(playerId, reason || 'Sanction administrative', banType || 'PERMANENT', expiresAt, (req as any).katikaUser.email);
     res.json({ success: true, playerId });
   });
 
@@ -1874,7 +1946,7 @@ async function startServer() {
     if (!playerId || newBalance === undefined) {
       return res.status(400).json({ success: false, error: 'Champs requis manquants' });
     }
-    RoomManager.updatePlayerChips(playerId, newBalance, reason || 'Ajustement Katika Master');
+    RoomManager.updatePlayerChips(playerId, newBalance, reason || 'Ajustement Katika Master', (req as any).katikaUser.email);
     res.json({ success: true, playerId, newBalance });
   });
 
@@ -1910,7 +1982,7 @@ async function startServer() {
     if (!message) {
       return res.status(400).json({ success: false, error: 'Message manquant' });
     }
-    const success = RoomManager.adminSendMessage(roomCode, playerId, message);
+    const success = RoomManager.adminSendMessage(roomCode, playerId, message, (req as any).katikaUser.email);
     res.json({ success, roomCode, playerId });
   });
 

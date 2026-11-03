@@ -69,7 +69,7 @@ const MOBILE_QUICK_PROMPTS = [
 ];
 
 export const KatikaMobileCopilot: React.FC = () => {
-  const { logout } = useKatikaAuth();
+  const { logout, user } = useKatikaAuth();
   const {
     threads,
     activeThread,
@@ -127,7 +127,7 @@ export const KatikaMobileCopilot: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const speechRecognitionRef = useRef<any>(null);
 
-  // Sync PWA Identity on mount
+  // Sync PWA Identity on mount
   useEffect(() => registerMetricsConsumer(), [registerMetricsConsumer]);
 
   useEffect(() => {
@@ -399,7 +399,7 @@ export const KatikaMobileCopilot: React.FC = () => {
             {showMenuDropdown && (
               <div className="absolute right-0 top-12 w-64 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl p-1.5 z-50 text-xs space-y-1 animate-in fade-in zoom-in-95 duration-150">
                 <div className="px-2.5 py-1.5 border-b border-slate-800 text-[10px] text-slate-400 font-mono truncate">
-                  Connecté : <span className="text-amber-300">{KATIKA_AUTHORIZED_EMAIL}</span>
+                  Connecté : <span className="text-amber-300">{user?.email}</span>
                 </div>
                 
                 {/* Actions déplacées de l'en-tête pour gagner de la place */}
