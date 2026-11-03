@@ -1,3 +1,4 @@
+import { KatikaQuickPostPanel } from '../components/social/KatikaQuickPostPanel';
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Bot,
@@ -95,6 +96,7 @@ export const KatikaMobileCopilot: React.FC<{ onBack?: () => void }> = ({ onBack 
   const [inputVal, setInputVal] = useState('');
   const [threadSearch, setThreadSearch] = useState('');
   const [showSocialModal, setShowSocialModal] = useState(false);
+  const [showQuickPost, setShowQuickPost] = useState(false);
   const [showMomentPicker, setShowMomentPicker] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showAdminNotes, setShowAdminNotes] = useState(false);
@@ -418,6 +420,16 @@ export const KatikaMobileCopilot: React.FC<{ onBack?: () => void }> = ({ onBack 
                   type="button"
                   onClick={() => {
                     setShowMenuDropdown(false);
+                    setShowQuickPost(true);
+                  }}
+                  className="w-full min-h-[44px] px-2.5 rounded-lg hover:bg-slate-800 text-left text-amber-300 font-semibold"
+                >
+                  ⚡ Publier un visuel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMenuDropdown(false);
                     refreshLiveMetrics();
                   }}
                   disabled={loadingMetrics}
@@ -666,10 +678,18 @@ export const KatikaMobileCopilot: React.FC<{ onBack?: () => void }> = ({ onBack 
               </button>
               <button
                 type="button"
+                onClick={() => setShowQuickPost(true)}
+                className="min-h-[48px] p-2.5 rounded-xl bg-amber-500 text-slate-950 text-left text-sm font-semibold flex items-center justify-between"
+              >
+                <span>⚡ Publier un visuel maintenant</span>
+                <Sparkles className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
                 onClick={() => setShowSocialModal(true)}
                 className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 hover:border-amber-500/60 text-left text-xs text-amber-300 transition cursor-pointer flex items-center justify-between"
               >
-                <span>🎨 Créer un visuel officiel pour les réseaux</span>
+                <span>🎨 Studio avancé</span>
                 <Sparkles className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -964,6 +984,12 @@ export const KatikaMobileCopilot: React.FC<{ onBack?: () => void }> = ({ onBack 
         onClose={() => setShowAdminNotes(false)}
         onInsertInChat={(prompt) => handleSend(prompt)}
       />
+      {showQuickPost && (
+        <KatikaQuickPostPanel
+          onClose={() => setShowQuickPost(false)}
+          onAskAi={(brief, moment) => void sendMessage({ text: brief, moment })}
+        />
+      )}
     </div>
   );
 };

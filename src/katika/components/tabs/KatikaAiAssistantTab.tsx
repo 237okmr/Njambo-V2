@@ -1,3 +1,4 @@
+import { KatikaQuickPostPanel } from '../social/KatikaQuickPostPanel';
 import { KatikaDataNotice } from '../KatikaDataNotice';
 import React, { useState, useRef, useEffect } from 'react';
 import {
@@ -112,6 +113,7 @@ export const KatikaAiAssistantTab: React.FC = () => {
   const [showWhatIf, setShowWhatIf] = useState(false);
   const [showAdminNotes, setShowAdminNotes] = useState(false);
   const [showSocialStudio, setShowSocialStudio] = useState(false);
+  const [showQuickPost, setShowQuickPost] = useState(false);
   const [socialStudioInitialTheme, setSocialStudioInitialTheme] = useState<SocialVisualTheme>('TACTICAL_PUZZLE');
 
   const handleOpenStudioWithTheme = (theme: SocialVisualTheme) => {
@@ -396,6 +398,16 @@ Consignes de restitution :
           >
             <RotateCw className={`w-3.5 h-3.5 text-blue-400 ${loadingMetrics ? 'animate-spin' : ''}`} />
             <span className="hidden sm:inline">Rafraîchir</span>
+          </button>
+
+          {/* Publication immédiate : visuel prêt tout de suite, sans quota IA */}
+          <button
+            type="button"
+            onClick={() => setShowQuickPost(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 text-slate-950 hover:bg-amber-400 transition cursor-pointer"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Publier vite</span>
           </button>
 
           {/* Studio Visuels Réseaux button */}
@@ -1471,6 +1483,12 @@ Consignes de restitution :
       </div>
 
       {/* Social Media Visuals Studio Modal */}
+      {showQuickPost && (
+        <KatikaQuickPostPanel
+          onClose={() => setShowQuickPost(false)}
+          onAskAi={(brief, moment) => void sendMessage({ text: brief, moment })}
+        />
+      )}
       <KatikaSocialStudioModal
         isOpen={showSocialStudio}
         onClose={() => setShowSocialStudio(false)}
