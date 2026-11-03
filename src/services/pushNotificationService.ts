@@ -31,6 +31,7 @@ export interface PushPreferences {
   gameStartAlerts: boolean;
   tableAlerts: boolean;
   hostJoinAlerts: boolean;
+  rankChanges: boolean;
   quietHoursEnabled: boolean;
   quietHoursStart: number; // 0-23 (e.g. 23)
   quietHoursEnd: number; // 0-23 (e.g. 8)
@@ -45,6 +46,7 @@ export const DEFAULT_PUSH_PREFERENCES: PushPreferences = {
   gameStartAlerts: true,
   tableAlerts: true,
   hostJoinAlerts: true,
+  rankChanges: true,
   quietHoursEnabled: false,
   quietHoursStart: 23,
   quietHoursEnd: 8,

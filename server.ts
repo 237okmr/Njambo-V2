@@ -112,7 +112,10 @@ import {
   isEligibleLeaderboardUser,
   LEADERBOARD_POLICY,
 } from './src/services/masteryConfig';
-import { computeRanks, rankSettingsFromConfig, withPublicRanks } from './src/services/rankTiers';
+import { RankTitleId, computeRanks, rankSettingsFromConfig, withPublicRanks } from './src/services/rankTiers';
+import { HONORIFIC_TITLES, legacyTitleIdFromStats } from './src/types/playerProfile';
+import { runRankPushes } from './server/ranks/rankPush';
+import { createLiveRankPushDeps } from './server/ranks/rankPushLive';
 
 const PORT = process.env.NODE_ENV === 'production'
   ? Number(process.env.PORT || 8080)
@@ -499,6 +502,40 @@ async function startServer() {
       Date.now(),
       { unknownActivitySince: leaderboardUnknownActivitySince, totalPlayers: leaderboardTotalPlayers }
     );
+  }
+
+  // Dernières annonces parties : le jeu n'affiche pas une deuxième fois le bandeau à l'ouverture.
+  const lastPushedRankTitles = new Map<string, string>();
+
+  // Rangs comparés à l'état enregistré, à chaque relecture du classement. Une panne n'empêche jamais de répondre.
+  async function checkRankChanges(): Promise<void> {
+    try {
+      const cfg = getEngineConfig() as unknown as Record<string, number>;
+      const { ranks } = computeLeaderboardRanks();
+      const players = cachedLeaderboardUsers.flatMap((u) => {
+        const rank = ranks[u.uid];
+        return rank
+          ? [{ uid: u.uid, titleId: rank.titleId, inactivitySteps: rank.inactivitySteps, legacyTitleId: legacyTitleIdFromStats(u.stats) as RankTitleId }]
+          : [];
+      });
+      if (players.length === 0) return;
+      const delivered = await runRankPushes(
+        createLiveRankPushDeps(),
+        players,
+        {
+          enabled: Boolean(cfg.rankPushEnabled),
+          cooldownMs: Number(cfg.rankPushCooldownHours ?? 24) * 60 * 60 * 1000,
+          maxPerCheck: Number(cfg.rankPushMaxPerCheck ?? 50),
+          nightStartHour: Number(cfg.rankPushNightStartHour ?? 22),
+          nightEndHour: Number(cfg.rankPushNightEndHour ?? 7),
+          titleName: (id) => HONORIFIC_TITLES.find((t) => t.id === id)?.title ?? id,
+        },
+        Date.now()
+      );
+      delivered.forEach((push) => lastPushedRankTitles.set(push.uid, push.titleId));
+    } catch (err: any) {
+      console.warn('[RankPush] Vérification impossible.', err?.message || err);
+    }
   }
 
   // Lit le classement si le cache a dépassé maxAgeMs. Lectures Firestore comptées : le Palmarès et le rang ont chacun leur durée.
@@ -968,6 +1005,7 @@ async function startServer() {
             );
             leaderboardCacheTimestamp = Date.now();
             console.log(`[Server] Leaderboard cache refreshed with ${cachedLeaderboardUsers.length} players.`);
+            await checkRankChanges();
           } catch (dbErr: any) {
             console.warn('[Leaderboard Server] Firestore query soft warning (e.g. quota limit reached):', dbErr?.message || dbErr);
           }
@@ -982,7 +1020,7 @@ async function startServer() {
       await refreshLeaderboardCacheIfNeeded(false, Number(getEngineConfig().rankRefreshMinutes ?? 60) * 60 * 1000);
       const result = computeLeaderboardRanks();
       const uid = typeof req.query.uid === 'string' ? req.query.uid : '';
-      res.json({ success: true, rank: result.ranks[uid] ?? null, tiers: result.tiers, totalPlayers: result.totalPlayers });
+      res.json({ success: true, rank: result.ranks[uid] ?? null, tiers: result.tiers, totalPlayers: result.totalPlayers, pushedTitleId: lastPushedRankTitles.get(uid) ?? null });
     } catch (err: any) {
       console.warn('[Leaderboard] Lecture du rang impossible.', err?.message || err);
       res.status(500).json({ success: false, error: 'Lecture du rang impossible.' });

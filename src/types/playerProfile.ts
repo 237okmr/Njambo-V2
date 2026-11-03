@@ -417,3 +417,18 @@ export const HONORIFIC_TITLES: HonorificTitle[] = [
     requirements: { minGames: 50, minWins: 30, minKoras: 5, minPotWon: 500 },
   },
 ];
+
+/** Rang selon l'ancien système à seuils fixes : sert de premier meilleur rang lors du passage aux rangs dynamiques. */
+export function legacyTitleIdFromStats(stats: Partial<PlayerStats> | null | undefined): string {
+  const qualifies = (t: HonorificTitle): boolean => {
+    const req = t.requirements;
+    return (
+      (stats?.gamesPlayed || 0) >= (req.minGames || 0) &&
+      (stats?.gamesWon || 0) >= (req.minWins || 0) &&
+      (stats?.koraCount || 0) >= (req.minKoras || 0) &&
+      (stats?.doubleKoraCount || 0) >= (req.minDoubleKoras || 0) &&
+      (stats?.biggestPotWon || 0) >= (req.minPotWon || 0)
+    );
+  };
+  return [...HONORIFIC_TITLES].reverse().find(qualifies)?.id ?? HONORIFIC_TITLES[0].id;
+}

@@ -41,7 +41,10 @@ export function useRankAnnouncements(isOnHomeScreen: boolean): void {
     writeRankMemory(memory);
     if (!message) return;
     notificationHistory.record({ id: `rank:${titleId}:${now}`, kind: 'RANK_CHANGE', title: message.title, body: message.body, createdAt: now });
-    notify({ message: `${message.title}. ${message.body}`, tone: message.tone, durationMs: 7000 });
+    // Déjà annoncé par notification : il reste dans la cloche, sans bandeau en plus.
+    if (liveRank.pushedTitleId !== titleId) {
+      notify({ message: `${message.title}. ${message.body}`, tone: message.tone, durationMs: 7000 });
+    }
     // Le profil change à chaque partie : seule une réponse du serveur déclenche une comparaison.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [liveRank, isOnHomeScreen, isLoggedIn]);

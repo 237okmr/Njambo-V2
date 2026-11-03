@@ -290,6 +290,24 @@ export const PushNotificationToggle: React.FC<PushNotificationToggleProps> = ({
               />
             </div>
 
+            {/* Rank changes */}
+            <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 min-w-0">
+                <BellRing className="w-4 h-4 text-amber-400 shrink-0" />
+                <div className="min-w-0">
+                  <span className="block text-slate-200 font-medium">Changements de rang</span>
+                  <span className="block text-xs text-slate-500">Rang perdu ou nouveau meilleur rang, jamais la nuit</span>
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                aria-label="Changements de rang"
+                checked={prefs.rankChanges ?? true}
+                onChange={(e) => handleUpdatePref('rankChanges', e.target.checked)}
+                className="w-4 h-4 rounded text-emerald-500 accent-emerald-500 cursor-pointer shrink-0"
+              />
+            </div>
+
             {/* Game Start Alerts */}
             <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between sm:col-span-2">
               <div className="flex items-center gap-2">

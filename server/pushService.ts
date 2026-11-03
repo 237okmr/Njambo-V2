@@ -28,6 +28,7 @@ export type PushType =
   | 'FORFEIT_WARNING'
   | 'FORFEIT_DECLARED'
   | 'PLAYER_JOINED'
+  | 'RANK_CHANGE'
   | 'SYSTEM';
 
 /** Alertes « table en danger » : jamais coupées par le mode nuit quand le joueur est assis à une table. */
@@ -41,6 +42,7 @@ export interface ServerPushPreferences {
   gameStartAlerts: boolean;
   tableAlerts: boolean; // déconnexion / avertissements de forfait
   hostJoinAlerts?: boolean; // notification quand un joueur rejoint la table de l'hôte
+  rankChanges?: boolean; // perte de rang ou nouveau meilleur rang
   quietHoursEnabled: boolean;
   quietHoursStart: number; // 0-23, heure locale du joueur
   quietHoursEnd: number; // 0-23, heure locale du joueur
@@ -54,6 +56,7 @@ export const DEFAULT_SERVER_PUSH_PREFERENCES: ServerPushPreferences = {
   gameStartAlerts: true,
   tableAlerts: true,
   hostJoinAlerts: true,
+  rankChanges: true,
   quietHoursEnabled: false,
   quietHoursStart: 23,
   quietHoursEnd: 8,
@@ -81,6 +84,7 @@ const PUSH_POLICY: Record<PushType, { ttl: number; urgency: 'high' | 'normal' }>
   FORFEIT_WARNING: { ttl: 60, urgency: 'high' },
   FORFEIT_DECLARED: { ttl: 600, urgency: 'normal' },
   PLAYER_JOINED: { ttl: 120, urgency: 'high' },
+  RANK_CHANGE: { ttl: 6 * 3600, urgency: 'normal' },
   SYSTEM: { ttl: 3600, urgency: 'normal' },
 };
 
@@ -112,6 +116,8 @@ export function isTypeAllowed(type: PushType | undefined, prefs: ServerPushPrefe
       return prefs.tableAlerts;
     case 'PLAYER_JOINED':
       return prefs.hostJoinAlerts ?? true;
+    case 'RANK_CHANGE':
+      return prefs.rankChanges ?? true;
     default:
       return true; // SYSTEM (test, messages admin) : toujours livré
   }
@@ -122,6 +128,12 @@ export function isQuietNow(prefs: ServerPushPreferences, nowMs: number = Date.no
   const localHour = new Date(nowMs + (prefs.tzOffsetMinutes || 0) * 60_000).getUTCHours();
   const { quietHoursStart: start, quietHoursEnd: end } = prefs;
   return start > end ? localHour >= start || localHour < end : localHour >= start && localHour < end;
+}
+
+/** Vrai si l'heure locale du joueur tombe dans la plage, y compris si elle traverse minuit. */
+export function isInNightWindow(tzOffsetMinutes: number, startHour: number, endHour: number, nowMs: number = Date.now()): boolean {
+  const localHour = new Date(nowMs + (tzOffsetMinutes || 0) * 60_000).getUTCHours();
+  return startHour > endHour ? localHour >= startHour || localHour < endHour : localHour >= startHour && localHour < endHour;
 }
 
 export interface PushPayload {
@@ -283,8 +295,8 @@ class PushService {
   public async sendNotificationToUser(
     userId: string,
     payload: PushPayload,
-    options?: { onlyEndpoint?: string }
-  ): Promise<{ success: number; failed: number }> {
+    options?: { onlyEndpoint?: string; nightWindow?: { startHour: number; endHour: number } }
+  ): Promise<{ success: number; failed: number; deferred: number }> {
     let userSubs: UserSubscriptionRecord[] = [];
 
     if (db) {
@@ -315,7 +327,7 @@ class PushService {
     }
 
     if (userSubs.length === 0) {
-      return { success: 0, failed: 0 };
+      return { success: 0, failed: 0, deferred: 0 };
     }
 
     const type = payload.data?.type;
@@ -331,6 +343,7 @@ class PushService {
 
     let successCount = 0;
     let failedCount = 0;
+    let deferredCount = 0;
     const invalidEndpoints: string[] = [];
 
     const sendPromises = userSubs.map(async (record) => {
@@ -338,6 +351,11 @@ class PushService {
       // seul endroit où elles peuvent réellement empêcher l'envoi.
       const prefs: ServerPushPreferences = { ...DEFAULT_SERVER_PUSH_PREFERENCES, ...(record.preferences || {}) };
       if (!isTypeAllowed(type, prefs)) return;
+      // Annonce non urgente : elle attend le matin du joueur au lieu de le réveiller ou d'être perdue.
+      if (options?.nightWindow && (isQuietNow(prefs) || isInNightWindow(prefs.tzOffsetMinutes, options.nightWindow.startHour, options.nightWindow.endHour))) {
+        deferredCount++;
+        return;
+      }
       if (type !== 'SYSTEM' && !CRITICAL_TYPES.includes(type as PushType) && isQuietNow(prefs)) return;
 
       try {
@@ -382,7 +400,7 @@ class PushService {
       }
     }
 
-    return { success: successCount, failed: failedCount };
+    return { success: successCount, failed: failedCount, deferred: deferredCount };
   }
 
   public async broadcastToAll(payload: PushPayload): Promise<{ success: number; failed: number }> {

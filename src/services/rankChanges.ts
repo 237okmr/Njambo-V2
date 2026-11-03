@@ -36,6 +36,20 @@ export interface RankMessage {
 
 const higher = (a: RankTitleId, b: RankTitleId): RankTitleId => (level(a) >= level(b) ? a : b);
 
+/** Mêmes mots dans le jeu et dans la notification. */
+export function rankMessageText(kind: 'NEW_BEST' | 'RANK_UP' | 'RANK_DOWN' | 'RANK_DOWN_INACTIVE', titleName: string): { title: string; body: string } {
+  switch (kind) {
+    case 'NEW_BEST':
+      return { title: `Nouveau meilleur rang : ${titleName} 🎉`, body: 'Bravo ! Continue pour garder ta place.' };
+    case 'RANK_UP':
+      return { title: `Tu remontes : ${titleName}`, body: 'Bien joué, tu reprends du terrain.' };
+    case 'RANK_DOWN_INACTIVE':
+      return { title: `Tu passes ${titleName}`, body: 'Faute de partie récente. Rejoue pour retrouver ta place.' };
+    default:
+      return { title: `Tu passes ${titleName}`, body: 'D’autres joueurs t’ont dépassé. Rejoue pour reprendre ta place.' };
+  }
+}
+
 /**
  * Compare le rang reçu à la mémoire. Un rang change toujours aussitôt ; seul le message est limité dans le temps,
  * pour qu'un joueur proche d'un palier ne soit pas sollicité sans arrêt. Un nouveau meilleur rang passe toujours.
@@ -74,15 +88,7 @@ export function applyRankUpdate(
   if (silent) return { memory: next, message: null };
 
   const isUp = level(update.titleId) > level(memory.lastTitleId);
-  let message: RankMessage;
-  if (isNewBest) {
-    message = { kind: 'NEW_BEST', title: `Nouveau meilleur rang : ${update.titleName} 🎉`, body: 'Bravo ! Continue pour garder ta place.', tone: 'success' };
-  } else if (isUp) {
-    message = { kind: 'RANK_UP', title: `Tu remontes : ${update.titleName}`, body: 'Bien joué, tu reprends du terrain.', tone: 'success' };
-  } else if (update.inactivitySteps > 0) {
-    message = { kind: 'RANK_DOWN_INACTIVE', title: `Tu passes ${update.titleName}`, body: 'Faute de partie récente. Rejoue pour retrouver ta place.', tone: 'warning' };
-  } else {
-    message = { kind: 'RANK_DOWN', title: `Tu passes ${update.titleName}`, body: 'D’autres joueurs t’ont dépassé. Rejoue pour reprendre ta place.', tone: 'warning' };
-  }
+  const kind = isNewBest ? 'NEW_BEST' : isUp ? 'RANK_UP' : update.inactivitySteps > 0 ? 'RANK_DOWN_INACTIVE' : 'RANK_DOWN';
+  const message: RankMessage = { kind, ...rankMessageText(kind, update.titleName), tone: isNewBest || isUp ? 'success' : 'warning' };
   return { memory: { ...next, lastMessageAt: nowMs }, message };
 }

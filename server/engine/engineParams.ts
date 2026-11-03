@@ -100,6 +100,31 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Le rang change toujours aussitôt. Ce délai limite seulement les messages, sauf pour un nouveau meilleur rang. 0 : aucun délai.',
   },
   {
+    key: 'rankPushEnabled', label: 'Notifier les changements de rang (application fermée)', unit: '', type: 'boolean',
+    min: 0, max: 1, default: false, group: 'rangs', scope: 'server', effect: 'immediate',
+    help: 'Ouvert : un joueur abonné est prévenu d\'une perte de rang ou d\'un nouveau meilleur rang. Fermé : rien ne part, et une ouverture n\'annonce rien d\'ancien.',
+  },
+  {
+    key: 'rankPushCooldownHours', label: 'Délai entre deux notifications de rang', unit: 'h',
+    min: 1, max: 720, default: 24, group: 'rangs', scope: 'server', effect: 'immediate',
+    help: 'Par joueur. Une annonce bloquée par ce délai part ensuite, sauf si le rang est revenu.',
+  },
+  {
+    key: 'rankPushNightStartHour', label: 'Début de la nuit, sans notification de rang', unit: 'h',
+    min: 0, max: 23, default: 22, group: 'rangs', scope: 'server', effect: 'immediate',
+    help: 'Heure locale du joueur. Une annonce de nuit attend le matin.',
+  },
+  {
+    key: 'rankPushNightEndHour', label: 'Fin de la nuit, sans notification de rang', unit: 'h',
+    min: 0, max: 23, default: 7, group: 'rangs', scope: 'server', effect: 'immediate',
+    help: 'Heure locale du joueur.',
+  },
+  {
+    key: 'rankPushMaxPerCheck', label: 'Notifications de rang par vérification', unit: '',
+    min: 1, max: 500, default: 50, group: 'rangs', scope: 'server', effect: 'immediate',
+    help: 'Plafond à chaque relecture du classement : les suivantes partent à la prochaine.',
+  },
+  {
     key: 'rankRefreshMinutes', label: 'Actualisation des rangs des joueurs', unit: 'min',
     min: 5, max: 1440, default: 60, group: 'rangs', scope: 'server', effect: 'immediate',
     help: 'Âge maximal du classement utilisé pour le rang affiché dans le jeu. Plus cette durée est courte, plus le serveur consomme de lectures Firestore.',

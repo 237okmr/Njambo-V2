@@ -13,6 +13,8 @@ export interface RankSnapshot {
   rank: PlayerRank | null;
   tiers: TierSummary[];
   totalPlayers: number;
+  /** Rang déjà annoncé par notification : le jeu ne répète pas le bandeau. */
+  pushedTitleId?: string | null;
 }
 
 export function readStoredRank(uid: string): RankSnapshot | null {
@@ -32,7 +34,7 @@ export async function fetchRankSnapshot(uid: string): Promise<RankSnapshot | nul
     if (!res.ok) return null;
     const data = await res.json();
     if (!data?.success || !Array.isArray(data.tiers)) return null;
-    const snapshot: RankSnapshot = { uid, rank: data.rank ?? null, tiers: data.tiers, totalPlayers: Number(data.totalPlayers) || 0 };
+    const snapshot: RankSnapshot = { uid, rank: data.rank ?? null, tiers: data.tiers, totalPlayers: Number(data.totalPlayers) || 0, pushedTitleId: data.pushedTitleId ?? null };
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
     } catch {
