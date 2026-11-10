@@ -6,6 +6,7 @@ import { Card, GameState, Player, SavedManche, AIDifficulty, GamePhase, GameInvi
 import { DEFAULT_BASE_BET, DEFAULT_INITIAL_CAPITAL } from './utils/deck';
 import { sounds, triggerHaptic } from './utils/sound';
 import { getPwaShareBase } from './utils/pwaLinks';
+import { forgetCashInviteCode, readCashInviteCode, recallCashInviteCode, rememberCashInviteCode, stripCashInviteParam } from './utils/cashInvite';
 import { GAME_HOME_PATH, isConsoleLocation, isKnownGamePath, routePathFor, screenFromPath } from './utils/appRoutes';
 import { consumeBackLayer } from './utils/backLayers';
 
@@ -183,6 +184,12 @@ function GameApp() {
   const [showQuitModal, setShowQuitModal] = useState<boolean>(false);
   const [showHomeModeSheet, setShowHomeModeSheet] = useState<boolean>(false);
   const [isKoraCashOpen, setIsKoraCashOpen] = useState<boolean>(false);
+  // Invitation à une table Kora Cash reçue par lien (?cash=CODE) : gardée jusqu'à ce qu'elle soit réglée.
+  const [cashInviteCode, setCashInviteCode] = useState<string | null>(null);
+  const clearCashInvite = useCallback(() => {
+    setCashInviteCode(null);
+    forgetCashInviteCode();
+  }, []);
   const [profileInitialTab, setProfileInitialTab] = useState<ProfileTabType>('identity');
   const { notify } = useNotify();
   const [useDiamondLayout, setUseDiamondLayout] = useState<boolean>(() => {
@@ -532,6 +539,25 @@ function GameApp() {
     if (screen === 'koraCash') setIsKoraCashOpen(true);
     if (screen === 'notifications') notificationScreen.open();
   }, [setIsLeaderboardOpen, setIsProfileModalOpen, setShowMultiplayerHub]);
+
+  // Lien d'invitation Kora Cash (?cash=CODE) : ouvre Kora Cash sur cette table, y compris après la connexion Google.
+  // Le paramètre ?join= des tables gratuites n'est pas concerné.
+  useEffect(() => {
+    const fromUrl = readCashInviteCode(window.location.search);
+    const code = fromUrl || recallCashInviteCode();
+    if (!code) return;
+    rememberCashInviteCode(code);
+    setCashInviteCode(code);
+    setIsKoraCashOpen(true);
+    if (fromUrl) {
+      try {
+        const { pathname, hash } = window.location;
+        window.history.replaceState(window.history.state, '', pathname + stripCashInviteParam(window.location.search) + hash);
+      } catch {
+        // Adresse non modifiable : le code reste lisible, sans conséquence.
+      }
+    }
+  }, []);
 
   const rearmBackGuard = () => {
     window.history.pushState({ njamboBack: 'active' }, '', routePathRef.current);
@@ -1139,7 +1165,8 @@ function GameApp() {
     const winType = activeGameState.partieWinType || 'KORA';
     const pot = activeGameState.pot || 0;
     const roomCode = multiplayerRoom?.id;
-    const shareUrl = `${getPwaShareBase()}${roomCode ? `?join=${roomCode}` : ''}`;
+    // Une table Kora Cash ne se rejoint pas par ?join= : le lien du résultat renvoie alors à l'accueil du jeu.
+    const shareUrl = `${getPwaShareBase()}${roomCode && !multiplayerRoom?.cash ? `?join=${roomCode}` : ''}`;
 
     const diff = (activeGameState.aiDifficulty || gameState.aiDifficulty || 'NORMAL') as string;
     const modeLabel = isOnlineActive
@@ -1168,7 +1195,7 @@ function GameApp() {
     navigator.clipboard.writeText(fallbackText);
     triggerHaptic('light');
     triggerToast('Résultat et lien de partage copiés !');
-  }, [activeGameState, multiplayerRoom?.id, isOnlineActive, gameState.aiDifficulty]);
+  }, [activeGameState, multiplayerRoom?.id, multiplayerRoom?.cash, isOnlineActive, gameState.aiDifficulty]);
 
   // Unified instant win reveal for both Solo and Multiplayer
   const effectiveInstantWinReveal = isOnlineActive
@@ -3184,7 +3211,12 @@ function GameApp() {
         {isKoraCashOpen && (
           <ErrorBoundary>
             <KoraCashScreen
-              onClose={() => setIsKoraCashOpen(false)}
+              inviteCode={cashInviteCode}
+              onInviteDone={clearCashInvite}
+              onClose={() => {
+                setIsKoraCashOpen(false);
+                clearCashInvite();
+              }}
               onOpenCashTable={(request) => handleOpenCashTable(request, localPlayerName)}
               onResumeCashTable={(roomCode) => {
                 void handleJoinRoom(roomCode, localPlayerName).then((res) => {

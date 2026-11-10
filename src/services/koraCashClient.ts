@@ -150,6 +150,58 @@ export async function fetchCashTables(): Promise<CashTablesView> {
   };
 }
 
+export type CashPreviewState = 'OPEN' | 'FULL' | 'STARTED' | 'CLOSED' | 'MINE' | 'UNAVAILABLE';
+
+/** Ce que le serveur montre d'une table à un invité : jamais de solde, jamais le nom des autres joueurs. */
+export interface CashTablePreviewView {
+  state: CashPreviewState;
+  roomCode?: string;
+  bet?: number;
+  betLevel?: number;
+  capacity?: number;
+  rakePercent?: number;
+  seated?: number;
+  hostName?: string;
+  minBuyIn?: number;
+  maxBuyIn?: number;
+}
+
+export interface CashTablePreviewResult {
+  /** Faux quand Kora Cash ferme ses tables : rien à montrer. */
+  enabled: boolean;
+  preview: CashTablePreviewView | null;
+}
+
+const PREVIEW_STATES: CashPreviewState[] = ['OPEN', 'FULL', 'STARTED', 'CLOSED', 'MINE', 'UNAVAILABLE'];
+
+function optionalNumber(raw: unknown): number | undefined {
+  const n = Number(raw);
+  return raw !== undefined && raw !== null && Number.isFinite(n) ? n : undefined;
+}
+
+/** Aperçu d'une table Kora Cash par son code, pour la page d'invitation. Lecture seule. */
+export async function fetchCashTablePreview(code: string): Promise<CashTablePreviewResult> {
+  const data = await cashRequest<any>(`/api/cash/tables/preview?code=${encodeURIComponent(code)}`, 'Lecture de la table impossible.');
+  if (data.enabled !== true) return { enabled: false, preview: null };
+  const raw = data.preview;
+  const state: CashPreviewState = PREVIEW_STATES.includes(raw?.state) ? raw.state : 'UNAVAILABLE';
+  return {
+    enabled: true,
+    preview: {
+      state,
+      roomCode: typeof raw?.roomCode === 'string' ? raw.roomCode : undefined,
+      bet: optionalNumber(raw?.bet),
+      betLevel: optionalNumber(raw?.betLevel),
+      capacity: optionalNumber(raw?.capacity),
+      rakePercent: optionalNumber(raw?.rakePercent),
+      seated: optionalNumber(raw?.seated),
+      hostName: typeof raw?.hostName === 'string' ? raw.hostName : undefined,
+      minBuyIn: optionalNumber(raw?.minBuyIn),
+      maxBuyIn: optionalNumber(raw?.maxBuyIn),
+    },
+  };
+}
+
 /** Enregistre la confirmation « 18 ans et argent réel » : le serveur en garde la preuve. */
 export async function acceptCashTableTerms(): Promise<void> {
   await cashRequest('/api/cash/tables/consent', 'Enregistrement impossible.', { method: 'POST' });

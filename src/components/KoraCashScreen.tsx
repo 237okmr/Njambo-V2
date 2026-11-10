@@ -11,6 +11,7 @@ import { KoraCashDepositPanel } from './KoraCashDepositPanel';
 import { KoraCashHistoryPanel } from './KoraCashHistoryPanel';
 import { KoraCashPhonesPanel, KoraCashWithdrawPanel } from './KoraCashWithdrawPanels';
 import { CashTableRequest, KoraCashTablesPanel } from './KoraCashTablesPanel';
+import { KoraCashInvite } from './KoraCashInvite';
 import { KoraCashProtectionPanel } from './KoraCashProtectionPanel';
 import { useKoraCashDeposits } from '../hooks/useKoraCashDeposits';
 import { useBackLayer } from '../hooks/useBackLayer';
@@ -38,6 +39,10 @@ interface KoraCashScreenProps {
   onClose: () => void;
   onOpenCashTable: (request: CashTableRequest) => Promise<{ success: boolean; error?: string }>;
   onResumeCashTable: (roomCode: string) => void;
+  /** Code d'une table Kora Cash reçu par lien d'invitation (?cash=CODE) : la page s'ouvre sur cette invitation. */
+  inviteCode?: string | null;
+  /** L'invitation est réglée (entrée, refus ou « plus tard ») : l'application l'oublie. */
+  onInviteDone?: () => void;
 }
 
 const SoonCard: React.FC<{ title: string; text: string }> = ({ title, text }) => (
@@ -63,7 +68,7 @@ const TABS: SegmentTab<KoraCashTab>[] = [
 ];
 
 /** Page Kora Cash : un mode de jeu à part entière, avec son adresse. Le serveur reste seul juge de ce qui est ouvert. */
-export const KoraCashScreen: React.FC<KoraCashScreenProps> = ({ onClose, onOpenCashTable, onResumeCashTable }) => {
+export const KoraCashScreen: React.FC<KoraCashScreenProps> = ({ onClose, onOpenCashTable, onResumeCashTable, inviteCode = null, onInviteDone }) => {
   const { isLoggedIn, loginWithGoogle } = usePlayerProfile();
   const [status, setStatus] = useState<KoraCashPublicStatus | null>(null);
   const [statusLoaded, setStatusLoaded] = useState<boolean>(false);
@@ -74,6 +79,7 @@ export const KoraCashScreen: React.FC<KoraCashScreenProps> = ({ onClose, onOpenC
   const [chosenTab, setChosenTab] = useState<KoraCashTab | null>(null);
   const [walletView, setWalletView] = useState<'deposit' | 'withdraw'>('deposit');
   const [showDiagnostic, setShowDiagnostic] = useState<boolean>(false);
+  const [publicPrefill, setPublicPrefill] = useState<{ bet: number; capacity: number } | null>(null);
 
   useBackLayer(showDiagnostic, () => setShowDiagnostic(false));
 
@@ -140,6 +146,11 @@ export const KoraCashScreen: React.FC<KoraCashScreenProps> = ({ onClose, onOpenC
   // L'onglet d'arrivée attend de connaître les tables et le solde, pour ne pas sauter d'un onglet à l'autre.
   const arrivalKnown = tablesChecked && (wallet !== null || walletError !== null);
   const activeTab: KoraCashTab | null = chosenTab ?? (arrivalKnown ? defaultKoraCashTab(cashTables, available) : null);
+
+  // Une invitation reçue ouvre l'onglet Tables, où elle s'affiche.
+  useEffect(() => {
+    if (inviteCode) setChosenTab('tables');
+  }, [inviteCode]);
 
   const goToDeposit = () => {
     setWalletView('deposit');
@@ -210,7 +221,16 @@ export const KoraCashScreen: React.FC<KoraCashScreenProps> = ({ onClose, onOpenC
               <div className="mx-auto w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-300">
                 <Lock className="w-5 h-5" />
               </div>
-              <p className="text-sm text-slate-300 leading-relaxed">Kora Cash est réservé aux joueurs connectés avec un compte Google. Connecte-toi pour voir ton solde.</p>
+              {inviteCode ? (
+                <>
+                  <p className="text-sm font-black text-white">Une table Kora Cash t’attend</p>
+                  <p className="text-sm text-slate-300 leading-relaxed">
+                    Connecte-toi avec ton compte Google pour voir la mise et prendre place. Kora Cash se joue en argent réel, réservé aux 18 ans et plus.
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm text-slate-300 leading-relaxed">Kora Cash est réservé aux joueurs connectés avec un compte Google. Connecte-toi pour voir ton solde.</p>
+              )}
               <button
                 type="button"
                 onClick={loginWithGoogle}
@@ -229,13 +249,43 @@ export const KoraCashScreen: React.FC<KoraCashScreenProps> = ({ onClose, onOpenC
             </div>
           )}
 
-          {isOpen && activeTab === 'tables' &&
+          {isOpen && activeTab === 'tables' && inviteCode && (
+            <KoraCashInvite
+              code={inviteCode}
+              view={cashTables}
+              viewChecked={tablesChecked}
+              available={available}
+              onViewChange={setCashTables}
+              onGoToDeposit={goToDeposit}
+              onJoin={async (request) => {
+                const result = await onOpenCashTable(request);
+                if (result.success) {
+                  onInviteDone?.();
+                  onClose();
+                }
+                return result;
+              }}
+              onResume={(roomCode) => {
+                onInviteDone?.();
+                onResumeCashTable(roomCode);
+                onClose();
+              }}
+              onPublicTable={(bet, capacity) => {
+                setPublicPrefill({ bet, capacity });
+                onInviteDone?.();
+              }}
+              onDismiss={() => onInviteDone?.()}
+            />
+          )}
+
+          {isOpen && activeTab === 'tables' && !inviteCode &&
             (canPlayTables && cashTables ? (
               <KoraCashTablesPanel
                 view={cashTables}
                 available={available}
                 onViewChange={setCashTables}
                 onGoToDeposit={goToDeposit}
+                initialPublic={publicPrefill}
                 onOpenTable={async (request) => {
                   const result = await onOpenCashTable(request);
                   if (result.success) onClose();
@@ -252,6 +302,14 @@ export const KoraCashScreen: React.FC<KoraCashScreenProps> = ({ onClose, onOpenC
 
           {isOpen && activeTab === 'wallet' && (
             <>
+              {inviteCode && (
+                <div className="flex items-center justify-between gap-3 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30">
+                  <span className="text-xs font-bold text-amber-100">Une invitation à la table {inviteCode} t’attend.</span>
+                  <button type="button" onClick={() => setChosenTab('tables')} className="min-h-11 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shrink-0 cursor-pointer">
+                    Revenir à l’invitation
+                  </button>
+                </div>
+              )}
               <div role="tablist" aria-label="Portefeuille" className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-slate-900/90 border border-slate-800">
                 {(
                   [

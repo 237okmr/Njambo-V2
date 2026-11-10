@@ -26,6 +26,8 @@ interface KoraCashTablesPanelProps {
   onOpenTable: (request: CashTableRequest) => Promise<{ success: boolean; error?: string }>;
   onResumeTable: (roomCode: string) => void;
   onGoToDeposit: () => void;
+  /** Arrivée depuis une invitation devenue impossible : table publique de la même mise, déjà choisie. */
+  initialPublic?: { bet: number; capacity: number } | null;
 }
 
 const chipClass = (active: boolean) =>
@@ -34,10 +36,10 @@ const chipClass = (active: boolean) =>
   }`;
 
 /** Choix d'une table Cash : le serveur reste seul juge des niveaux, des bornes et du solde. */
-export const KoraCashTablesPanel: React.FC<KoraCashTablesPanelProps> = ({ view, available, onViewChange, onOpenTable, onResumeTable, onGoToDeposit }) => {
+export const KoraCashTablesPanel: React.FC<KoraCashTablesPanelProps> = ({ view, available, onViewChange, onOpenTable, onResumeTable, onGoToDeposit, initialPublic }) => {
   const [mode, setMode] = useState<TableMode>('public');
-  const [bet, setBet] = useState<number>(view.betLevels[0] ?? 0);
-  const [capacity, setCapacity] = useState<number>(2);
+  const [bet, setBet] = useState<number>(initialPublic && view.betLevels.includes(initialPublic.bet) ? initialPublic.bet : (view.betLevels[0] ?? 0));
+  const [capacity, setCapacity] = useState<number>(initialPublic ? initialPublic.capacity : 2);
   const [typed, setTyped] = useState<string>('');
   const [code, setCode] = useState<string>('');
   const [busy, setBusy] = useState<boolean>(false);

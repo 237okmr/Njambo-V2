@@ -5,6 +5,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { FriendService } from '../../services/friendService';
 import { triggerHaptic } from '../../utils/sound';
 import { getPwaShareBase } from '../../utils/pwaLinks';
+import { buildCashInviteUrl, buildCashInviteWhatsAppUrl } from '../../utils/cashInvite';
 
 interface FriendQrModalProps {
   isOpen: boolean;
@@ -12,6 +13,8 @@ interface FriendQrModalProps {
   playerId: string;
   playerName: string;
   activeRoomCode?: string | null;
+  /** Table Kora Cash : le lien et le message sont ceux de Kora Cash (?cash=CODE), pas ceux des tables gratuites. */
+  cashInvite?: { bet: number; rakePercent: number } | null;
   storedFriendCode?: string;
 }
 
@@ -21,6 +24,7 @@ export const FriendQrModal: React.FC<FriendQrModalProps> = ({
   playerId,
   playerName,
   activeRoomCode,
+  cashInvite,
   storedFriendCode,
 }) => {
   const [copiedCode, setCopiedCode] = useState(false);
@@ -28,7 +32,9 @@ export const FriendQrModal: React.FC<FriendQrModalProps> = ({
 
   const friendCode = FriendService.getFriendCode(playerId, storedFriendCode);
   const qrValue = activeRoomCode
-    ? FriendService.getShareInviteUrl(activeRoomCode, playerId)
+    ? cashInvite
+      ? buildCashInviteUrl(getPwaShareBase(), activeRoomCode)
+      : FriendService.getShareInviteUrl(activeRoomCode, playerId)
     : `${getPwaShareBase()}?friendCode=${encodeURIComponent(friendCode)}&friendName=${encodeURIComponent(playerName)}`;
 
   const handleCopyCode = () => {
@@ -48,7 +54,9 @@ export const FriendQrModal: React.FC<FriendQrModalProps> = ({
   const handleOpenWhatsApp = () => {
     triggerHaptic('medium');
     const waUrl = activeRoomCode
-      ? FriendService.getWhatsAppShareUrl(activeRoomCode, playerName)
+      ? cashInvite
+        ? buildCashInviteWhatsAppUrl({ code: activeRoomCode, bet: cashInvite.bet, rakePercent: cashInvite.rakePercent, url: qrValue })
+        : FriendService.getWhatsAppShareUrl(activeRoomCode, playerName)
       : `https://wa.me/?text=${encodeURIComponent(
           `🃏 Ajoute-moi sur Njambo Kora !\nMon code ami est : ${friendCode}\nRejoins-moi ici : ${qrValue}`
         )}`;

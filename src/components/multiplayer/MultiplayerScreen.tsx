@@ -68,6 +68,8 @@ import { isTestEnvironment } from '../../utils/envUtils';
 import { PlayerAvatar } from '../profile/PlayerAvatar';
 import { RoomFilterBottomSheet, AdvancedRoomFilters } from './RoomFilterBottomSheet';
 import { FriendQrModal } from './FriendQrModal';
+import { getPwaShareBase } from '../../utils/pwaLinks';
+import { buildCashInviteText, buildCashInviteUrl, buildCashInviteWhatsAppUrl } from '../../utils/cashInvite';
 import { JoinProgressIndicator } from './JoinProgressIndicator';
 import { HeadToHeadModal } from '../rivalry/HeadToHeadModal';
 import { usePlayerProfile } from '../../context/PlayerProfileContext';
@@ -818,10 +820,13 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
 
   const handleCopyLink = async () => {
     if (!room) return;
-    const shareUrl = FriendService.getShareInviteUrl(room.id, localPlayerId);
+    // Une table Kora Cash se rejoint depuis Kora Cash : son lien est ?cash=CODE, jamais ?join=CODE.
+    const shareUrl = room.cash ? buildCashInviteUrl(getPwaShareBase(), room.id) : FriendService.getShareInviteUrl(room.id, localPlayerId);
     const shareData = {
-      title: 'Njambo Kora - Table Multijoueur',
-      text: `Rejoins ma table de Njambo Kora ! Code : ${room.id}`,
+      title: room.cash ? 'Njambo Kora - Table Kora Cash' : 'Njambo Kora - Table Multijoueur',
+      text: room.cash
+        ? buildCashInviteText({ code: room.id, bet: room.baseBet, rakePercent: room.cash.rakePercent })
+        : `Rejoins ma table de Njambo Kora ! Code : ${room.id}`,
       url: shareUrl,
     };
 
@@ -844,10 +849,17 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
   const handleWhatsAppShare = () => {
     if (!room) return;
     triggerHaptic('medium');
-    const waUrl = FriendService.getWhatsAppShareUrl(room.id, playerName, {
-      baseBet: room.baseBet,
-      fillWithBots: room.fillWithBots,
-    });
+    const waUrl = room.cash
+      ? buildCashInviteWhatsAppUrl({
+          code: room.id,
+          bet: room.baseBet,
+          rakePercent: room.cash.rakePercent,
+          url: buildCashInviteUrl(getPwaShareBase(), room.id),
+        })
+      : FriendService.getWhatsAppShareUrl(room.id, playerName, {
+          baseBet: room.baseBet,
+          fillWithBots: room.fillWithBots,
+        });
     window.open(waUrl, '_blank');
   };
 
@@ -4064,6 +4076,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
         playerId={localPlayerId}
         playerName={playerName}
         activeRoomCode={room?.id}
+        cashInvite={room?.cash ? { bet: room.baseBet, rakePercent: room.cash.rakePercent } : null}
         storedFriendCode={profile?.friendCode}
       />
 

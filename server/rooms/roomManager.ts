@@ -12,6 +12,7 @@ import { CashLedgerError } from '../cash/cashTypes';
 import type { CashTableBook } from '../cash/cashTables';
 import { getCashTablesAccess, getLiveCashTableBook, hasCashTableConsent } from '../cash/cashTableStore';
 import { CashTableSettings, buyInRangeFor, isValidCapacity, validateBuyIn, validateRebuy } from '../cash/cashTableRules';
+import { CashTablePreview, buildCashTablePreview } from '../cash/cashInvitePreview';
 import { PartiePairOutcome, pairOutcomesFromResult } from '../cash/protectionRules';
 import { checkTableEntryAllowed, recordPartieOutcomes } from '../cash/protectionStore';
 
@@ -1438,6 +1439,35 @@ export class RoomManager {
   /** Code de la table où ce joueur a encore un siège Cash ouvert. */
   public static getCashSeatRoomCode(uid: string): string | null {
     return this.findOpenCashSeatRoom(uid)?.id ?? null;
+  }
+
+  /**
+   * Aperçu en lecture seule d'une table Kora Cash, pour la page d'invitation. Il ne change rien : l'entrée reste
+   * décidée par handleCashTableOpen. Mêmes essais limités que l'entrée par code, contre le devinage des codes.
+   */
+  public static previewCashTable(uid: string, rawCode: unknown): { limited: boolean; preview: CashTablePreview } {
+    const key = `cash-preview:${uid}`;
+    const now = Date.now();
+    const attemptInfo = this.failedJoinAttempts.get(key);
+    if (attemptInfo && attemptInfo.resetAt > now && attemptInfo.count >= 6) {
+      return { limited: true, preview: { state: 'UNAVAILABLE' } };
+    }
+
+    const code = typeof rawCode === 'string' ? rawCode.trim().toUpperCase() : '';
+    const room = /^[A-Z0-9]{4,6}$/.test(code) ? this.rooms.get(code) : undefined;
+    const preview = buildCashTablePreview(room, uid);
+
+    if (preview.state === 'UNAVAILABLE') {
+      const prev = this.failedJoinAttempts.get(key);
+      if (prev && prev.resetAt > now) {
+        prev.count += 1;
+      } else {
+        this.failedJoinAttempts.set(key, { count: 1, resetAt: now + Number(this.engineConfig.joinCodeAttemptWindowSeconds ?? 20) * 1000 });
+      }
+    } else {
+      this.failedJoinAttempts.delete(key);
+    }
+    return { limited: false, preview };
   }
 
   public static isCashTableLive(tableId: string): boolean {

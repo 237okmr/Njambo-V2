@@ -1339,6 +1339,30 @@ async function startServer() {
     }
   });
 
+  // Kora Cash — aperçu d'une table par son code, pour la page d'invitation. Lecture seule, compte Google requis.
+  // Ne renvoie jamais de solde ni de capital, ni le nom des autres joueurs ; entrer à la table reste décidé par le serveur de salons.
+  app.get('/api/cash/tables/preview', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const player = await requireGooglePlayer(req, res);
+    if (!player) return;
+    try {
+      const { open } = await getCashTablesAccess();
+      if (!open) {
+        res.json({ success: true, enabled: false });
+        return;
+      }
+      const { limited, preview } = RoomManager.previewCashTable(player.uid, req.query.code);
+      if (limited) {
+        res.status(429).json({ success: false, error: 'Trop de tentatives. Patiente quelques secondes.' });
+        return;
+      }
+      res.json({ success: true, enabled: true, preview });
+    } catch (err) {
+      console.error('[KoraCash] Aperçu de table impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Lecture de la table impossible.' });
+    }
+  });
+
   // Kora Cash — confirmation « 18 ans et argent réel » : la preuve est conservée côté serveur.
   app.post('/api/cash/tables/consent', async (req, res) => {
     const player = await requireGooglePlayer(req, res);
