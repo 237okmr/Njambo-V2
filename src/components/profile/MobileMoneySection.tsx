@@ -49,7 +49,7 @@ export const MobileMoneySection: React.FC<MobileMoneySectionProps> = ({ isLogged
     <section id="settings-mobile-money" className="flex flex-col gap-2">
       <h3 className="px-1 text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
         <Smartphone className="w-3.5 h-3.5 text-amber-400" />
-        Mobile Money
+        MTN MoMo et Orange Money
       </h3>
 
       {!isLoggedIn ? (

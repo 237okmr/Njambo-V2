@@ -219,6 +219,26 @@
         })();
       </script>
     </div>
+    <script>
+      // Écran de démarrage resté bloqué (ex. iPhone trop ancien pour le code du jeu) : on affiche l'erreur au lieu d'un écran figé.
+      (function () {
+        function show(msg) {
+          try {
+            var splash = document.getElementById('splash-screen');
+            if (!splash || document.getElementById('splash-error')) return;
+            var p = document.createElement('p');
+            p.id = 'splash-error';
+            p.style.cssText = 'margin-top:20px;max-width:320px;font-size:13px;line-height:1.4;color:#fca5a5;text-align:center;word-break:break-word';
+            var m = /OS (\d+)[_.](\d+)/.exec(navigator.userAgent || '');
+            var ios = m ? ' (iOS ' + m[1] + '.' + m[2] + ')' : '';
+            p.textContent = 'Le jeu n’a pas pu démarrer' + ios + '. Mets à jour ton téléphone ou ton navigateur, puis recharge. Détail : ' + String(msg || 'erreur inconnue').slice(0, 160);
+            splash.appendChild(p);
+          } catch (e) {}
+        }
+        window.addEventListener('error', function (e) { show(e && e.message); });
+        window.addEventListener('unhandledrejection', function (e) { show(e && e.reason && (e.reason.message || e.reason)); });
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -420,7 +420,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                     </span>
                   </div>
                   <span className="text-xs font-semibold text-slate-300 truncate">
-                    {activeMultiplayerRoom.players?.length || 4} Joueurs · Mise : {activeMultiplayerRoom.baseBet || 10} jetons
+                    {activeMultiplayerRoom.players?.length || 4} Joueurs · Mise : {activeMultiplayerRoom.cash ? formatFcfa(activeMultiplayerRoom.baseBet) : `${activeMultiplayerRoom.baseBet || 10} jetons`}
                   </span>
                 </div>
               </div>

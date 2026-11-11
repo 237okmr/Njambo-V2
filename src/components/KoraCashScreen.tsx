@@ -355,7 +355,7 @@ export const KoraCashScreen: React.FC<KoraCashScreenProps> = ({ onClose, onOpenC
                 (canWithdraw && withdrawalSettings ? (
                   <KoraCashWithdrawPanel settings={withdrawalSettings} phones={phones} available={available} onManagePhones={() => setChosenTab('account')} />
                 ) : (
-                  <SoonCard title="Retrait bientôt ouvert" text="Tu pourras bientôt envoyer ton solde vers ton numéro Mobile Money." />
+                  <SoonCard title="Retrait bientôt ouvert" text="Tu pourras bientôt envoyer ton solde vers ton numéro MTN ou Orange." />
                 ))}
             </>
           )}

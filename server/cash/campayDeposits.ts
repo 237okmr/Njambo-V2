@@ -59,7 +59,7 @@ export interface PublicDepositResult {
 }
 
 const MSG_PENDING = 'Ton opérateur n\'a pas encore répondu. Si tu as validé la demande, la confirmation arrive toute seule.';
-const MSG_UNREACHABLE = 'Mobile Money ne répond pas. Réessaie dans un instant.';
+const MSG_UNREACHABLE = 'Le service de paiement ne répond pas. Réessaie dans un instant.';
 const MSG_REVIEW = 'Ce paiement demande une vérification. Ton solde sera crédité dès qu\'elle est faite.';
 const MSG_FAILED = 'Le paiement a échoué ou a été annulé. Aucun montant n\'a été crédité.';
 const MSG_SUCCESS = 'Paiement confirmé. Ton solde est crédité.';

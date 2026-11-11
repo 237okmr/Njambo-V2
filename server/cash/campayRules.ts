@@ -23,7 +23,7 @@ export interface PhoneResult {
 export function normalizeCameroonPhone(raw: unknown): PhoneResult {
   const cleaned = String(raw ?? '').replace(/[\s.\-()]/g, '');
   if (cleaned === '') {
-    return { ok: false, error: 'Saisis ton numéro Mobile Money.' };
+    return { ok: false, error: 'Saisis ton numéro MTN ou Orange.' };
   }
   let digits = cleaned.startsWith('+') ? cleaned.slice(1) : cleaned;
   if (digits.startsWith('00237')) digits = digits.slice(2);

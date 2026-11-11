@@ -168,7 +168,7 @@ export const CASH_BALANCE_LABEL = 'Mon solde';
 
 /** Messages du suivi d'un dépôt. */
 export const DEPOSIT_CONFIRMED_TEXT = 'Paiement confirmé : ton solde est crédité.';
-export const NO_PAYMENT_METHOD_TEXT = 'Le dépôt par Mobile Money est indisponible pour l’instant.';
+export const NO_PAYMENT_METHOD_TEXT = 'Le dépôt par MTN MoMo ou Orange Money est indisponible pour l’instant.';
 
 /** Numéro enregistré (237677123412) affiché lisiblement : 6 77 12 34 12. */
 export function formatPhone(phone: string): string {
@@ -179,7 +179,7 @@ export function formatPhone(phone: string): string {
 
 /** Texte du bouton de dépôt : le montant choisi y figure dès qu'il est connu. */
 export function depositButtonLabel(ui: DepositUi, amount: number | undefined): string {
-  return ui.needsPhone && amount !== undefined ? `Payer ${formatFcfa(amount)} par Mobile Money` : ui.buttonLabel;
+  return ui.needsPhone && amount !== undefined ? `Payer ${formatFcfa(amount)} par MTN MoMo ou Orange Money` : ui.buttonLabel;
 }
 
 /** Libellés selon l'environnement et la méthode : en démo, seul le paiement Campay de test est proposé. */
@@ -188,9 +188,9 @@ export function getDepositUi(environment: KoraCashEnvironment, depositMode: Kora
     if (depositMode === 'CAMPAY') {
       return {
         banner: canWithdraw
-          ? 'Le montant choisi est débité de ton compte Mobile Money. Tu peux retirer ce solde vers un numéro vérifié.'
-          : 'Le montant choisi est débité de ton compte Mobile Money. Ce solde ne peut pas encore être retiré.',
-        buttonLabel: 'Payer par Mobile Money',
+          ? 'Le montant choisi est débité de ton compte MTN MoMo ou Orange Money. Tu peux retirer ce solde vers un numéro vérifié.'
+          : 'Le montant choisi est débité de ton compte MTN MoMo ou Orange Money. Ce solde ne peut pas encore être retiré.',
+        buttonLabel: 'Payer par MTN MoMo ou Orange Money',
         canDeposit: true,
         closedTitle: 'Dépôt indisponible',
         needsPhone: true,
@@ -212,7 +212,7 @@ export function getDepositUi(environment: KoraCashEnvironment, depositMode: Kora
     };
   }
   return {
-    banner: 'Le dépôt par Mobile Money ouvre bientôt.',
+    banner: 'Le dépôt par MTN MoMo et Orange Money ouvre bientôt.',
     buttonLabel: 'Déposer',
     canDeposit: false,
     closedTitle: 'Dépôt bientôt ouvert',

@@ -58,6 +58,7 @@ import { notificationScreen, useNotificationScreenOpen } from './hooks/useNotifi
 import { NotificationHistoryScreen } from './components/notifications/NotificationHistoryScreen';
 import { PlayerProfileScreen, ProfileTabType } from './components/profile/PlayerProfileScreen';
 import { KoraCashScreen } from './components/KoraCashScreen';
+import { formatFcfa } from './services/koraCashFormat';
 import type { KoraCashTab } from './services/koraCashFormat';
 import { BottomNavBar } from './components/common/BottomNavBar';
 import { activeBottomNavItem, isBottomNavVisible } from './utils/bottomNav';
@@ -1304,7 +1305,11 @@ function GameApp() {
       ? 'Grand Katika 👑'
       : 'Normale 🎯';
 
-    const text = `🏆 Victoire éclatante sur Njambo Kora !\n🎯 Mode : ${modeLabel}\n💥 Type : ${winType}\n🪙 Pot raflé : +${pot} jetons (par ${winnerName})\n\nRejoins la table et tente ta chance !`;
+    // Table Kora Cash : montants en FCFA, et pas d'invitation à « tenter sa chance » (argent réel, réservé aux adultes).
+    const isCashResult = Boolean(multiplayerRoom?.cash);
+    const text = isCashResult
+      ? `🏆 Partie remportée sur Njambo Kora !\n🎯 Mode : Kora Cash\n💥 Type : ${winType}\n💰 Pot de la partie : ${formatFcfa(pot)} (remporté par ${winnerName})\n\nKora Cash est réservé aux joueurs de 18 ans et plus.`
+      : `🏆 Victoire éclatante sur Njambo Kora !\n🎯 Mode : ${modeLabel}\n💥 Type : ${winType}\n🪙 Pot raflé : +${pot} jetons (par ${winnerName})\n\nRejoins la table et tente ta chance !`;
     const fallbackText = `${text}\n${shareUrl}`;
 
     if (navigator.share && navigator.canShare && navigator.canShare({ title: 'Njambo Kora - Résultat', text, url: shareUrl })) {

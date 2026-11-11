@@ -191,13 +191,13 @@ export async function startCampayCollect(params: { amount: number; phone: string
   let token: string | null = null;
   try {
     const creds = await getProviderCredentials('campay', 'demo');
-    if (!creds) return { kind: 'REJECTED', message: 'Le paiement par Mobile Money est indisponible pour l\'instant.' };
+    if (!creds) return { kind: 'REJECTED', message: 'Le paiement par MTN MoMo ou Orange Money est indisponible pour l\'instant.' };
     token = await resolveDemoToken(creds);
   } catch {
     // Rien n'a encore été demandé à Campay : l'échec est sans risque.
-    return { kind: 'REJECTED', message: 'Mobile Money ne répond pas. Réessaie dans un instant.' };
+    return { kind: 'REJECTED', message: 'Le service de paiement ne répond pas. Réessaie dans un instant.' };
   }
-  if (!token) return { kind: 'REJECTED', message: 'Le paiement par Mobile Money est indisponible pour l\'instant.' };
+  if (!token) return { kind: 'REJECTED', message: 'Le paiement par MTN MoMo ou Orange Money est indisponible pour l\'instant.' };
 
   try {
     const res = await fetch(`${CAMPAY_DEMO_BASE_URL}/api/collect/`, {
@@ -235,13 +235,13 @@ export async function startCampayWithdraw(params: { amount: number; phone: strin
   let token: string | null = null;
   try {
     const creds = await getProviderCredentials('campay', 'demo');
-    if (!creds) return { kind: 'REJECTED', message: 'Le retrait par Mobile Money est indisponible pour l\'instant.' };
+    if (!creds) return { kind: 'REJECTED', message: 'Le retrait par MTN MoMo ou Orange Money est indisponible pour l\'instant.' };
     token = await resolveDemoToken(creds);
   } catch {
     // Rien n'a encore été demandé à Campay : l'échec est sans risque.
-    return { kind: 'REJECTED', message: 'Mobile Money ne répond pas. Réessaie dans un instant.' };
+    return { kind: 'REJECTED', message: 'Le service de paiement ne répond pas. Réessaie dans un instant.' };
   }
-  if (!token) return { kind: 'REJECTED', message: 'Le retrait par Mobile Money est indisponible pour l\'instant.' };
+  if (!token) return { kind: 'REJECTED', message: 'Le retrait par MTN MoMo ou Orange Money est indisponible pour l\'instant.' };
 
   try {
     const res = await fetch(`${CAMPAY_DEMO_BASE_URL}/api/withdraw/`, {

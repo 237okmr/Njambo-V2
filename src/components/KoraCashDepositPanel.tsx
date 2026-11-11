@@ -101,6 +101,9 @@ export const KoraCashDepositPanel: React.FC<KoraCashDepositPanelProps> = ({ ui, 
         </div>
       )}
       {ui.needsPhone && (
+        <p id="kora-cash-deposit-networks" className="text-xs text-slate-300">Tu peux payer avec MTN Mobile Money ou avec Orange Money.</p>
+      )}
+      {ui.needsPhone && (
         <input
           type="tel"
           inputMode="tel"
@@ -111,8 +114,8 @@ export const KoraCashDepositPanel: React.FC<KoraCashDepositPanelProps> = ({ ui, 
             setPhone(e.target.value);
             setMessage(null);
           }}
-          placeholder="Ton numéro Mobile Money (ex. 677 12 34 56)"
-          aria-label="Numéro Mobile Money"
+          placeholder="Ton numéro MTN ou Orange (ex. 677 12 34 56)"
+          aria-label="Numéro MTN ou Orange"
           className="w-full h-10 px-3 rounded-xl bg-slate-900 border border-slate-700 focus:border-amber-400 outline-none text-xs text-white placeholder:text-slate-500"
         />
       )}

@@ -347,6 +347,17 @@ html[data-perf='light'] .home-glow {
 }
 
 /*
+ * iPhone avant iOS 15.4 : l'unité dvh n'existe pas, la hauteur est ignorée et l'écran s'effondre. On retombe sur vh.
+ */
+@supports not (height: 100dvh) {
+  .h-dvh { height: 100vh; }
+  .min-h-dvh { min-height: 100vh; }
+  .max-h-dvh { max-height: 100vh; }
+  [class*="100dvh-var(--app-bottom-nav"] { height: calc(100vh - var(--app-bottom-nav, 0px)); }
+  [class*="12dvh,100px"] { height: clamp(72px, 12vh, 100px); }
+}
+
+/*
  * Filet de sécurité des fonds (navigateurs mobiles anciens ou moteurs limités) : valeurs hexadécimales
  * unies, sans dépendre des variables de couleur Tailwind. Évite qu'un écran plein écran (Profil, Règles,
  * Palmarès, Multijoueur, Notifications, Réglages de partie) devienne transparent et laisse voir l'accueil.

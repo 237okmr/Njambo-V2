@@ -315,7 +315,7 @@ export const KoraCashPhonesPanel: React.FC<PhonesPanelProps> = ({ phones, maxPho
               setMessage(null);
             }}
             placeholder="Ex. 677 12 34 56"
-            aria-label="Nouveau numéro Mobile Money"
+            aria-label="Nouveau numéro MTN ou Orange"
             className="min-w-0 flex-1 h-10 px-3 rounded-xl bg-slate-900 border border-slate-700 focus:border-amber-400 outline-none text-xs text-white placeholder:text-slate-500"
           />
           <button

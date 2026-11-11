@@ -116,13 +116,13 @@ describe('Kora Cash joueur — format et saisie', () => {
     const ui = getDepositUi('DEMO', 'CAMPAY');
     assert.equal(ui.canDeposit, true);
     assert.equal(ui.needsPhone, true);
-    assert.match(ui.banner, /débité de ton compte Mobile Money/);
+    assert.match(ui.banner, /débité de ton compte MTN MoMo ou Orange Money/);
     for (const text of [ui.banner, ui.buttonLabel, getDepositUi('DEMO', 'CAMPAY', true).banner, getDepositUi('DEMO').banner, getDepositUi('LIVE').banner]) {
       assert.doesNotMatch(text, /d[ée]mo|\btest\b|fictif|b[êe]ta|campay/i);
     }
-    assert.match(ui.buttonLabel, /Mobile Money/);
-    assert.equal(depositButtonLabel(ui, undefined), 'Payer par Mobile Money');
-    assert.equal(depositButtonLabel(ui, 25), 'Payer 25 FCFA par Mobile Money');
+    assert.match(ui.buttonLabel, /Orange Money/);
+    assert.equal(depositButtonLabel(ui, undefined), 'Payer par MTN MoMo ou Orange Money');
+    assert.equal(depositButtonLabel(ui, 25), 'Payer 25 FCFA par MTN MoMo ou Orange Money');
     assert.equal(getDepositUi('DEMO').needsPhone, false);
     assert.equal(getDepositUi('LIVE', 'CAMPAY').canDeposit, false);
   });
