@@ -51,6 +51,24 @@ export interface SearchCallsSnapshot {
   calls: SearchCallEntry[];
   mine: MySearchCall | null;
 }
+export interface AppointmentParticipantView {
+  userId: string;
+  displayName: string;
+  avatarId: string;
+}
+export interface AppointmentEntry {
+  id: string;
+  organizerId: string;
+  organizerName: string;
+  organizerAvatar: string;
+  mode: SearchMode;
+  startsAt: number;
+  isMine: boolean;
+  myAnswer: 'YES' | 'NO' | null;
+  yes: AppointmentParticipantView[];
+  full: boolean;
+}
+export type AppointmentsListener = (appointments: AppointmentEntry[]) => void;
 export type SearchCallsListener = (snapshot: SearchCallsSnapshot) => void;
 export type OnlinePlayersListener = (players: OnlinePlayer[]) => void;
 export type PresenceSettingsListener = (settings: PresenceSettings) => void;
@@ -105,6 +123,8 @@ class WebSocketService {
   private presenceSettingsListeners: Set<PresenceSettingsListener> = new Set();
   private searchCallsListeners: Set<SearchCallsListener> = new Set();
   private lastSearchCalls: SearchCallsSnapshot = { calls: [], mine: null };
+  private appointmentsListeners: Set<AppointmentsListener> = new Set();
+  private lastAppointments: AppointmentEntry[] = [];
   private openTablesListeners: Set<OpenTablesListener> = new Set();
   private openTableTargetListeners: Set<OpenTableTargetListener> = new Set();
   private quickMatchResultListeners: Set<QuickMatchResultListener> = new Set();
@@ -1418,6 +1438,11 @@ class WebSocketService {
         this.searchCallsListeners.forEach((l) => l(this.lastSearchCalls));
         break;
 
+      case 'APPOINTMENTS_UPDATE':
+        this.lastAppointments = (msg.appointments || []) as AppointmentEntry[];
+        this.appointmentsListeners.forEach((l) => l(this.lastAppointments));
+        break;
+
       case 'OPEN_TABLES_UPDATE':
         if (msg.openTables) {
           this.openTablesListeners.forEach((l) => l(msg.openTables!));
@@ -2196,6 +2221,50 @@ class WebSocketService {
     this.searchCallsListeners.add(listener);
     return () => {
       this.searchCallsListeners.delete(listener);
+    };
+  }
+
+  /** Demande les rendez-vous visibles (la réponse arrive par onAppointments). */
+  public getAppointments(): void {
+    this.send({ type: 'GET_APPOINTMENTS', playerId: this.getLocalPlayerId() });
+  }
+
+  public createAppointment(input: { mode: SearchMode; startsAt: number; inviteeIds: string[]; openToAlerts: boolean }): void {
+    this.send({
+      type: 'CREATE_APPOINTMENT',
+      playerId: this.getLocalPlayerId(),
+      playerName: localStorage.getItem('njambo_player_name') || 'Joueur',
+      avatarSeed: localStorage.getItem('njambo_avatar_seed') || 'avatar_1',
+      searchMode: input.mode,
+      startsAt: input.startsAt,
+      inviteeIds: input.inviteeIds,
+      openToAlerts: input.openToAlerts,
+    });
+  }
+
+  public respondAppointment(appointmentId: string, answer: 'YES' | 'NO'): void {
+    this.send({
+      type: 'RESPOND_APPOINTMENT',
+      playerId: this.getLocalPlayerId(),
+      playerName: localStorage.getItem('njambo_player_name') || 'Joueur',
+      avatarSeed: localStorage.getItem('njambo_avatar_seed') || 'avatar_1',
+      appointmentId,
+      answer,
+    });
+  }
+
+  public cancelAppointment(appointmentId: string): void {
+    this.send({ type: 'CANCEL_APPOINTMENT', playerId: this.getLocalPlayerId(), appointmentId });
+  }
+
+  public getLastAppointments(): AppointmentEntry[] {
+    return this.lastAppointments;
+  }
+
+  public onAppointments(listener: AppointmentsListener): () => void {
+    this.appointmentsListeners.add(listener);
+    return () => {
+      this.appointmentsListeners.delete(listener);
     };
   }
 

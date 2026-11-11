@@ -39,6 +39,12 @@ export interface KatikaEngineConfig {
   searchCallCooldownSeconds?: number;
   searchCallMaxRecipients?: number;
   searchCallMaxPartants?: number;
+  appointmentHorizonHours?: number;
+  appointmentMinLeadSeconds?: number;
+  appointmentReminderLeadMinutes?: number;
+  appointmentGraceMinutes?: number;
+  appointmentMaxActivePerPlayer?: number;
+  appointmentMaxInvitees?: number;
   openTableRefLifetimeSeconds?: number;
   openTablesAccessCacheSeconds?: number;
   notificationHistoryMaxItems?: number;

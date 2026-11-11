@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import type { GameInvitation } from '../types';
-import { buildHomeCard, countInvitations, countSearchCalls, liveSearchCalls, invitationsForMode, isCashSideAvailable, resolveSocialMode, splitSeatedTable } from './socialCenter';
+import { appointmentsForMode, countAppointmentsToAnswer, buildHomeCard, countInvitations, countSearchCalls, liveSearchCalls, invitationsForMode, isCashSideAvailable, resolveSocialMode, splitSeatedTable } from './socialCenter';
 
 const NOW = 1_000_000;
 
@@ -91,5 +91,27 @@ describe('table où le joueur est assis', () => {
   });
   it('aucune table : rien des deux côtés', () => {
     assert.deepEqual(splitSeatedTable(null), { free: null, cash: null });
+  });
+});
+
+describe('rendez-vous dans le centre social', () => {
+  const now = 1_000_000;
+  const apt = (over: Record<string, unknown> = {}) => ({ mode: 'FREE' as const, startsAt: now + 600_000, isMine: false, myAnswer: null as 'YES' | 'NO' | null, ...over });
+
+  it('compte à part Gratuit et Cash, sans mes rendez-vous ni ceux déjà répondus', () => {
+    const list = [apt(), apt({ mode: 'CASH' }), apt({ isMine: true }), apt({ myAnswer: 'YES' }), apt({ startsAt: now - 1 })];
+    assert.deepEqual(countAppointmentsToAnswer(list, true, now), { free: 1, cash: 1 });
+    assert.deepEqual(countAppointmentsToAnswer(list, false, now), { free: 1, cash: 0 });
+  });
+
+  it('filtre par mode et trie par heure', () => {
+    const list = [apt({ startsAt: now + 900_000 }), apt({ mode: 'CASH' }), apt({ startsAt: now + 300_000 })];
+    assert.deepEqual(appointmentsForMode(list, 'FREE').map((a) => a.startsAt), [now + 300_000, now + 900_000]);
+  });
+
+  it('la carte d\'accueil les mentionne', () => {
+    const card = buildHomeCard({ isGoogle: true, counts: { free: 0, cash: 0 }, appointments: { free: 2, cash: 0 } });
+    assert.equal(card.badge, 2);
+    assert.equal(card.detail, '2 rendez-vous à confirmer');
   });
 });

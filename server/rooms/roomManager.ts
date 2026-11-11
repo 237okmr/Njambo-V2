@@ -7,6 +7,8 @@ import { PARAM_BY_KEY, clampParamValue } from '../engine/engineParams';
 import { pushService, buildGameUrl, buildCashGameUrl } from '../pushService';
 import { DEFAULT_PRESENCE_SETTINGS, PresenceSettings, buildOnlinePlayers, checkInviteQuota, isGoogleUserId, mayReceiveInvite, normalizePresenceSettings } from '../presence/onlinePlayersRules';
 import { PresenceSettingsRuntime, firestorePresenceSettings } from '../presence/presenceSettingsStore';
+import { Appointment, AppointmentView, applyAnswer, buildAppointmentViews, describeDelay, dueReminders, isAppointmentOver, normalizeAnswer, refusalMessage, validateNewAppointment } from '../presence/appointmentsRules';
+import { AppointmentsRuntime, firestoreAppointments } from '../presence/appointmentsStore';
 import { SearchCall, SearchCallView, addPartant, buildCallViews, checkSearchCooldown, isCallLive, normalizeSearchMode, selectRecipients } from '../presence/searchCallsRules';
 import { APP_VERSION } from '../../src/version';
 import { verifyFirebaseIdToken } from '../firebaseAdmin';
@@ -73,6 +75,10 @@ export class RoomManager {
   private static openTableRefs = new Map<string, { uid: string; roomId: string; expiresAt: number }>(); // référence opaque -> table d'ami
   private static cashViewAccessCache = new Map<string, { allowed: boolean; fetchedAt: number }>(); // playerId -> droit de voir les niveaux Cash
   private static presenceSettingsRuntime: PresenceSettingsRuntime = firestorePresenceSettings;
+  private static appointments = new Map<string, Appointment>(); // id -> rendez-vous (relu depuis Firestore à la première utilisation)
+  private static appointmentsLoaded = false;
+  private static appointmentsLoading: Promise<void> | null = null;
+  private static appointmentsRuntime: AppointmentsRuntime = firestoreAppointments;
   private static searchCalls = new Map<string, SearchCall>(); // playerId -> appel « je cherche une partie » (en mémoire seulement)
   private static lastSearchNotifiedAt = new Map<string, number>(); // playerId -> dernier envoi de notifications d'appel
   private static cashSearchAccessCache = new Map<string, { allowed: boolean; fetchedAt: number }>(); // playerId -> droit d'appel/réponse côté Cash
@@ -1445,6 +1451,22 @@ export class RoomManager {
 
         case 'REPLY_SEARCH':
           void this.handleReplySearch(client, msg);
+          break;
+
+        case 'GET_APPOINTMENTS':
+          void this.sendAppointmentsTo(client.playerId);
+          break;
+
+        case 'CREATE_APPOINTMENT':
+          void this.handleCreateAppointment(client, msg);
+          break;
+
+        case 'RESPOND_APPOINTMENT':
+          void this.handleRespondAppointment(client, msg);
+          break;
+
+        case 'CANCEL_APPOINTMENT':
+          void this.handleCancelAppointment(client, msg);
           break;
 
         default:
@@ -6348,30 +6370,35 @@ export class RoomManager {
     void this.sendSearchCallsTo(uid);
   }
 
+  /** Joueurs Google connus de la présence, avec leur statut et leurs réglages d'alertes déjà en mémoire (rien n'est lu dans Firestore). */
+  private static presenceCandidates(now: number): Array<{ userId: string; status: 'AVAILABLE' | 'IN_SOLO' | 'IN_LOBBY' | 'IN_GAME'; online: boolean; searchAlerts?: boolean; hidden?: boolean }> {
+    const freshMs = Number(this.engineConfig.friendPresenceFreshSeconds ?? 25) * 1000;
+    return [...this.userPresences.values()]
+      .filter((p) => isGoogleUserId(p.userId))
+      .map((p) => {
+        const open = this.clients.get(p.userId);
+        const socketOpen = !!open && open.socket.readyState === WebSocket.OPEN;
+        const room = p.currentRoomCode ? this.rooms.get(p.currentRoomCode) : undefined;
+        const status: 'AVAILABLE' | 'IN_SOLO' | 'IN_LOBBY' | 'IN_GAME' =
+          (room && room.status === 'PLAYING') || p.status === 'IN_GAME' ? 'IN_GAME' : p.status === 'IN_SOLO' ? 'IN_SOLO' : p.status === 'IN_LOBBY' || room ? 'IN_LOBBY' : 'AVAILABLE';
+        const settings = this.presenceSettingsCache.get(p.userId);
+        return {
+          userId: p.userId,
+          status,
+          online: p.status !== 'OFFLINE' && (socketOpen || now - p.lastSeenAt < freshMs),
+          searchAlerts: settings?.searchAlerts,
+          hidden: settings?.hidden,
+        };
+      });
+  }
+
   /** Prévient les destinataires de l'appel : liste en direct s'ils sont connectés, notification dans tous les cas. */
   private static async notifySearchRecipients(call: SearchCall): Promise<void> {
     const uid = call.userId;
     const now = Date.now();
     try {
       const friendIds = await this.getConfirmedFriendIds(uid);
-      const freshMs = Number(this.engineConfig.friendPresenceFreshSeconds ?? 25) * 1000;
-      const candidates = [...this.userPresences.values()]
-        .filter((p) => isGoogleUserId(p.userId))
-        .map((p) => {
-          const open = this.clients.get(p.userId);
-          const socketOpen = !!open && open.socket.readyState === WebSocket.OPEN;
-          const room = p.currentRoomCode ? this.rooms.get(p.currentRoomCode) : undefined;
-          const status: 'AVAILABLE' | 'IN_SOLO' | 'IN_LOBBY' | 'IN_GAME' =
-            (room && room.status === 'PLAYING') || p.status === 'IN_GAME' ? 'IN_GAME' : p.status === 'IN_SOLO' ? 'IN_SOLO' : p.status === 'IN_LOBBY' || room ? 'IN_LOBBY' : 'AVAILABLE';
-          const settings = this.presenceSettingsCache.get(p.userId);
-          return {
-            userId: p.userId,
-            status,
-            online: p.status !== 'OFFLINE' && (socketOpen || now - p.lastSeenAt < freshMs),
-            searchAlerts: settings?.searchAlerts,
-            hidden: settings?.hidden,
-          };
-        });
+      const candidates = this.presenceCandidates(now);
       const picked = selectRecipients({
         callerId: uid,
         friendIds,
@@ -6482,6 +6509,294 @@ export class RoomManager {
         },
       })
       .catch((err) => console.warn('[RoomManager] Notification de réponse non envoyée:', err));
+  }
+
+  // ── Rendez-vous ───────────────────────────────────────────────────────────────────────────────────────────────
+
+  public static setAppointmentsRuntimeForTest(runtime: AppointmentsRuntime | null): void {
+    this.appointmentsRuntime = runtime ?? firestoreAppointments;
+    this.appointments.clear();
+    this.appointmentsLoaded = false;
+    this.appointmentsLoading = null;
+  }
+
+  private static appointmentGraceMs(): number {
+    return Number(this.engineConfig.appointmentGraceMinutes ?? 60) * 60_000;
+  }
+
+  /** Relit les rendez-vous à venir une seule fois (première utilisation après un démarrage). Échec : on réessaiera. */
+  private static async ensureAppointmentsLoaded(): Promise<boolean> {
+    if (this.appointmentsLoaded) return true;
+    if (!this.appointmentsLoading) {
+      this.appointmentsLoading = (async () => {
+        try {
+          const list = await this.appointmentsRuntime.loadUpcoming(Date.now() - this.appointmentGraceMs(), 500);
+          for (const a of list) if (!this.appointments.has(a.id)) this.appointments.set(a.id, a);
+          this.appointmentsLoaded = true;
+        } catch (err) {
+          console.warn('[RoomManager] Lecture des rendez-vous impossible:', err instanceof Error ? err.message : String(err));
+        } finally {
+          this.appointmentsLoading = null;
+        }
+      })();
+    }
+    await this.appointmentsLoading;
+    return this.appointmentsLoaded;
+  }
+
+  /** Rendez-vous visibles par ce joueur. Aucune lecture Firestore hors listes déjà en cache. */
+  private static async buildAppointmentViewsFor(uid: string): Promise<AppointmentView[]> {
+    if (this.appointments.size === 0) return [];
+    const now = Date.now();
+    const [settings, myBlocked] = await Promise.all([this.loadPresenceSettings(uid), this.getBlockedIds(uid)]);
+    const others = [...new Set([...this.appointments.values()].filter((a) => a.organizerId !== uid).map((a) => a.organizerId))];
+    const blockedOrganizers = new Set<string>();
+    await Promise.all(
+      others.map(async (id) => {
+        if (myBlocked.has(id) || (await this.getBlockedIds(id)).has(uid)) blockedOrganizers.add(id);
+      })
+    );
+    const cashOk = [...this.appointments.values()].some((a) => a.mode === 'CASH' && a.organizerId !== uid) ? await this.mayUseCashSearch(uid) : false;
+    return buildAppointmentViews({
+      viewerId: uid,
+      appointments: this.appointments.values(),
+      nowMs: now,
+      graceMs: this.appointmentGraceMs(),
+      strangerAllowed: settings?.searchAlerts === true,
+      canSeeMode: (mode) => (mode === 'CASH' ? cashOk : true),
+      isBlocked: (id) => blockedOrganizers.has(id),
+      limit: Number(this.engineConfig.onlinePlayersListMax ?? 50),
+    });
+  }
+
+  private static async sendAppointmentsTo(uid: string): Promise<void> {
+    const target = this.clients.get(uid);
+    if (!target || target.socket.readyState !== WebSocket.OPEN || !this.isVerifiedGooglePlayer(target)) return;
+    try {
+      await this.ensureAppointmentsLoaded();
+      const appointments = await this.buildAppointmentViewsFor(uid);
+      this.sendMessage(target.socket, { type: 'APPOINTMENTS_UPDATE', appointments, timestamp: Date.now() });
+    } catch (err) {
+      console.warn('[RoomManager] Liste des rendez-vous impossible à produire:', err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  private static appointmentPush(uid: string, title: string, body: string, a: Appointment, tag: string): void {
+    pushService
+      .sendNotificationToUser(uid, {
+        title,
+        body,
+        icon: '/icon-192.png',
+        badge: '/badge-96.png',
+        tag,
+        data: {
+          type: 'APPOINTMENT',
+          mode: a.mode,
+          appointmentId: a.id,
+          fromUserId: a.organizerId,
+          fromUserName: a.organizerName,
+          expiresAt: a.startsAt,
+          url: `/game/?social=calls&mode=${a.mode === 'CASH' ? 'cash' : 'free'}`,
+        },
+      })
+      .catch((err) => console.warn('[RoomManager] Notification de rendez-vous non envoyée:', err));
+  }
+
+  private static async validateAppointmentPlayer(client: ConnectedClient, msg: ClientMessage): Promise<boolean> {
+    if (msg.isGuest || !this.isVerifiedGooglePlayer(client)) {
+      this.sendMessage(client.socket, { type: 'ERROR', errorCode: 'AUTH_REQUIRED', error: 'Connecte-toi avec Google pour utiliser les rendez-vous.' });
+      return false;
+    }
+    if (!(await this.ensureAppointmentsLoaded())) {
+      this.sendMessage(client.socket, { type: 'ERROR', errorCode: 'GENERIC', error: 'Les rendez-vous sont indisponibles pour le moment. Réessaie.' });
+      return false;
+    }
+    return true;
+  }
+
+  public static async handleCreateAppointment(client: ConnectedClient, msg: ClientMessage): Promise<void> {
+    const refuse = (error: string) => this.sendMessage(client.socket, { type: 'ERROR', errorCode: 'GENERIC', error });
+    if (!(await this.validateAppointmentPlayer(client, msg))) return;
+    const uid = client.playerId;
+    const mode = normalizeSearchMode(msg.searchMode);
+    if (!mode) return refuse('Ton rendez-vous n\'a pas pu être créé. Réessaie.');
+    const sanction = this.getActivePlayerSanction(uid);
+    if (sanction && (sanction.status === 'BANNED' || sanction.sanctionType === 'TEMP_BAN' || sanction.sanctionType === 'PERM_BAN')) {
+      return refuse('Tu ne peux pas proposer de rendez-vous pour le moment.');
+    }
+    if (this.engineConfig.isMaintenanceMode) return refuse('Le jeu est en maintenance. Réessaie plus tard.');
+    if (mode === 'CASH') {
+      const access = await this.getCashRuntime().getAccess().catch(() => ({ open: false }));
+      if (!access.open || !(await this.mayUseCashSearch(uid))) return refuse('Kora Cash n\'est pas accessible pour toi pour le moment.');
+    }
+
+    const now = Date.now();
+    const graceMs = this.appointmentGraceMs();
+    const friendIds = await this.getConfirmedFriendIds(uid);
+    const checked = validateNewAppointment({
+      nowMs: now,
+      startsAt: msg.startsAt,
+      minLeadMs: Number(this.engineConfig.appointmentMinLeadSeconds ?? 120) * 1000,
+      horizonMs: Number(this.engineConfig.appointmentHorizonHours ?? 48) * 3_600_000,
+      organizerId: uid,
+      requestedInvitees: msg.inviteeIds,
+      friendIds,
+      openToAlerts: msg.openToAlerts === true,
+      activeCount: [...this.appointments.values()].filter((a) => a.organizerId === uid && !isAppointmentOver(a, now, graceMs)).length,
+      maxActive: Number(this.engineConfig.appointmentMaxActivePerPlayer ?? 3),
+      maxInvitees: Number(this.engineConfig.appointmentMaxInvitees ?? 10),
+    });
+    if (checked.ok === false) return refuse(refusalMessage(checked.reason));
+
+    const presence = this.userPresences.get(uid);
+    const clean = (raw: unknown, fallback: string, max: number) => (typeof raw === 'string' ? raw : fallback).replace(/[\u0000-\u001f\u007f<>]/g, '').trim().slice(0, max) || fallback;
+    const appointment: Appointment = {
+      id: `apt_${randomBytes(6).toString('hex')}`,
+      organizerId: uid,
+      organizerName: clean(msg.playerName || presence?.displayName, 'Un joueur', 40),
+      organizerAvatar: (msg.avatarSeed || presence?.avatarId || 'default').toString().replace(/[^A-Za-z0-9_.:-]/g, '').slice(0, 60) || 'default',
+      mode,
+      startsAt: checked.startsAt,
+      createdAt: now,
+      invitedIds: checked.invitedIds,
+      openToAlerts: msg.openToAlerts === true,
+      yes: [],
+      no: [],
+      preReminderSent: false,
+      startReminderSent: false,
+    };
+    try {
+      await this.appointmentsRuntime.save(appointment);
+    } catch (err) {
+      console.error('[RoomManager] Enregistrement du rendez-vous impossible:', err instanceof Error ? err.message : String(err));
+      return refuse('Ton rendez-vous n\'a pas pu être enregistré. Réessaie.');
+    }
+    this.appointments.set(appointment.id, appointment);
+    this.sendMessage(client.socket, { type: 'NOTIFICATION', notification: 'Rendez-vous proposé.' });
+    await this.notifyAppointmentAudience(appointment);
+    void this.sendAppointmentsTo(uid);
+  }
+
+  /** Prévient les amis invités (même hors ligne) et, si le rendez-vous est ouvert, les joueurs en ligne qui ont activé les alertes. */
+  private static async notifyAppointmentAudience(a: Appointment): Promise<void> {
+    try {
+      const now = Date.now();
+      const candidates = this.presenceCandidates(now).map((c) => (a.openToAlerts ? c : { ...c, searchAlerts: undefined }));
+      const picked = selectRecipients({
+        callerId: a.organizerId,
+        friendIds: new Set(a.invitedIds),
+        candidates,
+        offlineFriendIds: a.invitedIds,
+        max: Number(this.engineConfig.searchCallMaxRecipients ?? 20),
+      });
+      const myBlocked = await this.getBlockedIds(a.organizerId);
+      await Promise.all(
+        picked.map(async ({ userId: rid }) => {
+          try {
+            if (myBlocked.has(rid) || (await this.getBlockedIds(rid)).has(a.organizerId)) return;
+            if (a.mode === 'CASH' && !(await this.mayUseCashSearch(rid))) return;
+            void this.sendAppointmentsTo(rid);
+            this.appointmentPush(rid, `📅 ${a.organizerName} propose une partie`, `${describeDelay(a.startsAt - now)}${a.mode === 'CASH' ? ' · Kora Cash, argent réel, 18 ans et plus' : ''}. Ouvre Social pour répondre.`, a, `apt-${a.id}`);
+          } catch (err) {
+            console.warn('[RoomManager] Invité de rendez-vous ignoré:', err instanceof Error ? err.message : String(err));
+          }
+        })
+      );
+    } catch (err) {
+      console.error('[RoomManager] Notification des rendez-vous impossible:', err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  public static async handleRespondAppointment(client: ConnectedClient, msg: ClientMessage): Promise<void> {
+    const gone = () => this.sendMessage(client.socket, { type: 'ERROR', errorCode: 'GENERIC', error: 'Ce rendez-vous n\'est plus disponible.' });
+    if (!(await this.validateAppointmentPlayer(client, msg))) return;
+    const uid = client.playerId;
+    const a = typeof msg.appointmentId === 'string' ? this.appointments.get(msg.appointmentId) : undefined;
+    const answer = normalizeAnswer(msg.answer);
+    if (!a || !answer || a.organizerId === uid || isAppointmentOver(a, Date.now(), this.appointmentGraceMs())) return gone();
+
+    const visible = (await this.buildAppointmentViewsFor(uid)).some((v) => v.id === a.id);
+    if (!visible) return gone();
+
+    const presence = this.userPresences.get(uid);
+    const participant = {
+      userId: uid,
+      displayName: (msg.playerName || presence?.displayName || 'Un joueur').toString().replace(/[\u0000-\u001f\u007f<>]/g, '').trim().slice(0, 40) || 'Un joueur',
+      avatarId: (msg.avatarSeed || presence?.avatarId || 'default').toString().replace(/[^A-Za-z0-9_.:-]/g, '').slice(0, 60) || 'default',
+    };
+    const next = applyAnswer(a, participant, answer);
+    if (!next) {
+      if (answer === 'YES' && !a.yes.some((p) => p.userId === uid)) {
+        this.sendMessage(client.socket, { type: 'ERROR', errorCode: 'GENERIC', error: 'Ce rendez-vous est complet.' });
+      } else {
+        void this.sendAppointmentsTo(uid);
+      }
+      return;
+    }
+    try {
+      await this.appointmentsRuntime.save(next);
+    } catch (err) {
+      console.error('[RoomManager] Enregistrement de la réponse impossible:', err instanceof Error ? err.message : String(err));
+      this.sendMessage(client.socket, { type: 'ERROR', errorCode: 'GENERIC', error: 'Ta réponse n\'a pas pu être enregistrée. Réessaie.' });
+      return;
+    }
+    this.appointments.set(next.id, next);
+    void this.sendAppointmentsTo(uid);
+    void this.sendAppointmentsTo(next.organizerId);
+    if (answer === 'YES') {
+      this.appointmentPush(next.organizerId, `📅 ${participant.displayName} sera là`, `${describeDelay(next.startsAt - Date.now())}. Ouvre Social pour voir qui vient.`, next, `apt-yes-${next.id}`);
+    }
+  }
+
+  public static async handleCancelAppointment(client: ConnectedClient, msg: ClientMessage): Promise<void> {
+    if (!(await this.validateAppointmentPlayer(client, msg))) return;
+    const a = typeof msg.appointmentId === 'string' ? this.appointments.get(msg.appointmentId) : undefined;
+    if (!a || a.organizerId !== client.playerId) {
+      this.sendMessage(client.socket, { type: 'ERROR', errorCode: 'GENERIC', error: 'Ce rendez-vous n\'est plus disponible.' });
+      return;
+    }
+    try {
+      await this.appointmentsRuntime.remove(a.id);
+    } catch (err) {
+      console.error('[RoomManager] Annulation du rendez-vous impossible:', err instanceof Error ? err.message : String(err));
+      this.sendMessage(client.socket, { type: 'ERROR', errorCode: 'GENERIC', error: 'Le rendez-vous n\'a pas pu être annulé. Réessaie.' });
+      return;
+    }
+    this.appointments.delete(a.id);
+    const concerned = new Set<string>([a.organizerId, ...a.invitedIds, ...a.yes.map((p) => p.userId)]);
+    concerned.forEach((id) => void this.sendAppointmentsTo(id));
+    for (const p of a.yes) {
+      this.appointmentPush(p.userId, `📅 Rendez-vous annulé`, `${a.organizerName} a annulé la partie prévue.`, a, `apt-cancel-${a.id}`);
+    }
+  }
+
+  /** Une fois par minute : retire les rendez-vous finis, envoie les rappels dus (organisateur et joueurs ayant répondu oui). */
+  private static async runAppointmentTick(now: number): Promise<void> {
+    if (!(await this.ensureAppointmentsLoaded())) return;
+    const graceMs = this.appointmentGraceMs();
+    for (const [id, a] of this.appointments) {
+      if (isAppointmentOver(a, now, graceMs)) {
+        this.appointments.delete(id);
+        void this.appointmentsRuntime.remove(id).catch((err) => console.warn('[RoomManager] Suppression d\'un rendez-vous fini impossible:', err instanceof Error ? err.message : String(err)));
+      }
+    }
+    const leadMs = Number(this.engineConfig.appointmentReminderLeadMinutes ?? 10) * 60_000;
+    for (const due of dueReminders(this.appointments.values(), now, leadMs)) {
+      const a = this.appointments.get(due.id);
+      if (!a) continue;
+      const updated: Appointment = { ...a, preReminderSent: true, startReminderSent: a.startReminderSent || due.kind === 'START' };
+      this.appointments.set(a.id, updated);
+      void this.appointmentsRuntime.save(updated).catch((err) => console.warn('[RoomManager] Rappel de rendez-vous non enregistré:', err instanceof Error ? err.message : String(err)));
+      const people = [a.organizerId, ...a.yes.map((p) => p.userId)];
+      const isStart = due.kind === 'START';
+      for (const uid of people) {
+        const title = isStart ? '📅 C\'est l\'heure !' : `📅 Ta partie commence ${describeDelay(a.startsAt - now)}`;
+        const body = isStart ? 'Ouvre Social pour retrouver tes joueurs et ouvrir la table.' : `Rendez-vous avec ${uid === a.organizerId ? 'tes amis' : a.organizerName}. Prépare-toi.`;
+        const open = this.clients.get(uid);
+        if (open && open.socket.readyState === WebSocket.OPEN) this.sendMessage(open.socket, { type: 'NOTIFICATION', notification: `${title} ${body}` });
+        this.appointmentPush(uid, title, body, updated, `apt-${due.kind}-${a.id}`);
+      }
+    }
   }
 
   public static async handleSendDirectInvite(client: ConnectedClient, msg: ClientMessage): Promise<void> {
@@ -7069,6 +7384,8 @@ export class RoomManager {
           this.presenceSettingsCache.delete(key);
         }
       });
+      // Rendez-vous : rappels dus et rendez-vous finis
+      void this.runAppointmentTick(now).catch((err) => console.warn('[RoomManager] Ménage des rendez-vous impossible:', err instanceof Error ? err.message : String(err)));
       // Appels « je cherche une partie » : échus retirés ; délais de relance oubliés une fois écoulés
       this.searchCalls.forEach((call, key) => {
         if (!isCallLive(call, now)) this.searchCalls.delete(key);

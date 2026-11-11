@@ -30,6 +30,7 @@ export type PushType =
   | 'PLAYER_JOINED'
   | 'RANK_CHANGE'
   | 'SEARCH_CALL'
+  | 'APPOINTMENT'
   | 'SYSTEM';
 
 /** Alertes « table en danger » : jamais coupées par le mode nuit quand le joueur est assis à une table. */
@@ -45,6 +46,7 @@ export interface ServerPushPreferences {
   hostJoinAlerts?: boolean; // notification quand un joueur rejoint la table de l'hôte
   rankChanges?: boolean; // perte de rang ou nouveau meilleur rang
   searchCalls?: boolean; // quelqu'un cherche une partie
+  appointments?: boolean; // rendez-vous proposés, réponses, rappels
   quietHoursEnabled: boolean;
   quietHoursStart: number; // 0-23, heure locale du joueur
   quietHoursEnd: number; // 0-23, heure locale du joueur
@@ -60,6 +62,7 @@ export const DEFAULT_SERVER_PUSH_PREFERENCES: ServerPushPreferences = {
   hostJoinAlerts: true,
   rankChanges: true,
   searchCalls: true,
+  appointments: true,
   quietHoursEnabled: false,
   quietHoursStart: 23,
   quietHoursEnd: 8,
@@ -89,6 +92,7 @@ const PUSH_POLICY: Record<PushType, { ttl: number; urgency: 'high' | 'normal' }>
   PLAYER_JOINED: { ttl: 120, urgency: 'high' },
   RANK_CHANGE: { ttl: 6 * 3600, urgency: 'normal' },
   SEARCH_CALL: { ttl: 600, urgency: 'normal' },
+  APPOINTMENT: { ttl: 900, urgency: 'high' },
   SYSTEM: { ttl: 3600, urgency: 'normal' },
 };
 
@@ -129,6 +133,8 @@ export function isTypeAllowed(type: PushType | undefined, prefs: ServerPushPrefe
       return prefs.rankChanges ?? true;
     case 'SEARCH_CALL':
       return prefs.searchCalls ?? true;
+    case 'APPOINTMENT':
+      return prefs.appointments ?? true;
     default:
       return true; // SYSTEM (test, messages admin) : toujours livré
   }

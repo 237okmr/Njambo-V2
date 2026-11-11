@@ -534,6 +534,10 @@ service cloud.firestore {
     match /cash_reconciliations/{docId} {
       allow read, write: if false;
     }
+    // Rendez-vous du centre social : lus et écrits par le serveur seulement.
+    match /social_appointments/{docId} {
+      allow read, write: if false;
+    }
     // Identifiants des prestataires de paiement (chiffrés) : jamais accessibles depuis un client.
     match /server_secrets/{docId} {
       allow read, write: if false;

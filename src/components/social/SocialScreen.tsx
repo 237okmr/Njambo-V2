@@ -7,6 +7,8 @@ import { NativeSegmentedNav, SegmentTab } from '../common/NativeSegmentedNav';
 import { PlayerAvatar } from '../profile/PlayerAvatar';
 import { OpenTablesPanel } from './OpenTablesPanel';
 import { CashBalanceBar } from './CashBalanceBar';
+import { AppointmentComposer, AppointmentStarter, AppointmentsSection } from './AppointmentsPanel';
+import { useAppointments } from '../../hooks/useAppointments';
 import { MySearchCard, SearchCallsList, SearchStarter } from './SearchCallsPanel';
 import { useSearchCalls } from '../../hooks/useSearchCalls';
 import { fetchCashTables } from '../../services/koraCashClient';
@@ -25,7 +27,7 @@ import { getPublicParamNumber } from '../../services/publicConfig';
 import { wsService } from '../../services/websocketService';
 import { formatFcfa } from '../../services/koraCashFormat';
 import { triggerHaptic } from '../../utils/sound';
-import { SocialMode, SocialSubTab, countInvitations, countSearchCalls, invitationsForMode, readStoredSocialMode, resolveSocialMode, splitSeatedTable, storeSocialMode } from '../../utils/socialCenter';
+import { SocialMode, SocialSubTab, countAppointmentsToAnswer, countInvitations, countSearchCalls, invitationsForMode, readStoredSocialMode, resolveSocialMode, splitSeatedTable, storeSocialMode } from '../../utils/socialCenter';
 
 interface SocialScreenProps {
   onClose: () => void;
@@ -236,6 +238,18 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
   const search = useSearchCalls(isLoggedIn, true);
   const [repliedIds, setRepliedIds] = useState<Record<string, true>>({});
   const searchCounts = useMemo(() => countSearchCalls(search.calls, cashAvailable, now), [search.calls, cashAvailable, now]);
+  // Rendez-vous : proposés ou reçus, du mode affiché seulement.
+  const appointments = useAppointments(isLoggedIn, true);
+  const appointmentCounts = useMemo(() => countAppointmentsToAnswer(appointments, cashAvailable, now), [appointments, cashAvailable, now]);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const composerFriends = useMemo(
+    () =>
+      (friendsHub.acceptedFriends as any[])
+        .filter((f) => f.friendUid)
+        .map((f) => ({ id: String(f.friendUid), name: String(f.displayName || 'Ami'), avatarId: String(f.avatarId || 'avatar_1') })),
+    [friendsHub.acceptedFriends]
+  );
+  const appointmentStarter = <AppointmentStarter onOpen={() => { triggerHaptic('light'); setComposerOpen(true); }} />;
   const myCall = search.mine && search.mine.mode === mode && search.mine.expiresAt > now ? search.mine : null;
   const otherModeCall = search.mine && search.mine.mode !== mode && search.mine.expiresAt > now;
 
@@ -314,7 +328,7 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
   };
 
   // Mêmes quatre onglets dans les deux modes ; seule la pastille d'invitations dépend du mode.
-  const modeBadge = (isCash ? counts.cash : counts.free) + (isCash ? searchCounts.cash : searchCounts.free);
+  const modeBadge = (isCash ? counts.cash : counts.free) + (isCash ? searchCounts.cash : searchCounts.free) + (isCash ? appointmentCounts.cash : appointmentCounts.free);
   const tabs: SegmentTab<SocialSubTab>[] = [
     { id: 'INVITATIONS', label: 'Invitations', shortLabel: 'Invit.', icon: Inbox, badge: modeBadge > 0 ? String(modeBadge) : undefined, badgeColor: 'bg-rose-500 text-white' },
     { id: 'FRIENDS', label: 'Amis', shortLabel: 'Amis', icon: Users },
@@ -414,7 +428,14 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
               <>
                 {myCallCard}
                 <SearchCallsList mode={mode} calls={search.calls} nowMs={now} repliedIds={repliedIds} onReply={replyToCall} />
-                {visibleInvitations.length === 0 && !myCall && searchCounts[isCash ? 'cash' : 'free'] === 0 ? (
+                <AppointmentsSection
+                  mode={mode}
+                  items={appointments}
+                  nowMs={now}
+                  onRespond={(id, answer) => { triggerHaptic('light'); wsService.respondAppointment(id, answer); }}
+                  onCancel={(id) => { triggerHaptic('light'); wsService.cancelAppointment(id); }}
+                />
+                {visibleInvitations.length === 0 && !myCall && searchCounts[isCash ? 'cash' : 'free'] === 0 && !appointments.some((a) => a.mode === mode) ? (
                   <Empty
                     icon={<Inbox className="w-7 h-7" />}
                     title={isCash ? 'Aucune invitation Kora Cash' : 'Aucune invitation'}
@@ -438,6 +459,7 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
                 )}
                 {/* Sous les invitations : les défis à compte à rebours passent avant. */}
                 {!myCall && searchStarter(true)}
+                {appointmentStarter}
               </>
             )}
 
@@ -478,6 +500,7 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
             )}
 
             {(subTab === 'FRIENDS' || subTab === 'ONLINE') && (myCallCard ?? searchStarter(subTab === 'FRIENDS'))}
+            {subTab === 'FRIENDS' && appointmentStarter}
 
             {(subTab === 'FRIENDS' || subTab === 'ONLINE') && (
               <FriendsPanel
@@ -570,6 +593,17 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
         conflict={activeGameConflict}
         setConflict={setActiveGameConflict}
         onReturnToGame={(code) => void onJoinCode(code)}
+      />
+      <AppointmentComposer
+        open={composerOpen}
+        mode={mode}
+        friends={composerFriends}
+        onClose={() => setComposerOpen(false)}
+        onCreate={(input) => {
+          triggerHaptic('light');
+          wsService.createAppointment({ mode, ...input });
+          setComposerOpen(false);
+        }}
       />
     </motion.div>
   );

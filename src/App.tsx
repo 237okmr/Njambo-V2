@@ -33,8 +33,9 @@ import { HomeScreen } from './components/HomeScreen';
 import { MultiplayerScreen } from './components/multiplayer/MultiplayerScreen';
 import { SocialScreen } from './components/social/SocialScreen';
 import { useKoraCashEnabled, useSocialFlags } from './hooks/useSocialAvailability';
-import { buildHomeCard, countInvitations, countSearchCalls, isCashSideAvailable, storeSocialMode, totalInvitations } from './utils/socialCenter';
+import { buildHomeCard, countAppointmentsToAnswer, countInvitations, countSearchCalls, isCashSideAvailable, storeSocialMode, totalInvitations } from './utils/socialCenter';
 import { useSearchCalls } from './hooks/useSearchCalls';
+import { useAppointments } from './hooks/useAppointments';
 import { DirectInviteToast } from './components/multiplayer/DirectInviteToast';
 import { JoinProgressIndicator } from './components/multiplayer/JoinProgressIndicator';
 import { SavedSessionsModal } from './components/SavedSessionsModal';
@@ -95,7 +96,8 @@ import {
   RefreshCw,
   Crown,
   Flag,
-  ShieldAlert,} from 'lucide-react';
+  ShieldAlert,
+} from 'lucide-react';
 
 export function App() {
   // Katika Route & Mobile Copilot Detection
@@ -926,8 +928,11 @@ function GameApp() {
   // Joueurs qui cherchent une partie : poussés par le serveur dès qu'un appel nous concerne (pas de relance périodique hors de Social).
   const searchSnapshot = useSearchCalls(socialFlags.centerEnabled && isGoogleLoggedIn, false);
   const socialSearchCounts = countSearchCalls(searchSnapshot.calls, socialCashAvailable, wsService.getServerTime());
+  // Rendez-vous à confirmer : poussés par le serveur dès qu'un rendez-vous nous concerne.
+  const appointmentList = useAppointments(socialFlags.centerEnabled && isGoogleLoggedIn, false);
+  const socialAppointmentCounts = countAppointmentsToAnswer(appointmentList, socialCashAvailable, wsService.getServerTime());
   const socialHomeCard = socialFlags.centerEnabled
-    ? buildHomeCard({ isGoogle: isGoogleLoggedIn, counts: socialCounts, searching: socialSearchCounts })
+    ? buildHomeCard({ isGoogle: isGoogleLoggedIn, counts: socialCounts, searching: socialSearchCounts, appointments: socialAppointmentCounts })
     : null;
 
   const handleResumeSocialTable = useCallback(
@@ -1094,8 +1099,8 @@ function GameApp() {
       const d = msg.data || {};
       const roomCode: string | undefined = d.roomCode ? String(d.roomCode).toUpperCase() : undefined;
 
-      // Appel « je cherche une partie » (ou réponse « partant ») : on ouvre Social sur les invitations, dans le bon mode, sans rien faire de plus.
-      if (d.type === 'SEARCH_CALL') {
+      // Appel « je cherche une partie », réponse « partant » ou rendez-vous : on ouvre Social sur les invitations, dans le bon mode, sans rien faire de plus.
+      if (d.type === 'SEARCH_CALL' || d.type === 'APPOINTMENT') {
         if (socialCenterEnabledRef.current) {
           storeSocialMode(d.mode === 'CASH' ? 'CASH' : 'FREE');
           setSocialTarget(null);
@@ -3441,7 +3446,7 @@ function GameApp() {
             showInstallModal,
         })}
         socialEnabled={socialFlags.centerEnabled}
-        socialBadge={totalInvitations(socialCounts) + totalInvitations(socialSearchCounts)}
+        socialBadge={totalInvitations(socialCounts) + totalInvitations(socialSearchCounts) + totalInvitations(socialAppointmentCounts)}
         activeItem={activeBottomNavItem({ leaderboard: isLeaderboardOpen, profile: isProfileModalOpen, koraCash: isKoraCashOpen, social: isSocialOpen })}
         onNavigate={(item) => {
           setShowHomeModeSheet(false);

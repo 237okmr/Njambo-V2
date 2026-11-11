@@ -78,11 +78,30 @@ export function countSearchCalls(calls: readonly SearchCallLike[], cashAvailable
   };
 }
 
+/** Rendez-vous : même séparation Gratuit / Cash. Seuls comptent ceux à venir auxquels je n'ai pas répondu et que je n'organise pas. */
+export interface AppointmentLike {
+  mode: SocialMode;
+  startsAt: number;
+  isMine: boolean;
+  myAnswer: 'YES' | 'NO' | null;
+}
+
+export function appointmentsForMode<T extends AppointmentLike>(list: readonly T[], mode: SocialMode): T[] {
+  return list.filter((a) => a.mode === mode).sort((a, b) => a.startsAt - b.startsAt);
+}
+
+export function countAppointmentsToAnswer(list: readonly AppointmentLike[], cashAvailable: boolean, nowMs: number): InvitationCounts {
+  const pending = (mode: SocialMode) => list.filter((a) => a.mode === mode && !a.isMine && a.myAnswer === null && a.startsAt > nowMs).length;
+  return { free: pending('FREE'), cash: cashAvailable ? pending('CASH') : 0 };
+}
+
 export interface HomeCardInput {
   isGoogle: boolean;
   counts: InvitationCounts;
   /** Joueurs qui cherchent une partie (absent : aucun). */
   searching?: InvitationCounts;
+  /** Rendez-vous à confirmer (absent : aucun). */
+  appointments?: InvitationCounts;
 }
 
 export interface HomeCardView {
@@ -95,12 +114,13 @@ export interface HomeCardView {
 }
 
 /** Texte de la carte d'accueil. Une invitation Kora Cash n'y montre jamais la mise. */
-export function buildHomeCard({ isGoogle, counts, searching }: HomeCardInput): HomeCardView {
+export function buildHomeCard({ isGoogle, counts, searching, appointments }: HomeCardInput): HomeCardView {
   if (!isGoogle) {
     return { title: 'Social', detail: 'Connecte-toi avec Google pour retrouver tes amis', badge: 0, action: 'SIGN_IN' };
   }
   const searchTotal = searching ? totalInvitations(searching) : 0;
-  const total = totalInvitations(counts) + searchTotal;
+  const appointmentTotal = appointments ? totalInvitations(appointments) : 0;
+  const total = totalInvitations(counts) + searchTotal + appointmentTotal;
   if (total === 0) {
     return { title: 'Social', detail: 'Amis, invitations et tables', badge: 0, action: 'OPEN' };
   }
@@ -108,6 +128,7 @@ export function buildHomeCard({ isGoogle, counts, searching }: HomeCardInput): H
   if (counts.free > 0) parts.push(`${counts.free} défi${counts.free > 1 ? 's' : ''}`);
   if (counts.cash > 0) parts.push(`${counts.cash} invitation${counts.cash > 1 ? 's' : ''} Kora Cash`);
   if (searchTotal > 0) parts.push(`${searchTotal} ${searchTotal > 1 ? 'cherchent' : 'cherche'} une partie`);
+  if (appointmentTotal > 0) parts.push(`${appointmentTotal} rendez-vous à confirmer`);
   return { title: 'Social', detail: parts.join(' · '), badge: total, action: 'OPEN' };
 }
 

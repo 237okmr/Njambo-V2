@@ -336,6 +336,36 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Nombre maximal de joueurs qui peuvent répondre « partant » à un même appel.',
   },
   {
+    key: 'appointmentHorizonHours', label: 'Rendez-vous : jusqu\'à quand à l\'avance', unit: 'h',
+    min: 1, max: 168, default: 48, group: 'salons', scope: 'both', effect: 'immediate',
+    help: 'Un joueur ne peut pas proposer un rendez-vous plus loin que cette durée.',
+  },
+  {
+    key: 'appointmentMinLeadSeconds', label: 'Rendez-vous : délai minimal avant l\'heure', unit: 's',
+    min: 30, max: 3600, default: 120, group: 'salons', scope: 'both', effect: 'immediate',
+    help: 'Un rendez-vous doit être proposé au moins ce temps avant son heure.',
+  },
+  {
+    key: 'appointmentReminderLeadMinutes', label: 'Rendez-vous : rappel avant l\'heure', unit: 'min',
+    min: 1, max: 120, default: 10, group: 'salons', scope: 'server', effect: 'immediate',
+    help: 'Le rappel est envoyé à l\'organisateur et à ceux qui ont répondu oui. Un second rappel « c\'est l\'heure » part à l\'heure dite. Précision : environ une minute.',
+  },
+  {
+    key: 'appointmentGraceMinutes', label: 'Rendez-vous : durée affichée après l\'heure', unit: 'min',
+    min: 5, max: 360, default: 60, group: 'salons', scope: 'server', effect: 'immediate',
+    help: 'Après son heure, un rendez-vous reste visible ce temps, puis disparaît.',
+  },
+  {
+    key: 'appointmentMaxActivePerPlayer', label: 'Rendez-vous à venir par joueur', unit: '',
+    min: 1, max: 10, default: 3, group: 'salons', scope: 'server', effect: 'immediate',
+    help: 'Nombre de rendez-vous qu\'un joueur peut avoir en même temps comme organisateur.',
+  },
+  {
+    key: 'appointmentMaxInvitees', label: 'Amis invités par rendez-vous', unit: '',
+    min: 1, max: 30, default: 10, group: 'salons', scope: 'server', effect: 'immediate',
+    help: 'Nombre maximal d\'amis nommément invités à un même rendez-vous.',
+  },
+  {
     key: 'openTablesListMax', label: 'Taille de la liste des tables ouvertes', unit: '',
     min: 5, max: 100, default: 30, group: 'salons', scope: 'server', effect: 'immediate',
     help: 'Nombre maximal de tables montrées dans la liste « Tables ouvertes » de la page Social.',

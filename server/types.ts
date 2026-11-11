@@ -48,7 +48,17 @@ export interface ClientMessage {
     | 'STOP_SEARCH'
     | 'GET_SEARCH_CALLS'
     | 'REPLY_SEARCH'
+    | 'GET_APPOINTMENTS'
+    | 'CREATE_APPOINTMENT'
+    | 'RESPOND_APPOINTMENT'
+    | 'CANCEL_APPOINTMENT'
     | 'ACK_PARTIE_RESULTS';
+  /** Rendez-vous : heure (ms), amis invités, ouverture aux alertes, identifiant et réponse. */
+  startsAt?: number;
+  inviteeIds?: string[];
+  openToAlerts?: boolean;
+  appointmentId?: string;
+  answer?: 'YES' | 'NO';
   /** Mode de l'appel « je cherche une partie » (START_SEARCH). */
   searchMode?: 'FREE' | 'CASH';
   /** Liste demandée : tables gratuites ou niveaux Kora Cash. */
@@ -148,6 +158,7 @@ export interface ServerMessage {
     | 'ONLINE_PLAYERS_UPDATE'
     | 'PRESENCE_SETTINGS'
     | 'SEARCH_CALLS_UPDATE'
+    | 'APPOINTMENTS_UPDATE'
     | 'OPEN_TABLES_UPDATE'
     | 'OPEN_TABLE_TARGET'
     | 'QUICK_MATCH_RESULT'
@@ -181,6 +192,7 @@ export interface ServerMessage {
   presenceSettings?: { hidden: boolean; friendsOnlyInvites: boolean; searchAlerts: boolean };
   /** Appels « je cherche une partie » visibles par ce joueur, et son propre appel avec ses « partants ». */
   searchCalls?: Array<{ userId: string; displayName: string; avatarId: string; mode: 'FREE' | 'CASH'; expiresAt: number; isFriend: boolean; canJoin: boolean }>;
+  appointments?: Array<{ id: string; organizerId: string; organizerName: string; organizerAvatar: string; mode: 'FREE' | 'CASH'; startsAt: number; isMine: boolean; myAnswer: 'YES' | 'NO' | null; yes: Array<{ userId: string; displayName: string; avatarId: string }>; full: boolean }>;
   mySearch?: { mode: 'FREE' | 'CASH'; expiresAt: number; partants: Array<{ userId: string; displayName: string; avatarId: string }> } | null;
   openTables?: { mode: 'FREE'; tables: OpenTableEntry[] } | { mode: 'CASH'; levels: OpenCashLevel[] };
   partieResults?: PartieResult[];
