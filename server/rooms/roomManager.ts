@@ -10,6 +10,7 @@ import { PresenceSettingsRuntime, firestorePresenceSettings } from '../presence/
 import { APP_VERSION } from '../../src/version';
 import { verifyFirebaseIdToken } from '../firebaseAdmin';
 import { randomBytes } from 'crypto';
+import { FreeOpenTable, OpenTableRoomView, buildCashOpenLevels, buildFreeOpenTables } from './openTablesRules';
 import { CashLedgerError } from '../cash/cashTypes';
 import type { CashTableBook } from '../cash/cashTables';
 import { getCashTablesAccess, getLiveCashTableBook, hasCashTableConsent } from '../cash/cashTableStore';
@@ -67,6 +68,9 @@ export class RoomManager {
   private static pendingInvitations = new Map<string, GameInvitation>(); // inviteId -> GameInvitation
   private static presenceSettingsCache = new Map<string, PresenceSettings>(); // playerId -> réglages de visibilité (lus une fois)
   private static presenceSettingsLoading = new Map<string, Promise<PresenceSettings | undefined>>();
+  private static blockedIdsCache = new Map<string, { ids: Set<string>; fetchedAt: number }>(); // playerId -> joueurs qu'il a bloqués
+  private static openTableRefs = new Map<string, { uid: string; roomId: string; expiresAt: number }>(); // référence opaque -> table d'ami
+  private static cashViewAccessCache = new Map<string, { allowed: boolean; fetchedAt: number }>(); // playerId -> droit de voir les niveaux Cash
   private static presenceSettingsRuntime: PresenceSettingsRuntime = firestorePresenceSettings;
   private static directInviteSendLog = new Map<string, number[]>(); // playerId -> horodatages des invitations envoyées
   private static lastDirectInviteTimestamps = new Map<string, number>(); // "fromUserId_toUserId" -> timestamp
@@ -1405,6 +1409,14 @@ export class RoomManager {
 
         case 'GET_ONLINE_PLAYERS':
           this.handleGetOnlinePlayers(client);
+          break;
+
+        case 'GET_OPEN_TABLES':
+          void this.handleGetOpenTables(client, msg);
+          break;
+
+        case 'RESOLVE_OPEN_TABLE':
+          void this.handleResolveOpenTable(client, msg);
           break;
 
         case 'GET_PRESENCE_SETTINGS':
@@ -6000,6 +6012,153 @@ export class RoomManager {
       limit: Number(this.engineConfig.onlinePlayersListMax ?? 50),
     });
     this.sendMessage(client.socket, { type: 'ONLINE_PLAYERS_UPDATE', onlinePlayers, timestamp: now });
+  }
+
+  // ── Tables ouvertes ───────────────────────────────────────────────────────────────────────────────────────────
+
+  /** Joueurs que ce joueur a bloqués, relus dans Firestore au plus une fois par friendListCacheSeconds. */
+  private static async getBlockedIds(uid: string): Promise<Set<string>> {
+    const now = Date.now();
+    const cacheMs = Number(this.engineConfig.friendListCacheSeconds ?? 60) * 1000;
+    const cached = this.blockedIdsCache.get(uid);
+    if (cached && cacheMs > 0 && now - cached.fetchedAt < cacheMs) return cached.ids;
+    try {
+      const snap = await getDoc(doc(db, 'blocked_players', uid));
+      recordServerReads(1);
+      const ids = new Set<string>(snap.exists() ? ((snap.data()?.blockedUserIds as string[]) || []) : []);
+      this.blockedIdsCache.set(uid, { ids, fetchedAt: now });
+      return ids;
+    } catch (err) {
+      console.error('[RoomManager] Lecture des blocages impossible:', err instanceof Error ? err.message : String(err));
+      return cached ? cached.ids : new Set<string>();
+    }
+  }
+
+  private static toOpenTableView(room: MultiplayerRoom): OpenTableRoomView {
+    const hostPlayer = (room.players || []).find((p) => p.id === (room.originalHostId || room.hostId));
+    return {
+      id: room.id,
+      cash: Boolean(room.cash),
+      cashClosed: room.cash?.closed,
+      cashOpenSeats: room.cash ? Object.values(room.cash.seats || {}).filter((seat) => seat.open).length : undefined,
+      cashRakePercent: room.cash?.rakePercent,
+      isPublic: room.isPublic !== false,
+      status: room.status,
+      maxPlayers: room.maxPlayers,
+      baseBet: room.baseBet,
+      hostName: room.hostName,
+      hostAvatarSeed: hostPlayer?.avatarSeed,
+      players: (room.players || []).map((p) => {
+        const other = this.clients.get(p.id);
+        return {
+          id: p.id,
+          name: p.name,
+          isHuman: Boolean(p.isHuman),
+          isSpectator: Boolean(p.isSpectator),
+          connected: Boolean(p.connected && other && other.socket.readyState === WebSocket.OPEN),
+        };
+      }),
+    };
+  }
+
+  /** Tables gratuites ouvertes pour ce joueur. Les blocages sont relus (en mémoire tampon) pour les seuls joueurs des tables retenues. */
+  private static async computeFreeOpenTables(uid: string, limit: number): Promise<FreeOpenTable[]> {
+    const views = [...this.rooms.values()].filter((r) => r && r.id && r.players && r.players.length > 0).map((r) => this.toOpenTableView(r));
+    const friendIds = await this.getConfirmedFriendIds(uid);
+    const firstPass = buildFreeOpenTables({ rooms: views, selfId: uid, friendIds, isHidden: () => false, isBlockedWith: () => false, limit: limit * 3 });
+
+    const seatedIds = new Set<string>();
+    firstPass.forEach((t) => {
+      const room = this.rooms.get(t.roomId);
+      (room?.players || []).forEach((p) => {
+        if (p.isHuman && !p.isSpectator && p.id !== uid) seatedIds.add(p.id);
+      });
+    });
+    const mine = await this.getBlockedIds(uid);
+    const theirs = new Map<string, Set<string>>();
+    const hidden = new Set<string>();
+    await Promise.all(
+      [...seatedIds].map(async (id) => {
+        theirs.set(id, await this.getBlockedIds(id));
+        if (friendIds.has(id)) {
+          const settings = await this.loadPresenceSettings(id);
+          if (settings?.hidden) hidden.add(id);
+        }
+      })
+    );
+    return buildFreeOpenTables({
+      rooms: views,
+      selfId: uid,
+      friendIds,
+      isHidden: (id) => hidden.has(id),
+      isBlockedWith: (id) => mine.has(id) || Boolean(theirs.get(id)?.has(uid)),
+      limit,
+    });
+  }
+
+  /** Le joueur peut-il voir les niveaux Kora Cash ? Mêmes conditions d'accès que l'entrée, sans le consentement (la page Cash le demande). */
+  private static async mayViewCashLevels(uid: string): Promise<boolean> {
+    const now = Date.now();
+    const cacheMs = Number(this.engineConfig.openTablesAccessCacheSeconds ?? 60) * 1000;
+    const cached = this.cashViewAccessCache.get(uid);
+    if (cached && now - cached.fetchedAt < cacheMs) return cached.allowed;
+    let allowed = false;
+    try {
+      const runtime = this.getCashRuntime();
+      const { open } = await runtime.getAccess();
+      if (open && !this.engineConfig.isMaintenanceMode) {
+        const sanction = this.getActivePlayerSanction(uid);
+        const banned = Boolean(sanction && (sanction.status === 'BANNED' || sanction.sanctionType === 'TEMP_BAN' || sanction.sanctionType === 'PERM_BAN'));
+        allowed = !banned && (await runtime.checkEntry(uid)) === null;
+      }
+    } catch (err) {
+      console.error('[KoraCash] Droit de voir les niveaux impossible à lire:', err instanceof Error ? err.message : String(err));
+    }
+    this.cashViewAccessCache.set(uid, { allowed, fetchedAt: now });
+    return allowed;
+  }
+
+  /** Liste des tables ouvertes : gratuites (salons publics et tables d'amis) ou niveaux Kora Cash. Une seule des deux par demande. */
+  public static async handleGetOpenTables(client: ConnectedClient, msg: ClientMessage): Promise<void> {
+    if (!this.isVerifiedGooglePlayer(client)) {
+      this.sendMessage(client.socket, { type: 'ERROR', errorCode: 'AUTH_REQUIRED', error: 'Connecte-toi avec Google pour voir les tables ouvertes.' });
+      return;
+    }
+    const uid = client.playerId;
+    const now = Date.now();
+
+    if (msg.openTablesMode === 'CASH') {
+      const levels = (await this.mayViewCashLevels(uid))
+        ? buildCashOpenLevels([...this.rooms.values()].filter((r) => r && r.cash).map((r) => this.toOpenTableView(r)))
+        : [];
+      this.sendMessage(client.socket, { type: 'OPEN_TABLES_UPDATE', openTables: { mode: 'CASH', levels }, timestamp: now });
+      return;
+    }
+
+    const lifetimeMs = Number(this.engineConfig.openTableRefLifetimeSeconds ?? 120) * 1000;
+    for (const [ref, entry] of this.openTableRefs) {
+      if (entry.expiresAt <= now) this.openTableRefs.delete(ref);
+    }
+    const found = await this.computeFreeOpenTables(uid, Number(this.engineConfig.openTablesListMax ?? 30));
+    const tables = found.map(({ roomId, ...entry }) => {
+      if (entry.kind === 'PUBLIC') return entry;
+      const ref = randomBytes(9).toString('hex');
+      this.openTableRefs.set(ref, { uid, roomId, expiresAt: now + lifetimeMs });
+      return { ...entry, id: ref };
+    });
+    this.sendMessage(client.socket, { type: 'OPEN_TABLES_UPDATE', openTables: { mode: 'FREE', tables }, timestamp: now });
+  }
+
+  /** Clic sur une table d'ami : le code n'est donné qu'après revérification (ami toujours assis, place libre, aucun blocage). */
+  public static async handleResolveOpenTable(client: ConnectedClient, msg: ClientMessage): Promise<void> {
+    const refuse = () =>
+      this.sendMessage(client.socket, { type: 'ERROR', errorCode: 'ROOM_NOT_FOUND', error: 'Cette table n\'est plus disponible. Actualise la liste.' });
+    if (!this.isVerifiedGooglePlayer(client)) return refuse();
+    const entry = typeof msg.tableRef === 'string' ? this.openTableRefs.get(msg.tableRef) : undefined;
+    if (!entry || entry.uid !== client.playerId || entry.expiresAt <= Date.now()) return refuse();
+    const stillOpen = (await this.computeFreeOpenTables(client.playerId, Number(this.engineConfig.openTablesListMax ?? 30) * 2)).some((t) => t.roomId === entry.roomId);
+    if (!stillOpen) return refuse();
+    this.sendMessage(client.socket, { type: 'OPEN_TABLE_TARGET', matchedRoomCode: entry.roomId, timestamp: Date.now() });
   }
 
   public static async handleGetPresenceSettings(client: ConnectedClient): Promise<void> {

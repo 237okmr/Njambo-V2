@@ -316,6 +316,26 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Nombre maximal de joueurs montrés dans la liste « En ligne ». Les joueurs disponibles passent en premier.',
   },
   {
+    key: 'openTablesListMax', label: 'Taille de la liste des tables ouvertes', unit: '',
+    min: 5, max: 100, default: 30, group: 'salons', scope: 'server', effect: 'immediate',
+    help: 'Nombre maximal de tables montrées dans la liste « Tables ouvertes » de la page Social.',
+  },
+  {
+    key: 'openTableRefLifetimeSeconds', label: 'Validité d\'une table d\'ami dans la liste', unit: 's',
+    min: 30, max: 600, default: 120, group: 'salons', scope: 'server', effect: 'immediate',
+    help: 'Durée pendant laquelle le clic sur une table d\'ami reste valable après son affichage. Passé ce délai, la liste doit être actualisée.',
+  },
+  {
+    key: 'openTablesAccessCacheSeconds', label: 'Mémoire du droit de voir les tables Kora Cash', unit: 's',
+    min: 10, max: 600, default: 60, group: 'salons', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Le droit d\'un joueur de voir les niveaux Kora Cash est relu au plus une fois par ce délai, pour ménager la base.',
+  },
+  {
+    key: 'clientOpenTablesPollSeconds', label: 'Rafraîchissement de la liste des tables ouvertes', unit: 's',
+    min: 5, max: 120, default: 10, group: 'salons', scope: 'client', effect: 'immediate',
+    help: 'Fréquence de mise à jour automatique de la liste « Tables ouvertes » quand la page Social est visible.',
+  },
+  {
     key: 'socialCenterEnabled', label: 'Centre social (page Social, bouton de la barre, carte d\'accueil)', unit: '', type: 'boolean',
     min: 0, max: 1, default: false, group: 'salons', scope: 'both', effect: 'immediate',
     help: 'Ouvert : les joueurs voient la page Social (invitations, amis, joueurs en ligne, tables). Fermé : rien n\'apparaît, ni dans la barre du bas ni sur l\'accueil. Prérogative katika, jamais visible côté joueur.',

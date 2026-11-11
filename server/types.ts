@@ -1,4 +1,4 @@
-import { Card, GameState, MultiplayerRoom, Player, RoomPlayer, RoomStatus, EmoteMessage, Suit, PartieWinType, PublicRoomSummary, GameInvitation, UserPresence, PartieResult } from '../src/types';
+import { OpenCashLevel, OpenTableEntry, Card, GameState, MultiplayerRoom, Player, RoomPlayer, RoomStatus, EmoteMessage, Suit, PartieWinType, PublicRoomSummary, GameInvitation, UserPresence, PartieResult } from '../src/types';
 
 export interface ClientMessage {
   type:
@@ -41,8 +41,14 @@ export interface ClientMessage {
     | 'GET_FRIENDS_PRESENCE'
     | 'GET_ONLINE_PLAYERS'
     | 'GET_PRESENCE_SETTINGS'
+    | 'GET_OPEN_TABLES'
+    | 'RESOLVE_OPEN_TABLE'
     | 'SET_PRESENCE_SETTINGS'
     | 'ACK_PARTIE_RESULTS';
+  /** Liste demandée : tables gratuites ou niveaux Kora Cash. */
+  openTablesMode?: 'FREE' | 'CASH';
+  /** Référence opaque d'une table d'ami, reçue dans la liste. */
+  tableRef?: string;
   /** Réglages de visibilité envoyés par le joueur (SET_PRESENCE_SETTINGS). */
   presenceSettings?: { hidden?: boolean; friendsOnlyInvites?: boolean };
   roomCode?: string;
@@ -135,6 +141,8 @@ export interface ServerMessage {
     | 'FRIENDS_PRESENCE_UPDATE'
     | 'ONLINE_PLAYERS_UPDATE'
     | 'PRESENCE_SETTINGS'
+    | 'OPEN_TABLES_UPDATE'
+    | 'OPEN_TABLE_TARGET'
     | 'QUICK_MATCH_RESULT'
     | 'VERSION_HANDSHAKE'
     | 'PARTIE_RESULTS';
@@ -164,6 +172,7 @@ export interface ServerMessage {
   presences?: UserPresence[];
   onlinePlayers?: Array<{ userId: string; displayName: string; avatarId: string; status: 'AVAILABLE' | 'IN_SOLO' | 'IN_LOBBY' | 'IN_GAME' }>;
   presenceSettings?: { hidden: boolean; friendsOnlyInvites: boolean };
+  openTables?: { mode: 'FREE'; tables: OpenTableEntry[] } | { mode: 'CASH'; levels: OpenCashLevel[] };
   partieResults?: PartieResult[];
   matchedRoomCode?: string;
   activeGameRoomCode?: string;

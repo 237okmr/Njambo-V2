@@ -1,4 +1,4 @@
-import { MultiplayerRoom, EmoteMessage, PublicRoomSummary, GameInvitation, UserPresence, PartieResult } from '../types';
+import { MultiplayerRoom, EmoteMessage, PublicRoomSummary, GameInvitation, UserPresence, PartieResult, OpenCashLevel, OpenTableEntry } from '../types';
 import { ClientMessage, ServerMessage } from '../../server/types';
 import { auth } from '../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -31,6 +31,9 @@ export interface PresenceSettings {
 }
 export type OnlinePlayersListener = (players: OnlinePlayer[]) => void;
 export type PresenceSettingsListener = (settings: PresenceSettings) => void;
+export type OpenTablesUpdate = { mode: 'FREE'; tables: OpenTableEntry[] } | { mode: 'CASH'; levels: OpenCashLevel[] };
+export type OpenTablesListener = (update: OpenTablesUpdate) => void;
+export type OpenTableTargetListener = (roomCode: string) => void;
 export type QuickMatchResultListener = (roomCode: string) => void;
 export type PartieResultsListener = (results: PartieResult[]) => void;
 export type VersionStatusListener = (data: {
@@ -77,6 +80,8 @@ class WebSocketService {
   private friendsPresenceListeners: Set<FriendsPresenceListener> = new Set();
   private onlinePlayersListeners: Set<OnlinePlayersListener> = new Set();
   private presenceSettingsListeners: Set<PresenceSettingsListener> = new Set();
+  private openTablesListeners: Set<OpenTablesListener> = new Set();
+  private openTableTargetListeners: Set<OpenTableTargetListener> = new Set();
   private quickMatchResultListeners: Set<QuickMatchResultListener> = new Set();
   private versionStatusListeners: Set<VersionStatusListener> = new Set();
   private cashWalletListeners: Set<() => void> = new Set();
@@ -1383,6 +1388,18 @@ class WebSocketService {
         }
         break;
 
+      case 'OPEN_TABLES_UPDATE':
+        if (msg.openTables) {
+          this.openTablesListeners.forEach((l) => l(msg.openTables!));
+        }
+        break;
+
+      case 'OPEN_TABLE_TARGET':
+        if (msg.matchedRoomCode) {
+          this.openTableTargetListeners.forEach((l) => l(msg.matchedRoomCode!));
+        }
+        break;
+
       case 'QUICK_MATCH_RESULT':
         if (msg.matchedRoomCode) {
           this.quickMatchResultListeners.forEach((l) => l(msg.matchedRoomCode!));
@@ -2085,6 +2102,30 @@ class WebSocketService {
   /** Demande la liste des joueurs Google en ligne et visibles (la réponse arrive par onOnlinePlayers). */
   public getOnlinePlayers(): void {
     this.send({ type: 'GET_ONLINE_PLAYERS', playerId: this.getLocalPlayerId() });
+  }
+
+  /** Demande les tables ouvertes : gratuites ou niveaux Kora Cash (la réponse arrive par onOpenTables). */
+  public getOpenTables(mode: 'FREE' | 'CASH'): void {
+    this.send({ type: 'GET_OPEN_TABLES', playerId: this.getLocalPlayerId(), openTablesMode: mode });
+  }
+
+  /** Clic sur une table d'ami : le serveur revérifie puis donne le code par onOpenTableTarget. */
+  public resolveOpenTable(tableRef: string): void {
+    this.send({ type: 'RESOLVE_OPEN_TABLE', playerId: this.getLocalPlayerId(), tableRef });
+  }
+
+  public onOpenTables(listener: OpenTablesListener): () => void {
+    this.openTablesListeners.add(listener);
+    return () => {
+      this.openTablesListeners.delete(listener);
+    };
+  }
+
+  public onOpenTableTarget(listener: OpenTableTargetListener): () => void {
+    this.openTableTargetListeners.add(listener);
+    return () => {
+      this.openTableTargetListeners.delete(listener);
+    };
   }
 
   public getPresenceSettings(): void {

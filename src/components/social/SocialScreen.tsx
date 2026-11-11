@@ -5,6 +5,7 @@ import type { GameInvitation, MultiplayerRoom } from '../../types';
 import { NativeScreenHeader } from '../common/NativeScreenHeader';
 import { NativeSegmentedNav, SegmentTab } from '../common/NativeSegmentedNav';
 import { PlayerAvatar } from '../profile/PlayerAvatar';
+import { OpenTablesPanel } from './OpenTablesPanel';
 import { usePlayerProfile } from '../../context/PlayerProfileContext';
 import { useVisibleInterval } from '../../hooks/useVisibleInterval';
 import { getPublicParamNumber } from '../../services/publicConfig';
@@ -24,6 +25,8 @@ interface SocialScreenProps {
   onResumeTable: (room: MultiplayerRoom) => void;
   onOpenMultiplayer: () => void;
   onOpenKoraCash: () => void;
+  /** Rejoint un salon par son code et dit si cela a réussi. */
+  onJoinCode: (code: string) => Promise<{ success: boolean; error?: string }>;
   /** Le côté Kora Cash est-il disponible (interrupteurs katika, Kora Cash ouvert, compte Google) ? */
   cashAvailable: boolean;
   /** Amis ou joueurs en ligne : l'écran existant, intégré. */
@@ -96,6 +99,7 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
   onResumeTable,
   onOpenMultiplayer,
   onOpenKoraCash,
+  onJoinCode,
   cashAvailable,
   renderFriends,
 }) => {
@@ -278,6 +282,8 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
                     {isCash ? 'Tu as une table gratuite en cours. La voir' : 'Tu as une table Kora Cash en cours. La voir'}
                   </button>
                 )}
+
+                <OpenTablesPanel mode={mode} onJoinCode={onJoinCode} onOpenKoraCash={onOpenKoraCash} />
 
                 {isCash ? (
                   <button type="button" onClick={onOpenKoraCash} className={primaryButton}>

@@ -3259,6 +3259,15 @@ function GameApp() {
                 setIsSocialOpen(false);
                 setIsKoraCashOpen(true);
               }}
+              onJoinCode={async (code) => {
+                const res = await handleJoinRoom(code, localPlayerName);
+                if (res.success) {
+                  setIsSocialOpen(false);
+                  const current = wsService.getCurrentRoom();
+                  if (current && current.status !== 'LOBBY') setCurrentScreen('GAME');
+                }
+                return res;
+              }}
               cashAvailable={socialCashAvailable}
               renderFriends={(view) => renderMultiplayerScreen(view)}
             />

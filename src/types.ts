@@ -599,6 +599,27 @@ export interface PublicRoomSummary {
   hostAbsentSince?: number;
 }
 
+/** Table ouverte, côté gratuit. Pour une table d'ami, `id` est une référence opaque : le code n'est révélé qu'au clic. */
+export interface OpenTableEntry {
+  kind: 'PUBLIC' | 'FRIEND';
+  id: string;
+  hostName: string;
+  hostAvatarSeed?: string;
+  seated: number;
+  capacity: number;
+  baseBet: number;
+  /** Amis confirmés assis à cette table. */
+  friendNames: string[];
+}
+
+/** Niveau de mise Kora Cash ayant des tables publiques en attente. Ni hôte ni code : l'entrée passe par la page Kora Cash. */
+export interface OpenCashLevel {
+  baseBet: number;
+  tables: number;
+  freeSeats: number;
+  rakePercent: number;
+}
+
 export interface RoomFilters {
   betTier: 'ALL' | 'LOW' | 'MEDIUM' | 'HIGH';
   playerCount: 'ALL' | '2' | '3' | '4';
