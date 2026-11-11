@@ -85,24 +85,28 @@ export const MySearchCard: React.FC<{
   </section>
 );
 
-/** Bouton « Je cherche une partie » (onglet En ligne). */
+/** Bouton « Je cherche une partie ». Version compacte (Invit, Amis) : le bouton seul ; l'explication complète est dans En ligne. */
 export const SearchStarter: React.FC<{
   mode: SocialMode;
   /** Un appel est déjà en cours dans l'autre mode. */
   busyOtherMode: boolean;
+  compact?: boolean;
   onStart: () => void;
-}> = ({ mode, busyOtherMode, onStart }) => (
-  <div className="p-3 rounded-2xl bg-slate-900/60 border border-slate-800 flex flex-col gap-2">
-    <button type="button" disabled={busyOtherMode} onClick={onStart} className={`${smallPrimary} h-10 w-full justify-center`}>
-      <Megaphone className="w-4 h-4" />
-      <span>Je cherche une partie</span>
-    </button>
-    <span className="text-xs text-slate-400">
-      {busyOtherMode
-        ? `Ton appel est déjà en cours côté ${mode === 'CASH' ? 'Gratuit' : 'Kora Cash'}. Arrête-le d'abord.`
-        : mode === 'CASH'
-          ? 'Tes amis et les joueurs qui l\'ont accepté sont prévenus. Aucune mise n\'est engagée : vous ouvrez ensuite une table dans Kora Cash.'
-          : 'Tes amis et les joueurs qui l\'ont accepté sont prévenus. L\'appel s\'efface seul.'}
-    </span>
-  </div>
-);
+}> = ({ mode, busyOtherMode, compact = false, onStart }) => {
+  const hint = busyOtherMode
+    ? `Ton appel est déjà en cours côté ${mode === 'CASH' ? 'Gratuit' : 'Kora Cash'}. Arrête-le d'abord.`
+    : compact
+      ? null
+      : mode === 'CASH'
+        ? 'Tes amis et les joueurs qui l\'ont accepté sont prévenus. Aucune mise n\'est engagée : vous ouvrez ensuite une table dans Kora Cash.'
+        : 'Tes amis et les joueurs qui l\'ont accepté sont prévenus. L\'appel s\'efface seul.';
+  return (
+    <div className={compact ? 'flex flex-col gap-1.5' : 'p-3 rounded-2xl bg-slate-900/60 border border-slate-800 flex flex-col gap-2'}>
+      <button type="button" disabled={busyOtherMode} onClick={onStart} className={`${smallPrimary} ${compact ? 'h-9' : 'h-10'} w-full justify-center`}>
+        <Megaphone className="w-4 h-4" />
+        <span>Je cherche une partie</span>
+      </button>
+      {hint && <span className="text-xs text-slate-400">{hint}</span>}
+    </div>
+  );
+};

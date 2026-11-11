@@ -248,6 +248,19 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
     });
   }, [subTab, onJoinCode]);
 
+  // Bouton « Je cherche une partie » : le même dans Invit, Amis et En ligne ; l'explication complète n'est que dans En ligne.
+  const searchStarter = (compact: boolean) => (
+    <SearchStarter
+      mode={mode}
+      compact={compact}
+      busyOtherMode={Boolean(otherModeCall)}
+      onStart={() => {
+        triggerHaptic('light');
+        wsService.startSearch(mode);
+      }}
+    />
+  );
+
   const replyToCall = (call: { userId: string }) => {
     triggerHaptic('light');
     setRepliedIds((prev) => ({ ...prev, [call.userId]: true }));
@@ -423,6 +436,8 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
                     />
                   ))
                 )}
+                {/* Sous les invitations : les défis à compte à rebours passent avant. */}
+                {!myCall && searchStarter(true)}
               </>
             )}
 
@@ -462,13 +477,7 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
               </div>
             )}
 
-            {subTab === 'ONLINE' && (
-              <>
-                {myCallCard ?? (
-                  <SearchStarter mode={mode} busyOtherMode={Boolean(otherModeCall)} onStart={() => { triggerHaptic('light'); wsService.startSearch(mode); }} />
-                )}
-              </>
-            )}
+            {(subTab === 'FRIENDS' || subTab === 'ONLINE') && (myCallCard ?? searchStarter(subTab === 'FRIENDS'))}
 
             {(subTab === 'FRIENDS' || subTab === 'ONLINE') && (
               <FriendsPanel
