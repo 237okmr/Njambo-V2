@@ -6,6 +6,8 @@ import { NativeScreenHeader } from '../common/NativeScreenHeader';
 import { NativeSegmentedNav, SegmentTab } from '../common/NativeSegmentedNav';
 import { PlayerAvatar } from '../profile/PlayerAvatar';
 import { OpenTablesPanel } from './OpenTablesPanel';
+import { CashBalanceBar } from './CashBalanceBar';
+import { fetchCashTables } from '../../services/koraCashClient';
 import { FriendsPanel } from './FriendsPanel';
 import { ActiveGameConflict, ActiveGameConflictModal, AuthRequirementModal } from './HubDialogs';
 import { useFriendsHub } from '../../hooks/useFriendsHub';
@@ -34,6 +36,8 @@ interface SocialScreenProps {
   onResumeTable: (room: MultiplayerRoom) => void;
   onOpenMultiplayer: () => void;
   onOpenKoraCash: () => void;
+  /** Ouvre Kora Cash directement sur le portefeuille (toucher sur le solde). */
+  onOpenKoraCashWallet: () => void;
   /** Rejoint un salon par son code et dit si cela a réussi. */
   onJoinCode: (code: string) => Promise<{ success: boolean; error?: string }>;
   /** Le côté Kora Cash est-il disponible (interrupteurs katika, Kora Cash ouvert, compte Google) ? */
@@ -113,6 +117,7 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
   onResumeTable,
   onOpenMultiplayer,
   onOpenKoraCash,
+  onOpenKoraCashWallet,
   onJoinCode,
   cashAvailable,
   localPlayerId,
@@ -205,10 +210,33 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
 
   useVisibleInterval(() => setNow(wsService.getServerTime()), getPublicParamNumber('clientCountdownTickSeconds') * 1000);
 
-  // Côté Kora Cash : ni amis ni joueurs en ligne (ils invitent à des tables gratuites). On revient aux invitations.
+  // Côté Kora Cash : la confirmation « 18 ans, argent réel » se lit à l'affichage de ce mode seulement.
+  // Sans elle, une carte renvoie vers Kora Cash, où elle se fait. Rien n'est mémorisé : au retour, elle est relue.
+  const [cashConsent, setCashConsent] = useState<'unknown' | 'yes' | 'no' | 'error'>('unknown');
+  const [consentCheck, setConsentCheck] = useState<number>(0);
   useEffect(() => {
-    if (isCash && (subTab === 'FRIENDS' || subTab === 'ONLINE')) setSubTab('INVITATIONS');
-  }, [isCash, subTab]);
+    if (!isCash) return;
+    let cancelled = false;
+    setCashConsent('unknown');
+    fetchCashTables()
+      .then((view) => {
+        if (!cancelled) setCashConsent(view.consented ? 'yes' : 'no');
+      })
+      .catch(() => {
+        if (!cancelled) setCashConsent('error');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isCash, consentCheck]);
+
+  // Table Kora Cash ouverte où je suis assis : seule situation où l'on peut inviter côté Cash.
+  const cashTableOpen = Boolean(
+    room?.cash &&
+      !room.cash.closed &&
+      (room.status === 'LOBBY' || room.status === 'MANCHE_OVER') &&
+      (room.players || []).length < room.maxPlayers
+  );
 
   const counts = useMemo(() => countInvitations(invitations, cashAvailable, now), [invitations, cashAvailable, now]);
   const visibleInvitations = useMemo(() => invitationsForMode(invitations, mode, now), [invitations, mode, now]);
@@ -234,17 +262,14 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
     }
   };
 
-  const tabs: SegmentTab<SocialSubTab>[] = isCash
-    ? [
-        { id: 'INVITATIONS', label: 'Invitations', shortLabel: 'Invitations', icon: Inbox, badge: counts.cash > 0 ? String(counts.cash) : undefined, badgeColor: 'bg-rose-500 text-white' },
-        { id: 'TABLES', label: 'Tables', shortLabel: 'Tables', icon: Table2 },
-      ]
-    : [
-        { id: 'INVITATIONS', label: 'Invitations', shortLabel: 'Invit.', icon: Inbox, badge: counts.free > 0 ? String(counts.free) : undefined, badgeColor: 'bg-rose-500 text-white' },
-        { id: 'FRIENDS', label: 'Amis', shortLabel: 'Amis', icon: Users },
-        { id: 'ONLINE', label: 'En ligne', shortLabel: 'En ligne', icon: Wifi },
-        { id: 'TABLES', label: 'Tables', shortLabel: 'Tables', icon: Table2 },
-      ];
+  // Mêmes quatre onglets dans les deux modes ; seule la pastille d'invitations dépend du mode.
+  const modeBadge = isCash ? counts.cash : counts.free;
+  const tabs: SegmentTab<SocialSubTab>[] = [
+    { id: 'INVITATIONS', label: 'Invitations', shortLabel: 'Invit.', icon: Inbox, badge: modeBadge > 0 ? String(modeBadge) : undefined, badgeColor: 'bg-rose-500 text-white' },
+    { id: 'FRIENDS', label: 'Amis', shortLabel: 'Amis', icon: Users },
+    { id: 'ONLINE', label: 'En ligne', shortLabel: 'En ligne', icon: Wifi },
+    { id: 'TABLES', label: 'Tables', shortLabel: 'Tables', icon: Table2 },
+  ];
 
   return (
     <motion.div
@@ -297,15 +322,40 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
             </div>
           )}
 
-          {isCash && (
-            <div id="social-cash-banner" className="shrink-0 mt-2 px-3 sm:px-6 py-2 border-y bg-amber-500/10 border-amber-500/30">
-              <p className="max-w-lg mx-auto flex items-center gap-1.5 text-xs font-black text-amber-200">
-                <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
-                <span>Argent réel, réservé aux 18 ans et plus. Tu peux perdre ta mise.</span>
-              </p>
-            </div>
-          )}
+          {isCash && cashConsent === 'yes' && <CashBalanceBar onOpenWallet={onOpenKoraCashWallet} />}
 
+          {isCash && cashConsent !== 'yes' ? (
+            <main id="social-cash-gate" className="flex-1 overflow-y-auto no-scrollbar p-3.5 sm:p-6 max-w-lg mx-auto w-full flex flex-col gap-3.5">
+              {cashConsent === 'unknown' && (
+                <div className="flex items-center justify-center gap-2 p-8 text-sm text-slate-400">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Vérification de ton accès Kora Cash…</span>
+                </div>
+              )}
+              {cashConsent === 'error' && (
+                <>
+                  <Empty icon={<ShieldAlert className="w-7 h-7" />} title="Vérification impossible" text="Ton accès Kora Cash n'a pas pu être vérifié. Vérifie ta connexion puis réessaie." />
+                  <button type="button" onClick={() => setConsentCheck((n) => n + 1)} className={secondaryButton}>
+                    Réessayer
+                  </button>
+                </>
+              )}
+              {cashConsent === 'no' && (
+                <>
+                  <Empty
+                    icon={<ShieldAlert className="w-7 h-7" />}
+                    title="Confirme ton âge avant de jouer"
+                    text="Kora Cash se joue avec de l'argent réel et il est réservé aux 18 ans et plus. La confirmation se fait une seule fois, dans Kora Cash."
+                  />
+                  <button type="button" onClick={onOpenKoraCash} className={primaryButton}>
+                    <Wallet className="w-4 h-4" />
+                    <span>Ouvrir Kora Cash</span>
+                  </button>
+                </>
+              )}
+            </main>
+          ) : (
+          <>
           <NativeSegmentedNav tabs={tabs} activeTab={subTab} onChange={(id) => { triggerHaptic('light'); setSubTab(id); }} ariaLabel="Navigation Social" />
 
           <main className="flex-1 overflow-y-auto no-scrollbar p-3.5 sm:p-6 max-w-lg mx-auto w-full flex flex-col gap-3.5">
@@ -336,7 +386,7 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
               </>
             )}
 
-            {!isCash && friendsHub.friendAcceptedToast && (
+            {friendsHub.friendAcceptedToast && (
               <div className="p-3 rounded-2xl bg-emerald-500/20 border border-emerald-500/50 text-emerald-200 flex items-center justify-between gap-3 shadow-lg">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <PlayerAvatar avatarId={(friendsHub.friendAcceptedToast.avatarId as any) || 'avatar_1'} size="sm" className="w-8 h-8 shrink-0 ring-2 ring-emerald-400" />
@@ -351,7 +401,7 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
               </div>
             )}
 
-            {!isCash && (hubErrorMsg || hubSuccessMsg) && (
+            {(hubErrorMsg || hubSuccessMsg) && (
               <div
                 className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-between gap-2 ${
                   hubErrorMsg ? 'bg-rose-500/10 border-rose-500/30 text-rose-300' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
@@ -372,7 +422,7 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
               </div>
             )}
 
-            {!isCash && (subTab === 'FRIENDS' || subTab === 'ONLINE') && (
+            {(subTab === 'FRIENDS' || subTab === 'ONLINE') && (
               <FriendsPanel
                 key={subTab}
                 hub={friendsHub}
@@ -395,6 +445,7 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
                 setShowAddFriendModal={setShowAddFriendModal}
                 showQrModal={showQrModal}
                 setShowQrModal={setShowQrModal}
+                cash={isCash ? { tableOpen: cashTableOpen, onOpenKoraCash } : undefined}
               />
             )}
 
@@ -447,6 +498,8 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
               </>
             )}
           </main>
+          </>
+          )}
         </>
       )}
       <AuthRequirementModal

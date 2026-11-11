@@ -45,6 +45,8 @@ interface KoraCashScreenProps {
   onInviteDone?: () => void;
   /** Centre social ouvert : lien vers la page Social pour les invitations et les amis. */
   onOpenSocial?: () => void;
+  /** Onglet d'arrivée (ex. le portefeuille depuis le solde du centre social). Sinon, choix automatique. */
+  initialTab?: KoraCashTab;
 }
 
 const SoonCard: React.FC<{ title: string; text: string }> = ({ title, text }) => (
@@ -70,7 +72,7 @@ const TABS: SegmentTab<KoraCashTab>[] = [
 ];
 
 /** Page Kora Cash : un mode de jeu à part entière, avec son adresse. Le serveur reste seul juge de ce qui est ouvert. */
-export const KoraCashScreen: React.FC<KoraCashScreenProps> = ({ onClose, onOpenCashTable, onResumeCashTable, inviteCode = null, onInviteDone, onOpenSocial }) => {
+export const KoraCashScreen: React.FC<KoraCashScreenProps> = ({ onClose, onOpenCashTable, onResumeCashTable, inviteCode = null, onInviteDone, onOpenSocial, initialTab }) => {
   const { isLoggedIn, loginWithGoogle } = usePlayerProfile();
   const [status, setStatus] = useState<KoraCashPublicStatus | null>(null);
   const [statusLoaded, setStatusLoaded] = useState<boolean>(false);
@@ -78,7 +80,7 @@ export const KoraCashScreen: React.FC<KoraCashScreenProps> = ({ onClose, onOpenC
   const [phones, setPhones] = useState<CashPhone[]>([]);
   const [cashTables, setCashTables] = useState<CashTablesView | null>(null);
   const [tablesChecked, setTablesChecked] = useState<boolean>(false);
-  const [chosenTab, setChosenTab] = useState<KoraCashTab | null>(null);
+  const [chosenTab, setChosenTab] = useState<KoraCashTab | null>(initialTab ?? null);
   const [walletView, setWalletView] = useState<'deposit' | 'withdraw'>('deposit');
   const [showDiagnostic, setShowDiagnostic] = useState<boolean>(false);
   const [publicPrefill, setPublicPrefill] = useState<{ bet: number; capacity: number } | null>(null);

@@ -56,6 +56,7 @@ import { notificationScreen, useNotificationScreenOpen } from './hooks/useNotifi
 import { NotificationHistoryScreen } from './components/notifications/NotificationHistoryScreen';
 import { PlayerProfileScreen, ProfileTabType } from './components/profile/PlayerProfileScreen';
 import { KoraCashScreen } from './components/KoraCashScreen';
+import type { KoraCashTab } from './services/koraCashFormat';
 import { BottomNavBar } from './components/common/BottomNavBar';
 import { activeBottomNavItem, isBottomNavVisible } from './utils/bottomNav';
 import { GlobalLeaderboardModal } from './components/leaderboard/GlobalLeaderboardModal';
@@ -188,6 +189,8 @@ function GameApp() {
   const [showQuitModal, setShowQuitModal] = useState<boolean>(false);
   const [showHomeModeSheet, setShowHomeModeSheet] = useState<boolean>(false);
   const [isKoraCashOpen, setIsKoraCashOpen] = useState<boolean>(false);
+  // Onglet d'arrivée de Kora Cash quand on y entre depuis le solde du centre social (portefeuille) ; remis à zéro à la fermeture.
+  const [koraCashInitialTab, setKoraCashInitialTab] = useState<KoraCashTab | undefined>(undefined);
   const [isSocialOpen, setIsSocialOpen] = useState<boolean>(false);
   // Sous-onglet de la page Social demandé par une notification (demandes d'amis reçues, par exemple).
   const [socialTarget, setSocialTarget] = useState<{ friendSubTab?: 'FRIENDS' | 'RECEIVED' | 'SENT' } | null>(null);
@@ -3277,6 +3280,11 @@ function GameApp() {
                 setIsSocialOpen(false);
                 setIsKoraCashOpen(true);
               }}
+              onOpenKoraCashWallet={() => {
+                setIsSocialOpen(false);
+                setKoraCashInitialTab('wallet');
+                setIsKoraCashOpen(true);
+              }}
               onJoinCode={async (code) => {
                 const res = await handleJoinRoom(code, localPlayerName);
                 if (res.success) {
@@ -3354,9 +3362,11 @@ function GameApp() {
           <ErrorBoundary>
             <KoraCashScreen
               inviteCode={cashInviteCode}
+              initialTab={koraCashInitialTab}
               onInviteDone={clearCashInvite}
               onClose={() => {
                 setIsKoraCashOpen(false);
+                setKoraCashInitialTab(undefined);
                 clearCashInvite();
               }}
               onOpenCashTable={(request) => handleOpenCashTable(request, localPlayerName)}
@@ -3364,6 +3374,7 @@ function GameApp() {
                 socialFlags.centerEnabled
                   ? () => {
                       setIsKoraCashOpen(false);
+                      setKoraCashInitialTab(undefined);
                       setIsSocialOpen(true);
                     }
                   : undefined

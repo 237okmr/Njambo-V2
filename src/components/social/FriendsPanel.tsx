@@ -108,13 +108,19 @@ export interface FriendsPanelProps {
   setShowAddFriendModal: (open: boolean) => void;
   showQrModal: boolean;
   setShowQrModal: (open: boolean) => void;
+  /**
+   * Présent côté Kora Cash du centre social. Les listes sont les mêmes, mais on n'y crée jamais de table et on n'y mise rien :
+   * assis à une table Cash ouverte, on invite ; sinon le bouton renvoie vers Kora Cash. Rejoindre une table gratuite et
+   * l'invitation WhatsApp sont masqués.
+   */
+  cash?: { tableOpen: boolean; onOpenKoraCash: () => void };
 }
 
 /** Amis, demandes, joueurs en ligne, fenêtres « ajouter un ami », « mon code » et « face-à-face ». Partagé par Multijoueur et Social. */
 export const FriendsPanel: React.FC<FriendsPanelProps> = ({
   hub, challenges, embedded, isLoggedIn, profile, localPlayerId, playerName, room, isAuthLoading, onJoinRoomCode: handleJoin, onGoogleSignIn,
   incomingInvitations, onAcceptInvite: handleAcceptInvite, onDeclineInvite: handleDeclineInvite,
-  setHubErrorMsg, setHubSuccessMsg, showAddFriendModal, setShowAddFriendModal, showQrModal, setShowQrModal,
+  setHubErrorMsg, setHubSuccessMsg, showAddFriendModal, setShowAddFriendModal, showQrModal, setShowQrModal, cash,
 }) => {
   const {
     setLocalContacts, setRecentPlayers, recentPlayers, friendSubTab, setFriendSubTab, friendsPresenceMap, newFriendInput,
@@ -123,12 +129,34 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({
     pendingSentRequests, onlineFriendIds, handleAcceptFriendRequest, handleDeclineFriendRequest, handleCancelSentRequest,
     handleRemoveFriend, handleBlockPlayer, handleSearchFriend, handleSendFriendRequest, handleAddFriendLegacyFallback,
   } = hub;
-  const { handleChallengeFriend, handleInviteOnlinePlayer, handleWhatsAppInviteFriend } = challenges;
+  const { handleChallengeFriend: freeChallenge, handleInviteOnlinePlayer: freeInvite, handleWhatsAppInviteFriend, handleSendDirectInvite } = challenges;
+  const cashMode = Boolean(cash);
+  const cashCanInvite = Boolean(cash?.tableOpen);
+  const handleChallengeFriend: typeof freeChallenge = (friend, status) => {
+    if (!cash) return freeChallenge(friend, status);
+    if (cash.tableOpen) return handleSendDirectInvite(friend.id);
+    cash.onOpenKoraCash();
+    return Promise.resolve(false);
+  };
+  const handleInviteOnlinePlayer: typeof freeInvite = (player) => {
+    if (!cash) return freeInvite(player);
+    if (cash.tableOpen) return handleSendDirectInvite(player.userId);
+    cash.onOpenKoraCash();
+    return Promise.resolve(false);
+  };
+  const challengeLabel = cashMode ? (cashCanInvite ? 'Inviter' : 'Ouvrir une table') : 'Défier';
   const handleGoogleSignIn = onGoogleSignIn;
 
   return (
     <>
             <div className="flex flex-col gap-3">
+              {cashMode && (
+                <p className="text-xs font-bold text-amber-200/90 px-1">
+                  {cashCanInvite
+                    ? 'Tu invites à ta table Kora Cash. Chacun choisit lui-même sa mise à l’entrée.'
+                    : 'Pour inviter, assieds-toi d’abord à une table Kora Cash.'}
+                </p>
+              )}
               {/* Rappel discret pour les invités : la liste d'amis dépend du navigateur */}
               {!isLoggedIn && (
                 <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-slate-900/60 border border-slate-800">
@@ -467,7 +495,7 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({
                                   className="h-8 px-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 text-slate-950 text-xs font-black flex items-center gap-1 shadow-sm transition active:scale-95 cursor-pointer"
                                 >
                                   <Swords className="w-3.5 h-3.5" />
-                                  <span>Défier</span>
+                                  <span>{challengeLabel}</span>
                                 </button>
                               )}
 
@@ -479,11 +507,11 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({
                                   title="Inviter directement : sa partie solo sera sauvegardée s'il accepte."
                                 >
                                   <Swords className="w-3.5 h-3.5" />
-                                  <span>Défier</span>
+                                  <span>{challengeLabel}</span>
                                 </button>
                               )}
 
-                              {canJoinRoom && !isTableFull && (
+                              {!cashMode && canJoinRoom && !isTableFull && (
                                 <button
                                   type="button"
                                   onClick={() => handleJoin(currentRoomCode!)}
@@ -507,7 +535,7 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({
                                 </button>
                               )}
 
-                              {canJoinRoom && isTableFull && (
+                              {!cashMode && canJoinRoom && isTableFull && (
                                 <button
                                   type="button"
                                   onClick={() => handleChallengeFriend({ id: friendId, name: friendName, avatarSeed: friendAvatar }, 'IN_GAME')}
@@ -519,7 +547,7 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({
                                 </button>
                               )}
 
-                              {status === 'OFFLINE' && (
+                              {!cashMode && status === 'OFFLINE' && (
                                 <button
                                   type="button"
                                   onClick={() => handleWhatsAppInviteFriend({ id: friendId, name: friendName, avatarSeed: friendAvatar })}
