@@ -47,6 +47,7 @@ import {
   ShieldAlert,
   ChevronDown,
   ChevronRight,
+  Wifi,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -62,6 +63,8 @@ import {
 import { triggerHaptic, sounds } from '../../utils/sound';
 import { getLocalPlayerName } from '../../services/identity';
 import { FriendService } from '../../services/friendService';
+import { OnlinePlayersPanel } from './OnlinePlayersPanel';
+import type { OnlinePlayer } from '../../services/websocketService';
 import { notificationNavigation } from '../../services/notificationNavigation';
 import { webSocketService } from '../../services/websocketService';
 import { isTestEnvironment } from '../../utils/envUtils';
@@ -107,6 +110,8 @@ export interface MultiplayerScreenProps {
   }, confirmLeaveCurrent?: boolean) => Promise<{ success: boolean; error?: string; errorCode?: string; activeGameRoomCode?: string } | void>;
   onJoinRoom: (roomCode: string, playerName: string, confirmLeaveCurrent?: boolean) => Promise<{ success: boolean; error?: string; errorCode?: string; activeGameRoomCode?: string }>;
   onQuickMatch: (settings?: { baseBet?: number; initialCapital?: number }, confirmLeaveCurrent?: boolean) => Promise<{ success: boolean; error?: string; errorCode?: string; activeGameRoomCode?: string }>;
+  /** Invitation à une table Kora Cash acceptée : ouvre la page d'invitation Cash de cette table. */
+  onOpenCashInvite?: (roomCode: string) => void;
   // Lobby actions
   onStartGame: () => Promise<void>;
   onToggleReady?: (isReady: boolean) => void;
@@ -142,6 +147,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
   onClaimHost,
   onLeaveRoom,
   onKickPlayer,
+  onOpenCashInvite,
 }) => {
   // 3-Pillar Navigation Tabs (Zero horizontal scroll)
   const [activeTab, setActiveTab] = useState<MultiplayerTab>('play');
@@ -271,7 +277,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
   const [localContacts, setLocalContacts] = useState<LocalContact[]>(() => FriendService.getLocalContacts());
   const [recentPlayers, setRecentPlayers] = useState<LocalContact[]>(() => FriendService.getRecentPlayers());
   const [cloudFriends, setCloudFriends] = useState<FriendDocument[]>([]);
-  const [friendSubTab, setFriendSubTab] = useState<'FRIENDS' | 'RECEIVED' | 'SENT'>('FRIENDS');
+  const [friendSubTab, setFriendSubTab] = useState<'FRIENDS' | 'ONLINE' | 'RECEIVED' | 'SENT'>('FRIENDS');
 
   // Navigation depuis la cloche des notifications : ouvre directement le bon onglet (sans action automatique)
   useEffect(() => {
@@ -863,21 +869,22 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
     window.open(waUrl, '_blank');
   };
 
-  const handleSendDirectInvite = async (targetPlayerId: string) => {
+  const handleSendDirectInvite = async (targetPlayerId: string): Promise<boolean> => {
     if (!isLoggedIn) {
       setAuthRequirementReason("Connecte-toi avec Google pour inviter un joueur.");
       setShowAuthRequirementModal(true);
-      return;
+      return false;
     }
     if (!room) {
       setHubErrorMsg('Tu dois être dans un salon pour envoyer une invitation.');
-      return;
+      return false;
     }
     try {
       await webSocketService.sendDirectInvite(targetPlayerId, room.id);
       setHubSuccessMsg('Invitation envoyée !');
       triggerHaptic('success');
       setTimeout(() => setHubSuccessMsg(null), getPublicParamNumber('uiToastDurationMs'));
+      return true;
     } catch (e: any) {
       const errorMsg = e?.message || "Impossible d'envoyer l'invitation.";
       if (errorMsg.includes('Connexion Google requise')) {
@@ -885,6 +892,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
         setShowAuthRequirementModal(true);
       }
       setHubErrorMsg(errorMsg);
+      return false;
     }
   };
 
@@ -905,19 +913,19 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
     friend: { id: string; name: string; avatarSeed?: string; addedAt?: number },
     forcedStatus?: PresenceStatus,
     confirmLeaveCurrent?: boolean
-  ) => {
+  ): Promise<boolean> => {
     const presence = friendsPresenceMap[friend.id];
     const status = forcedStatus || (presence ? presence.status : 'OFFLINE');
 
     if (status === 'OFFLINE') {
       handleWhatsAppInviteFriend(friend);
-      return;
+      return false;
     }
 
     if (!isLoggedIn) {
       setAuthRequirementReason("Connecte-toi avec Google pour défier un ami.");
       setShowAuthRequirementModal(true);
-      return;
+      return false;
     }
     triggerHaptic('medium');
     setIsLoading(true);
@@ -943,7 +951,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
               await handleChallengeFriend(friend, forcedStatus, true);
             },
           });
-          return;
+          return false;
         }
         throw new Error(res.error || 'Le défi n\'a pas pu être créé. Réessaie.');
       }
@@ -960,14 +968,34 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
           handleSendDirectInvite(friend.id);
         }
       }, getPublicParamNumber('clientInviteAfterCreateDelayMs'));
+      return true;
     } catch (err: any) {
       setHubErrorMsg(err.message || 'Le défi n\'a pas pu être créé. Réessaie.');
+      return false;
     } finally {
       setIsLoading(false);
     }
   };
 
+  /** Identifiants des amis confirmés, pour les repérer dans la liste « En ligne ». */
+  const onlineFriendIds = useMemo(
+    () => new Set<string>(acceptedFriends.map((f: any) => f.friendUid || f.id).filter(Boolean)),
+    [acceptedFriends]
+  );
+
+  /** Invitation depuis la liste « En ligne » : à la table où je suis assis, sinon en ouvrant une table privée. */
+  const handleInviteOnlinePlayer = async (player: OnlinePlayer): Promise<boolean> => {
+    if (room) return handleSendDirectInvite(player.userId);
+    return handleChallengeFriend({ id: player.userId, name: player.displayName, avatarSeed: player.avatarId }, 'ONLINE_IDLE');
+  };
+
   const handleAcceptInvite = (invite: GameInvitation, confirmLeaveCurrent?: boolean) => {
+    if (invite.cash) {
+      // Table Kora Cash : on prévient l'hôte, puis la page d'invitation Cash décide de l'entrée (jamais de JOIN_ROOM direct).
+      acceptInvitation(invite);
+      onOpenCashInvite?.(invite.roomCode);
+      return;
+    }
     acceptInvitation(invite, confirmLeaveCurrent);
     handleJoin(invite.roomCode, confirmLeaveCurrent);
   };
@@ -2768,7 +2796,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                           <div className="flex flex-col">
                             <span className="text-xs font-black text-white">{inv.fromUserName} te défie !</span>
                             <span className="text-xs text-slate-400">
-                              Table #{inv.roomCode} · {inv.baseBet} jetons
+                              Table #{inv.roomCode} · {inv.cash ? `${inv.baseBet} FCFA · argent réel` : `${inv.baseBet} jetons`}
                             </span>
                           </div>
                         </div>
@@ -2794,7 +2822,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                             onClick={() => handleAcceptInvite(inv)}
                             className="h-9 rounded-xl bg-emerald-500 text-slate-950 text-xs font-black hover:bg-emerald-400 cursor-pointer shadow-md"
                           >
-                            Rejoindre
+                            {inv.cash ? 'Voir la table' : 'Rejoindre'}
                           </button>
                         </div>
                       </div>
@@ -2835,7 +2863,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
               {/* Social Sub-Tabs Header & Action (Restructured into 2 rows) */}
               <div className="flex flex-col gap-2.5">
                 {/* Row 1: Full-width sub-tab pills */}
-                <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800 w-full">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800 w-full">
                   <button
                     type="button"
                     onClick={() => setFriendSubTab('FRIENDS')}
@@ -2849,6 +2877,19 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                     <span className="truncate">
                       Mes amis{acceptedFriends.length > 0 ? ` (${acceptedFriends.length})` : ''}
                     </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFriendSubTab('ONLINE')}
+                    className={`h-9 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer w-full ${
+                      friendSubTab === 'ONLINE'
+                        ? 'bg-amber-500 text-slate-950 font-black shadow-sm'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <Wifi className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">En ligne</span>
                   </button>
 
                   <button
@@ -2888,6 +2929,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                 </div>
 
                 {/* Row 2: Full-width add friend button */}
+                {friendSubTab !== 'ONLINE' && (
                 <button
                   type="button"
                   onClick={() => {
@@ -2900,7 +2942,19 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                   <UserPlus className="w-4 h-4" />
                   <span>+ Ajouter un ami</span>
                 </button>
+                )}
               </div>
+
+              {/* VUE : JOUEURS EN LIGNE */}
+              {friendSubTab === 'ONLINE' && (
+                <OnlinePlayersPanel
+                  isLoggedIn={isLoggedIn}
+                  isAuthLoading={isAuthLoading}
+                  onSignIn={handleGoogleSignIn}
+                  friendIds={onlineFriendIds}
+                  onInvite={handleInviteOnlinePlayer}
+                />
+              )}
 
               {/* VIEW 1 : MES AMIS */}
               {friendSubTab === 'FRIENDS' && (

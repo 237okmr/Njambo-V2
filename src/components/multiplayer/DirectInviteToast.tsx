@@ -172,11 +172,13 @@ const InviteCard: React.FC<InviteCardProps> = ({
           {avatar}
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
-              <span className="truncate text-xs font-black text-white">{invitation.fromUserName} te lance un défi</span>
+              <span className="truncate text-xs font-black text-white">
+                {invitation.fromUserName} {invitation.cash ? 't’invite à une table Kora Cash' : 'te lance un défi'}
+              </span>
               {timerPill}
             </div>
             <span className="block truncate text-xs text-slate-400">
-              Table #{invitation.roomCode} · {invitation.baseBet} jetons
+              Table #{invitation.roomCode} · {invitation.cash ? `${invitation.baseBet} FCFA · argent réel` : `${invitation.baseBet} jetons`}
               {othersCount > 0 ? ` · +${othersCount} autre${othersCount > 1 ? 's' : ''}` : ''}
             </span>
           </div>
@@ -235,15 +237,18 @@ const InviteCard: React.FC<InviteCardProps> = ({
         {avatar}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <span className="truncate text-sm font-black text-white">{invitation.fromUserName} te lance un défi</span>
+            <span className="truncate text-sm font-black text-white">
+              {invitation.fromUserName} {invitation.cash ? 't’invite à une table Kora Cash' : 'te lance un défi'}
+            </span>
             {timerPill}
           </div>
           <span className="block truncate text-xs text-slate-400">
             Table <strong>#{invitation.roomCode}</strong> · Mise{' '}
-            <strong className="text-amber-400">{invitation.baseBet} jetons</strong>
+            <strong className="text-amber-400">{invitation.baseBet} {invitation.cash ? 'FCFA' : 'jetons'}</strong>
+            {invitation.cash ? ' · argent réel, 18 ans et plus' : ''}
             {othersCount > 0 ? ` · +${othersCount} autre${othersCount > 1 ? 's' : ''} en attente` : ''}
           </span>
-          {willSaveSolo && (
+          {willSaveSolo && !invitation.cash && (
             <span className="mt-0.5 block truncate text-xs font-medium text-emerald-400">
               Ta partie solo sera sauvegardée automatiquement.
             </span>
@@ -286,7 +291,7 @@ const InviteCard: React.FC<InviteCardProps> = ({
           className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-xs font-black text-slate-950 shadow-md shadow-emerald-500/20 transition active:scale-95"
         >
           <Check className="h-3.5 w-3.5 shrink-0" />
-          Rejoindre
+          {invitation.cash ? 'Voir la table' : 'Rejoindre'}
         </button>
       </div>
     </motion.div>

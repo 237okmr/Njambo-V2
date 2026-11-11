@@ -4,7 +4,9 @@ import { ClientMessage, ServerMessage } from '../types';
 import { ActiveRoomState, ServerGameEngine, maskOpponentCards, selectBotToReplace, syncRoomPlayersWithGameState, PlayerAlert } from '../engine/serverGameEngine';
 import { getEngineConfig, updateEngineConfig as applyEngineConfigUpdate, KatikaEngineConfig, DEFAULT_ENGINE_CONFIG } from '../engine/engineConfig';
 import { PARAM_BY_KEY, clampParamValue } from '../engine/engineParams';
-import { pushService, buildGameUrl } from '../pushService';
+import { pushService, buildGameUrl, buildCashGameUrl } from '../pushService';
+import { DEFAULT_PRESENCE_SETTINGS, PresenceSettings, buildOnlinePlayers, checkInviteQuota, isGoogleUserId, mayReceiveInvite, normalizePresenceSettings } from '../presence/onlinePlayersRules';
+import { PresenceSettingsRuntime, firestorePresenceSettings } from '../presence/presenceSettingsStore';
 import { APP_VERSION } from '../../src/version';
 import { verifyFirebaseIdToken } from '../firebaseAdmin';
 import { randomBytes } from 'crypto';
@@ -63,6 +65,10 @@ export class RoomManager {
   private static userPresences = new Map<string, UserPresence>(); // playerId -> UserPresence
   private static confirmedFriendsCache = new Map<string, { ids: Set<string>; fetchedAt: number }>(); // playerId -> amis confirmés lus dans Firestore
   private static pendingInvitations = new Map<string, GameInvitation>(); // inviteId -> GameInvitation
+  private static presenceSettingsCache = new Map<string, PresenceSettings>(); // playerId -> réglages de visibilité (lus une fois)
+  private static presenceSettingsLoading = new Map<string, Promise<PresenceSettings | undefined>>();
+  private static presenceSettingsRuntime: PresenceSettingsRuntime = firestorePresenceSettings;
+  private static directInviteSendLog = new Map<string, number[]>(); // playerId -> horodatages des invitations envoyées
   private static lastDirectInviteTimestamps = new Map<string, number>(); // "fromUserId_toUserId" -> timestamp
   private static lastEmoteTimestamps = new Map<string, number>(); // playerId -> lastEmoteTimestamp
   private static cleanupInterval: NodeJS.Timeout | null = null;
@@ -1395,6 +1401,18 @@ export class RoomManager {
 
         case 'GET_FRIENDS_PRESENCE':
           this.handleGetFriendsPresence(client, msg);
+          break;
+
+        case 'GET_ONLINE_PLAYERS':
+          this.handleGetOnlinePlayers(client);
+          break;
+
+        case 'GET_PRESENCE_SETTINGS':
+          void this.handleGetPresenceSettings(client);
+          break;
+
+        case 'SET_PRESENCE_SETTINGS':
+          void this.handleSetPresenceSettings(client, msg);
           break;
 
         default:
@@ -5819,6 +5837,9 @@ export class RoomManager {
       lastSeenAt: now,
     };
     this.userPresences.set(client.playerId, presence);
+    if (this.isVerifiedGooglePlayer(client)) {
+      void this.loadPresenceSettings(client.playerId);
+    }
 
     this.sendMessage(client.socket, {
       type: 'PONG',
@@ -5840,30 +5861,7 @@ export class RoomManager {
       return;
     }
 
-    // Vérification en base Firestore : ne retenir que les vrais amis confirmés (status === 'ACCEPTED').
-    // La liste est gardée friendListCacheSeconds : l'écran Social redemande la présence toutes les quelques secondes.
-    const cacheMs = Number(this.engineConfig.friendListCacheSeconds ?? 60) * 1000;
-    const cachedFriends = this.confirmedFriendsCache.get(client.playerId);
-    let confirmedFriendIds = new Set<string>();
-    if (cachedFriends && cacheMs > 0 && now - cachedFriends.fetchedAt < cacheMs) {
-      confirmedFriendIds = cachedFriends.ids;
-    } else {
-      try {
-        const friendsRef = collection(db, 'users', client.playerId, 'friends');
-        const q = query(friendsRef, where('status', '==', 'ACCEPTED'));
-        const snapshot = await getDocs(q);
-        recordServerReads(snapshot.size);
-        snapshot.forEach((docSnap) => {
-          const data = docSnap.data();
-          const fId = data?.friendUid || docSnap.id;
-          if (fId) confirmedFriendIds.add(fId);
-        });
-        this.confirmedFriendsCache.set(client.playerId, { ids: confirmedFriendIds, fetchedAt: now });
-      } catch (err) {
-        console.error('[RoomManager] Erreur lors de la récupération des amis pour la présence:', err);
-        if (cachedFriends) confirmedFriendIds = cachedFriends.ids;
-      }
-    }
+    const confirmedFriendIds = await this.getConfirmedFriendIds(client.playerId);
 
     for (const friendId of friendUserIds) {
       if (!friendId) continue;
@@ -5915,8 +5913,127 @@ export class RoomManager {
     });
   }
 
+  /**
+   * Amis confirmés d'un joueur (status === 'ACCEPTED'), relus dans Firestore au plus une fois par friendListCacheSeconds.
+   * Lecture impossible : on garde la dernière liste connue, sinon une liste vide (personne n'est alors ami).
+   */
+  private static async getConfirmedFriendIds(uid: string): Promise<Set<string>> {
+    const now = Date.now();
+    const cacheMs = Number(this.engineConfig.friendListCacheSeconds ?? 60) * 1000;
+    const cached = this.confirmedFriendsCache.get(uid);
+    if (cached && cacheMs > 0 && now - cached.fetchedAt < cacheMs) return cached.ids;
+    const ids = new Set<string>();
+    try {
+      const friendsRef = collection(db, 'users', uid, 'friends');
+      const q = query(friendsRef, where('status', '==', 'ACCEPTED'));
+      const snapshot = await getDocs(q);
+      recordServerReads(snapshot.size);
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const fId = data?.friendUid || docSnap.id;
+        if (fId) ids.add(fId);
+      });
+      this.confirmedFriendsCache.set(uid, { ids, fetchedAt: now });
+      return ids;
+    } catch (err) {
+      console.error('[RoomManager] Erreur lors de la récupération des amis confirmés:', err);
+      return cached ? cached.ids : ids;
+    }
+  }
+
+  // ── Joueurs en ligne ──────────────────────────────────────────────────────────────────────────────────────────
+
+  /** Réglages de visibilité d'un joueur : lus une seule fois, puis gardés en mémoire tant qu'il est présent. */
+  private static loadPresenceSettings(uid: string): Promise<PresenceSettings | undefined> {
+    const known = this.presenceSettingsCache.get(uid);
+    if (known) return Promise.resolve(known);
+    const pending = this.presenceSettingsLoading.get(uid);
+    if (pending) return pending;
+    const task = (async () => {
+      try {
+        const loaded = normalizePresenceSettings(await this.presenceSettingsRuntime.load(uid));
+        this.presenceSettingsCache.set(uid, loaded);
+        return loaded;
+      } catch (err) {
+        console.warn('[RoomManager] Lecture des réglages de visibilité impossible:', err instanceof Error ? err.message : String(err));
+        return undefined;
+      } finally {
+        this.presenceSettingsLoading.delete(uid);
+      }
+    })();
+    this.presenceSettingsLoading.set(uid, task);
+    return task;
+  }
+
+  public static setPresenceSettingsRuntimeForTest(runtime: PresenceSettingsRuntime | null): void {
+    this.presenceSettingsRuntime = runtime ?? firestorePresenceSettings;
+    this.presenceSettingsCache.clear();
+    this.presenceSettingsLoading.clear();
+  }
+
+  /** Liste des joueurs Google en ligne et visibles. Répond depuis la mémoire du serveur : aucune lecture Firestore. */
+  public static handleGetOnlinePlayers(client: ConnectedClient): void {
+    if (!this.isVerifiedGooglePlayer(client)) {
+      this.sendMessage(client.socket, {
+        type: 'ERROR',
+        errorCode: 'AUTH_REQUIRED',
+        error: 'Connecte-toi avec Google pour voir les joueurs en ligne.',
+      });
+      return;
+    }
+    const now = Date.now();
+    const onlinePlayers = buildOnlinePlayers({
+      presences: this.userPresences.values(),
+      nowMs: now,
+      freshMs: Number(this.engineConfig.friendPresenceFreshSeconds ?? 25) * 1000,
+      selfId: client.playerId,
+      settingsOf: (id) => this.presenceSettingsCache.get(id),
+      isSocketOpen: (id) => {
+        const other = this.clients.get(id);
+        return !!other && other.socket.readyState === WebSocket.OPEN;
+      },
+      roomStatusOf: (code) => {
+        const room = this.rooms.get(code);
+        if (!room) return undefined;
+        return room.status === 'PLAYING' ? 'PLAYING' : room.status === 'LOBBY' ? 'LOBBY' : 'OTHER';
+      },
+      limit: Number(this.engineConfig.onlinePlayersListMax ?? 50),
+    });
+    this.sendMessage(client.socket, { type: 'ONLINE_PLAYERS_UPDATE', onlinePlayers, timestamp: now });
+  }
+
+  public static async handleGetPresenceSettings(client: ConnectedClient): Promise<void> {
+    if (!this.isVerifiedGooglePlayer(client)) return;
+    const settings = (await this.loadPresenceSettings(client.playerId)) ?? { ...DEFAULT_PRESENCE_SETTINGS };
+    this.sendMessage(client.socket, { type: 'PRESENCE_SETTINGS', presenceSettings: settings, timestamp: Date.now() });
+  }
+
+  public static async handleSetPresenceSettings(client: ConnectedClient, msg: ClientMessage): Promise<void> {
+    if (!this.isVerifiedGooglePlayer(client)) return;
+    const current = (await this.loadPresenceSettings(client.playerId)) ?? { ...DEFAULT_PRESENCE_SETTINGS };
+    const patch = msg.presenceSettings || {};
+    const next: PresenceSettings = {
+      hidden: typeof patch.hidden === 'boolean' ? patch.hidden : current.hidden,
+      friendsOnlyInvites: typeof patch.friendsOnlyInvites === 'boolean' ? patch.friendsOnlyInvites : current.friendsOnlyInvites,
+    };
+    try {
+      await this.presenceSettingsRuntime.save(client.playerId, next);
+    } catch (err) {
+      console.error('[RoomManager] Enregistrement des réglages de visibilité impossible:', err instanceof Error ? err.message : String(err));
+      this.sendMessage(client.socket, {
+        type: 'ERROR',
+        errorCode: 'GENERIC',
+        error: 'Ton réglage n\'a pas pu être enregistré. Réessaie.',
+      });
+      this.sendMessage(client.socket, { type: 'PRESENCE_SETTINGS', presenceSettings: current, timestamp: Date.now() });
+      return;
+    }
+    this.presenceSettingsCache.set(client.playerId, next);
+    this.sendMessage(client.socket, { type: 'PRESENCE_SETTINGS', presenceSettings: next, timestamp: Date.now() });
+  }
+
   public static async handleSendDirectInvite(client: ConnectedClient, msg: ClientMessage): Promise<void> {
-    if (msg.isGuest) {
+    if (msg.isGuest || !this.isVerifiedGooglePlayer(client)) {
       this.sendMessage(client.socket, {
         type: 'ERROR',
         errorCode: 'JOIN_REFUSED',
@@ -5980,6 +6097,24 @@ export class RoomManager {
       return;
     }
 
+    if (client.roomCode !== msg.roomCode || !(room.players || []).some((p) => p.id === client.playerId)) {
+      this.sendMessage(client.socket, {
+        type: 'ERROR',
+        errorCode: 'FORBIDDEN',
+        error: 'Tu ne peux inviter que dans une table où tu es assis.',
+      });
+      return;
+    }
+
+    if (room.status !== 'LOBBY') {
+      this.sendMessage(client.socket, {
+        type: 'ERROR',
+        errorCode: 'GENERIC',
+        error: 'Cette partie a déjà commencé : on ne peut plus y inviter.',
+      });
+      return;
+    }
+
     // 3. Protection Liste de blocage bi-directionnelle (BLOCKED)
     let isBlocked = false;
     try {
@@ -6015,6 +6150,48 @@ export class RoomManager {
         error: 'Impossible d\'envoyer l\'invitation à ce joueur.',
       });
       return;
+    }
+
+    // 3 bis. Le destinataire accepte-t-il cette invitation ? Un seul message de refus, quelle qu'en soit la raison :
+    // on ne révèle ni un réglage de visibilité, ni une pause ou une exclusion Kora Cash.
+    const unavailable = () =>
+      this.sendMessage(client.socket, {
+        type: 'ERROR',
+        errorCode: 'GENERIC',
+        error: 'Ce joueur ne peut pas recevoir ton invitation pour le moment.',
+      });
+
+    if (!isGoogleUserId(msg.targetPlayerId)) {
+      unavailable();
+      return;
+    }
+    const targetSettings = await this.loadPresenceSettings(msg.targetPlayerId);
+    if (!targetSettings) {
+      unavailable();
+      return;
+    }
+    if (targetSettings.hidden || targetSettings.friendsOnlyInvites) {
+      const targetFriends = await this.getConfirmedFriendIds(msg.targetPlayerId);
+      if (!mayReceiveInvite(targetSettings, targetFriends.has(client.playerId))) {
+        unavailable();
+        return;
+      }
+    }
+    if (room.cash) {
+      // Table d'argent réel : l'hôte doit y être assis, et l'invité doit pouvoir s'y asseoir (18 ans confirmés, ni pause ni exclusion).
+      try {
+        const runtime = this.getCashRuntime();
+        const access = await runtime.getAccess();
+        const targetOk = access.open && room.cash.seats[client.playerId]?.open === true && (await runtime.hasConsent(msg.targetPlayerId)) && (await runtime.checkEntry(msg.targetPlayerId)) === null;
+        if (!targetOk) {
+          unavailable();
+          return;
+        }
+      } catch (err) {
+        console.warn('[RoomManager] Contrôle de l\'invitation Kora Cash impossible:', err instanceof Error ? err.message : String(err));
+        unavailable();
+        return;
+      }
     }
 
     // 4. Protection Limitation de fréquence / Anti-Spam (RATE_LIMITED)
@@ -6055,6 +6232,19 @@ export class RoomManager {
       return;
     }
 
+    const quotaMax = Number(this.engineConfig.directInviteMaxPerHour ?? 10);
+    // delay-ok: fenêtre de l'unité « par heure » du plafond d'invitations (le plafond lui-même est réglable dans katika)
+    const quota = checkInviteQuota(this.directInviteSendLog.get(client.playerId) || [], now, quotaMax, 3600000);
+    if (!quota.allowed) {
+      const minutes = Math.max(1, Math.ceil(quota.retryAfterMs / 60000));
+      this.sendMessage(client.socket, {
+        type: 'ERROR',
+        errorCode: 'RATE_LIMITED',
+        error: `Tu as déjà envoyé ${quotaMax} invitations cette heure. Réessaie dans ${minutes} minute${minutes > 1 ? 's' : ''}.`,
+      });
+      return;
+    }
+
     const targetClient = this.clients.get(msg.targetPlayerId);
     const inviteId = 'inv_' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
     const fromName = msg.playerName || room.hostName || 'Un joueur';
@@ -6066,7 +6256,7 @@ export class RoomManager {
       toUserId: msg.targetPlayerId,
       roomCode: msg.roomCode,
       baseBet: room.baseBet,
-      initialCapital: room.initialCapital,
+      ...(room.cash ? { cash: true, rakePercent: room.cash.rakePercent } : { initialCapital: room.initialCapital }),
       status: 'PENDING',
       createdAt: now,
       expiresAt: now + Number(this.engineConfig.directInviteLifetimeSeconds ?? 120) * 1000,
@@ -6074,6 +6264,7 @@ export class RoomManager {
 
     this.pendingInvitations.set(inviteId, invitation);
     this.lastDirectInviteTimestamps.set(invitePairKey, now);
+    this.directInviteSendLog.set(client.playerId, [...quota.kept, now]);
 
     let deliveredViaWs = false;
     // 1. Forward invitation via active WebSocket if online
@@ -6088,8 +6279,10 @@ export class RoomManager {
 
     // 2. Dispatch Web Push Notification (PWA / Mobile / Background)
     pushService.sendNotificationToUser(msg.targetPlayerId, {
-      title: `🃏 ${fromName} te lance un défi !`,
-      body: `Table #${msg.roomCode} · ${room.baseBet} jetons · ça part dans 2 min.`,
+      title: room.cash ? `🃏 ${fromName} t'invite à une table Kora Cash` : `🃏 ${fromName} te lance un défi !`,
+      body: room.cash
+        ? `Table #${msg.roomCode} · Mise ${room.baseBet} FCFA · argent réel, 18 ans et plus.`
+        : `Table #${msg.roomCode} · ${room.baseBet} jetons · ça part dans 2 min.`,
       icon: '/icon-192.png',
       badge: '/badge-96.png',
       tag: `invite-${inviteId}`,
@@ -6100,7 +6293,7 @@ export class RoomManager {
         fromUserId: client.playerId,
         fromUserName: fromName,
         expiresAt: invitation.expiresAt,
-        url: buildGameUrl(msg.roomCode),
+        url: room.cash ? buildCashGameUrl(msg.roomCode) : buildGameUrl(msg.roomCode),
       },
     }).catch((err) => {
       console.warn('[RoomManager] Web Push dispatch notice:', err);
@@ -6127,6 +6320,18 @@ export class RoomManager {
       return;
     }
 
+    // Seul le destinataire répond, et seulement tant que l'invitation est valable.
+    if (invite.toUserId !== client.playerId) return;
+    if (invite.expiresAt <= Date.now()) {
+      this.pendingInvitations.delete(msg.inviteId);
+      this.sendMessage(client.socket, {
+        type: 'ERROR',
+        errorCode: 'INVITE_EXPIRED',
+        error: 'Cette invitation a expiré ou n\'existe plus.',
+      });
+      return;
+    }
+
     invite.status = msg.agree ? 'ACCEPTED' : 'DECLINED';
     this.pendingInvitations.delete(msg.inviteId);
 
@@ -6145,8 +6350,9 @@ export class RoomManager {
       });
     }
 
-    // If accepted, auto join the room
-    if (msg.agree) {
+    // Table Kora Cash : pas d'entrée automatique. L'invité passe par la page d'invitation Cash (mise, commission, 18 ans,
+    // choix de son entrée) et le serveur reste seul juge de son siège.
+    if (msg.agree && !invite.cash) {
       this.handleJoinRoom(client, {
         type: 'JOIN_ROOM',
         playerId: client.playerId,
@@ -6402,6 +6608,20 @@ export class RoomManager {
       this.userPresences.forEach((pres, key) => {
         if (now - pres.lastSeenAt > Number(this.engineConfig.userPresenceRetentionMinutes ?? 15) * 60 * 1000) {
           this.userPresences.delete(key);
+        }
+      });
+
+      // Réglages de visibilité : on ne garde que ceux des joueurs encore présents
+      this.presenceSettingsCache.forEach((_settings, key) => {
+        if (!this.userPresences.has(key) && !this.clients.has(key)) {
+          this.presenceSettingsCache.delete(key);
+        }
+      });
+      // Journal des invitations envoyées : on retire les joueurs sans invitation récente (fenêtre de 1 h)
+      this.directInviteSendLog.forEach((stamps, key) => {
+        // delay-ok: fenêtre de l'unité « par heure » du plafond d'invitations
+        if (!stamps.some((t) => now - t < 3600000)) {
+          this.directInviteSendLog.delete(key);
         }
       });
 

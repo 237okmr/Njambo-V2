@@ -39,7 +39,12 @@ export interface ClientMessage {
     | 'PROPOSE_EARLY_CLOSE'
     | 'RESPOND_EARLY_CLOSE'
     | 'GET_FRIENDS_PRESENCE'
+    | 'GET_ONLINE_PLAYERS'
+    | 'GET_PRESENCE_SETTINGS'
+    | 'SET_PRESENCE_SETTINGS'
     | 'ACK_PARTIE_RESULTS';
+  /** Réglages de visibilité envoyés par le joueur (SET_PRESENCE_SETTINGS). */
+  presenceSettings?: { hidden?: boolean; friendsOnlyInvites?: boolean };
   roomCode?: string;
   resultIds?: string[];
   playerId: string;
@@ -128,6 +133,8 @@ export interface ServerMessage {
     | 'INVITE_FEEDBACK'
     | 'PRESENCE_STATUS_CHANGED'
     | 'FRIENDS_PRESENCE_UPDATE'
+    | 'ONLINE_PLAYERS_UPDATE'
+    | 'PRESENCE_SETTINGS'
     | 'QUICK_MATCH_RESULT'
     | 'VERSION_HANDSHAKE'
     | 'PARTIE_RESULTS';
@@ -155,6 +162,8 @@ export interface ServerMessage {
   };
   presence?: UserPresence;
   presences?: UserPresence[];
+  onlinePlayers?: Array<{ userId: string; displayName: string; avatarId: string; status: 'AVAILABLE' | 'IN_SOLO' | 'IN_LOBBY' | 'IN_GAME' }>;
+  presenceSettings?: { hidden: boolean; friendsOnlyInvites: boolean };
   partieResults?: PartieResult[];
   matchedRoomCode?: string;
   activeGameRoomCode?: string;

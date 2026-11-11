@@ -306,6 +306,21 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Empêche de spammer d\'invitations un même joueur.',
   },
   {
+    key: 'directInviteMaxPerHour', label: 'Invitations directes par heure et par joueur', unit: '',
+    min: 1, max: 100, default: 10, group: 'notifications', scope: 'server', effect: 'immediate',
+    help: 'Plafond d\'invitations qu\'un joueur peut envoyer en une heure, à tous les joueurs confondus. Au-delà, il doit attendre : cela protège la liste « En ligne » du harcèlement.',
+  },
+  {
+    key: 'onlinePlayersListMax', label: 'Taille de la liste « En ligne »', unit: '',
+    min: 10, max: 200, default: 50, group: 'notifications', scope: 'server', effect: 'immediate',
+    help: 'Nombre maximal de joueurs montrés dans la liste « En ligne ». Les joueurs disponibles passent en premier.',
+  },
+  {
+    key: 'clientOnlinePlayersPollSeconds', label: 'Rafraîchissement de la liste « En ligne »', unit: 's',
+    min: 5, max: 60, default: 15, group: 'connexion', scope: 'client', effect: 'immediate', advanced: true,
+    help: 'Fréquence à laquelle la liste « En ligne » se met à jour tant que son écran est ouvert.',
+  },
+  {
     key: 'notificationHistoryMaxItems', label: 'Plafond de l\'historique de notifications (par joueur)', unit: '',
     min: 20, max: 500, default: 100, group: 'notifications', scope: 'client', effect: 'immediate',
     help: 'Nombre maximal de notifications conservées dans la cloche d\'un joueur. Au-delà, les plus anciennes sont supprimées.',

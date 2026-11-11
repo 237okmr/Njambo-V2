@@ -837,8 +837,21 @@ function GameApp() {
     }
   }, [currentScreen, isOnlineActive, multiplayerRoom?.gameState?.phase, incomingInvitations.length, declineAllInvitations]);
 
+  // Invitation à une table Kora Cash acceptée : la page d'invitation Cash décide de l'entrée (mise, 18 ans, entrée choisie).
+  const openCashInviteFromInvitation = useCallback((code: string) => {
+    setShowMultiplayerHub(false);
+    setShowMultiplayerLobby(false);
+    setCashInviteCode(code);
+    setIsKoraCashOpen(true);
+  }, [setShowMultiplayerHub]);
+
   const handleAcceptInvitationUnified = useCallback(
     async (invitation: GameInvitation) => {
+      if (invitation.cash) {
+        acceptInvitation(invitation);
+        openCashInviteFromInvitation(invitation.roomCode);
+        return;
+      }
       if (currentScreen === 'GAME' && !isMultiplayerMode) {
         saveCurrentSession('Partie Solo Sauvegardée (Défi Amis)');
         triggerToast('Partie solo sauvegardée automatiquement !');
@@ -851,7 +864,7 @@ function GameApp() {
         triggerToast(res.error || "Erreur de connexion");
       }
     },
-    [acceptInvitation, handleJoinRoom, localPlayerName, currentScreen, isMultiplayerMode, saveCurrentSession, triggerToast]
+    [acceptInvitation, handleJoinRoom, localPlayerName, currentScreen, isMultiplayerMode, saveCurrentSession, triggerToast, openCashInviteFromInvitation]
   );
 
   const handleDeclineInvitationUnified = useCallback((invitation: GameInvitation) => {
@@ -3121,6 +3134,7 @@ function GameApp() {
         {(showMultiplayerHub || (showMultiplayerLobby && Boolean(multiplayerRoom))) && (
           <MultiplayerScreen
             isOpen={true}
+            onOpenCashInvite={openCashInviteFromInvitation}
             onClose={() => {
               setShowMultiplayerHub(false);
               setShowMultiplayerLobby(false);

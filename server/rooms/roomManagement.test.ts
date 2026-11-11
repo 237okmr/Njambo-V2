@@ -491,7 +491,15 @@ test('handleSendDirectInvite protections: SELF_INVITE, BANNED, RATE_LIMITED', as
     roomCode: 'ROOM_INVITE',
     reconnectToken: 'tok1',
     lastPing: Date.now(),
+    isAuthenticated: true,
+    authUid: 'p1',
+    authProvider: 'google.com',
   } as any;
+  // Réglages de visibilité du destinataire : lus en mémoire, sans Firestore.
+  RoomManager.setPresenceSettingsRuntimeForTest({
+    load: async () => ({ hidden: false, friendsOnlyInvites: false }),
+    save: async () => undefined,
+  });
 
   // Test 1: SELF_INVITE
   await RoomManager.handleSendDirectInvite(mockClient, {

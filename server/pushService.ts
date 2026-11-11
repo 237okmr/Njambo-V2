@@ -96,6 +96,11 @@ export function buildGameUrl(roomCode?: string): string {
   return roomCode ? `/game/?join=${encodeURIComponent(roomCode)}` : '/game/';
 }
 
+/** Destination d'une invitation à une table Kora Cash : la page d'invitation Cash, jamais le salon gratuit. */
+export function buildCashGameUrl(roomCode: string): string {
+  return `/game/?cash=${encodeURIComponent(roomCode)}`;
+}
+
 function sanitizeTopic(tag?: string): string | undefined {
   if (!tag) return undefined;
   const cleaned = tag.replace(/[^A-Za-z0-9_-]/g, '').slice(0, 32);

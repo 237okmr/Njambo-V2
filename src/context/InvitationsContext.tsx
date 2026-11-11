@@ -64,8 +64,10 @@ export const InvitationsProvider: React.FC<InvitationsProviderProps> = ({ childr
       notificationHistory.record({
         id: `invite:${invitation.id}`,
         kind: 'DIRECT_INVITE',
-        title: `${invitation.fromUserName} te lance un défi`,
-        body: `Table #${invitation.roomCode} · Mise ${invitation.baseBet} jetons`,
+        title: invitation.cash ? `${invitation.fromUserName} t’invite à une table Kora Cash` : `${invitation.fromUserName} te lance un défi`,
+        body: invitation.cash
+          ? `Table #${invitation.roomCode} · Mise ${invitation.baseBet} FCFA · argent réel`
+          : `Table #${invitation.roomCode} · Mise ${invitation.baseBet} jetons`,
         createdAt: receivedAt,
         expiresAt: invitation.expiresAt || receivedAt + getPublicParamNumber('directInviteLifetimeSeconds') * 1000,
         actorId: invitation.fromUserId,

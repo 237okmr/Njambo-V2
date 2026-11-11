@@ -562,6 +562,9 @@ export interface GameInvitation {
   roomCode: string;
   baseBet: number;
   initialCapital?: number;
+  /** Table Kora Cash : la mise est en FCFA et l'invité passe par la page d'invitation Cash, jamais par un JOIN_ROOM direct. */
+  cash?: boolean;
+  rakePercent?: number;
   status: InvitationStatus;
   createdAt: number;
   expiresAt: number; // 2 minutes expiration

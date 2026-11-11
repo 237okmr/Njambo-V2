@@ -19,6 +19,18 @@ export type PublicRoomsListener = (rooms: PublicRoomSummary[]) => void;
 export type DirectInviteListener = (invitation: GameInvitation) => void;
 export type InviteFeedbackListener = (data: { inviteId: string; agree: boolean; responderName: string; roomCode: string }) => void;
 export type FriendsPresenceListener = (presences: UserPresence[]) => void;
+export interface OnlinePlayer {
+  userId: string;
+  displayName: string;
+  avatarId: string;
+  status: 'AVAILABLE' | 'IN_SOLO' | 'IN_LOBBY' | 'IN_GAME';
+}
+export interface PresenceSettings {
+  hidden: boolean;
+  friendsOnlyInvites: boolean;
+}
+export type OnlinePlayersListener = (players: OnlinePlayer[]) => void;
+export type PresenceSettingsListener = (settings: PresenceSettings) => void;
 export type QuickMatchResultListener = (roomCode: string) => void;
 export type PartieResultsListener = (results: PartieResult[]) => void;
 export type VersionStatusListener = (data: {
@@ -63,6 +75,8 @@ class WebSocketService {
   private directInviteListeners: Set<DirectInviteListener> = new Set();
   private inviteFeedbackListeners: Set<InviteFeedbackListener> = new Set();
   private friendsPresenceListeners: Set<FriendsPresenceListener> = new Set();
+  private onlinePlayersListeners: Set<OnlinePlayersListener> = new Set();
+  private presenceSettingsListeners: Set<PresenceSettingsListener> = new Set();
   private quickMatchResultListeners: Set<QuickMatchResultListener> = new Set();
   private versionStatusListeners: Set<VersionStatusListener> = new Set();
   private cashWalletListeners: Set<() => void> = new Set();
@@ -1357,6 +1371,18 @@ class WebSocketService {
         }
         break;
 
+      case 'ONLINE_PLAYERS_UPDATE':
+        if (msg.onlinePlayers) {
+          this.onlinePlayersListeners.forEach((l) => l(msg.onlinePlayers!));
+        }
+        break;
+
+      case 'PRESENCE_SETTINGS':
+        if (msg.presenceSettings) {
+          this.presenceSettingsListeners.forEach((l) => l(msg.presenceSettings!));
+        }
+        break;
+
       case 'QUICK_MATCH_RESULT':
         if (msg.matchedRoomCode) {
           this.quickMatchResultListeners.forEach((l) => l(msg.matchedRoomCode!));
@@ -2054,6 +2080,33 @@ class WebSocketService {
       playerId,
       friendUserIds,
     });
+  }
+
+  /** Demande la liste des joueurs Google en ligne et visibles (la réponse arrive par onOnlinePlayers). */
+  public getOnlinePlayers(): void {
+    this.send({ type: 'GET_ONLINE_PLAYERS', playerId: this.getLocalPlayerId() });
+  }
+
+  public getPresenceSettings(): void {
+    this.send({ type: 'GET_PRESENCE_SETTINGS', playerId: this.getLocalPlayerId() });
+  }
+
+  public setPresenceSettings(patch: Partial<PresenceSettings>): void {
+    this.send({ type: 'SET_PRESENCE_SETTINGS', playerId: this.getLocalPlayerId(), presenceSettings: patch });
+  }
+
+  public onOnlinePlayers(listener: OnlinePlayersListener): () => void {
+    this.onlinePlayersListeners.add(listener);
+    return () => {
+      this.onlinePlayersListeners.delete(listener);
+    };
+  }
+
+  public onPresenceSettings(listener: PresenceSettingsListener): () => void {
+    this.presenceSettingsListeners.add(listener);
+    return () => {
+      this.presenceSettingsListeners.delete(listener);
+    };
   }
 
   public onFriendsPresence(listener: FriendsPresenceListener): () => void {

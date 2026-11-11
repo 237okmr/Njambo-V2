@@ -32,6 +32,8 @@ export interface KatikaEngineConfig {
   fairPlayTempBanMinutes?: number;
   directInviteLifetimeSeconds?: number;
   directInviteCooldownSeconds?: number;
+  directInviteMaxPerHour?: number;
+  onlinePlayersListMax?: number;
   notificationHistoryMaxItems?: number;
   jankSampleSeconds?: number;
   jankThresholdMs?: number;
