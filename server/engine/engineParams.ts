@@ -396,6 +396,21 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Ouvert : le centre social propose le côté Kora Cash (invitations et table en cours d\'argent réel), à condition que Kora Cash lui-même soit ouvert. Fermé : le centre ne montre que le jeu gratuit.',
   },
   {
+    key: 'crashReportWindowSeconds', label: 'Plantages : durée de la fenêtre de plafonds', unit: 's',
+    min: 10, max: 600, default: 60, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Les deux plafonds suivants se comptent sur cette durée.',
+  },
+  {
+    key: 'crashReportMaxPerClient', label: 'Plantages : rapports acceptés par appareil', unit: '',
+    min: 1, max: 100, default: 5, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Au-delà, les rapports d\'un même appareil sont ignorés jusqu\'à la fin de la fenêtre (protège contre une boucle d\'erreur).',
+  },
+  {
+    key: 'crashReportMaxPerWindow', label: 'Plantages : rapports acceptés pour tout le serveur', unit: '',
+    min: 1, max: 5000, default: 60, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Plafond global sur la même fenêtre : chaque rapport accepté coûte une lecture et une écriture Firestore.',
+  },
+  {
     key: 'clientOnlinePlayersPollSeconds', label: 'Rafraîchissement de la liste « En ligne »', unit: 's',
     min: 5, max: 60, default: 15, group: 'connexion', scope: 'client', effect: 'immediate', advanced: true,
     help: 'Fréquence à laquelle la liste « En ligne » se met à jour tant que son écran est ouvert.',

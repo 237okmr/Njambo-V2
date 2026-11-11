@@ -108,6 +108,8 @@ import { createLedgerBatchReader, getJournalLimits, loadJournalNames } from './s
 import { DASHBOARD_MAX_RECORDS, isDashboardFailure, katikaDashboardData, readWarnThreshold, toDashboardPart } from './server/katika/dashboardData';
 import { buildClientAudit, katikaAuditStore, mergeAuditLogs } from './server/katika/auditStore';
 import { getReadBudget, recordServerReads } from './server/katika/readBudget';
+import { createCrashReportService } from './server/diagnostics/crashReports';
+import { firestoreCrashStore } from './server/diagnostics/crashReportStore';
 import { getClientReads, recordClientReads } from './server/katika/clientReads';
 import { computeRepairPlan } from './server/profileRepair';
 import { collection, getCountFromServer, getDocs, query, limit, orderBy, startAfter } from 'firebase/firestore';
@@ -441,6 +443,31 @@ async function startServer() {
   // Mesure des lectures Firestore faites par les téléphones : rapport anonyme (types de document et nombres), validé et borné.
   app.post('/api/telemetry/client-reads', (req, res) => {
     recordClientReads(req.body?.reads);
+    res.status(204).end();
+  });
+
+  // Plantages des navigateurs : rapport anonyme (appareil, système, navigateur, erreur), nettoyé, plafonné et regroupé par signature.
+  // Réponse toujours vide et rapide : le navigateur qui plante n'attend rien du serveur.
+  const crashReports = createCrashReportService({
+    store: firestoreCrashStore,
+    now: () => Date.now(),
+    limits: () => {
+      const cfg = getEngineConfig();
+      return {
+        windowMs: Number(cfg.crashReportWindowSeconds ?? 60) * 1000,
+        maxPerKey: Number(cfg.crashReportMaxPerClient ?? 5),
+        maxGlobal: Number(cfg.crashReportMaxPerWindow ?? 60),
+      };
+    },
+    onNewSignature: (summary) => console.warn('[Plantage client] nouveau type :', summary),
+  });
+  app.post('/api/telemetry/client-crash', express.json({ type: ['application/json', 'text/plain'], limit: '8kb' }), async (req, res) => {
+    const forwarded = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+    await crashReports.receive({
+      body: req.body,
+      userAgent: req.headers['user-agent'],
+      clientKey: forwarded || req.socket.remoteAddress || '',
+    });
     res.status(204).end();
   });
 
@@ -1928,6 +1955,38 @@ async function startServer() {
       RoomManager.recordFinishedMatch(record);
     }
     res.json({ success: true });
+  });
+
+  // Plantages des navigateurs (lecture et suivi par les administrateurs ; droit « journal »).
+  app.get('/api/katika/crashes', async (_req, res) => {
+    try {
+      res.json({ success: true, crashes: await firestoreCrashStore.list() });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err?.message || 'Lecture des plantages impossible.' });
+    }
+  });
+  app.post('/api/katika/crashes/:signature/resolve', express.json(), async (req, res) => {
+    try {
+      await firestoreCrashStore.setResolved(String(req.params.signature), req.body?.resolved !== false);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err?.message || 'Modification impossible.' });
+    }
+  });
+  app.delete('/api/katika/crashes/:signature', async (req, res) => {
+    try {
+      await firestoreCrashStore.remove(String(req.params.signature));
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err?.message || 'Suppression impossible.' });
+    }
+  });
+  app.delete('/api/katika/crashes', async (_req, res) => {
+    try {
+      res.json({ success: true, removed: await firestoreCrashStore.removeResolved() });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err?.message || 'Nettoyage impossible.' });
+    }
   });
 
   // Audit Logs API

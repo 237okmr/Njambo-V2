@@ -235,8 +235,44 @@
             splash.appendChild(p);
           } catch (e) {}
         }
-        window.addEventListener('error', function (e) { show(e && e.message); });
-        window.addEventListener('unhandledrejection', function (e) { show(e && e.reason && (e.reason.message || e.reason)); });
+        // Rapport anonyme au serveur (appareil, système, navigateur, version, erreur) : le joueur n'a rien à faire.
+        // Au plus quelques rapports par chargement de page ; le serveur applique ses propres plafonds.
+        var sent = {};
+        var sentCount = 0;
+        function build() {
+          try {
+            var el = document.querySelector('script[type="module"][src]');
+            var src = el ? el.getAttribute('src') || '' : '';
+            return src.split('/').pop() || '';
+          } catch (e) { return ''; }
+        }
+        function report(kind, message, stack) {
+          try {
+            message = String(message || '');
+            if (!message || sent[message] || sentCount >= 3) return;
+            var boot = !!document.getElementById('splash-screen');
+            if (!boot && /Load failed|Failed to fetch|NetworkError|AbortError|ResizeObserver/i.test(message)) return;
+            sent[message] = true;
+            sentCount += 1;
+            var body = JSON.stringify({ kind: kind, phase: boot ? 'BOOT' : 'RUNTIME', message: message, stack: String(stack || ''), build: build() });
+            if (window.fetch) {
+              fetch('/api/telemetry/client-crash', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true }).catch(function () {});
+            } else if (navigator.sendBeacon) {
+              navigator.sendBeacon('/api/telemetry/client-crash', new Blob([body], { type: 'application/json' }));
+            }
+          } catch (e) {}
+        }
+        window.__njamboReportCrash = report;
+        window.addEventListener('error', function (e) {
+          if (e && e.filename && /^(chrome|moz|safari)-extension:/.test(e.filename)) return;
+          show(e && e.message);
+          report('error', e && e.message, e && e.error && e.error.stack);
+        });
+        window.addEventListener('unhandledrejection', function (e) {
+          var r = e && e.reason;
+          show(r && (r.message || r));
+          report('rejection', r && (r.message || r), r && r.stack);
+        });
       })();
     </script>
     <script type="module" src="/src/main.tsx"></script>

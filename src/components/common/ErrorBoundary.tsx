@@ -26,6 +26,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     console.error('[ErrorBoundary] Caught error:', error, errorInfo);
+    // Rapport anonyme au serveur (défini par le script de démarrage de index.html ; absent en test).
+    (window as unknown as { __njamboReportCrash?: (kind: string, message: string, stack?: string) => void }).__njamboReportCrash?.('react', error?.message || String(error), (error?.stack || '') + (errorInfo?.componentStack || ''));
   }
 
   handleReset = (): void => {

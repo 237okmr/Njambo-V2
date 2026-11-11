@@ -534,6 +534,10 @@ service cloud.firestore {
     match /cash_reconciliations/{docId} {
       allow read, write: if false;
     }
+    // Plantages remontés par les navigateurs : lus et écrits par le serveur seulement.
+    match /client_crashes/{docId} {
+      allow read, write: if false;
+    }
     // Rendez-vous du centre social : lus et écrits par le serveur seulement.
     match /social_appointments/{docId} {
       allow read, write: if false;

@@ -85,6 +85,10 @@ const ROUTE_TABLE: Array<[method: string, pattern: RegExp, requirement: RouteReq
   ['GET', /^\/audit-logs$/, any('logs.view')],
   ['POST', /^\/audit-logs$/, 'ANY_ADMIN'],
 
+  ['GET', /^\/crashes$/, any('logs.view')],
+  ['POST', /^\/crashes\/[^/]+\/resolve$/, any('logs.view')],
+  ['DELETE', /^\/crashes(\/[^/]+)?$/, any('logs.view')],
+
   ['GET', /^\/engine-config$/, 'ANY_ADMIN'],
   ['POST', /^\/engine-config$/, any('settings.edit')],
 

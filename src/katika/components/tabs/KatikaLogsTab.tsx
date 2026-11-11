@@ -22,6 +22,7 @@ import { KatikaAuditLog } from '../../types/katika';
 import { KatikaService, getAuditLogsNotice } from '../../services/katikaService';
 import { KATIKA_NAVIGATE_EVENT, KatikaNavigationEventDetail } from '../../utils/katikaNavigation';
 import { KatikaConnectionHealthPanel } from './KatikaConnectionHealthPanel';
+import { KatikaCrashesPanel } from './KatikaCrashesPanel';
 
 export const KatikaLogsTab: React.FC = () => {
   const [logs, setLogs] = useState<KatikaAuditLog[]>([]);
@@ -112,6 +113,7 @@ export const KatikaLogsTab: React.FC = () => {
   return (
     <div className="space-y-6">
       <KatikaConnectionHealthPanel />
+      <KatikaCrashesPanel />
 
       {/* Search, Filter & Export Bar */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-4 rounded-xl bg-slate-900/90 border border-slate-800">

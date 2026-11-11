@@ -17,6 +17,8 @@ export interface HomeInputs {
   collusionAlerts: number | null;
   /** Alertes du journal des dernières 24 h ; null si non lu ou non permis. */
   journalAlerts: { critical: number; warning: number } | null;
+  /** Types de plantage de l'application non traités et revus récemment ; null si non lu ou non permis. */
+  openCrashes?: number | null;
 }
 
 const plural = (n: number, one: string, many: string) => `${n} ${n > 1 ? many : one}`;
@@ -36,6 +38,9 @@ export function buildHomeTodo(input: HomeInputs): HomeTodoItem[] {
   }
   if (input.journalAlerts && input.journalAlerts.warning > 0) {
     items.push({ level: 'WARNING', text: `${plural(input.journalAlerts.warning, 'avertissement', 'avertissements')} au journal (24 h)`, tab: 'LOGS' });
+  }
+  if (input.openCrashes && input.openCrashes > 0) {
+    items.push({ level: 'WARNING', text: `${plural(input.openCrashes, 'type de plantage', 'types de plantage')} de l'application à examiner (24 h)`, tab: 'LOGS' });
   }
   if (items.length === 0 && input.serverUp === true) items.push({ level: 'OK', text: 'Rien à traiter pour le moment' });
   return items.sort((a, b) => rank(a.level) - rank(b.level));

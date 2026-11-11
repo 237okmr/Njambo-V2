@@ -23,6 +23,19 @@ describe('Accueil de katika : à traiter maintenant', () => {
   });
 });
 
+describe('plantages de l\'application', () => {
+  it('une ligne à examiner, au pluriel quand il y en a plusieurs, qui mène au journal', () => {
+    const one = buildHomeTodo({ ...base, openCrashes: 1 }).find((i) => i.text.includes('plantage'));
+    assert.equal(one?.text, "1 type de plantage de l'application à examiner (24 h)");
+    assert.equal(one?.tab, 'LOGS');
+    assert.match(buildHomeTodo({ ...base, openCrashes: 3 })[0].text, /^3 types de plantage/);
+  });
+  it('rien à signaler : pas de ligne, et « rien à traiter » reste affiché', () => {
+    assert.equal(buildHomeTodo({ ...base, openCrashes: 0 })[0].level, 'OK');
+    assert.equal(buildHomeTodo({ ...base, openCrashes: null })[0].level, 'OK');
+  });
+});
+
 describe('Confirmation renforcée de Kora Cash sur téléphone', () => {
   it('seulement pour une action Kora Cash, sur petit écran', () => {
     assert.equal(needsStrongConfirm('POST', '/api/katika/cash/withdrawals/x/approve', true), true);
