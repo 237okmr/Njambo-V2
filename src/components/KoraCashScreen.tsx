@@ -43,6 +43,8 @@ interface KoraCashScreenProps {
   inviteCode?: string | null;
   /** L'invitation est réglée (entrée, refus ou « plus tard ») : l'application l'oublie. */
   onInviteDone?: () => void;
+  /** Centre social ouvert : lien vers la page Social pour les invitations et les amis. */
+  onOpenSocial?: () => void;
 }
 
 const SoonCard: React.FC<{ title: string; text: string }> = ({ title, text }) => (
@@ -68,7 +70,7 @@ const TABS: SegmentTab<KoraCashTab>[] = [
 ];
 
 /** Page Kora Cash : un mode de jeu à part entière, avec son adresse. Le serveur reste seul juge de ce qui est ouvert. */
-export const KoraCashScreen: React.FC<KoraCashScreenProps> = ({ onClose, onOpenCashTable, onResumeCashTable, inviteCode = null, onInviteDone }) => {
+export const KoraCashScreen: React.FC<KoraCashScreenProps> = ({ onClose, onOpenCashTable, onResumeCashTable, inviteCode = null, onInviteDone, onOpenSocial }) => {
   const { isLoggedIn, loginWithGoogle } = usePlayerProfile();
   const [status, setStatus] = useState<KoraCashPublicStatus | null>(null);
   const [statusLoaded, setStatusLoaded] = useState<boolean>(false);
@@ -189,6 +191,19 @@ export const KoraCashScreen: React.FC<KoraCashScreenProps> = ({ onClose, onOpenC
               </span>
             </div>
           </div>
+        </div>
+      )}
+
+      {onOpenSocial && (
+        <div className="shrink-0 px-3 sm:px-6 py-1.5 border-b border-slate-800 bg-slate-900/60">
+          <button
+            type="button"
+            id="kora-cash-open-social"
+            onClick={onOpenSocial}
+            className="max-w-2xl mx-auto w-full text-left text-xs font-bold text-slate-300 hover:text-white cursor-pointer"
+          >
+            Invitations et amis → Social
+          </button>
         </div>
       )}
 

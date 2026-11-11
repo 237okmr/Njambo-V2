@@ -115,6 +115,10 @@ export interface MultiplayerScreenProps {
    * ni lecture des salons publics. Absent : écran Multijoueur complet, comportement inchangé.
    */
   embedded?: 'FRIENDS' | 'ONLINE';
+  /** Sous-onglet d'amis ouvert d'emblée en mode intégré (ex. demandes reçues, depuis une notification). */
+  initialFriendSubTab?: 'FRIENDS' | 'RECEIVED' | 'SENT';
+  /** Centre social ouvert : l'onglet « Amis » vit dans la page Social, il disparaît ici. */
+  hideFriendsTab?: boolean;
   /** Invitation à une table Kora Cash acceptée : ouvre la page d'invitation Cash de cette table. */
   onOpenCashInvite?: (roomCode: string) => void;
   // Lobby actions
@@ -154,6 +158,8 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
   onKickPlayer,
   onOpenCashInvite,
   embedded,
+  initialFriendSubTab,
+  hideFriendsTab = false,
 }) => {
   // 3-Pillar Navigation Tabs (Zero horizontal scroll)
   const [activeTab, setActiveTab] = useState<MultiplayerTab>(embedded ? 'social' : 'play');
@@ -283,7 +289,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
   const [localContacts, setLocalContacts] = useState<LocalContact[]>(() => FriendService.getLocalContacts());
   const [recentPlayers, setRecentPlayers] = useState<LocalContact[]>(() => FriendService.getRecentPlayers());
   const [cloudFriends, setCloudFriends] = useState<FriendDocument[]>([]);
-  const [friendSubTab, setFriendSubTab] = useState<'FRIENDS' | 'ONLINE' | 'RECEIVED' | 'SENT'>(embedded === 'ONLINE' ? 'ONLINE' : 'FRIENDS');
+  const [friendSubTab, setFriendSubTab] = useState<'FRIENDS' | 'ONLINE' | 'RECEIVED' | 'SENT'>(embedded === 'ONLINE' ? 'ONLINE' : initialFriendSubTab ?? 'FRIENDS');
 
   // Navigation depuis la cloche des notifications : ouvre directement le bon onglet (sans action automatique)
   useEffect(() => {
@@ -291,6 +297,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
     const applyNotificationTarget = () => {
       const target = notificationNavigation.consume();
       if (!target) return;
+      if (hideFriendsTab && target.tab === 'social') return;
       setActiveTab(target.tab);
       if (target.friendSubTab) setFriendSubTab(target.friendSubTab);
     };
@@ -1308,16 +1315,20 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
         badge: publicRooms.length > 0 ? String(publicRooms.length) : undefined,
         badgeColor: 'bg-slate-800 text-slate-300',
       },
-      {
-        id: 'social',
-        label: 'Amis',
-        shortLabel: 'Amis',
-        icon: Users,
-        badge: incomingInvitations.length > 0 ? String(incomingInvitations.length) : undefined,
-        badgeColor: 'bg-rose-500 text-white animate-pulse',
-      },
+      ...(hideFriendsTab
+        ? []
+        : [
+            {
+              id: 'social' as const,
+              label: 'Amis',
+              shortLabel: 'Amis',
+              icon: Users,
+              badge: incomingInvitations.length > 0 ? String(incomingInvitations.length) : undefined,
+              badgeColor: 'bg-rose-500 text-white animate-pulse',
+            },
+          ]),
     ],
-    [publicRooms.length, incomingInvitations.length]
+    [publicRooms.length, incomingInvitations.length, hideFriendsTab]
   );
 
   const showExpanded = isQuickMatchExpanded || isQuickMatching;

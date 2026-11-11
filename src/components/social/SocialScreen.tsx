@@ -31,6 +31,8 @@ interface SocialScreenProps {
   cashAvailable: boolean;
   /** Amis ou joueurs en ligne : l'écran existant, intégré. */
   renderFriends: (view: 'FRIENDS' | 'ONLINE') => React.ReactNode;
+  /** Sous-onglet ouvert d'emblée (ex. depuis une notification d'ami). */
+  initialSubTab?: SocialSubTab;
 }
 
 const primaryButton =
@@ -102,10 +104,11 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
   onJoinCode,
   cashAvailable,
   renderFriends,
+  initialSubTab = 'INVITATIONS',
 }) => {
   const { isLoggedIn, loginWithGoogle } = usePlayerProfile();
   const [requestedMode, setRequestedMode] = useState<SocialMode | null>(() => readStoredSocialMode());
-  const [subTab, setSubTab] = useState<SocialSubTab>('INVITATIONS');
+  const [subTab, setSubTab] = useState<SocialSubTab>(initialSubTab);
   const [now, setNow] = useState<number>(() => wsService.getServerTime());
   const [authBusy, setAuthBusy] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string | null>(null);

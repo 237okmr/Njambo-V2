@@ -189,6 +189,9 @@ function GameApp() {
   const [showHomeModeSheet, setShowHomeModeSheet] = useState<boolean>(false);
   const [isKoraCashOpen, setIsKoraCashOpen] = useState<boolean>(false);
   const [isSocialOpen, setIsSocialOpen] = useState<boolean>(false);
+  // Sous-onglet de la page Social demandé par une notification (demandes d'amis reçues, par exemple).
+  const [socialTarget, setSocialTarget] = useState<{ friendSubTab?: 'FRIENDS' | 'RECEIVED' | 'SENT' } | null>(null);
+  const socialCenterEnabledRef = useRef<boolean>(false);
   // Invitation à une table Kora Cash reçue par lien (?cash=CODE) : gardée jusqu'à ce qu'elle soit réglée.
   const [cashInviteCode, setCashInviteCode] = useState<string | null>(null);
   const clearCashInvite = useCallback(() => {
@@ -439,7 +442,17 @@ function GameApp() {
   // Cloche des notifications : un toucher sur une notification demande l'ouverture du hub multijoueur
   useEffect(() => {
     return notificationNavigation.subscribe(() => {
-      if (notificationNavigation.peek()) setShowMultiplayerHub(true);
+      const target = notificationNavigation.peek();
+      if (!target) return;
+      // Centre social ouvert : amis et invitations vivent dans Social, la notification y mène directement.
+      if (socialCenterEnabledRef.current && target.tab === 'social') {
+        notificationNavigation.consume();
+        setShowMultiplayerHub(false);
+        setSocialTarget({ friendSubTab: target.friendSubTab });
+        setIsSocialOpen(true);
+        return;
+      }
+      setShowMultiplayerHub(true);
     });
   }, [setShowMultiplayerHub]);
 
@@ -897,6 +910,7 @@ function GameApp() {
   // Centre social : interrupteurs katika, côté Kora Cash, pastille d'invitations et carte d'accueil.
   // Sans invitation ni compte Google, rien n'est lu côté serveur : la carte affiche un texte fixe.
   const socialFlags = useSocialFlags();
+  socialCenterEnabledRef.current = socialFlags.centerEnabled;
   const koraCashOpenForSocial = useKoraCashEnabled();
   const socialCashAvailable = isCashSideAvailable({
     centerEnabled: socialFlags.centerEnabled,
@@ -2347,9 +2361,11 @@ function GameApp() {
   }, [saveCurrentSession, triggerToast]);
 
   // Écran Multijoueur : plein écran, ou intégré à la page Social (amis / joueurs en ligne).
-  const renderMultiplayerScreen = (embedded?: 'FRIENDS' | 'ONLINE') => (
+  const renderMultiplayerScreen = (embedded?: 'FRIENDS' | 'ONLINE', initialFriendSubTab?: 'FRIENDS' | 'RECEIVED' | 'SENT') => (
       <MultiplayerScreen
         embedded={embedded}
+        initialFriendSubTab={initialFriendSubTab}
+        hideFriendsTab={socialFlags.centerEnabled}
         isOpen={true}
         onOpenCashInvite={openCashInviteFromInvitation}
         onClose={() => {
@@ -2451,7 +2467,7 @@ function GameApp() {
             onOpenSocial={() => setIsSocialOpen(true)}
             savedSessions={savedSessions}
             activeSessionId={activeSessionId}
-            pendingInvitesCount={incomingInvitations.length}
+            pendingInvitesCount={socialFlags.centerEnabled ? 0 : incomingInvitations.length}
             onStartSolo={() => {
               ensureLeaveMultiplayerBeforeSolo();
               setShowSetupModal(true);
@@ -3241,7 +3257,11 @@ function GameApp() {
             onClose={() => setIsSocialOpen(false)}
           >
             <SocialScreen
-              onClose={() => setIsSocialOpen(false)}
+              onClose={() => {
+                setIsSocialOpen(false);
+                setSocialTarget(null);
+              }}
+              initialSubTab={socialTarget?.friendSubTab ? 'FRIENDS' : 'INVITATIONS'}
               invitations={incomingInvitations}
               onAccept={(inv) => {
                 if (!inv.cash) setIsSocialOpen(false);
@@ -3269,7 +3289,7 @@ function GameApp() {
                 return res;
               }}
               cashAvailable={socialCashAvailable}
-              renderFriends={(view) => renderMultiplayerScreen(view)}
+              renderFriends={(view) => renderMultiplayerScreen(view, socialTarget?.friendSubTab)}
             />
           </ErrorBoundary>
         )}
@@ -3340,6 +3360,14 @@ function GameApp() {
                 clearCashInvite();
               }}
               onOpenCashTable={(request) => handleOpenCashTable(request, localPlayerName)}
+              onOpenSocial={
+                socialFlags.centerEnabled
+                  ? () => {
+                      setIsKoraCashOpen(false);
+                      setIsSocialOpen(true);
+                    }
+                  : undefined
+              }
               onResumeCashTable={(roomCode) => {
                 void handleJoinRoom(roomCode, localPlayerName).then((res) => {
                   if (!res.success) {
