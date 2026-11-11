@@ -110,6 +110,11 @@ export interface MultiplayerScreenProps {
   }, confirmLeaveCurrent?: boolean) => Promise<{ success: boolean; error?: string; errorCode?: string; activeGameRoomCode?: string } | void>;
   onJoinRoom: (roomCode: string, playerName: string, confirmLeaveCurrent?: boolean) => Promise<{ success: boolean; error?: string; errorCode?: string; activeGameRoomCode?: string }>;
   onQuickMatch: (settings?: { baseBet?: number; initialCapital?: number }, confirmLeaveCurrent?: boolean) => Promise<{ success: boolean; error?: string; errorCode?: string; activeGameRoomCode?: string }>;
+  /**
+   * Intégré à la page Social : seule la vue « Amis » ou « En ligne » s'affiche, sans en-tête, sans onglets, sans salon d'attente
+   * ni lecture des salons publics. Absent : écran Multijoueur complet, comportement inchangé.
+   */
+  embedded?: 'FRIENDS' | 'ONLINE';
   /** Invitation à une table Kora Cash acceptée : ouvre la page d'invitation Cash de cette table. */
   onOpenCashInvite?: (roomCode: string) => void;
   // Lobby actions
@@ -148,9 +153,10 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
   onLeaveRoom,
   onKickPlayer,
   onOpenCashInvite,
+  embedded,
 }) => {
   // 3-Pillar Navigation Tabs (Zero horizontal scroll)
-  const [activeTab, setActiveTab] = useState<MultiplayerTab>('play');
+  const [activeTab, setActiveTab] = useState<MultiplayerTab>(embedded ? 'social' : 'play');
 
   // Rend le bouton "Remplir avec des bots" plus visible dès que l'attente dépasse botFillReminderSeconds
   // (même seuil que la relance côté serveur), pour qu'un hôte qui ne remarquerait pas le bouton au premier
@@ -277,10 +283,11 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
   const [localContacts, setLocalContacts] = useState<LocalContact[]>(() => FriendService.getLocalContacts());
   const [recentPlayers, setRecentPlayers] = useState<LocalContact[]>(() => FriendService.getRecentPlayers());
   const [cloudFriends, setCloudFriends] = useState<FriendDocument[]>([]);
-  const [friendSubTab, setFriendSubTab] = useState<'FRIENDS' | 'ONLINE' | 'RECEIVED' | 'SENT'>('FRIENDS');
+  const [friendSubTab, setFriendSubTab] = useState<'FRIENDS' | 'ONLINE' | 'RECEIVED' | 'SENT'>(embedded === 'ONLINE' ? 'ONLINE' : 'FRIENDS');
 
   // Navigation depuis la cloche des notifications : ouvre directement le bon onglet (sans action automatique)
   useEffect(() => {
+    if (embedded) return;
     const applyNotificationTarget = () => {
       const target = notificationNavigation.consume();
       if (!target) return;
@@ -406,7 +413,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
           setShowFilterBottomSheet(false);
         } else if (showQrModal) {
           setShowQrModal(false);
-        } else {
+        } else if (!embedded) {
           handleBack();
         }
       }
@@ -436,7 +443,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
   useEffect(() => {
     if (!isOpen) return;
 
-    refreshPublicRooms();
+    if (!embedded) refreshPublicRooms();
 
     const unsubPublic = webSocketService.onPublicRooms((rooms) => {
       setPublicRooms(rooms);
@@ -454,8 +461,8 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
     setLocalContacts(FriendService.getLocalContacts());
     setRecentPlayers(FriendService.getRecentPlayers());
 
-    // Sync URL param if present (e.g. ?room=CODE or ?join=CODE)
-    try {
+    // Sync URL param if present (e.g. ?room=CODE or ?join=CODE). Pas en mode intégré : le salon d'attente n'y existe pas.
+    if (!embedded) try {
       const params = new URLSearchParams(window.location.search);
       const roomParam = params.get('room') || params.get('join');
       const fromParam = params.get('from');
@@ -1319,16 +1326,21 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
 
   return (
     <motion.div
-      initial={{ x: '100%' }}
-      animate={{ x: 0 }}
-      exit={{ x: '100%' }}
+      initial={embedded ? false : { x: '100%' }}
+      animate={embedded ? undefined : { x: 0 }}
+      exit={embedded ? undefined : { x: '100%' }}
       transition={{ type: 'spring', damping: 25, stiffness: 200 }}
       id="multiplayer-native-screen"
-      className="fixed inset-x-0 top-0 bottom-[var(--app-bottom-nav,0px)] z-[65] bg-slate-950 text-slate-100 flex flex-col font-sans select-none overflow-hidden comfort-ui"
+      className={
+        embedded
+          ? 'text-slate-100 flex flex-col font-sans select-none comfort-ui'
+          : 'fixed inset-x-0 top-0 bottom-[var(--app-bottom-nav,0px)] z-[65] bg-slate-950 text-slate-100 flex flex-col font-sans select-none overflow-hidden comfort-ui'
+      }
     >
       {/* ========================================================================= */}
       {/* 1. TOP UNIFIED HEADER BAR (Option A Back button + Sound Toggle)           */}
       {/* ========================================================================= */}
+      {!embedded && (
       <NativeScreenHeader
         id="native-multiplayer-header"
         backLabel="Retour"
@@ -1416,11 +1428,12 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
           )
         }
       />
+      )}
 
       {/* ========================================================================= */}
       {/* SCENARIO A : ACTIVE LOBBY ROOM                                            */}
       {/* ========================================================================= */}
-      {room ? (
+      {room && !embedded ? (
         <main className="flex-1 overflow-y-auto no-scrollbar p-3.5 sm:p-6 max-w-lg mx-auto w-full flex flex-col gap-4">
           {/* Test Environment Host Warning Banner */}
           {isHost && isTestEnvironment() && (
@@ -2142,7 +2155,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
         /* ========================================================================= */
         /* SCENARIO B : HUB MODE (3 Mobile Pillars - 0 Horizontal Scroll)             */
         /* ========================================================================= */
-        <main className="flex-1 overflow-y-auto no-scrollbar p-3.5 sm:p-6 max-w-lg mx-auto w-full flex flex-col gap-4">
+        <main className={embedded ? 'w-full flex flex-col gap-4' : 'flex-1 overflow-y-auto no-scrollbar p-3.5 sm:p-6 max-w-lg mx-auto w-full flex flex-col gap-4'}>
           {/* Real-time Friend Acceptance Toast Banner in Hub */}
           {friendAcceptedToast && (
             <div className="p-3 rounded-2xl bg-gradient-to-r from-emerald-500/25 to-emerald-500/25 border border-emerald-500/50 text-emerald-200 flex items-center justify-between gap-3 shadow-lg shadow-emerald-500/10 animate-in fade-in slide-in-from-top duration-300">
@@ -2175,6 +2188,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
           {/* ===================================================================== */}
           {/* 3-PILLAR SEGMENTED CONTROL (100% width, No scrollbar)                 */}
           {/* ===================================================================== */}
+          {!embedded && (
           <NativeSegmentedNav
             tabs={multiplayerTabs}
             activeTab={activeTab}
@@ -2184,6 +2198,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
             }}
             ariaLabel="Navigation multijoueur"
           />
+          )}
 
           {/* Active Fair-Play Sanction Warning Banner (Lot 3 - C) */}
           {activeSanction && activeSanction.active && (
@@ -2776,7 +2791,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
               )}
 
               {/* Invitations Received */}
-              {incomingInvitations.length > 0 && (
+              {incomingInvitations.length > 0 && !embedded && (
                 <div className="flex flex-col gap-2">
                   <span className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
                     <Mail className="w-3.5 h-3.5" /> Invitations reçues ({incomingInvitations.length})
@@ -2863,7 +2878,8 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
               {/* Social Sub-Tabs Header & Action (Restructured into 2 rows) */}
               <div className="flex flex-col gap-2.5">
                 {/* Row 1: Full-width sub-tab pills */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800 w-full">
+                {embedded !== 'ONLINE' && (
+                <div className={`grid ${embedded ? 'grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'} gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800 w-full`}>
                   <button
                     type="button"
                     onClick={() => setFriendSubTab('FRIENDS')}
@@ -2879,6 +2895,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                     </span>
                   </button>
 
+                  {!embedded && (
                   <button
                     type="button"
                     onClick={() => setFriendSubTab('ONLINE')}
@@ -2891,6 +2908,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                     <Wifi className="w-3.5 h-3.5 shrink-0" />
                     <span className="truncate">En ligne</span>
                   </button>
+                  )}
 
                   <button
                     type="button"
@@ -2927,6 +2945,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
                     </span>
                   </button>
                 </div>
+                )}
 
                 {/* Row 2: Full-width add friend button */}
                 {friendSubTab !== 'ONLINE' && (

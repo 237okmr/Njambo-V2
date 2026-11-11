@@ -26,3 +26,11 @@ describe('barre de navigation du bas', () => {
     assert.equal(activeBottomNavItem({ ...closed, profile: true, leaderboard: true }), 'leaderboard');
   });
 });
+
+describe('entrée Social de la barre du bas', () => {
+  it('est active quand sa page est ouverte, après Kora Cash dans l\'ordre de priorité', () => {
+    assert.equal(activeBottomNavItem({ ...closed, social: true }), 'social');
+    assert.equal(activeBottomNavItem({ ...closed, koraCash: true, social: true }), 'koraCash');
+    assert.equal(activeBottomNavItem(closed), 'home');
+  });
+});

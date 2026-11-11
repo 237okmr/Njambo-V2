@@ -3,7 +3,7 @@
  * Elle ne sert qu'à passer d'un écran principal à l'autre, jamais pendant une partie ni une tâche en cours.
  */
 
-export type BottomNavItem = 'home' | 'koraCash' | 'leaderboard' | 'profile';
+export type BottomNavItem = 'home' | 'social' | 'koraCash' | 'leaderboard' | 'profile';
 
 export interface BottomNavContext {
   isOnHomeScreen: boolean;
@@ -17,9 +17,10 @@ export function isBottomNavVisible(context: BottomNavContext): boolean {
 }
 
 /** Le dernier écran ouvert l'emporte, dans le même ordre que l'adresse affichée. */
-export function activeBottomNavItem(open: { leaderboard: boolean; profile: boolean; koraCash: boolean }): BottomNavItem {
+export function activeBottomNavItem(open: { leaderboard: boolean; profile: boolean; koraCash: boolean; social?: boolean }): BottomNavItem {
   if (open.leaderboard) return 'leaderboard';
   if (open.profile) return 'profile';
   if (open.koraCash) return 'koraCash';
+  if (open.social) return 'social';
   return 'home';
 }

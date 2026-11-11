@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { getPublicParamNumber } from './services/publicConfig';
 import { AnimatePresence, motion } from 'motion/react';
 import confetti from 'canvas-confetti';
-import { Card, GameState, Player, SavedManche, AIDifficulty, GamePhase, GameInvitation, SoloBetIncreaseMode } from './types';
+import { Card, GameState, Player, SavedManche, AIDifficulty, GamePhase, GameInvitation, MultiplayerRoom, SoloBetIncreaseMode } from './types';
 import { DEFAULT_BASE_BET, DEFAULT_INITIAL_CAPITAL } from './utils/deck';
 import { sounds, triggerHaptic } from './utils/sound';
 import { getPwaShareBase } from './utils/pwaLinks';
@@ -31,6 +31,9 @@ import { GameSetupModal } from './components/GameSetupModal';
 import { InstallPwaModal } from './components/InstallPwaModal';
 import { HomeScreen } from './components/HomeScreen';
 import { MultiplayerScreen } from './components/multiplayer/MultiplayerScreen';
+import { SocialScreen } from './components/social/SocialScreen';
+import { useKoraCashEnabled, useSocialFlags } from './hooks/useSocialAvailability';
+import { buildHomeCard, countInvitations, isCashSideAvailable, totalInvitations } from './utils/socialCenter';
 import { DirectInviteToast } from './components/multiplayer/DirectInviteToast';
 import { JoinProgressIndicator } from './components/multiplayer/JoinProgressIndicator';
 import { SavedSessionsModal } from './components/SavedSessionsModal';
@@ -150,6 +153,7 @@ function GameApp() {
     registerFairPlayIncident,
     chips,
     activeSanction,
+    isLoggedIn: isGoogleLoggedIn,
   } = usePlayerProfile();
 
   // Historique de notifications (cloche) : rattachement au compte et écoute des demandes d'amis
@@ -184,6 +188,7 @@ function GameApp() {
   const [showQuitModal, setShowQuitModal] = useState<boolean>(false);
   const [showHomeModeSheet, setShowHomeModeSheet] = useState<boolean>(false);
   const [isKoraCashOpen, setIsKoraCashOpen] = useState<boolean>(false);
+  const [isSocialOpen, setIsSocialOpen] = useState<boolean>(false);
   // Invitation à une table Kora Cash reçue par lien (?cash=CODE) : gardée jusqu'à ce qu'elle soit réglée.
   const [cashInviteCode, setCashInviteCode] = useState<string | null>(null);
   const clearCashInvite = useCallback(() => {
@@ -502,6 +507,7 @@ function GameApp() {
     profile: isProfileModalOpen,
     rules: showRulesModal,
     koraCash: isKoraCashOpen,
+    social: isSocialOpen,
     multiplayer: showMultiplayerHub || showMultiplayerLobby,
   });
   const routePathRef = useRef<string>(routePath);
@@ -537,6 +543,7 @@ function GameApp() {
     if (screen === 'multiplayer') setShowMultiplayerHub(true);
     if (screen === 'profile') setIsProfileModalOpen(true);
     if (screen === 'koraCash') setIsKoraCashOpen(true);
+    if (screen === 'social') setIsSocialOpen(true);
     if (screen === 'notifications') notificationScreen.open();
   }, [setIsLeaderboardOpen, setIsProfileModalOpen, setShowMultiplayerHub]);
 
@@ -634,6 +641,11 @@ function GameApp() {
         rearmBackGuard();
         return;
       }
+      if (isSocialOpen) {
+        setIsSocialOpen(false);
+        rearmBackGuard();
+        return;
+      }
       if (showInstallModal) {
         setShowInstallModal(false);
         rearmBackGuard();
@@ -685,6 +697,7 @@ function GameApp() {
     isProfileModalOpen,
     isLeaderboardOpen,
     isKoraCashOpen,
+    isSocialOpen,
     showMultiplayerHub,
     showMultiplayerLobby,
     setIsProfileModalOpen,
@@ -764,6 +777,10 @@ function GameApp() {
           setIsKoraCashOpen(false);
           return;
         }
+        if (isSocialOpen) {
+          setIsSocialOpen(false);
+          return;
+        }
         if (showMultiplayerHub || showMultiplayerLobby) {
           setShowMultiplayerHub(false);
           setShowMultiplayerLobby(false);
@@ -791,6 +808,7 @@ function GameApp() {
     isLeaderboardOpen,
     isProfileModalOpen,
     isKoraCashOpen,
+    isSocialOpen,
     showMultiplayerHub,
     showMultiplayerLobby,
     setIsLeaderboardOpen,
@@ -875,6 +893,45 @@ function GameApp() {
   const handleDismissInvitationUnified = useCallback((inviteId: string) => {
     dismissInvitation(inviteId);
   }, [dismissInvitation]);
+
+  // Centre social : interrupteurs katika, côté Kora Cash, pastille d'invitations et carte d'accueil.
+  // Sans invitation ni compte Google, rien n'est lu côté serveur : la carte affiche un texte fixe.
+  const socialFlags = useSocialFlags();
+  const koraCashOpenForSocial = useKoraCashEnabled();
+  const socialCashAvailable = isCashSideAvailable({
+    centerEnabled: socialFlags.centerEnabled,
+    cashSideEnabled: socialFlags.cashSideEnabled,
+    koraCashEnabled: koraCashOpenForSocial,
+    isGoogle: isGoogleLoggedIn,
+  });
+  const socialCounts = countInvitations(incomingInvitations, socialCashAvailable, wsService.getServerTime());
+  const socialHomeCard = socialFlags.centerEnabled
+    ? buildHomeCard({ isGoogle: isGoogleLoggedIn, counts: socialCounts })
+    : null;
+
+  const handleResumeSocialTable = useCallback(
+    (room: MultiplayerRoom) => {
+      setIsSocialOpen(false);
+      if (room.cash) {
+        void handleJoinRoom(room.id, localPlayerName).then((res) => {
+          if (!res.success) {
+            triggerToast(res.error || 'Retour à la table impossible.');
+            return;
+          }
+          const current = wsService.getCurrentRoom();
+          if (current && current.status !== 'LOBBY') setCurrentScreen('GAME');
+        });
+        return;
+      }
+      if (room.status === 'LOBBY') {
+        setShowMultiplayerLobby(true);
+      } else {
+        setIsMultiplayerMode(true);
+        setCurrentScreen('GAME');
+      }
+    },
+    [handleJoinRoom, localPlayerName, triggerToast, setShowMultiplayerLobby]
+  );
 
   // Update App Badge on mobile home screen when invitations change
   useEffect(() => {
@@ -2289,6 +2346,50 @@ function GameApp() {
     setCurrentScreen('HOME');
   }, [saveCurrentSession, triggerToast]);
 
+  // Écran Multijoueur : plein écran, ou intégré à la page Social (amis / joueurs en ligne).
+  const renderMultiplayerScreen = (embedded?: 'FRIENDS' | 'ONLINE') => (
+      <MultiplayerScreen
+        embedded={embedded}
+        isOpen={true}
+        onOpenCashInvite={openCashInviteFromInvitation}
+        onClose={() => {
+          setShowMultiplayerHub(false);
+          setShowMultiplayerLobby(false);
+        }}
+        sourceScreen={currentScreen}
+        soundEnabled={soundEnabled}
+        onToggleSound={toggleSound}
+        onOpenAccountSettings={() => {
+          setProfileInitialTab('settings');
+          setIsProfileModalOpen(true);
+        }}
+        room={!embedded && showMultiplayerLobby && multiplayerRoom ? multiplayerRoom : null}
+        localPlayerId={localPlayerId}
+        errorMessage={serverErrorMessage}
+        onCreateRoom={handleCreateRoom}
+        onJoinRoom={async (code, name, confirmLeaveCurrent) => {
+          const res = await handleJoinRoom(code, name, confirmLeaveCurrent);
+          if (res.success) {
+            const current = wsService.getCurrentRoom();
+            if (current && current.status !== 'LOBBY') {
+              setCurrentScreen('GAME');
+            }
+          }
+          return res;
+        }}
+        onQuickMatch={handleQuickMatch}
+        onStartGame={handleStartMultiplayerGame}
+        onToggleReady={handleToggleReady}
+        onToggleFillWithBots={handleToggleFillWithBots}
+        onUpdateSettings={handleUpdateRoomSettings}
+        onKickPlayer={handleKickPlayer}
+        onAlertUnreadyPlayers={handleAlertUnreadyPlayers}
+        onVoteStartWithBots={handleVoteStartWithBots}
+        onClaimHost={handleClaimHostRole}
+        onLeaveRoom={handleLeaveMultiplayer}
+      />
+  );
+
   return (
     <div className="flex flex-col h-dvh w-full bg-slate-950 text-slate-100 font-sans select-none overflow-hidden">
       {/* Top Header / Status Bar (Game Mode) */}
@@ -2346,6 +2447,8 @@ function GameApp() {
         {currentScreen === 'HOME' ? (
           <HomeScreen
             onOpenKoraCash={() => setIsKoraCashOpen(true)}
+            socialCard={socialHomeCard}
+            onOpenSocial={() => setIsSocialOpen(true)}
             savedSessions={savedSessions}
             activeSessionId={activeSessionId}
             pendingInvitesCount={incomingInvitations.length}
@@ -3129,48 +3232,44 @@ function GameApp() {
         deferredPrompt={deferredInstallPrompt}
       />
 
+      {/* Page Social : invitations, amis, joueurs en ligne, tables */}
+      <AnimatePresence>
+        {isSocialOpen && socialFlags.centerEnabled && (
+          <ErrorBoundary
+            fallbackTitle="La page Social n'a pas pu s'ouvrir"
+            fallbackMessage="Ferme cette fenêtre puis réessaie."
+            onClose={() => setIsSocialOpen(false)}
+          >
+            <SocialScreen
+              onClose={() => setIsSocialOpen(false)}
+              invitations={incomingInvitations}
+              onAccept={(inv) => {
+                if (!inv.cash) setIsSocialOpen(false);
+                void handleAcceptInvitationUnified(inv);
+              }}
+              onDecline={handleDeclineInvitationUnified}
+              onBlock={handleBlockInvitationUnified}
+              room={multiplayerRoom}
+              onResumeTable={handleResumeSocialTable}
+              onOpenMultiplayer={() => {
+                setIsSocialOpen(false);
+                setShowMultiplayerHub(true);
+              }}
+              onOpenKoraCash={() => {
+                setIsSocialOpen(false);
+                setIsKoraCashOpen(true);
+              }}
+              cashAvailable={socialCashAvailable}
+              renderFriends={(view) => renderMultiplayerScreen(view)}
+            />
+          </ErrorBoundary>
+        )}
+      </AnimatePresence>
+
       {/* Native Full-Screen Multiplayer Screen (Hub & Lobby) */}
       <AnimatePresence>
         {(showMultiplayerHub || (showMultiplayerLobby && Boolean(multiplayerRoom))) && (
-          <MultiplayerScreen
-            isOpen={true}
-            onOpenCashInvite={openCashInviteFromInvitation}
-            onClose={() => {
-              setShowMultiplayerHub(false);
-              setShowMultiplayerLobby(false);
-            }}
-            sourceScreen={currentScreen}
-            soundEnabled={soundEnabled}
-            onToggleSound={toggleSound}
-            onOpenAccountSettings={() => {
-              setProfileInitialTab('settings');
-              setIsProfileModalOpen(true);
-            }}
-            room={showMultiplayerLobby && multiplayerRoom ? multiplayerRoom : null}
-            localPlayerId={localPlayerId}
-            errorMessage={serverErrorMessage}
-            onCreateRoom={handleCreateRoom}
-            onJoinRoom={async (code, name, confirmLeaveCurrent) => {
-              const res = await handleJoinRoom(code, name, confirmLeaveCurrent);
-              if (res.success) {
-                const current = wsService.getCurrentRoom();
-                if (current && current.status !== 'LOBBY') {
-                  setCurrentScreen('GAME');
-                }
-              }
-              return res;
-            }}
-            onQuickMatch={handleQuickMatch}
-            onStartGame={handleStartMultiplayerGame}
-            onToggleReady={handleToggleReady}
-            onToggleFillWithBots={handleToggleFillWithBots}
-            onUpdateSettings={handleUpdateRoomSettings}
-            onKickPlayer={handleKickPlayer}
-            onAlertUnreadyPlayers={handleAlertUnreadyPlayers}
-            onVoteStartWithBots={handleVoteStartWithBots}
-            onClaimHost={handleClaimHostRole}
-            onLeaveRoom={handleLeaveMultiplayer}
-          />
+          renderMultiplayerScreen()
         )}
       </AnimatePresence>
 
@@ -3260,13 +3359,16 @@ function GameApp() {
             showTestModeModal ||
             showInstallModal,
         })}
-        activeItem={activeBottomNavItem({ leaderboard: isLeaderboardOpen, profile: isProfileModalOpen, koraCash: isKoraCashOpen })}
+        socialEnabled={socialFlags.centerEnabled}
+        socialBadge={totalInvitations(socialCounts)}
+        activeItem={activeBottomNavItem({ leaderboard: isLeaderboardOpen, profile: isProfileModalOpen, koraCash: isKoraCashOpen, social: isSocialOpen })}
         onNavigate={(item) => {
           setShowHomeModeSheet(false);
           setShowMultiplayerHub(false);
           setIsLeaderboardOpen(item === 'leaderboard');
           setIsProfileModalOpen(item === 'profile');
           setIsKoraCashOpen(item === 'koraCash');
+          setIsSocialOpen(item === 'social');
         }}
       />
 

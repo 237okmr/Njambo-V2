@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Globe, BookOpen, FolderOpen, Zap, Sparkles, Volume2, VolumeX, Smartphone, HelpCircle, ChevronRight, Trophy, Wallet, X } from 'lucide-react';
+import { Play, Globe, BookOpen, FolderOpen, Zap, Sparkles, Volume2, VolumeX, Smartphone, HelpCircle, ChevronRight, Trophy, Users, Wallet, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { SavedManche } from '../types';
 import { usePlayerProfile } from '../context/PlayerProfileContext';
@@ -11,6 +11,9 @@ import { pushNotificationService } from '../services/pushNotificationService';
 
 interface HomeScreenProps {
   onOpenKoraCash?: () => void;
+  /** Centre social ouvert par katika : la carte « Social » s'affiche entre « Jouer » et « Kora Cash ». */
+  socialCard?: { detail: string; badge: number } | null;
+  onOpenSocial?: () => void;
   savedSessions?: SavedManche[];
   activeSessionId?: string | null;
   savedSessionsCount?: number;
@@ -113,6 +116,8 @@ const PrimaryButtonShimmer: React.FC = () => (
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
   onOpenKoraCash,
+  socialCard = null,
+  onOpenSocial,
   savedSessions = [],
   activeSessionId = null,
   savedSessionsCount = 0,
@@ -479,6 +484,36 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               </span>
             )}
           </motion.button>
+
+          {/* Social : toujours visible quand le centre social est ouvert. Ni mise ni solde affichés. */}
+          {socialCard && (
+            <motion.button
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              whileTap={{ scale: 0.98 }}
+              type="button"
+              id="btn-home-social"
+              onClick={onOpenSocial}
+              className="relative w-full py-2.5 px-3.5 rounded-xl bg-slate-900/90 backdrop-blur-md text-slate-100 font-bold border border-slate-700 shadow-md flex items-center justify-between hover:bg-slate-800 hover:border-slate-500 transition-all duration-200 cursor-pointer group"
+            >
+              <div className="flex items-center gap-3 text-left min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shrink-0">
+                  <Users className="w-4 h-4" />
+                </div>
+                <div className="flex flex-col min-w-0 leading-tight">
+                  <span className="text-xs sm:text-sm font-extrabold text-white">Social</span>
+                  <span className="text-xs font-medium text-slate-400 truncate">{socialCard.detail}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {socialCard.badge > 0 && (
+                  <span className="min-w-5 h-5 px-1 rounded-full bg-rose-600 text-white font-black text-xs flex items-center justify-center shadow-md">{socialCard.badge}</span>
+                )}
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-300 transition" />
+              </div>
+            </motion.button>
+          )}
 
           {/* Kora Cash, avec le solde. Couleur signature : Or Solaire / Ambre */}
           {koraCashLoaded && (

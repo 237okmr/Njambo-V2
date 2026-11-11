@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useState } from 'react';
-import { Home, Trophy, User as UserIcon, Wallet } from 'lucide-react';
+import { Home, Trophy, User as UserIcon, Users, Wallet } from 'lucide-react';
 import { fetchKoraCashStatus } from '../../services/koraCashClient';
 import { triggerHaptic } from '../../utils/sound';
 import { BottomNavItem } from '../../utils/bottomNav';
@@ -8,6 +8,10 @@ interface BottomNavBarProps {
   isVisible: boolean;
   activeItem: BottomNavItem;
   onNavigate: (item: BottomNavItem) => void;
+  /** Centre social activé par katika : affiche l'entrée « Social ». */
+  socialEnabled?: boolean;
+  /** Invitations en attente, affichées en pastille sur « Social ». */
+  socialBadge?: number;
 }
 
 const isTextField = (target: EventTarget | null): boolean => {
@@ -35,7 +39,7 @@ function useIsKeyboardOpen(): boolean {
 }
 
 /** Barre principale, sous le pouce. Les écrans lui réservent sa hauteur par la variable CSS --app-bottom-nav. */
-export const BottomNavBar: React.FC<BottomNavBarProps> = ({ isVisible, activeItem, onNavigate }) => {
+export const BottomNavBar: React.FC<BottomNavBarProps> = ({ isVisible, activeItem, onNavigate, socialEnabled = false, socialBadge = 0 }) => {
   const isKeyboardOpen = useIsKeyboardOpen();
   const [isKoraCashEnabled, setIsKoraCashEnabled] = useState<boolean>(false);
   const shown = isVisible && !isKeyboardOpen;
@@ -59,6 +63,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({ isVisible, activeIte
 
   const items: { id: BottomNavItem; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: 'home', label: 'Accueil', icon: Home },
+    ...(socialEnabled ? [{ id: 'social' as const, label: 'Social', icon: Users }] : []),
     ...(isKoraCashEnabled ? [{ id: 'koraCash' as const, label: 'Kora Cash', icon: Wallet }] : []),
     { id: 'leaderboard', label: 'Palmarès', icon: Trophy },
     { id: 'profile', label: 'Profil', icon: UserIcon },
@@ -88,7 +93,14 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({ isVisible, activeIte
                 isActive ? 'text-amber-300' : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-amber-400' : 'text-slate-400'}`} />
+              <span className="relative">
+                <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-amber-400' : 'text-slate-400'}`} />
+                {id === 'social' && socialBadge > 0 && (
+                  <span className="absolute -top-1.5 -right-2.5 min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[10px] font-black leading-4 text-center">
+                    {socialBadge > 9 ? '9+' : socialBadge}
+                  </span>
+                )}
+              </span>
               <span className="truncate max-w-full px-0.5">{label}</span>
             </button>
           );

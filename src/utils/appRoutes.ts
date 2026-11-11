@@ -4,7 +4,7 @@
  */
 export const GAME_HOME_PATH = '/game/';
 
-export type RoutedScreen = 'rules' | 'leaderboard' | 'multiplayer' | 'profile' | 'notifications' | 'koraCash';
+export type RoutedScreen = 'rules' | 'leaderboard' | 'multiplayer' | 'profile' | 'notifications' | 'koraCash' | 'social';
 
 export const ROUTE_PATHS: Record<RoutedScreen, string> = {
   rules: '/game/regles',
@@ -13,6 +13,7 @@ export const ROUTE_PATHS: Record<RoutedScreen, string> = {
   profile: '/game/profil',
   notifications: '/game/notifications',
   koraCash: '/game/kora-cash',
+  social: '/game/social',
 };
 
 const normalizePath = (pathname: string): string => {
@@ -52,7 +53,7 @@ export function isConsoleLocation(pathname: string, search: string): boolean {
 
 /** Adresse à afficher selon les écrans ouverts : celui qui est au premier plan l'emporte. */
 export function routePathFor(open: Partial<Record<RoutedScreen, boolean>>): string {
-  const byPriority: RoutedScreen[] = ['notifications', 'leaderboard', 'profile', 'rules', 'koraCash', 'multiplayer'];
+  const byPriority: RoutedScreen[] = ['notifications', 'leaderboard', 'profile', 'rules', 'koraCash', 'social', 'multiplayer'];
   const top = byPriority.find((screen) => open[screen]);
   return top ? ROUTE_PATHS[top] : GAME_HOME_PATH;
 }

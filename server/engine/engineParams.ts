@@ -316,6 +316,16 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Nombre maximal de joueurs montrés dans la liste « En ligne ». Les joueurs disponibles passent en premier.',
   },
   {
+    key: 'socialCenterEnabled', label: 'Centre social (page Social, bouton de la barre, carte d\'accueil)', unit: '', type: 'boolean',
+    min: 0, max: 1, default: false, group: 'salons', scope: 'both', effect: 'immediate',
+    help: 'Ouvert : les joueurs voient la page Social (invitations, amis, joueurs en ligne, tables). Fermé : rien n\'apparaît, ni dans la barre du bas ni sur l\'accueil. Prérogative katika, jamais visible côté joueur.',
+  },
+  {
+    key: 'socialCashEnabled', label: 'Côté Kora Cash du centre social', unit: '', type: 'boolean',
+    min: 0, max: 1, default: true, group: 'salons', scope: 'both', effect: 'immediate',
+    help: 'Ouvert : le centre social propose le côté Kora Cash (invitations et table en cours d\'argent réel), à condition que Kora Cash lui-même soit ouvert. Fermé : le centre ne montre que le jeu gratuit.',
+  },
+  {
     key: 'clientOnlinePlayersPollSeconds', label: 'Rafraîchissement de la liste « En ligne »', unit: 's',
     min: 5, max: 60, default: 15, group: 'connexion', scope: 'client', effect: 'immediate', advanced: true,
     help: 'Fréquence à laquelle la liste « En ligne » se met à jour tant que son écran est ouvert.',
@@ -410,6 +420,11 @@ export const ENGINE_PARAMS: ParamDef[] = [
     key: 'clientInviteAfterCreateDelayMs', label: 'Pause avant l\'invitation d\'un ami après création de table', unit: 'ms',
     min: 300, max: 3000, default: 600, group: 'connexion', scope: 'client', effect: 'immediate', advanced: true,
     help: 'Pause laissée à la table pour se stabiliser avant d\'envoyer l\'invitation directe à l\'ami défié.',
+  },
+  {
+    key: 'clientCountdownTickSeconds', label: 'Rythme du compte à rebours des invitations (page Social)', unit: 's',
+    min: 1, max: 10, default: 1, group: 'interface', scope: 'client', effect: 'immediate', advanced: true,
+    help: 'Fréquence de mise à jour du temps restant affiché sur les invitations de la page Social. Purement visuel : l\'expiration, elle, est décidée par le serveur.',
   },
   {
     key: 'uiToastDurationMs', label: 'Durée des messages de confirmation', unit: 'ms',
