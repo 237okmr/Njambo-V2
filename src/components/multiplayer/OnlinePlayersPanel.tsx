@@ -148,6 +148,13 @@ export const OnlinePlayersPanel: React.FC<OnlinePlayersPanelProps> = ({ isLogged
           busy={!settings || savingSettings}
           onChange={(friendsOnlyInvites) => changeSetting({ friendsOnlyInvites })}
         />
+        <Switch
+          label="Me prévenir quand quelqu’un cherche une partie"
+          hint="Des joueurs que tu ne connais pas pourront te le signaler. Tes amis te préviennent toujours."
+          checked={settings?.searchAlerts ?? false}
+          busy={!settings || savingSettings}
+          onChange={(searchAlerts) => changeSetting({ searchAlerts })}
+        />
       </div>
 
       <div className="flex items-center justify-between gap-2">

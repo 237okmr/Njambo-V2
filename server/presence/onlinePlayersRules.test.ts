@@ -50,7 +50,7 @@ describe('liste des joueurs en ligne', () => {
 
   it('cache les joueurs qui se sont cachés, et ceux dont les réglages ne sont pas encore lus', () => {
     const list = build([presence('hidden'), presence('unknown'), presence('shown')], {
-      settingsOf: (id: string) => (id === 'hidden' ? { hidden: true, friendsOnlyInvites: false } : id === 'unknown' ? undefined : DEFAULT_PRESENCE_SETTINGS),
+      settingsOf: (id: string) => (id === 'hidden' ? { hidden: true, friendsOnlyInvites: false, searchAlerts: false } : id === 'unknown' ? undefined : DEFAULT_PRESENCE_SETTINGS),
     });
     assert.deepEqual(list.map((p) => p.userId), ['shown']);
   });
@@ -90,8 +90,8 @@ describe('liste des joueurs en ligne', () => {
 describe('réglages, plafond et réception', () => {
   it('lit des réglages inconnus comme « visible, invitations de tous »', () => {
     assert.deepEqual(normalizePresenceSettings(undefined), DEFAULT_PRESENCE_SETTINGS);
-    assert.deepEqual(normalizePresenceSettings({ hidden: 'oui', friendsOnlyInvites: 1 }), DEFAULT_PRESENCE_SETTINGS);
-    assert.deepEqual(normalizePresenceSettings({ hidden: true, friendsOnlyInvites: true }), { hidden: true, friendsOnlyInvites: true });
+    assert.deepEqual(normalizePresenceSettings({ hidden: 'oui', friendsOnlyInvites: 1, searchAlerts: false }), DEFAULT_PRESENCE_SETTINGS);
+    assert.deepEqual(normalizePresenceSettings({ hidden: true, friendsOnlyInvites: true, searchAlerts: false }), { hidden: true, friendsOnlyInvites: true, searchAlerts: false });
   });
 
   it('reconnaît un compte Google par son identifiant', () => {
@@ -115,8 +115,8 @@ describe('réglages, plafond et réception', () => {
 
   it('un joueur caché ou « amis seulement » ne reçoit que des amis', () => {
     assert.equal(mayReceiveInvite(DEFAULT_PRESENCE_SETTINGS, false), true);
-    assert.equal(mayReceiveInvite({ hidden: false, friendsOnlyInvites: true }, false), false);
-    assert.equal(mayReceiveInvite({ hidden: true, friendsOnlyInvites: false }, false), false);
-    assert.equal(mayReceiveInvite({ hidden: true, friendsOnlyInvites: true }, true), true);
+    assert.equal(mayReceiveInvite({ hidden: false, friendsOnlyInvites: true, searchAlerts: false }, false), false);
+    assert.equal(mayReceiveInvite({ hidden: true, friendsOnlyInvites: false, searchAlerts: false }, false), false);
+    assert.equal(mayReceiveInvite({ hidden: true, friendsOnlyInvites: true, searchAlerts: false }, true), true);
   });
 });

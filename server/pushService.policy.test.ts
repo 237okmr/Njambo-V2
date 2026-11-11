@@ -23,6 +23,12 @@ test('changements de rang : préférence active par défaut, désactivable', () 
   assert.equal(isTypeAllowed('RANK_CHANGE', { ...D, rankChanges: false }), false);
 });
 
+test('appels « je cherche une partie » : préférence active par défaut, désactivable', () => {
+  assert.equal(isTypeAllowed('SEARCH_CALL', D), true);
+  assert.equal(isTypeAllowed('SEARCH_CALL', { ...D, searchCalls: undefined }), true);
+  assert.equal(isTypeAllowed('SEARCH_CALL', { ...D, searchCalls: false }), false);
+});
+
 test('nuit des annonces de rang : heure locale du joueur, plage traversant minuit', () => {
   const at = (utcHour: number) => Date.UTC(2026, 8, 20, utcHour, 30);
   assert.equal(isInNightWindow(60, 22, 7, at(21)), true); // 22h30 locale

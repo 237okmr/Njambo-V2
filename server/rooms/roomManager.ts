@@ -7,6 +7,7 @@ import { PARAM_BY_KEY, clampParamValue } from '../engine/engineParams';
 import { pushService, buildGameUrl, buildCashGameUrl } from '../pushService';
 import { DEFAULT_PRESENCE_SETTINGS, PresenceSettings, buildOnlinePlayers, checkInviteQuota, isGoogleUserId, mayReceiveInvite, normalizePresenceSettings } from '../presence/onlinePlayersRules';
 import { PresenceSettingsRuntime, firestorePresenceSettings } from '../presence/presenceSettingsStore';
+import { SearchCall, SearchCallView, addPartant, buildCallViews, checkSearchCooldown, isCallLive, normalizeSearchMode, selectRecipients } from '../presence/searchCallsRules';
 import { APP_VERSION } from '../../src/version';
 import { verifyFirebaseIdToken } from '../firebaseAdmin';
 import { randomBytes } from 'crypto';
@@ -72,6 +73,9 @@ export class RoomManager {
   private static openTableRefs = new Map<string, { uid: string; roomId: string; expiresAt: number }>(); // référence opaque -> table d'ami
   private static cashViewAccessCache = new Map<string, { allowed: boolean; fetchedAt: number }>(); // playerId -> droit de voir les niveaux Cash
   private static presenceSettingsRuntime: PresenceSettingsRuntime = firestorePresenceSettings;
+  private static searchCalls = new Map<string, SearchCall>(); // playerId -> appel « je cherche une partie » (en mémoire seulement)
+  private static lastSearchNotifiedAt = new Map<string, number>(); // playerId -> dernier envoi de notifications d'appel
+  private static cashSearchAccessCache = new Map<string, { allowed: boolean; fetchedAt: number }>(); // playerId -> droit d'appel/réponse côté Cash
   private static directInviteSendLog = new Map<string, number[]>(); // playerId -> horodatages des invitations envoyées
   private static lastDirectInviteTimestamps = new Map<string, number>(); // "fromUserId_toUserId" -> timestamp
   private static lastEmoteTimestamps = new Map<string, number>(); // playerId -> lastEmoteTimestamp
@@ -1425,6 +1429,22 @@ export class RoomManager {
 
         case 'SET_PRESENCE_SETTINGS':
           void this.handleSetPresenceSettings(client, msg);
+          break;
+
+        case 'START_SEARCH':
+          void this.handleStartSearch(client, msg);
+          break;
+
+        case 'STOP_SEARCH':
+          void this.handleStopSearch(client);
+          break;
+
+        case 'GET_SEARCH_CALLS':
+          void this.sendSearchCallsTo(client.playerId);
+          break;
+
+        case 'REPLY_SEARCH':
+          void this.handleReplySearch(client, msg);
           break;
 
         default:
@@ -6174,6 +6194,7 @@ export class RoomManager {
     const next: PresenceSettings = {
       hidden: typeof patch.hidden === 'boolean' ? patch.hidden : current.hidden,
       friendsOnlyInvites: typeof patch.friendsOnlyInvites === 'boolean' ? patch.friendsOnlyInvites : current.friendsOnlyInvites,
+      searchAlerts: typeof patch.searchAlerts === 'boolean' ? patch.searchAlerts : current.searchAlerts,
     };
     try {
       await this.presenceSettingsRuntime.save(client.playerId, next);
@@ -6189,6 +6210,278 @@ export class RoomManager {
     }
     this.presenceSettingsCache.set(client.playerId, next);
     this.sendMessage(client.socket, { type: 'PRESENCE_SETTINGS', presenceSettings: next, timestamp: Date.now() });
+  }
+
+  // ── « Je cherche une partie » ─────────────────────────────────────────────────────────────────────────────────
+
+  /** Droit de lancer un appel Cash ou d'y répondre : accès Kora Cash ouvert, 18 ans confirmés, ni pause ni exclusion. */
+  private static async mayUseCashSearch(uid: string): Promise<boolean> {
+    const now = Date.now();
+    const cacheMs = Number(this.engineConfig.openTablesAccessCacheSeconds ?? 60) * 1000;
+    const cached = this.cashSearchAccessCache.get(uid);
+    if (cached && now - cached.fetchedAt < cacheMs) return cached.allowed;
+    let allowed = false;
+    try {
+      allowed = (await this.mayViewCashLevels(uid)) && (await this.getCashRuntime().hasConsent(uid));
+    } catch (err) {
+      console.warn('[RoomManager] Droit d\'appel Kora Cash impossible à lire:', err instanceof Error ? err.message : String(err));
+    }
+    this.cashSearchAccessCache.set(uid, { allowed, fetchedAt: now });
+    return allowed;
+  }
+
+  /** Joueur connecté et pas en pleine partie : il peut encore être rejoint. */
+  private static isSearchCallerAvailable(uid: string): boolean {
+    const other = this.clients.get(uid);
+    if (!other || other.socket.readyState !== WebSocket.OPEN) return false;
+    const presence = this.userPresences.get(uid);
+    if (presence?.status === 'IN_GAME') return false;
+    const room = other.roomCode ? this.rooms.get(other.roomCode) : undefined;
+    return !(room && room.status === 'PLAYING');
+  }
+
+  /** Table gratuite en attente où l'appelant est assis, avec une place libre. Sinon null. */
+  private static findJoinableCallerRoom(uid: string): MultiplayerRoom | null {
+    const other = this.clients.get(uid);
+    const room = other?.roomCode ? this.rooms.get(other.roomCode) : undefined;
+    if (!room || room.cash || room.status !== 'LOBBY') return null;
+    if (!(room.players || []).some((p) => p.id === uid)) return null;
+    return (room.players || []).length < room.maxPlayers ? room : null;
+  }
+
+  /** Appels visibles par ce joueur, et son propre appel. Rien n'est lu dans Firestore hors listes déjà mises en cache. */
+  private static async buildSearchViewFor(uid: string): Promise<{ views: SearchCallView[]; mine: ServerMessage['mySearch'] }> {
+    const now = Date.now();
+    const live = [...this.searchCalls.values()].filter((c) => isCallLive(c, now));
+    const mineCall = this.searchCalls.get(uid);
+    const mine = mineCall && isCallLive(mineCall, now) ? { mode: mineCall.mode, expiresAt: mineCall.expiresAt, partants: mineCall.partants } : null;
+    const others = live.filter((c) => c.userId !== uid);
+    if (others.length === 0) return { views: [], mine };
+
+    const [friendIds, settings, myBlocked] = await Promise.all([
+      this.getConfirmedFriendIds(uid),
+      this.loadPresenceSettings(uid),
+      this.getBlockedIds(uid),
+    ]);
+    const blockedByCaller = new Set<string>();
+    await Promise.all(
+      others.map(async (c) => {
+        if (myBlocked.has(c.userId) || (await this.getBlockedIds(c.userId)).has(uid)) blockedByCaller.add(c.userId);
+      })
+    );
+    const cashOk = others.some((c) => c.mode === 'CASH') ? await this.mayUseCashSearch(uid) : false;
+    const views = buildCallViews({
+      viewerId: uid,
+      calls: others,
+      nowMs: now,
+      friendIds,
+      canSeeMode: (mode) => (mode === 'CASH' ? cashOk : true),
+      isBlocked: (id) => blockedByCaller.has(id),
+      isCallerAvailable: (id) => this.isSearchCallerAvailable(id),
+      canJoinCaller: (id) => this.findJoinableCallerRoom(id) !== null && !blockedByCaller.has(id),
+      strangerAllowed: settings?.searchAlerts === true,
+      limit: Number(this.engineConfig.onlinePlayersListMax ?? 50),
+    });
+    return { views, mine };
+  }
+
+  /** Envoie à ce joueur (s'il est connecté) les appels qu'il voit. */
+  private static async sendSearchCallsTo(uid: string): Promise<void> {
+    const target = this.clients.get(uid);
+    if (!target || target.socket.readyState !== WebSocket.OPEN || !this.isVerifiedGooglePlayer(target)) return;
+    try {
+      const { views, mine } = await this.buildSearchViewFor(uid);
+      this.sendMessage(target.socket, { type: 'SEARCH_CALLS_UPDATE', searchCalls: views, mySearch: mine, timestamp: Date.now() });
+    } catch (err) {
+      console.warn('[RoomManager] Liste des appels impossible à produire:', err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  public static async handleStartSearch(client: ConnectedClient, msg: ClientMessage): Promise<void> {
+    const refuse = (error: string, errorCode: 'AUTH_REQUIRED' | 'RATE_LIMITED' | 'GENERIC' = 'GENERIC') =>
+      this.sendMessage(client.socket, { type: 'ERROR', errorCode, error });
+    if (msg.isGuest || !this.isVerifiedGooglePlayer(client)) return refuse('Connecte-toi avec Google pour dire que tu cherches une partie.', 'AUTH_REQUIRED');
+    const uid = client.playerId;
+    const mode = normalizeSearchMode(msg.searchMode);
+    if (!mode) return refuse('Ton appel n\'a pas pu être lancé. Réessaie.');
+
+    const sanction = this.getActivePlayerSanction(uid);
+    if (sanction && (sanction.status === 'BANNED' || sanction.sanctionType === 'TEMP_BAN' || sanction.sanctionType === 'PERM_BAN')) {
+      return refuse('Tu ne peux pas lancer d\'appel pour le moment.');
+    }
+    if (this.engineConfig.isMaintenanceMode) return refuse('Le jeu est en maintenance. Réessaie plus tard.');
+    if (!this.isSearchCallerAvailable(uid)) return refuse('Tu ne peux pas lancer d\'appel en pleine partie.');
+    if (mode === 'CASH') {
+      const access = await this.getCashRuntime().getAccess().catch(() => ({ open: false }));
+      if (!access.open || !(await this.mayUseCashSearch(uid))) return refuse('Kora Cash n\'est pas accessible pour toi pour le moment.');
+    }
+
+    const now = Date.now();
+    const existing = this.searchCalls.get(uid);
+    if (existing && isCallLive(existing, now)) {
+      void this.sendSearchCallsTo(uid);
+      return;
+    }
+    const cooldownMs = Number(this.engineConfig.searchCallCooldownSeconds ?? 300) * 1000;
+    const cooldown = checkSearchCooldown(this.lastSearchNotifiedAt.get(uid), now, cooldownMs);
+    if (!cooldown.allowed) {
+      const minutes = Math.max(1, Math.ceil(cooldown.retryAfterMs / 60000));
+      return refuse(`Patiente ${minutes} minute${minutes > 1 ? 's' : ''} avant de relancer un appel.`, 'RATE_LIMITED');
+    }
+
+    const presence = this.userPresences.get(uid);
+    const displayName = (msg.playerName || presence?.displayName || 'Un joueur').toString().replace(/[\u0000-\u001f\u007f<>]/g, '').trim().slice(0, 40) || 'Un joueur';
+    const avatarId = (msg.avatarSeed || presence?.avatarId || 'default').toString().replace(/[^A-Za-z0-9_.:-]/g, '').slice(0, 60) || 'default';
+    const call: SearchCall = {
+      userId: uid,
+      displayName,
+      avatarId,
+      mode,
+      startedAt: now,
+      expiresAt: now + Number(this.engineConfig.searchCallLifetimeSeconds ?? 1200) * 1000,
+      partants: [],
+    };
+    this.searchCalls.set(uid, call);
+    this.lastSearchNotifiedAt.set(uid, now);
+
+    await this.notifySearchRecipients(call);
+    void this.sendSearchCallsTo(uid);
+  }
+
+  /** Prévient les destinataires de l'appel : liste en direct s'ils sont connectés, notification dans tous les cas. */
+  private static async notifySearchRecipients(call: SearchCall): Promise<void> {
+    const uid = call.userId;
+    const now = Date.now();
+    try {
+      const friendIds = await this.getConfirmedFriendIds(uid);
+      const freshMs = Number(this.engineConfig.friendPresenceFreshSeconds ?? 25) * 1000;
+      const candidates = [...this.userPresences.values()]
+        .filter((p) => isGoogleUserId(p.userId))
+        .map((p) => {
+          const open = this.clients.get(p.userId);
+          const socketOpen = !!open && open.socket.readyState === WebSocket.OPEN;
+          const room = p.currentRoomCode ? this.rooms.get(p.currentRoomCode) : undefined;
+          const status: 'AVAILABLE' | 'IN_SOLO' | 'IN_LOBBY' | 'IN_GAME' =
+            (room && room.status === 'PLAYING') || p.status === 'IN_GAME' ? 'IN_GAME' : p.status === 'IN_SOLO' ? 'IN_SOLO' : p.status === 'IN_LOBBY' || room ? 'IN_LOBBY' : 'AVAILABLE';
+          const settings = this.presenceSettingsCache.get(p.userId);
+          return {
+            userId: p.userId,
+            status,
+            online: p.status !== 'OFFLINE' && (socketOpen || now - p.lastSeenAt < freshMs),
+            searchAlerts: settings?.searchAlerts,
+            hidden: settings?.hidden,
+          };
+        });
+      const picked = selectRecipients({
+        callerId: uid,
+        friendIds,
+        candidates,
+        offlineFriendIds: friendIds,
+        max: Number(this.engineConfig.searchCallMaxRecipients ?? 20),
+      });
+      const myBlocked = await this.getBlockedIds(uid);
+
+      await Promise.all(
+        picked.map(async ({ userId: rid }) => {
+          try {
+            if (myBlocked.has(rid) || (await this.getBlockedIds(rid)).has(uid)) return;
+            if (call.mode === 'CASH' && !(await this.mayUseCashSearch(rid))) return;
+            void this.sendSearchCallsTo(rid);
+            const body = call.mode === 'CASH' ? 'Kora Cash · argent réel, 18 ans et plus. Ouvre Social pour répondre.' : 'Ouvre Social pour lui répondre.';
+            pushService
+              .sendNotificationToUser(rid, {
+                title: `🃏 ${call.displayName} cherche une partie`,
+                body,
+                icon: '/icon-192.png',
+                badge: '/badge-96.png',
+                tag: `search-${uid}`,
+                data: {
+                  type: 'SEARCH_CALL',
+                  mode: call.mode,
+                  fromUserId: uid,
+                  fromUserName: call.displayName,
+                  expiresAt: call.expiresAt,
+                  url: `/game/?social=calls&mode=${call.mode === 'CASH' ? 'cash' : 'free'}`,
+                },
+              })
+              .catch((err) => console.warn('[RoomManager] Notification d\'appel non envoyée:', err));
+          } catch (err) {
+            console.warn('[RoomManager] Destinataire d\'appel ignoré:', err instanceof Error ? err.message : String(err));
+          }
+        })
+      );
+    } catch (err) {
+      console.error('[RoomManager] Notification des appels impossible:', err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  public static async handleStopSearch(client: ConnectedClient): Promise<void> {
+    if (!this.isVerifiedGooglePlayer(client)) return;
+    this.searchCalls.delete(client.playerId);
+    await this.sendSearchCallsTo(client.playerId);
+  }
+
+  /** « Partant » : rejoint l'appelant s'il est assis à une table gratuite libre, sinon le prévient. Jamais de table rejointe côté Cash. */
+  public static async handleReplySearch(client: ConnectedClient, msg: ClientMessage): Promise<void> {
+    const gone = () => this.sendMessage(client.socket, { type: 'ERROR', errorCode: 'GENERIC', error: 'Cet appel n\'est plus actif.' });
+    if (msg.isGuest || !this.isVerifiedGooglePlayer(client)) {
+      this.sendMessage(client.socket, { type: 'ERROR', errorCode: 'AUTH_REQUIRED', error: 'Connecte-toi avec Google pour répondre.' });
+      return;
+    }
+    const uid = client.playerId;
+    const targetId = typeof msg.targetPlayerId === 'string' ? msg.targetPlayerId : '';
+    const call = this.searchCalls.get(targetId);
+    if (!call || targetId === uid || !isCallLive(call, Date.now())) return gone();
+
+    const { views } = await this.buildSearchViewFor(uid);
+    const view = views.find((v) => v.userId === targetId);
+    if (!view) return gone();
+
+    if (view.canJoin) {
+      const room = this.findJoinableCallerRoom(targetId);
+      if (room) {
+        this.sendMessage(client.socket, { type: 'OPEN_TABLE_TARGET', matchedRoomCode: room.id, timestamp: Date.now() });
+        return;
+      }
+    }
+
+    const presence = this.userPresences.get(uid);
+    const partant = {
+      userId: uid,
+      displayName: (msg.playerName || presence?.displayName || 'Un joueur').toString().replace(/[\u0000-\u001f\u007f<>]/g, '').trim().slice(0, 40) || 'Un joueur',
+      avatarId: (msg.avatarSeed || presence?.avatarId || 'default').toString().replace(/[^A-Za-z0-9_.:-]/g, '').slice(0, 60) || 'default',
+    };
+    const next = addPartant(call.partants, partant, Number(this.engineConfig.searchCallMaxPartants ?? 10));
+    if (!next) {
+      const already = call.partants.some((p) => p.userId === uid);
+      this.sendMessage(client.socket, {
+        type: 'ERROR',
+        errorCode: 'GENERIC',
+        error: already ? 'Tu as déjà répondu à cet appel.' : 'Cet appel a déjà assez de réponses.',
+      });
+      return;
+    }
+    call.partants = next;
+    this.sendMessage(client.socket, { type: 'NOTIFICATION', notification: `${call.displayName} est prévenu : tu es partant.` });
+    void this.sendSearchCallsTo(targetId);
+    pushService
+      .sendNotificationToUser(targetId, {
+        title: `🃏 ${partant.displayName} est partant !`,
+        body: 'Ouvre Social pour l\'inviter.',
+        icon: '/icon-192.png',
+        badge: '/badge-96.png',
+        tag: `search-reply-${targetId}`,
+        data: {
+          type: 'SEARCH_CALL',
+          mode: call.mode,
+          reply: true,
+          fromUserId: uid,
+          fromUserName: partant.displayName,
+          expiresAt: call.expiresAt,
+          url: `/game/?social=calls&mode=${call.mode === 'CASH' ? 'cash' : 'free'}`,
+        },
+      })
+      .catch((err) => console.warn('[RoomManager] Notification de réponse non envoyée:', err));
   }
 
   public static async handleSendDirectInvite(client: ConnectedClient, msg: ClientMessage): Promise<void> {
@@ -6775,6 +7068,14 @@ export class RoomManager {
         if (!this.userPresences.has(key) && !this.clients.has(key)) {
           this.presenceSettingsCache.delete(key);
         }
+      });
+      // Appels « je cherche une partie » : échus retirés ; délais de relance oubliés une fois écoulés
+      this.searchCalls.forEach((call, key) => {
+        if (!isCallLive(call, now)) this.searchCalls.delete(key);
+      });
+      const searchCooldownMs = Number(this.engineConfig.searchCallCooldownSeconds ?? 300) * 1000;
+      this.lastSearchNotifiedAt.forEach((at, key) => {
+        if (now - at >= searchCooldownMs) this.lastSearchNotifiedAt.delete(key);
       });
       // Journal des invitations envoyées : on retire les joueurs sans invitation récente (fenêtre de 1 h)
       this.directInviteSendLog.forEach((stamps, key) => {

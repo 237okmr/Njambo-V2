@@ -57,7 +57,7 @@ function presenceOf(userId: string, patch: Partial<UserPresence> = {}) {
   manager.userPresences.set(userId, { userId, displayName: `Nom ${userId}`, avatarId: 'a1', status: 'ONLINE_IDLE', lastSeenAt: Date.now(), ...patch });
 }
 
-const store = new Map<string, { hidden: boolean; friendsOnlyInvites: boolean }>();
+const store = new Map<string, { hidden: boolean; friendsOnlyInvites: boolean; searchAlerts: boolean }>();
 let saveFails = false;
 let loads = 0;
 
@@ -65,7 +65,7 @@ function installStore() {
   RoomManager.setPresenceSettingsRuntimeForTest({
     load: async (uid) => {
       loads += 1;
-      return store.get(uid) ?? { hidden: false, friendsOnlyInvites: false };
+      return store.get(uid) ?? { hidden: false, friendsOnlyInvites: false, searchAlerts: false };
     },
     save: async (uid, settings) => {
       if (saveFails) throw new Error('hors ligne');
@@ -127,7 +127,7 @@ describe('liste des joueurs en ligne', () => {
   });
 
   it('montre les joueurs visibles, jamais soi-même, jamais un joueur caché', async () => {
-    store.set('hidden', { hidden: true, friendsOnlyInvites: false });
+    store.set('hidden', { hidden: true, friendsOnlyInvites: false, searchAlerts: false });
     const me = connect('me');
     presenceOf('me');
     presenceOf('ok');
@@ -150,10 +150,10 @@ describe('réglages de visibilité', () => {
   it('enregistre le choix, le garde en mémoire et le renvoie', async () => {
     const me = connect('me');
     await manager.handleSetPresenceSettings(me.client, { type: 'SET_PRESENCE_SETTINGS', playerId: 'me', presenceSettings: { hidden: true } });
-    assert.deepEqual(store.get('me'), { hidden: true, friendsOnlyInvites: false });
-    assert.deepEqual(me.last('PRESENCE_SETTINGS').presenceSettings, { hidden: true, friendsOnlyInvites: false });
+    assert.deepEqual(store.get('me'), { hidden: true, friendsOnlyInvites: false, searchAlerts: false });
+    assert.deepEqual(me.last('PRESENCE_SETTINGS').presenceSettings, { hidden: true, friendsOnlyInvites: false, searchAlerts: false });
     await manager.handleSetPresenceSettings(me.client, { type: 'SET_PRESENCE_SETTINGS', playerId: 'me', presenceSettings: { friendsOnlyInvites: true } });
-    assert.deepEqual(store.get('me'), { hidden: true, friendsOnlyInvites: true });
+    assert.deepEqual(store.get('me'), { hidden: true, friendsOnlyInvites: true, searchAlerts: false });
   });
 
   it('si l’écriture échoue, le choix n’est pas appliqué et le joueur le sait', async () => {
@@ -162,7 +162,7 @@ describe('réglages de visibilité', () => {
     await manager.handleSetPresenceSettings(me.client, { type: 'SET_PRESENCE_SETTINGS', playerId: 'me', presenceSettings: { hidden: true } });
     assert.equal(store.has('me'), false);
     assert.equal(me.last('ERROR')?.errorCode, 'GENERIC');
-    assert.deepEqual(me.last('PRESENCE_SETTINGS').presenceSettings, { hidden: false, friendsOnlyInvites: false });
+    assert.deepEqual(me.last('PRESENCE_SETTINGS').presenceSettings, { hidden: false, friendsOnlyInvites: false, searchAlerts: false });
   });
 
   it('ignore un invité', async () => {
@@ -196,7 +196,7 @@ describe('invitations directes', () => {
 
   it('une invitation vers un invité ou un joueur caché est refusée avec le même message', async () => {
     manager.rooms.set('T1', room({ id: 'T1' }));
-    store.set('shy', { hidden: true, friendsOnlyInvites: false });
+    store.set('shy', { hidden: true, friendsOnlyInvites: false, searchAlerts: false });
     const host = connect('host', 'T1');
     await invite(host, 'usr_other', 'T1');
     const first = host.last('ERROR')?.error;
@@ -207,7 +207,7 @@ describe('invitations directes', () => {
 
   it('« amis seulement » : refusé pour un inconnu, accepté pour un ami confirmé', async () => {
     manager.rooms.set('T1', room({ id: 'T1' }));
-    store.set('ben', { hidden: false, friendsOnlyInvites: true });
+    store.set('ben', { hidden: false, friendsOnlyInvites: true, searchAlerts: false });
     const host = connect('host', 'T1');
     const ben = connect('ben');
     manager.confirmedFriendsCache.set('ben', { ids: new Set<string>(), fetchedAt: Date.now() });

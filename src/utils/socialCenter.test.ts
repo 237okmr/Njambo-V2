@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import type { GameInvitation } from '../types';
-import { buildHomeCard, countInvitations, invitationsForMode, isCashSideAvailable, resolveSocialMode, splitSeatedTable } from './socialCenter';
+import { buildHomeCard, countInvitations, countSearchCalls, liveSearchCalls, invitationsForMode, isCashSideAvailable, resolveSocialMode, splitSeatedTable } from './socialCenter';
 
 const NOW = 1_000_000;
 
@@ -55,6 +55,28 @@ describe('carte d’accueil', () => {
     assert.match(card.detail, /2 défis/);
     assert.match(card.detail, /1 invitation Kora Cash/);
     assert.ok(!/FCFA|jetons|\d{3}/.test(card.detail));
+  });
+});
+
+describe('appels « je cherche une partie »', () => {
+  const calls = [
+    { mode: 'FREE' as const, expiresAt: NOW + 1000 },
+    { mode: 'FREE' as const, expiresAt: NOW },
+    { mode: 'CASH' as const, expiresAt: NOW + 1000 },
+  ];
+  it('sépare les modes et ignore les appels échus', () => {
+    assert.equal(liveSearchCalls(calls, 'FREE', NOW).length, 1);
+    assert.deepEqual(countSearchCalls(calls, true, NOW), { free: 1, cash: 1 });
+  });
+  it('ne compte pas le Cash quand son côté est indisponible', () => {
+    assert.deepEqual(countSearchCalls(calls, false, NOW), { free: 1, cash: 0 });
+  });
+  it('ajoute les appels à la pastille et au texte de la carte d\'accueil', () => {
+    const card = buildHomeCard({ isGoogle: true, counts: { free: 1, cash: 0 }, searching: { free: 2, cash: 0 } });
+    assert.equal(card.badge, 3);
+    assert.match(card.detail, /1 défi/);
+    assert.match(card.detail, /2 cherchent une partie/);
+    assert.equal(buildHomeCard({ isGoogle: true, counts: { free: 0, cash: 0 }, searching: { free: 1, cash: 0 } }).detail, '1 cherche une partie');
   });
 });
 

@@ -497,7 +497,7 @@ test('handleSendDirectInvite protections: SELF_INVITE, BANNED, RATE_LIMITED', as
   } as any;
   // Réglages de visibilité du destinataire : lus en mémoire, sans Firestore.
   RoomManager.setPresenceSettingsRuntimeForTest({
-    load: async () => ({ hidden: false, friendsOnlyInvites: false }),
+    load: async () => ({ hidden: false, friendsOnlyInvites: false, searchAlerts: false }),
     save: async () => undefined,
   });
 

@@ -25,6 +25,6 @@ export const firestorePresenceSettings: PresenceSettingsRuntime = {
     await getFirebaseAdminAppDb()
       .collection(PRESENCE_SETTINGS_COLLECTION)
       .doc(uid)
-      .set({ uid, hidden: settings.hidden, friendsOnlyInvites: settings.friendsOnlyInvites, updatedAt: Date.now() });
+      .set({ uid, hidden: settings.hidden, friendsOnlyInvites: settings.friendsOnlyInvites, searchAlerts: settings.searchAlerts, updatedAt: Date.now() });
   },
 };

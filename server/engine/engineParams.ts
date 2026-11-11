@@ -316,6 +316,26 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Nombre maximal de joueurs montrés dans la liste « En ligne ». Les joueurs disponibles passent en premier.',
   },
   {
+    key: 'searchCallLifetimeSeconds', label: 'Durée d\'un appel « Je cherche une partie »', unit: 's',
+    min: 60, max: 7200, default: 1200, group: 'salons', scope: 'server', effect: 'immediate',
+    help: 'Combien de temps un appel reste visible et actif avant de s\'effacer seul.',
+  },
+  {
+    key: 'searchCallCooldownSeconds', label: 'Délai entre deux appels « Je cherche une partie »', unit: 's',
+    min: 30, max: 3600, default: 300, group: 'salons', scope: 'server', effect: 'immediate',
+    help: 'Un joueur ne peut pas relancer un appel (donc relancer des notifications) avant ce délai. Protège les joueurs du harcèlement.',
+  },
+  {
+    key: 'searchCallMaxRecipients', label: 'Joueurs prévenus par appel', unit: '',
+    min: 1, max: 100, default: 20, group: 'salons', scope: 'server', effect: 'immediate',
+    help: 'Nombre maximal de joueurs notifiés par un appel : les amis d\'abord, puis les joueurs en ligne qui ont activé l\'option. Chaque notification coûte une lecture de la base.',
+  },
+  {
+    key: 'searchCallMaxPartants', label: 'Réponses « partant » par appel', unit: '',
+    min: 1, max: 50, default: 10, group: 'salons', scope: 'server', effect: 'immediate',
+    help: 'Nombre maximal de joueurs qui peuvent répondre « partant » à un même appel.',
+  },
+  {
     key: 'openTablesListMax', label: 'Taille de la liste des tables ouvertes', unit: '',
     min: 5, max: 100, default: 30, group: 'salons', scope: 'server', effect: 'immediate',
     help: 'Nombre maximal de tables montrées dans la liste « Tables ouvertes » de la page Social.',

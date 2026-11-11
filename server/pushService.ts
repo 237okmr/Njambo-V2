@@ -29,6 +29,7 @@ export type PushType =
   | 'FORFEIT_DECLARED'
   | 'PLAYER_JOINED'
   | 'RANK_CHANGE'
+  | 'SEARCH_CALL'
   | 'SYSTEM';
 
 /** Alertes « table en danger » : jamais coupées par le mode nuit quand le joueur est assis à une table. */
@@ -43,6 +44,7 @@ export interface ServerPushPreferences {
   tableAlerts: boolean; // déconnexion / avertissements de forfait
   hostJoinAlerts?: boolean; // notification quand un joueur rejoint la table de l'hôte
   rankChanges?: boolean; // perte de rang ou nouveau meilleur rang
+  searchCalls?: boolean; // quelqu'un cherche une partie
   quietHoursEnabled: boolean;
   quietHoursStart: number; // 0-23, heure locale du joueur
   quietHoursEnd: number; // 0-23, heure locale du joueur
@@ -57,6 +59,7 @@ export const DEFAULT_SERVER_PUSH_PREFERENCES: ServerPushPreferences = {
   tableAlerts: true,
   hostJoinAlerts: true,
   rankChanges: true,
+  searchCalls: true,
   quietHoursEnabled: false,
   quietHoursStart: 23,
   quietHoursEnd: 8,
@@ -85,6 +88,7 @@ const PUSH_POLICY: Record<PushType, { ttl: number; urgency: 'high' | 'normal' }>
   FORFEIT_DECLARED: { ttl: 600, urgency: 'normal' },
   PLAYER_JOINED: { ttl: 120, urgency: 'high' },
   RANK_CHANGE: { ttl: 6 * 3600, urgency: 'normal' },
+  SEARCH_CALL: { ttl: 600, urgency: 'normal' },
   SYSTEM: { ttl: 3600, urgency: 'normal' },
 };
 
@@ -123,6 +127,8 @@ export function isTypeAllowed(type: PushType | undefined, prefs: ServerPushPrefe
       return prefs.hostJoinAlerts ?? true;
     case 'RANK_CHANGE':
       return prefs.rankChanges ?? true;
+    case 'SEARCH_CALL':
+      return prefs.searchCalls ?? true;
     default:
       return true; // SYSTEM (test, messages admin) : toujours livré
   }

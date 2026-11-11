@@ -40,7 +40,7 @@ function reset(friends: string[] = [], blocked: Record<string, string[]> = {}) {
   RM.confirmedFriendsCache.set('me', { ids: new Set(friends), fetchedAt: now });
   RM.blockedIdsCache.set('me', { ids: new Set(blocked.me || []), fetchedAt: now });
   for (const id of ['h1', 'h2', 'f1', 'f2']) RM.blockedIdsCache.set(id, { ids: new Set(blocked[id] || []), fetchedAt: now });
-  RoomManager.setPresenceSettingsRuntimeForTest({ load: async () => ({ hidden: false, friendsOnlyInvites: false }), save: async () => undefined });
+  RoomManager.setPresenceSettingsRuntimeForTest({ load: async () => ({ hidden: false, friendsOnlyInvites: false, searchAlerts: false }), save: async () => undefined });
 }
 
 test('tables ouvertes : le salon public est listé avec son code, la table d\'ami avec une référence opaque', async () => {
@@ -94,7 +94,7 @@ test('tables ouvertes : ami masqué et joueurs bloqués (dans les deux sens) n\'
   RM.rooms.set('C', room('C', 'f1', { isPublic: false }));  // ami masqué
   RM.rooms.set('D', room('D', 'h2'));                       // salon public normal
   RoomManager.setPresenceSettingsRuntimeForTest({
-    load: async (uid: string) => ({ hidden: uid === 'f1', friendsOnlyInvites: false }),
+    load: async (uid: string) => ({ hidden: uid === 'f1', friendsOnlyInvites: false, searchAlerts: false }),
     save: async () => undefined,
   });
   await RoomManager.handleGetOpenTables(me.client, { type: 'GET_OPEN_TABLES', playerId: 'me', openTablesMode: 'FREE' });

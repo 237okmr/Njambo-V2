@@ -44,13 +44,19 @@ export interface ClientMessage {
     | 'GET_OPEN_TABLES'
     | 'RESOLVE_OPEN_TABLE'
     | 'SET_PRESENCE_SETTINGS'
+    | 'START_SEARCH'
+    | 'STOP_SEARCH'
+    | 'GET_SEARCH_CALLS'
+    | 'REPLY_SEARCH'
     | 'ACK_PARTIE_RESULTS';
+  /** Mode de l'appel « je cherche une partie » (START_SEARCH). */
+  searchMode?: 'FREE' | 'CASH';
   /** Liste demandée : tables gratuites ou niveaux Kora Cash. */
   openTablesMode?: 'FREE' | 'CASH';
   /** Référence opaque d'une table d'ami, reçue dans la liste. */
   tableRef?: string;
   /** Réglages de visibilité envoyés par le joueur (SET_PRESENCE_SETTINGS). */
-  presenceSettings?: { hidden?: boolean; friendsOnlyInvites?: boolean };
+  presenceSettings?: { hidden?: boolean; friendsOnlyInvites?: boolean; searchAlerts?: boolean };
   roomCode?: string;
   resultIds?: string[];
   playerId: string;
@@ -141,6 +147,7 @@ export interface ServerMessage {
     | 'FRIENDS_PRESENCE_UPDATE'
     | 'ONLINE_PLAYERS_UPDATE'
     | 'PRESENCE_SETTINGS'
+    | 'SEARCH_CALLS_UPDATE'
     | 'OPEN_TABLES_UPDATE'
     | 'OPEN_TABLE_TARGET'
     | 'QUICK_MATCH_RESULT'
@@ -171,7 +178,10 @@ export interface ServerMessage {
   presence?: UserPresence;
   presences?: UserPresence[];
   onlinePlayers?: Array<{ userId: string; displayName: string; avatarId: string; status: 'AVAILABLE' | 'IN_SOLO' | 'IN_LOBBY' | 'IN_GAME' }>;
-  presenceSettings?: { hidden: boolean; friendsOnlyInvites: boolean };
+  presenceSettings?: { hidden: boolean; friendsOnlyInvites: boolean; searchAlerts: boolean };
+  /** Appels « je cherche une partie » visibles par ce joueur, et son propre appel avec ses « partants ». */
+  searchCalls?: Array<{ userId: string; displayName: string; avatarId: string; mode: 'FREE' | 'CASH'; expiresAt: number; isFriend: boolean; canJoin: boolean }>;
+  mySearch?: { mode: 'FREE' | 'CASH'; expiresAt: number; partants: Array<{ userId: string; displayName: string; avatarId: string }> } | null;
   openTables?: { mode: 'FREE'; tables: OpenTableEntry[] } | { mode: 'CASH'; levels: OpenCashLevel[] };
   partieResults?: PartieResult[];
   matchedRoomCode?: string;

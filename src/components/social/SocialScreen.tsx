@@ -7,6 +7,8 @@ import { NativeSegmentedNav, SegmentTab } from '../common/NativeSegmentedNav';
 import { PlayerAvatar } from '../profile/PlayerAvatar';
 import { OpenTablesPanel } from './OpenTablesPanel';
 import { CashBalanceBar } from './CashBalanceBar';
+import { MySearchCard, SearchCallsList, SearchStarter } from './SearchCallsPanel';
+import { useSearchCalls } from '../../hooks/useSearchCalls';
 import { fetchCashTables } from '../../services/koraCashClient';
 import { FriendsPanel } from './FriendsPanel';
 import { ActiveGameConflict, ActiveGameConflictModal, AuthRequirementModal } from './HubDialogs';
@@ -23,7 +25,7 @@ import { getPublicParamNumber } from '../../services/publicConfig';
 import { wsService } from '../../services/websocketService';
 import { formatFcfa } from '../../services/koraCashFormat';
 import { triggerHaptic } from '../../utils/sound';
-import { SocialMode, SocialSubTab, countInvitations, invitationsForMode, readStoredSocialMode, resolveSocialMode, splitSeatedTable, storeSocialMode } from '../../utils/socialCenter';
+import { SocialMode, SocialSubTab, countInvitations, countSearchCalls, invitationsForMode, readStoredSocialMode, resolveSocialMode, splitSeatedTable, storeSocialMode } from '../../utils/socialCenter';
 
 interface SocialScreenProps {
   onClose: () => void;
@@ -230,6 +232,28 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
     };
   }, [isCash, consentCheck]);
 
+  // « Je cherche une partie » : appels reçus et mon propre appel.
+  const search = useSearchCalls(isLoggedIn, true);
+  const [repliedIds, setRepliedIds] = useState<Record<string, true>>({});
+  const searchCounts = useMemo(() => countSearchCalls(search.calls, cashAvailable, now), [search.calls, cashAvailable, now]);
+  const myCall = search.mine && search.mine.mode === mode && search.mine.expiresAt > now ? search.mine : null;
+  const otherModeCall = search.mine && search.mine.mode !== mode && search.mine.expiresAt > now;
+
+  // « Partant » sur l'appel d'un joueur assis à une table gratuite libre : le serveur donne le code de sa table.
+  // L'onglet Tables a son propre écouteur de ce même message : on n'écoute ici que hors de cet onglet.
+  useEffect(() => {
+    if (subTab === 'TABLES') return;
+    return wsService.onOpenTableTarget((code) => {
+      void onJoinCode(code);
+    });
+  }, [subTab, onJoinCode]);
+
+  const replyToCall = (call: { userId: string }) => {
+    triggerHaptic('light');
+    setRepliedIds((prev) => ({ ...prev, [call.userId]: true }));
+    wsService.replySearch(call.userId);
+  };
+
   // Table Kora Cash ouverte où je suis assis : seule situation où l'on peut inviter côté Cash.
   const cashTableOpen = Boolean(
     room?.cash &&
@@ -237,6 +261,20 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
       (room.status === 'LOBBY' || room.status === 'MANCHE_OVER') &&
       (room.players || []).length < room.maxPlayers
   );
+
+  const myCallCard = myCall ? (
+    <MySearchCard
+      mine={myCall}
+      nowMs={now}
+      inviteLabel={isCash && !cashTableOpen ? 'Ouvrir une table' : 'Inviter'}
+      onStop={() => wsService.stopSearch()}
+      onInvite={(p) => {
+        if (!isCash) void friendChallenges.handleChallengeFriend({ id: p.userId, name: p.displayName, avatarSeed: p.avatarId }, 'ONLINE_IDLE');
+        else if (cashTableOpen) void friendChallenges.handleSendDirectInvite(p.userId);
+        else onOpenKoraCash();
+      }}
+    />
+  ) : null;
 
   const counts = useMemo(() => countInvitations(invitations, cashAvailable, now), [invitations, cashAvailable, now]);
   const visibleInvitations = useMemo(() => invitationsForMode(invitations, mode, now), [invitations, mode, now]);
@@ -263,7 +301,7 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
   };
 
   // Mêmes quatre onglets dans les deux modes ; seule la pastille d'invitations dépend du mode.
-  const modeBadge = isCash ? counts.cash : counts.free;
+  const modeBadge = (isCash ? counts.cash : counts.free) + (isCash ? searchCounts.cash : searchCounts.free);
   const tabs: SegmentTab<SocialSubTab>[] = [
     { id: 'INVITATIONS', label: 'Invitations', shortLabel: 'Invit.', icon: Inbox, badge: modeBadge > 0 ? String(modeBadge) : undefined, badgeColor: 'bg-rose-500 text-white' },
     { id: 'FRIENDS', label: 'Amis', shortLabel: 'Amis', icon: Users },
@@ -361,7 +399,9 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
           <main className="flex-1 overflow-y-auto no-scrollbar p-3.5 sm:p-6 max-w-lg mx-auto w-full flex flex-col gap-3.5">
             {subTab === 'INVITATIONS' && (
               <>
-                {visibleInvitations.length === 0 ? (
+                {myCallCard}
+                <SearchCallsList mode={mode} calls={search.calls} nowMs={now} repliedIds={repliedIds} onReply={replyToCall} />
+                {visibleInvitations.length === 0 && !myCall && searchCounts[isCash ? 'cash' : 'free'] === 0 ? (
                   <Empty
                     icon={<Inbox className="w-7 h-7" />}
                     title={isCash ? 'Aucune invitation Kora Cash' : 'Aucune invitation'}
@@ -420,6 +460,14 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
+            )}
+
+            {subTab === 'ONLINE' && (
+              <>
+                {myCallCard ?? (
+                  <SearchStarter mode={mode} busyOtherMode={Boolean(otherModeCall)} onStart={() => { triggerHaptic('light'); wsService.startSearch(mode); }} />
+                )}
+              </>
             )}
 
             {(subTab === 'FRIENDS' || subTab === 'ONLINE') && (

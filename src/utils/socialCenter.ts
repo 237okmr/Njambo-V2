@@ -60,9 +60,29 @@ export function totalInvitations(counts: InvitationCounts): number {
   return counts.free + counts.cash;
 }
 
+/** Appels « je cherche une partie » vus par le joueur : même séparation Gratuit / Cash que les invitations. */
+export interface SearchCallLike {
+  mode: SocialMode;
+  expiresAt: number;
+}
+
+export function liveSearchCalls<T extends SearchCallLike>(calls: readonly T[], mode: SocialMode, nowMs: number): T[] {
+  return calls.filter((c) => c.mode === mode && c.expiresAt > nowMs);
+}
+
+/** Compteurs séparés. Les appels Kora Cash ne comptent que si le côté Cash est disponible. */
+export function countSearchCalls(calls: readonly SearchCallLike[], cashAvailable: boolean, nowMs: number): InvitationCounts {
+  return {
+    free: liveSearchCalls(calls, 'FREE', nowMs).length,
+    cash: cashAvailable ? liveSearchCalls(calls, 'CASH', nowMs).length : 0,
+  };
+}
+
 export interface HomeCardInput {
   isGoogle: boolean;
   counts: InvitationCounts;
+  /** Joueurs qui cherchent une partie (absent : aucun). */
+  searching?: InvitationCounts;
 }
 
 export interface HomeCardView {
@@ -75,17 +95,19 @@ export interface HomeCardView {
 }
 
 /** Texte de la carte d'accueil. Une invitation Kora Cash n'y montre jamais la mise. */
-export function buildHomeCard({ isGoogle, counts }: HomeCardInput): HomeCardView {
+export function buildHomeCard({ isGoogle, counts, searching }: HomeCardInput): HomeCardView {
   if (!isGoogle) {
     return { title: 'Social', detail: 'Connecte-toi avec Google pour retrouver tes amis', badge: 0, action: 'SIGN_IN' };
   }
-  const total = totalInvitations(counts);
+  const searchTotal = searching ? totalInvitations(searching) : 0;
+  const total = totalInvitations(counts) + searchTotal;
   if (total === 0) {
     return { title: 'Social', detail: 'Amis, invitations et tables', badge: 0, action: 'OPEN' };
   }
   const parts: string[] = [];
   if (counts.free > 0) parts.push(`${counts.free} défi${counts.free > 1 ? 's' : ''}`);
   if (counts.cash > 0) parts.push(`${counts.cash} invitation${counts.cash > 1 ? 's' : ''} Kora Cash`);
+  if (searchTotal > 0) parts.push(`${searchTotal} ${searchTotal > 1 ? 'cherchent' : 'cherche'} une partie`);
   return { title: 'Social', detail: parts.join(' · '), badge: total, action: 'OPEN' };
 }
 

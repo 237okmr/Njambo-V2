@@ -28,7 +28,30 @@ export interface OnlinePlayer {
 export interface PresenceSettings {
   hidden: boolean;
   friendsOnlyInvites: boolean;
+  /** Accepte d'être prévenu quand un joueur inconnu cherche une partie. */
+  searchAlerts: boolean;
 }
+export type SearchMode = 'FREE' | 'CASH';
+export interface SearchCallEntry {
+  userId: string;
+  displayName: string;
+  avatarId: string;
+  mode: SearchMode;
+  expiresAt: number;
+  isFriend: boolean;
+  /** Il est assis à une table gratuite libre : « partant » mène directement à sa table. */
+  canJoin: boolean;
+}
+export interface MySearchCall {
+  mode: SearchMode;
+  expiresAt: number;
+  partants: Array<{ userId: string; displayName: string; avatarId: string }>;
+}
+export interface SearchCallsSnapshot {
+  calls: SearchCallEntry[];
+  mine: MySearchCall | null;
+}
+export type SearchCallsListener = (snapshot: SearchCallsSnapshot) => void;
 export type OnlinePlayersListener = (players: OnlinePlayer[]) => void;
 export type PresenceSettingsListener = (settings: PresenceSettings) => void;
 export type OpenTablesUpdate = { mode: 'FREE'; tables: OpenTableEntry[] } | { mode: 'CASH'; levels: OpenCashLevel[] };
@@ -80,6 +103,8 @@ class WebSocketService {
   private friendsPresenceListeners: Set<FriendsPresenceListener> = new Set();
   private onlinePlayersListeners: Set<OnlinePlayersListener> = new Set();
   private presenceSettingsListeners: Set<PresenceSettingsListener> = new Set();
+  private searchCallsListeners: Set<SearchCallsListener> = new Set();
+  private lastSearchCalls: SearchCallsSnapshot = { calls: [], mine: null };
   private openTablesListeners: Set<OpenTablesListener> = new Set();
   private openTableTargetListeners: Set<OpenTableTargetListener> = new Set();
   private quickMatchResultListeners: Set<QuickMatchResultListener> = new Set();
@@ -1388,6 +1413,11 @@ class WebSocketService {
         }
         break;
 
+      case 'SEARCH_CALLS_UPDATE':
+        this.lastSearchCalls = { calls: msg.searchCalls || [], mine: msg.mySearch ?? null };
+        this.searchCallsListeners.forEach((l) => l(this.lastSearchCalls));
+        break;
+
       case 'OPEN_TABLES_UPDATE':
         if (msg.openTables) {
           this.openTablesListeners.forEach((l) => l(msg.openTables!));
@@ -2125,6 +2155,47 @@ class WebSocketService {
     this.openTableTargetListeners.add(listener);
     return () => {
       this.openTableTargetListeners.delete(listener);
+    };
+  }
+
+  /** Demande les appels « je cherche une partie » visibles (la réponse arrive par onSearchCalls). */
+  public getSearchCalls(): void {
+    this.send({ type: 'GET_SEARCH_CALLS', playerId: this.getLocalPlayerId() });
+  }
+
+  public startSearch(mode: SearchMode): void {
+    this.send({
+      type: 'START_SEARCH',
+      playerId: this.getLocalPlayerId(),
+      playerName: localStorage.getItem('njambo_player_name') || 'Joueur',
+      avatarSeed: localStorage.getItem('njambo_avatar_seed') || 'avatar_1',
+      searchMode: mode,
+    });
+  }
+
+  public stopSearch(): void {
+    this.send({ type: 'STOP_SEARCH', playerId: this.getLocalPlayerId() });
+  }
+
+  /** « Partant » : rejoint l'appelant (réponse par onOpenTableTarget) ou le prévient. */
+  public replySearch(targetPlayerId: string): void {
+    this.send({
+      type: 'REPLY_SEARCH',
+      playerId: this.getLocalPlayerId(),
+      playerName: localStorage.getItem('njambo_player_name') || 'Joueur',
+      avatarSeed: localStorage.getItem('njambo_avatar_seed') || 'avatar_1',
+      targetPlayerId,
+    });
+  }
+
+  public getLastSearchCalls(): SearchCallsSnapshot {
+    return this.lastSearchCalls;
+  }
+
+  public onSearchCalls(listener: SearchCallsListener): () => void {
+    this.searchCallsListeners.add(listener);
+    return () => {
+      this.searchCallsListeners.delete(listener);
     };
   }
 

@@ -33,7 +33,8 @@ import { HomeScreen } from './components/HomeScreen';
 import { MultiplayerScreen } from './components/multiplayer/MultiplayerScreen';
 import { SocialScreen } from './components/social/SocialScreen';
 import { useKoraCashEnabled, useSocialFlags } from './hooks/useSocialAvailability';
-import { buildHomeCard, countInvitations, isCashSideAvailable, totalInvitations } from './utils/socialCenter';
+import { buildHomeCard, countInvitations, countSearchCalls, isCashSideAvailable, storeSocialMode, totalInvitations } from './utils/socialCenter';
+import { useSearchCalls } from './hooks/useSearchCalls';
 import { DirectInviteToast } from './components/multiplayer/DirectInviteToast';
 import { JoinProgressIndicator } from './components/multiplayer/JoinProgressIndicator';
 import { SavedSessionsModal } from './components/SavedSessionsModal';
@@ -922,8 +923,11 @@ function GameApp() {
     isGoogle: isGoogleLoggedIn,
   });
   const socialCounts = countInvitations(incomingInvitations, socialCashAvailable, wsService.getServerTime());
+  // Joueurs qui cherchent une partie : poussés par le serveur dès qu'un appel nous concerne (pas de relance périodique hors de Social).
+  const searchSnapshot = useSearchCalls(socialFlags.centerEnabled && isGoogleLoggedIn, false);
+  const socialSearchCounts = countSearchCalls(searchSnapshot.calls, socialCashAvailable, wsService.getServerTime());
   const socialHomeCard = socialFlags.centerEnabled
-    ? buildHomeCard({ isGoogle: isGoogleLoggedIn, counts: socialCounts })
+    ? buildHomeCard({ isGoogle: isGoogleLoggedIn, counts: socialCounts, searching: socialSearchCounts })
     : null;
 
   const handleResumeSocialTable = useCallback(
@@ -1055,6 +1059,24 @@ function GameApp() {
     }
   }, [handleJoinRoom, localPlayerName, triggerToast, setShowMultiplayerHub]);
 
+  // Ouverture depuis une notification d'appel alors que l'app était fermée (?social=calls&mode=free|cash) :
+  // Social s'ouvre sur les invitations, dans le bon mode. Le lien est nettoyé aussitôt.
+  const socialLinkHandledRef = useRef<boolean>(false);
+  useEffect(() => {
+    if (socialLinkHandledRef.current || !socialFlags.centerEnabled) return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('social') !== 'calls') return;
+      socialLinkHandledRef.current = true;
+      storeSocialMode(params.get('mode') === 'cash' ? 'CASH' : 'FREE');
+      setSocialTarget(null);
+      setIsSocialOpen(true);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } catch {
+      // ignore
+    }
+  }, [socialFlags.centerEnabled]);
+
   // 2) Messages du service worker : clic sur une notification, renouvellement d'abonnement.
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
@@ -1071,6 +1093,17 @@ function GameApp() {
 
       const d = msg.data || {};
       const roomCode: string | undefined = d.roomCode ? String(d.roomCode).toUpperCase() : undefined;
+
+      // Appel « je cherche une partie » (ou réponse « partant ») : on ouvre Social sur les invitations, dans le bon mode, sans rien faire de plus.
+      if (d.type === 'SEARCH_CALL') {
+        if (socialCenterEnabledRef.current) {
+          storeSocialMode(d.mode === 'CASH' ? 'CASH' : 'FREE');
+          setSocialTarget(null);
+          setShowMultiplayerHub(false);
+          setIsSocialOpen(true);
+        }
+        return;
+      }
 
       // Forfait déjà prononcé : rien à rejoindre, on explique simplement.
       if (d.type === 'FORFEIT_DECLARED') {
@@ -3408,7 +3441,7 @@ function GameApp() {
             showInstallModal,
         })}
         socialEnabled={socialFlags.centerEnabled}
-        socialBadge={totalInvitations(socialCounts)}
+        socialBadge={totalInvitations(socialCounts) + totalInvitations(socialSearchCounts)}
         activeItem={activeBottomNavItem({ leaderboard: isLeaderboardOpen, profile: isProfileModalOpen, koraCash: isKoraCashOpen, social: isSocialOpen })}
         onNavigate={(item) => {
           setShowHomeModeSheet(false);

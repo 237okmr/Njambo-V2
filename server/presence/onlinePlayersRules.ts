@@ -21,15 +21,18 @@ export interface PresenceSettings {
   hidden: boolean;
   /** Seuls ses amis confirmés peuvent lui envoyer une invitation directe. */
   friendsOnlyInvites: boolean;
+  /** Le joueur accepte d'être prévenu quand un joueur qu'il ne connaît pas cherche une partie (désactivé par défaut). */
+  searchAlerts: boolean;
 }
 
-export const DEFAULT_PRESENCE_SETTINGS: PresenceSettings = { hidden: false, friendsOnlyInvites: false };
+export const DEFAULT_PRESENCE_SETTINGS: PresenceSettings = { hidden: false, friendsOnlyInvites: false, searchAlerts: false };
 
 export function normalizePresenceSettings(raw: unknown): PresenceSettings {
   const source = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
   return {
     hidden: source.hidden === true,
     friendsOnlyInvites: source.friendsOnlyInvites === true,
+    searchAlerts: source.searchAlerts === true,
   };
 }
 

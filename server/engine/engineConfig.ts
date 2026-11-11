@@ -35,6 +35,10 @@ export interface KatikaEngineConfig {
   directInviteMaxPerHour?: number;
   onlinePlayersListMax?: number;
   openTablesListMax?: number;
+  searchCallLifetimeSeconds?: number;
+  searchCallCooldownSeconds?: number;
+  searchCallMaxRecipients?: number;
+  searchCallMaxPartants?: number;
   openTableRefLifetimeSeconds?: number;
   openTablesAccessCacheSeconds?: number;
   notificationHistoryMaxItems?: number;
