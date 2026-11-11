@@ -643,6 +643,26 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Durée pendant laquelle le serveur réutilise le dernier résumé d\'activité (parties, manches, présence) au lieu de relire Firestore. Plus la durée est longue, moins le quota gratuit de lectures est consommé. 0 = pas de cache.',
   },
   {
+    key: 'katikaJournalPageLines', label: 'Lignes par chargement du journal Kora Cash', unit: '',
+    min: 10, max: 200, default: 50, group: 'katika', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Nombre de transactions affichées à chaque clic sur « Charger » ou « Charger plus » dans le journal de Kora Cash. Chaque ligne lue compte dans le quota gratuit de lectures.',
+  },
+  {
+    key: 'katikaJournalMaxReads', label: 'Lectures maximales par chargement du journal', unit: '',
+    min: 50, max: 5000, default: 500, group: 'katika', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Plafond de lignes lues dans Firestore pour un seul chargement. Si les filtres ne trouvent pas assez de lignes avant ce plafond, le journal s\'arrête et propose de continuer. Protège le quota gratuit de lectures.',
+  },
+  {
+    key: 'katikaJournalExportMaxLines', label: 'Lignes maximales d\'un export CSV du journal', unit: '',
+    min: 100, max: 20000, default: 2000, group: 'katika', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Nombre maximal de transactions écrites dans un fichier CSV. Au-delà, l\'export s\'arrête et le dit : resserre la période ou les filtres.',
+  },
+  {
+    key: 'katikaJournalExportMaxReads', label: 'Lectures maximales d\'un export CSV du journal', unit: '',
+    min: 100, max: 50000, default: 5000, group: 'katika', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Plafond de lignes lues dans Firestore pour un export, filtrées ou non. Un filtre rare sur une longue période lit beaucoup de lignes pour en garder peu : ce plafond protège le quota.',
+  },
+  {
     key: 'katikaDashboardCacheSeconds', label: 'Durée de conservation des indicateurs de base du tableau de bord', unit: 's',
     min: 0, max: 3600, default: 120, group: 'katika', scope: 'server', effect: 'immediate', advanced: true, allowZero: true,
     help: 'Durée pendant laquelle le serveur réutilise le dossier des joueurs et les dernières fiches de manche au lieu de les relire dans Firestore à chaque actualisation du tableau de bord. 0 = pas de cache.',

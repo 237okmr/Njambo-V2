@@ -96,6 +96,7 @@ const ROUTE_TABLE: Array<[method: string, pattern: RegExp, requirement: RouteReq
   ['GET', /^\/(ai-quota|moments)$/, any('copilot.use')],
   ['POST', /^\/(ai-chat|ai-chat-stream|ai-visual)$/, any('copilot.use')],
 
+  ['GET', /^\/cash\/journal\/export$/, any('cash.manage')],
   ['GET', /^\/cash\//, any('cash.view')],
   ['POST', /^\/cash\//, any('cash.manage')],
 ];

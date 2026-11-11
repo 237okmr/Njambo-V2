@@ -14,7 +14,7 @@ export interface PublicCashMovement {
   createdAt: number;
 }
 
-function movementAmount(entry: CashLedgerEntry): number {
+export function movementAmount(entry: CashLedgerEntry): number {
   if (entry.kind === 'TABLE_SETTLEMENT') return entry.lockedDelta;
   if (entry.kind === 'ADJUSTMENT') return entry.availableDelta + entry.lockedDelta;
   return entry.availableDelta;

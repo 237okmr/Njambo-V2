@@ -78,6 +78,10 @@ describe('Droits des administrateurs de katika', () => {
     const viewer: KatikaAccess = { isOwner: false, permissions: ['cash.view'] };
     assert.equal(allowed(viewer, 'GET', '/cash/withdrawals'), true);
     assert.equal(allowed(viewer, 'POST', '/cash/withdrawals/x/approve'), false);
+    // Journal des transactions : « voir » lit la liste, mais seul « agir » exporte le fichier.
+    assert.equal(allowed(viewer, 'GET', '/cash/journal'), true);
+    assert.equal(allowed(viewer, 'GET', '/cash/journal/export'), false);
+    assert.equal(allowed({ isOwner: false, permissions: ['cash.manage'] }, 'GET', '/cash/journal/export'), true);
   });
 
   it('ne garde que les droits connus, sans doublon', () => {

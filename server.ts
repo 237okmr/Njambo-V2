@@ -102,7 +102,9 @@ import { adminRegistry, listAdminEntries, readAdminEntry, writeAdminEntry } from
 import { sanitizeRankTitles, summarizeUsers } from './server/katika/usersSummary';
 import { createAiLimiter } from './server/katika/aiLimiter';
 import { deleteThread, listThreads, sanitizeThread, saveThread, threadsToPrune } from './server/katika/copilotThreads';
-import { isActivityFailure, katikaActivityData, toActivityBucket, readStopThreshold } from './server/katika/activityData';
+import { isActivityFailure, katikaActivityData, toActivityBucket, readStopThreshold, isQuotaError, katikaReadsBlocked, QUOTA_MESSAGE, READ_LIMIT_MESSAGE } from './server/katika/activityData';
+import { buildJournalCsv, formatDoualaDateTime, parseJournalQuery, resolvePlayerFilter, scanJournal, toJournalLine } from './server/cash/cashJournalRules';
+import { createLedgerBatchReader, getJournalLimits, loadJournalNames } from './server/cash/journalStore';
 import { DASHBOARD_MAX_RECORDS, isDashboardFailure, katikaDashboardData, readWarnThreshold, toDashboardPart } from './server/katika/dashboardData';
 import { buildClientAudit, katikaAuditStore, mergeAuditLogs } from './server/katika/auditStore';
 import { getReadBudget, recordServerReads } from './server/katika/readBudget';
@@ -2184,6 +2186,79 @@ async function startServer() {
       res.status(500).json({ success: false, error: 'Correction impossible.' });
     }
   });
+
+  // Kora Cash — journal global des transactions (lecture seule). La période borne la requête ; type et joueur filtrent les lignes lues ;
+  // le balayage s'arrête au plafond de lectures du registre. Ni e-mail ni téléphone ne sortent.
+  async function readJournal(req: any, res: any, mode: 'page' | 'export') {
+    res.setHeader('Cache-Control', 'no-store');
+    if (katikaReadsBlocked()) {
+      return res.status(503).json({ success: false, code: 'READ_LIMIT', error: READ_LIMIT_MESSAGE });
+    }
+    try {
+      const cfg = await getKoraCashConfig();
+      const parsed = parseJournalQuery(req.query || {}, Date.now(), cfg.environment === 'LIVE' ? 'LIVE' : 'DEMO');
+      if (parsed.ok === false) return res.status(400).json({ success: false, error: parsed.error });
+      const { query } = parsed;
+
+      const names = await loadJournalNames();
+      let uids: Set<string> | null = null;
+      if (query.player) {
+        uids = resolvePlayerFilter(query.player, names);
+        if (uids.size === 0) {
+          return res.json({ success: true, lines: [], nextCursor: null, scanned: 0, capped: false, from: query.from, to: query.to, environment: query.environment, playerNotFound: true });
+        }
+      }
+
+      const limits = getJournalLimits();
+      const result = await scanJournal(createLedgerBatchReader(query.environment, query.from, query.to), mode === 'export' ? null : query.cursor, {
+        pageSize: mode === 'export' ? limits.exportMaxLines : limits.pageLines,
+        maxReads: mode === 'export' ? limits.exportMaxReads : limits.maxReads,
+        kinds: query.kinds,
+        uids,
+      });
+      const lines = result.entries.map((entry) => toJournalLine(entry, names.get(entry.uid) ?? `Joueur #${entry.uid.replace(/[^A-Za-z0-9]/g, '').slice(-4).toUpperCase()}`));
+
+      if (mode === 'export') {
+        const admin = (req as any).katikaUser;
+        // Plus de lignes existent au-delà de ce qui est écrit, ou le plafond de lectures a coupé le balayage.
+        const truncated = result.nextCursor !== null;
+        RoomManager.addAuditLog({
+          id: 'cash_journal_export_' + Date.now().toString(36),
+          timestamp: Date.now(),
+          type: 'KATIKA_ACTION',
+          severity: 'INFO',
+          actor: String(admin?.email || admin?.uid || 'admin'),
+          summary: `Export CSV du journal Kora Cash : ${lines.length} ligne(s)${truncated ? ' (incomplet)' : ''}`,
+          details: { environment: query.environment, from: query.from, to: query.to, kinds: query.kinds, player: query.player, lines: lines.length, scanned: result.scanned, truncated },
+        });
+        const stamp = formatDoualaDateTime(Date.now()).slice(0, 16).replace(/[-: ]/g, '');
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="journal-kora-cash-${query.environment.toLowerCase()}-${stamp}.csv"`);
+        res.setHeader('X-Journal-Lines', String(lines.length));
+        res.setHeader('X-Journal-Truncated', truncated ? '1' : '0');
+        return res.send(buildJournalCsv(lines));
+      }
+
+      return res.json({
+        success: true,
+        lines,
+        nextCursor: result.nextCursor,
+        scanned: result.scanned,
+        capped: result.capped,
+        from: query.from,
+        to: query.to,
+        environment: query.environment,
+      });
+    } catch (err) {
+      console.error('[KoraCash] Lecture du journal impossible.', err instanceof Error ? err.message : String(err));
+      if (isQuotaError(err)) return res.status(503).json({ success: false, code: 'QUOTA', error: QUOTA_MESSAGE });
+      return res.status(500).json({ success: false, error: 'Lecture du journal impossible.' });
+    }
+  }
+
+  app.get('/api/katika/cash/journal', (req, res) => readJournal(req, res, 'page'));
+  // Export : réservé au droit « Kora Cash : agir » (voir adminRights) et inscrit au journal d'audit.
+  app.get('/api/katika/cash/journal/export', (req, res) => readJournal(req, res, 'export'));
 
   // Kora Cash — derniers dépôts Mobile Money et dernière réponse de Campay pour chacun (statut, opérateur, motif). Lecture seule.
   app.get('/api/katika/cash/campay-deposits', async (_req, res) => {
