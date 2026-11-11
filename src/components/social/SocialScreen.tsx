@@ -6,6 +6,15 @@ import { NativeScreenHeader } from '../common/NativeScreenHeader';
 import { NativeSegmentedNav, SegmentTab } from '../common/NativeSegmentedNav';
 import { PlayerAvatar } from '../profile/PlayerAvatar';
 import { OpenTablesPanel } from './OpenTablesPanel';
+import { FriendsPanel } from './FriendsPanel';
+import { ActiveGameConflict, ActiveGameConflictModal, AuthRequirementModal } from './HubDialogs';
+import { useFriendsHub } from '../../hooks/useFriendsHub';
+import { useFriendChallenges } from '../../hooks/useFriendChallenges';
+import { useBackLayer } from '../../hooks/useBackLayer';
+import { useInvitations } from '../../context/InvitationsContext';
+import { getLocalPlayerName } from '../../services/identity';
+import type { MultiplayerScreenProps } from '../multiplayer/MultiplayerScreen';
+import { AlertTriangle, Check, X } from 'lucide-react';
 import { usePlayerProfile } from '../../context/PlayerProfileContext';
 import { useVisibleInterval } from '../../hooks/useVisibleInterval';
 import { getPublicParamNumber } from '../../services/publicConfig';
@@ -29,8 +38,11 @@ interface SocialScreenProps {
   onJoinCode: (code: string) => Promise<{ success: boolean; error?: string }>;
   /** Le côté Kora Cash est-il disponible (interrupteurs katika, Kora Cash ouvert, compte Google) ? */
   cashAvailable: boolean;
-  /** Amis ou joueurs en ligne : l'écran existant, intégré. */
-  renderFriends: (view: 'FRIENDS' | 'ONLINE') => React.ReactNode;
+  localPlayerId: string;
+  /** Crée une table (pour défier un ami) : même fonction que celle de l'écran Multijoueur. */
+  onCreateRoom: MultiplayerScreenProps['onCreateRoom'];
+  /** Sous-onglet d'amis ouvert d'emblée (ex. demandes reçues, depuis une notification). */
+  initialFriendSubTab?: 'FRIENDS' | 'RECEIVED' | 'SENT';
   /** Sous-onglet ouvert d'emblée (ex. depuis une notification d'ami). */
   initialSubTab?: SocialSubTab;
 }
@@ -103,12 +115,87 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
   onOpenKoraCash,
   onJoinCode,
   cashAvailable,
-  renderFriends,
+  localPlayerId,
+  onCreateRoom,
+  initialFriendSubTab,
   initialSubTab = 'INVITATIONS',
 }) => {
-  const { isLoggedIn, loginWithGoogle } = usePlayerProfile();
+  const { isLoggedIn, loginWithGoogle, profile } = usePlayerProfile();
+  const { declineInvitation: declineIncomingInvitation } = useInvitations();
+  const playerName = profile?.displayName || getLocalPlayerName();
+
+  // Amis : même logique que l'écran Multijoueur, ici sans lui.
+  const [hubErrorMsg, setHubErrorMsg] = useState<string | null>(null);
+  const [hubSuccessMsg, setHubSuccessMsg] = useState<string | null>(null);
+  const [, setIsHubLoading] = useState<boolean>(false);
+  const [activeGameConflict, setActiveGameConflict] = useState<ActiveGameConflict | null>(null);
+  const [showAuthRequirementModal, setShowAuthRequirementModal] = useState<boolean>(false);
+  const [authRequirementReason, setAuthRequirementReason] = useState<string>('');
+  const [showAddFriendModal, setShowAddFriendModal] = useState<boolean>(false);
+  const [showQrModal, setShowQrModal] = useState<boolean>(false);
+  const friendsHub = useFriendsHub({
+    isOpen: true,
+    room,
+    embedded: initialSubTab === 'ONLINE' ? 'ONLINE' : 'FRIENDS',
+    initialFriendSubTab,
+    activeTab: 'social',
+    isLoggedIn,
+    profile,
+    incomingInvitations: invitations,
+    declineInvitation: declineIncomingInvitation,
+    setHubSuccessMsg,
+    setHubErrorMsg,
+    setAuthRequirementReason,
+    setShowAuthRequirementModal,
+    setShowAddFriendModal,
+  });
+  const friendChallenges = useFriendChallenges({
+    isLoggedIn,
+    room,
+    playerName,
+    onCreateRoom,
+    friendsPresenceMap: friendsHub.friendsPresenceMap,
+    setIsLoading: setIsHubLoading,
+    setHubSuccessMsg,
+    setHubErrorMsg,
+    setAuthRequirementReason,
+    setShowAuthRequirementModal,
+    setActiveGameConflict,
+  });
+  const anyDialogOpen = Boolean(activeGameConflict) || showAuthRequirementModal || showAddFriendModal || showQrModal;
+  useBackLayer(anyDialogOpen, () => {
+    if (activeGameConflict) setActiveGameConflict(null);
+    else if (showAuthRequirementModal) setShowAuthRequirementModal(false);
+    else if (showAddFriendModal) setShowAddFriendModal(false);
+    else setShowQrModal(false);
+  });
+  const [isHubAuthLoading, setIsHubAuthLoading] = useState<boolean>(false);
+  const handleHubGoogleSignIn = async () => {
+    setIsHubAuthLoading(true);
+    try {
+      await loginWithGoogle();
+      setShowAuthRequirementModal(false);
+      setHubSuccessMsg('Compte Google connecté.');
+      triggerHaptic('success');
+    } catch (err) {
+      setHubErrorMsg(err instanceof Error && err.message ? err.message : 'La connexion Google a échoué. Réessaie.');
+      triggerHaptic('heavy');
+    } finally {
+      setIsHubAuthLoading(false);
+    }
+  };
   const [requestedMode, setRequestedMode] = useState<SocialMode | null>(() => readStoredSocialMode());
   const [subTab, setSubTab] = useState<SocialSubTab>(initialSubTab);
+
+  // La vue « En ligne » et la vue « Amis » partagent le même état d'amis : on aligne son sous-onglet sur celui de la page.
+  const { friendSubTab: hubFriendSubTab, setFriendSubTab: setHubFriendSubTab } = friendsHub;
+  useEffect(() => {
+    if (subTab === 'ONLINE') {
+      if (hubFriendSubTab !== 'ONLINE') setHubFriendSubTab('ONLINE');
+    } else if (subTab === 'FRIENDS' && hubFriendSubTab === 'ONLINE') {
+      setHubFriendSubTab(initialFriendSubTab ?? 'FRIENDS');
+    }
+  }, [subTab, hubFriendSubTab, setHubFriendSubTab, initialFriendSubTab]);
   const [now, setNow] = useState<number>(() => wsService.getServerTime());
   const [authBusy, setAuthBusy] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -249,8 +336,67 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
               </>
             )}
 
-            {!isCash && subTab === 'FRIENDS' && renderFriends('FRIENDS')}
-            {!isCash && subTab === 'ONLINE' && renderFriends('ONLINE')}
+            {!isCash && friendsHub.friendAcceptedToast && (
+              <div className="p-3 rounded-2xl bg-emerald-500/20 border border-emerald-500/50 text-emerald-200 flex items-center justify-between gap-3 shadow-lg">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <PlayerAvatar avatarId={(friendsHub.friendAcceptedToast.avatarId as any) || 'avatar_1'} size="sm" className="w-8 h-8 shrink-0 ring-2 ring-emerald-400" />
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-black text-white truncate">{friendsHub.friendAcceptedToast.name} a accepté ta demande !</span>
+                    <span className="text-xs text-emerald-300/90 font-medium truncate">Vous êtes désormais amis.</span>
+                  </div>
+                </div>
+                <button type="button" aria-label="Fermer" onClick={() => friendsHub.setFriendAcceptedToast(null)} className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-300 hover:text-white flex items-center justify-center shrink-0 cursor-pointer">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
+            {!isCash && (hubErrorMsg || hubSuccessMsg) && (
+              <div
+                className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-between gap-2 ${
+                  hubErrorMsg ? 'bg-rose-500/10 border-rose-500/30 text-rose-300' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                }`}
+              >
+                <span className="flex items-center gap-2 min-w-0">
+                  {hubErrorMsg ? <AlertTriangle className="w-4 h-4 shrink-0" /> : <Check className="w-4 h-4 shrink-0" />}
+                  <span>{hubErrorMsg || hubSuccessMsg}</span>
+                </span>
+                <button
+                  type="button"
+                  aria-label="Fermer le message"
+                  onClick={() => (hubErrorMsg ? setHubErrorMsg(null) : setHubSuccessMsg(null))}
+                  className="p-1 hover:text-white cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
+            {!isCash && (subTab === 'FRIENDS' || subTab === 'ONLINE') && (
+              <FriendsPanel
+                key={subTab}
+                hub={friendsHub}
+                challenges={friendChallenges}
+                embedded={subTab}
+                isLoggedIn={isLoggedIn}
+                profile={profile}
+                localPlayerId={localPlayerId}
+                playerName={playerName}
+                room={room}
+                isAuthLoading={isHubAuthLoading}
+                onJoinRoomCode={(code) => void onJoinCode(code)}
+                onGoogleSignIn={() => void handleHubGoogleSignIn()}
+                incomingInvitations={[]}
+                onAcceptInvite={() => undefined}
+                onDeclineInvite={() => undefined}
+                setHubErrorMsg={setHubErrorMsg}
+                setHubSuccessMsg={setHubSuccessMsg}
+                showAddFriendModal={showAddFriendModal}
+                setShowAddFriendModal={setShowAddFriendModal}
+                showQrModal={showQrModal}
+                setShowQrModal={setShowQrModal}
+              />
+            )}
 
             {subTab === 'TABLES' && (
               <>
@@ -303,6 +449,18 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
           </main>
         </>
       )}
+      <AuthRequirementModal
+        open={showAuthRequirementModal}
+        reason={authRequirementReason}
+        isAuthLoading={isHubAuthLoading}
+        onGoogleSignIn={() => void handleHubGoogleSignIn()}
+        onClose={() => setShowAuthRequirementModal(false)}
+      />
+      <ActiveGameConflictModal
+        conflict={activeGameConflict}
+        setConflict={setActiveGameConflict}
+        onReturnToGame={(code) => void onJoinCode(code)}
+      />
     </motion.div>
   );
 };

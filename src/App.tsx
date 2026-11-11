@@ -2360,11 +2360,9 @@ function GameApp() {
     setCurrentScreen('HOME');
   }, [saveCurrentSession, triggerToast]);
 
-  // Écran Multijoueur : plein écran, ou intégré à la page Social (amis / joueurs en ligne).
-  const renderMultiplayerScreen = (embedded?: 'FRIENDS' | 'ONLINE', initialFriendSubTab?: 'FRIENDS' | 'RECEIVED' | 'SENT') => (
+  // Écran Multijoueur (plein écran).
+  const renderMultiplayerScreen = () => (
       <MultiplayerScreen
-        embedded={embedded}
-        initialFriendSubTab={initialFriendSubTab}
         hideFriendsTab={socialFlags.centerEnabled}
         isOpen={true}
         onOpenCashInvite={openCashInviteFromInvitation}
@@ -2379,7 +2377,7 @@ function GameApp() {
           setProfileInitialTab('settings');
           setIsProfileModalOpen(true);
         }}
-        room={!embedded && showMultiplayerLobby && multiplayerRoom ? multiplayerRoom : null}
+        room={showMultiplayerLobby && multiplayerRoom ? multiplayerRoom : null}
         localPlayerId={localPlayerId}
         errorMessage={serverErrorMessage}
         onCreateRoom={handleCreateRoom}
@@ -3289,7 +3287,9 @@ function GameApp() {
                 return res;
               }}
               cashAvailable={socialCashAvailable}
-              renderFriends={(view) => renderMultiplayerScreen(view, socialTarget?.friendSubTab)}
+              localPlayerId={localPlayerId}
+              onCreateRoom={handleCreateRoom}
+              initialFriendSubTab={socialTarget?.friendSubTab}
             />
           </ErrorBoundary>
         )}
