@@ -182,10 +182,15 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
   const handleHubGoogleSignIn = async () => {
     setIsHubAuthLoading(true);
     try {
-      await loginWithGoogle();
-      setShowAuthRequirementModal(false);
-      setHubSuccessMsg('Compte Google connecté.');
-      triggerHaptic('success');
+      const outcome = await loginWithGoogle();
+      if (outcome.ok) {
+        setShowAuthRequirementModal(false);
+        setHubSuccessMsg('Compte Google connecté.');
+        triggerHaptic('success');
+      } else if (outcome.ok === false && outcome.message) {
+        setHubErrorMsg(outcome.message);
+        triggerHaptic('heavy');
+      }
     } catch (err) {
       setHubErrorMsg(err instanceof Error && err.message ? err.message : 'La connexion Google a échoué. Réessaie.');
       triggerHaptic('heavy');
@@ -319,7 +324,8 @@ export const SocialScreen: React.FC<SocialScreenProps> = ({
     setAuthBusy(true);
     setAuthError(null);
     try {
-      await loginWithGoogle();
+      const outcome = await loginWithGoogle();
+      if (outcome.ok === false && outcome.message) setAuthError(outcome.message);
     } catch (err) {
       setAuthError(err instanceof Error ? err.message : 'La connexion Google a échoué. Réessaie.');
     } finally {

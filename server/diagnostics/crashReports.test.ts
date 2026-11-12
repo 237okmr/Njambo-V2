@@ -54,6 +54,18 @@ describe('nettoyage', () => {
   });
 });
 
+describe('bruit connu et échecs de connexion', () => {
+  it('l\'assertion interne de Firebase Auth n\'est pas gardée', () => {
+    const r = sanitizeCrashReport({ message: 'INTERNAL ASSERTION FAILED: Pending promise was never set' }, IPHONE_OLD);
+    assert.deepEqual(r, { ok: false, reason: 'NOISE' });
+  });
+  it('un échec de connexion Google est gardé avec son type', () => {
+    const r = sanitizeCrashReport({ kind: 'auth', message: 'Connexion Google : auth/popup-blocked' }, IPHONE_OLD);
+    assert.ok(r.ok);
+    if (r.ok) assert.equal(r.report.kind, 'auth');
+  });
+});
+
 describe('signature et regroupement', () => {
   const rep = (over: Record<string, unknown> = {}) => {
     const r = sanitizeCrashReport({ message: 'Cannot read x at line 12', build: 'index-1.js', phase: 'BOOT', ...over }, IPHONE_OLD);

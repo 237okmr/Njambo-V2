@@ -9,6 +9,7 @@ import React, {
   ReactNode,
 } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
+import { authErrorCode, authFailureReportMessage, describeGoogleSignInError, GoogleSignInOutcome } from '../utils/authErrors';
 import { auth } from '../lib/firebase';
 import { setLocalPlayerName } from '../services/identity';
 import { getPublicParamNumber } from '../services/publicConfig';
@@ -54,7 +55,7 @@ interface PlayerProfileContextValue {
   setIsProfileModalOpen: (open: boolean) => void;
   isLeaderboardOpen: boolean;
   setIsLeaderboardOpen: (open: boolean) => void;
-  loginWithGoogle: () => Promise<void>;
+  loginWithGoogle: () => Promise<GoogleSignInOutcome>;
   logout: () => Promise<void>;
   updateDisplayName: (name: string) => Promise<void>;
   updateAvatar: (avatarId: AvatarOptionId) => Promise<void>;
@@ -281,7 +282,7 @@ export const PlayerProfileProvider: React.FC<{ children: ReactNode }> = ({ child
     }
   }, [profile.isGuest, profile.uid, profile.friendCode]);
 
-  const loginWithGoogle = useCallback(async () => {
+  const loginWithGoogle = useCallback(async (): Promise<GoogleSignInOutcome> => {
     setIsSyncing(true);
     setSyncMessage('Fusion de tes données locales avec ton compte Google...');
     try {
@@ -294,14 +295,22 @@ export const PlayerProfileProvider: React.FC<{ children: ReactNode }> = ({ child
       });
       setSyncMessage('Synchronisation réussie ! Ton palmarès est sécurisé.');
       setTimeout(() => setSyncMessage(null), 4000);
-    } catch (err: any) {
-      if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
-        console.error('[PlayerProfile] Login error:', err);
-        setSyncMessage('Erreur lors de la connexion. Tes données locales restent intactes.');
-        setTimeout(() => setSyncMessage(null), 5000);
-      } else {
+      return { ok: true };
+    } catch (err: unknown) {
+      const code = authErrorCode(err);
+      const view = describeGoogleSignInError(code);
+      if (view.message === null) {
         setSyncMessage(null);
+      } else {
+        console.error('[PlayerProfile] Login error:', err);
+        setSyncMessage(view.message);
+        setTimeout(() => setSyncMessage(null), 5000);
       }
+      // Code d'erreur seul (jamais de nom ni de courriel), pour savoir combien de joueurs échouent et pourquoi.
+      if (view.report) {
+        (window as unknown as { __njamboReportCrash?: (kind: string, message: string, stack?: string) => void }).__njamboReportCrash?.('auth', authFailureReportMessage(code), '');
+      }
+      return { ok: false, message: view.message };
     } finally {
       setIsSyncing(false);
     }

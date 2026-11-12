@@ -12,7 +12,7 @@ export const MAX_STACK_CHARS = 900;
 const MAX_BUILD_CHARS = 60;
 
 export type CrashPhase = 'BOOT' | 'RUNTIME';
-export type CrashKind = 'error' | 'rejection' | 'react';
+export type CrashKind = 'error' | 'rejection' | 'react' | 'auth';
 
 export interface CrashReport {
   message: string;
@@ -99,13 +99,17 @@ function asEnum<T extends string>(value: unknown, allowed: readonly T[], fallbac
   return typeof value === 'string' && (allowed as readonly string[]).includes(value) ? (value as T) : fallback;
 }
 
-export type SanitizeResult = { ok: true; report: CrashReport } | { ok: false; reason: 'EMPTY' };
+export type SanitizeResult = { ok: true; report: CrashReport } | { ok: false; reason: 'EMPTY' | 'NOISE' };
+
+/** Bruit connu de Firebase Auth (événement de popup arrivé en retard) : sans effet pour le joueur, les échecs de connexion sont suivis à part. */
+const KNOWN_NOISE = [/INTERNAL ASSERTION FAILED: Pending promise was never set/i];
 
 /** Valide et nettoie le corps reçu. Un rapport sans message n'est pas gardé. */
 export function sanitizeCrashReport(body: unknown, userAgent: unknown): SanitizeResult {
   const b = (body && typeof body === 'object' ? body : {}) as Record<string, unknown>;
   const message = scrubText(b.message, MAX_MESSAGE_CHARS);
   if (!message) return { ok: false, reason: 'EMPTY' };
+  if (KNOWN_NOISE.some((re) => re.test(message))) return { ok: false, reason: 'NOISE' };
   const ua = parseUserAgent(userAgent);
   const build = typeof b.build === 'string' ? b.build.replace(/[^A-Za-z0-9._-]/g, '').slice(0, MAX_BUILD_CHARS) : '';
   return {
@@ -114,7 +118,7 @@ export function sanitizeCrashReport(body: unknown, userAgent: unknown): Sanitize
       message,
       stack: scrubText(b.stack, MAX_STACK_CHARS),
       phase: asEnum(b.phase, ['BOOT', 'RUNTIME'] as const, 'RUNTIME'),
-      kind: asEnum(b.kind, ['error', 'rejection', 'react'] as const, 'error'),
+      kind: asEnum(b.kind, ['error', 'rejection', 'react', 'auth'] as const, 'error'),
       build,
       ...ua,
     },

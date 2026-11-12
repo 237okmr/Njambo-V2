@@ -251,6 +251,7 @@
             message = String(message || '');
             if (!message || sent[message] || sentCount >= 3) return;
             var boot = !!document.getElementById('splash-screen');
+            if (/INTERNAL ASSERTION FAILED: Pending promise was never set/i.test(message)) return;
             if (!boot && /Load failed|Failed to fetch|NetworkError|AbortError|ResizeObserver/i.test(message)) return;
             sent[message] = true;
             sentCount += 1;

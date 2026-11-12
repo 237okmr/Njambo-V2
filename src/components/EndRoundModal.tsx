@@ -324,8 +324,8 @@ export const EndRoundModal: React.FC<EndRoundModalProps> = ({
     if (isAuthLoading) return;
     setIsAuthLoading(true);
     try {
-      await loginWithGoogle();
-      setAuthSuccess(true);
+      const outcome = await loginWithGoogle();
+      if (outcome.ok) setAuthSuccess(true);
     } catch {
       // Handled in context
     } finally {

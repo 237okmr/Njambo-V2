@@ -97,7 +97,7 @@ export const KatikaCrashesPanel: React.FC = () => {
             <div key={r.signature} className={`p-3 rounded-lg border ${r.resolved ? 'bg-slate-800/40 border-slate-700/40 opacity-70' : 'bg-slate-800/70 border-rose-500/30'}`}>
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-400">
                 <span className={`px-1.5 py-0.5 rounded font-bold ${r.phase === 'BOOT' ? 'bg-rose-500/20 text-rose-300' : 'bg-amber-500/20 text-amber-300'}`}>
-                  {r.phase === 'BOOT' ? 'Au démarrage' : 'En cours d\'utilisation'}
+                  {r.kind === 'auth' ? 'Connexion Google' : r.phase === 'BOOT' ? 'Au démarrage' : 'En cours d\'utilisation'}
                 </span>
                 <span className="text-slate-200 font-semibold">
                   {r.device} · {r.os} {r.osVersion} · {r.browser}

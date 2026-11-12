@@ -188,10 +188,15 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
   const handleGoogleSignIn = async () => {
     setIsAuthLoading(true);
     try {
-      await loginWithGoogle();
-      setShowAuthRequirementModal(false);
-      setHubSuccessMsg("Compte Google connecté.");
-      triggerHaptic('success');
+      const outcome = await loginWithGoogle();
+      if (outcome.ok) {
+        setShowAuthRequirementModal(false);
+        setHubSuccessMsg("Compte Google connecté.");
+        triggerHaptic('success');
+      } else if (outcome.ok === false && outcome.message) {
+        setHubErrorMsg(outcome.message);
+        triggerHaptic('heavy');
+      }
     } catch (err: any) {
       setHubErrorMsg(err?.message || "La connexion Google a échoué. Réessaie.");
       triggerHaptic('heavy');
