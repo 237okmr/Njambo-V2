@@ -71,6 +71,7 @@ import { isTestEnvironment } from '../../utils/envUtils';
 import { PlayerAvatar } from '../profile/PlayerAvatar';
 import { RoomFilterBottomSheet, AdvancedRoomFilters } from './RoomFilterBottomSheet';
 import { FriendQrModal } from './FriendQrModal';
+import { TableQrSheet } from './TableQrSheet';
 import { getPwaShareBase } from '../../utils/pwaLinks';
 import { buildCashInviteText, buildCashInviteUrl, buildCashInviteWhatsAppUrl } from '../../utils/cashInvite';
 import { JoinProgressIndicator } from './JoinProgressIndicator';
@@ -211,6 +212,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
   const [showAddFriendModal, setShowAddFriendModal] = useState<boolean>(false);
   const [showFilterBottomSheet, setShowFilterBottomSheet] = useState<boolean>(false);
   const [showQrModal, setShowQrModal] = useState<boolean>(false);
+  const [showTableQr, setShowTableQr] = useState<boolean>(false);
 
   // Player identity & Code Input
   // Le pseudo se modifie uniquement dans le profil : c'est le même à table, au Palmarès et sur tous les appareils.
@@ -996,6 +998,16 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
               </button>
               <button
                 type="button"
+                id="btn-table-qr-header"
+                onClick={() => { triggerHaptic('light'); setShowTableQr(true); }}
+                className="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700/80 flex items-center justify-center transition active:scale-95 cursor-pointer shrink-0 shadow-sm"
+                title="QR code de la table"
+                aria-label="QR code de la table"
+              >
+                <QrCode className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
                 id="btn-copy-room-code-header"
                 onClick={handleCopyCode}
                 className="h-9 px-2.5 sm:px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 text-xs font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shrink-0 shadow-sm"
@@ -1740,6 +1752,16 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
               <span className="text-left">Inviter un ami sur WhatsApp en 1 clic</span>
             </div>
             <span className="px-2 py-0.5 rounded-full bg-white/20 text-xs">Partager</span>
+          </button>
+
+          <button
+            type="button"
+            id="btn-table-qr-banner"
+            onClick={() => { triggerHaptic('light'); setShowTableQr(true); }}
+            className="w-full p-3 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-100 font-bold text-xs flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer"
+          >
+            <QrCode className="w-4 h-4 text-amber-400" />
+            <span>Ils sont à côté de toi ? Afficher le QR code</span>
           </button>
 
           {/* Bottom Leave Table Button for mobile ergonomics */}
@@ -2853,6 +2875,15 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
       />
 
 
+      {room && (
+        <TableQrSheet
+          open={showTableQr}
+          onClose={() => setShowTableQr(false)}
+          code={room.id}
+          cash={Boolean(room.cash)}
+          url={room.cash ? buildCashInviteUrl(getPwaShareBase(), room.id) : FriendService.getShareInviteUrl(room.id, localPlayerId)}
+        />
+      )}
       <AuthRequirementModal
         open={showAuthRequirementModal}
         reason={authRequirementReason}
