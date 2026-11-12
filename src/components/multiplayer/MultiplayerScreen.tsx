@@ -72,6 +72,11 @@ import { PlayerAvatar } from '../profile/PlayerAvatar';
 import { RoomFilterBottomSheet, AdvancedRoomFilters } from './RoomFilterBottomSheet';
 import { FriendQrModal } from './FriendQrModal';
 import { TableQrSheet } from './TableQrSheet';
+import { getPersistentItem, setPersistentItem } from '../../utils/storageUtils';
+import {
+  LAST_TABLE_STORAGE_KEY, parseLastTable, serializeLastTable, pickTeammates, mergeLastTable,
+  type LastTable, type LastTableSettings,
+} from '../../utils/lastTable';
 import { getPwaShareBase } from '../../utils/pwaLinks';
 import { buildCashInviteText, buildCashInviteUrl, buildCashInviteWhatsAppUrl } from '../../utils/cashInvite';
 import { JoinProgressIndicator } from './JoinProgressIndicator';
@@ -213,6 +218,11 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
   const [showFilterBottomSheet, setShowFilterBottomSheet] = useState<boolean>(false);
   const [showQrModal, setShowQrModal] = useState<boolean>(false);
   const [showTableQr, setShowTableQr] = useState<boolean>(false);
+  // « Nouvelle table comme la dernière fois » : mémoire locale, feuille de confirmation, invitations à lancer à l'arrivée de la salle.
+  const [lastTable, setLastTable] = useState<LastTable | null>(() => parseLastTable(getPersistentItem(LAST_TABLE_STORAGE_KEY)));
+  const [showQuickTable, setShowQuickTable] = useState<boolean>(false);
+  const [quickUnticked, setQuickUnticked] = useState<string[]>([]);
+  const pendingQuickInviteRef = useRef<string[] | null>(null);
 
   // Player identity & Code Input
   // Le pseudo se modifie uniquement dans le profil : c'est le même à table, au Palmarès et sur tous les appareils.
@@ -552,7 +562,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
     handleCancelPendingAction();
   };
 
-  const handleCreate = async (confirmLeaveCurrent?: boolean) => {
+  const handleCreate = async (confirmLeaveCurrent?: boolean, override?: LastTableSettings, inviteIds?: string[]) => {
     // Fair-play check: table creation restriction
     if (activeSanction && activeSanction.active) {
       if (
@@ -576,7 +586,8 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
     }
 
     // Creator Policy: Private tables require Google login
-    if (!isPublicRoom && !isLoggedIn) {
+    const cfg: LastTableSettings = override ?? { isPublic: isPublicRoom, fillWithBots, maxPlayers, baseBet, initialCapital, turnTimerSeconds, enableDoubleKora, enableUnder21 };
+    if (!cfg.isPublic && !isLoggedIn) {
       setAuthRequirementReason("Connecte-toi avec Google pour créer une table privée.");
       setShowAuthRequirementModal(true);
       return;
@@ -588,14 +599,14 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
     try {
       const res = await onCreateRoom({
         playerName: playerName.trim(),
-        fillWithBots,
-        maxPlayers,
-        baseBet,
-        initialCapital,
-        turnTimerSeconds,
-        enableDoubleKora,
-        enableUnder21,
-        isPublic: isPublicRoom,
+        fillWithBots: cfg.fillWithBots,
+        maxPlayers: cfg.maxPlayers,
+        baseBet: cfg.baseBet,
+        initialCapital: cfg.initialCapital,
+        turnTimerSeconds: cfg.turnTimerSeconds,
+        enableDoubleKora: cfg.enableDoubleKora,
+        enableUnder21: cfg.enableUnder21,
+        isPublic: cfg.isPublic,
       }, confirmLeaveCurrent);
       if (res && !res.success) {
         if (res.errorCode === 'ACTIVE_GAME_IN_PROGRESS' && res.activeGameRoomCode) {
@@ -603,7 +614,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
             activeRoomCode: res.activeGameRoomCode,
             message: res.error,
             onConfirmLeaveAndProceed: async () => {
-              await handleCreate(true);
+              await handleCreate(true, override, inviteIds);
             },
           });
           return;
@@ -611,7 +622,12 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
         throw new Error(res.error || 'La table n\'a pas pu être créée. Réessaie.');
       }
       setShowCreateModal(false);
+      setShowQuickTable(false);
       setActiveGameConflict(null);
+      const next = mergeLastTable(lastTable, cfg, null);
+      setLastTable(next);
+      setPersistentItem(LAST_TABLE_STORAGE_KEY, serializeLastTable(next));
+      if (inviteIds) pendingQuickInviteRef.current = inviteIds;
     } catch (err: any) {
       const errorMsg = err.message || 'La table n\'a pas pu être créée. Réessaie.';
       if (errorMsg.includes('Connexion Google requise')) {
@@ -770,6 +786,30 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
   });
   const { handleSendDirectInvite, handleWhatsAppInviteFriend, handleChallengeFriend, handleInviteOnlinePlayer } = friendChallenges;
 
+  // Table créée via « comme la dernière fois » : feuille de partage native tout de suite, puis invitations directes aux coéquipiers cochés.
+  useEffect(() => {
+    if (!room || room.hostId !== localPlayerId || !pendingQuickInviteRef.current) return;
+    const ids = pendingQuickInviteRef.current;
+    pendingQuickInviteRef.current = null;
+    void handleCopyLink();
+    ids.forEach((id) => { void handleSendDirectInvite(id); });
+  }, [room?.id]);
+
+  // On retient les coéquipiers de la table dont je suis l'hôte, pour le bouton de la prochaine fois.
+  useEffect(() => {
+    if (!room || room.hostId !== localPlayerId || room.cash) return;
+    const mates = pickTeammates(room.players, localPlayerId);
+    if (mates.length === 0) return;
+    setLastTable((prev) => {
+      if (!prev) return prev;
+      const same = prev.teammates.length === mates.length && prev.teammates.every((t, i) => t.id === mates[i].id);
+      if (same) return prev;
+      const next = mergeLastTable(prev, prev.settings, mates);
+      setPersistentItem(LAST_TABLE_STORAGE_KEY, serializeLastTable(next));
+      return next;
+    });
+  }, [room?.players?.length, room?.id]);
+
   const handleAcceptInvite = (invite: GameInvitation, confirmLeaveCurrent?: boolean) => {
     if (invite.cash) {
       // Table Kora Cash : on prévient l'hôte, puis la page d'invitation Cash décide de l'entrée (jamais de JOIN_ROOM direct).
@@ -792,6 +832,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
     showCreateModal ||
     showAddFriendModal ||
     showFilterBottomSheet ||
+    showQuickTable ||
     showQrModal;
 
   const closeTopDialog = () => {
@@ -805,6 +846,8 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
       setShowAddFriendModal(false);
     } else if (showFilterBottomSheet) {
       setShowFilterBottomSheet(false);
+    } else if (showQuickTable) {
+      setShowQuickTable(false);
     } else if (showQrModal) {
       setShowQrModal(false);
     }
@@ -1898,6 +1941,29 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
           {/* ===================================================================== */}
           {activeTab === 'play' && (
             <div className="flex flex-col gap-3.5">
+              {lastTable && (
+                <button
+                  type="button"
+                  id="btn-quick-table-last"
+                  disabled={isLoading}
+                  onClick={() => {
+                    setQuickUnticked([]);
+                    setShowQuickTable(true);
+                  }}
+                  className="w-full p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 flex items-center gap-3 text-left cursor-pointer transition active:scale-98 disabled:opacity-60"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                    <PlusCircle className="w-5 h-5 text-emerald-400" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-black text-white">Nouvelle table comme la dernière fois</span>
+                    <span className="text-xs text-slate-300 truncate">
+                      {lastTable.settings.maxPlayers} joueurs · mise {lastTable.settings.baseBet} · {lastTable.settings.isPublic ? 'publique' : 'privée'}
+                      {lastTable.teammates.length > 0 ? ` · ${lastTable.teammates.map((t) => t.name).join(', ')}` : ''}
+                    </span>
+                  </div>
+                </button>
+              )}
               {/* Hero Card : Créer un Salon personnalisé (Carte Héros Émeraude) */}
               <div className="p-5 rounded-3xl bg-gradient-to-br from-emerald-500/20 via-slate-900 to-slate-900 border border-emerald-500/40 shadow-xl flex flex-col gap-4">
                 <div className="flex items-start justify-between gap-3">
@@ -2512,6 +2578,55 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
       {/* MODAL 2 : CRÉER UN SALON PERSONNALISÉ (Sélecteur Central 2 Cartes)        */}
       {/* ========================================================================= */}
       <AnimatePresence>
+        {showQuickTable && lastTable && (
+          <div className="fixed inset-0 z-[70] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3" onClick={() => !isLoading && setShowQuickTable(false)}>
+            <div onClick={(e) => e.stopPropagation()} className="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-4 shadow-2xl flex flex-col gap-3">
+              <h3 className="text-base font-black text-white">Nouvelle table comme la dernière fois</h3>
+              <p className="text-xs text-slate-300">
+                {lastTable.settings.maxPlayers} joueurs · mise {lastTable.settings.baseBet} · capital {lastTable.settings.initialCapital} · {lastTable.settings.isPublic ? 'table publique' : 'table privée'}
+              </p>
+              {lastTable.teammates.length > 0 ? (
+                <div className="flex flex-col gap-2">
+                  <span className="text-xs font-bold text-slate-400">Prévenir par notification :</span>
+                  <div className="flex flex-wrap gap-2">
+                    {lastTable.teammates.map((t) => {
+                      const on = !quickUnticked.includes(t.id);
+                      return (
+                        <button
+                          key={t.id}
+                          type="button"
+                          aria-pressed={on}
+                          onClick={() => setQuickUnticked((prev) => (on ? [...prev, t.id] : prev.filter((x) => x !== t.id)))}
+                          className={`h-9 px-3 rounded-full text-xs font-bold border cursor-pointer ${on ? 'bg-emerald-500/20 border-emerald-400 text-emerald-200' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
+                        >
+                          {on ? '✓ ' : ''}{t.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400">Aucun coéquipier retenu pour l'instant : tu partageras le lien.</p>
+              )}
+              <button
+                type="button"
+                id="btn-quick-table-confirm"
+                disabled={isLoading}
+                onClick={() => {
+                  const ids = lastTable.teammates.filter((t) => !quickUnticked.includes(t.id)).map((t) => t.id);
+                  void handleCreate(false, lastTable.settings, ids);
+                }}
+                className="w-full h-12 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-sm font-black cursor-pointer disabled:opacity-60"
+              >
+                {isLoading ? 'Création…' : 'Créer et partager le lien'}
+              </button>
+              <button type="button" disabled={isLoading} onClick={() => setShowQuickTable(false)} className="text-xs font-bold text-slate-400 cursor-pointer py-1">
+                Annuler
+              </button>
+            </div>
+          </div>
+        )}
+
         {showCreateModal && (
           <div className="fixed inset-0 z-[70] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-2.5 sm:p-4">
             <motion.div
