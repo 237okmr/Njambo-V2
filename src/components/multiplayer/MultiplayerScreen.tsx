@@ -75,8 +75,10 @@ import { TableQrSheet } from './TableQrSheet';
 import { getPersistentItem, setPersistentItem } from '../../utils/storageUtils';
 import {
   LAST_TABLE_STORAGE_KEY, parseLastTable, serializeLastTable, pickTeammates, mergeLastTable,
+  LAST_CASH_TABLE_STORAGE_KEY, parseLastCashTable, serializeLastCashTable,
   type LastTable, type LastTableSettings,
 } from '../../utils/lastTable';
+import { setPendingTableInvite, takePendingTableInvite } from '../../utils/pendingTableInvite';
 import { getPwaShareBase } from '../../utils/pwaLinks';
 import { buildCashInviteText, buildCashInviteUrl, buildCashInviteWhatsAppUrl } from '../../utils/cashInvite';
 import { JoinProgressIndicator } from './JoinProgressIndicator';
@@ -222,7 +224,6 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
   const [lastTable, setLastTable] = useState<LastTable | null>(() => parseLastTable(getPersistentItem(LAST_TABLE_STORAGE_KEY)));
   const [showQuickTable, setShowQuickTable] = useState<boolean>(false);
   const [quickUnticked, setQuickUnticked] = useState<string[]>([]);
-  const pendingQuickInviteRef = useRef<string[] | null>(null);
 
   // Player identity & Code Input
   // Le pseudo se modifie uniquement dans le profil : c'est le même à table, au Palmarès et sur tous les appareils.
@@ -627,7 +628,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
       const next = mergeLastTable(lastTable, cfg, null);
       setLastTable(next);
       setPersistentItem(LAST_TABLE_STORAGE_KEY, serializeLastTable(next));
-      if (inviteIds) pendingQuickInviteRef.current = inviteIds;
+      if (inviteIds) setPendingTableInvite(inviteIds);
     } catch (err: any) {
       const errorMsg = err.message || 'La table n\'a pas pu être créée. Réessaie.';
       if (errorMsg.includes('Connexion Google requise')) {
@@ -788,18 +789,26 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({
 
   // Table créée via « comme la dernière fois » : feuille de partage native tout de suite, puis invitations directes aux coéquipiers cochés.
   useEffect(() => {
-    if (!room || room.hostId !== localPlayerId || !pendingQuickInviteRef.current) return;
-    const ids = pendingQuickInviteRef.current;
-    pendingQuickInviteRef.current = null;
+    if (!room || room.hostId !== localPlayerId) return;
+    const ids = takePendingTableInvite();
+    if (!ids) return;
     void handleCopyLink();
     ids.forEach((id) => { void handleSendDirectInvite(id); });
   }, [room?.id]);
 
   // On retient les coéquipiers de la table dont je suis l'hôte, pour le bouton de la prochaine fois.
   useEffect(() => {
-    if (!room || room.hostId !== localPlayerId || room.cash) return;
+    if (!room || room.hostId !== localPlayerId) return;
     const mates = pickTeammates(room.players, localPlayerId);
     if (mates.length === 0) return;
+    if (room.cash) {
+      // Table Kora Cash : mémoire à part, ajoutée à la dernière table Cash connue (jamais mélangée aux tables gratuites).
+      const prevCash = parseLastCashTable(getPersistentItem(LAST_CASH_TABLE_STORAGE_KEY));
+      if (prevCash && JSON.stringify(prevCash.teammates) !== JSON.stringify(mates)) {
+        setPersistentItem(LAST_CASH_TABLE_STORAGE_KEY, serializeLastCashTable({ ...prevCash, teammates: mates }));
+      }
+      return;
+    }
     setLastTable((prev) => {
       if (!prev) return prev;
       const same = prev.teammates.length === mates.length && prev.teammates.every((t, i) => t.id === mates[i].id);

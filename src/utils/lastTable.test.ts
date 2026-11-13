@@ -39,3 +39,30 @@ test('maxPlayers borné entre 2 et 4', () => {
   const raw = JSON.stringify({ settings: { ...settings, maxPlayers: 9 }, teammates: [] });
   assert.equal(parseLastTable(raw)?.settings.maxPlayers, 4);
 });
+
+import { parseLastCashTable, serializeLastCashTable, cashRecreateBlocker } from './lastTable';
+import { setPendingTableInvite, takePendingTableInvite, clearPendingTableInvite } from './pendingTableInvite';
+
+const cash = { betLevel: 500, capacity: 3, isPublic: false, buyIn: 5000, teammates: [{ id: 'a', name: 'Ama' }] };
+const view = { betLevels: [100, 500, 1000], minBuyInMultiple: 10, maxBuyInMultiple: 40 };
+
+test('table Cash : aller-retour et données abîmées', () => {
+  assert.deepEqual(parseLastCashTable(serializeLastCashTable(cash)), cash);
+  assert.equal(parseLastCashTable('{"betLevel":0,"capacity":2,"buyIn":10}'), null);
+  assert.equal(parseLastCashTable('xx'), null);
+});
+
+test('table Cash : blocages avant création en un geste', () => {
+  assert.equal(cashRecreateBlocker(cash, view, 10000), null);
+  assert.equal(cashRecreateBlocker(cash, { ...view, betLevels: [100] }, 10000), 'level');
+  assert.equal(cashRecreateBlocker({ ...cash, buyIn: 100 }, view, 10000), 'range');
+  assert.equal(cashRecreateBlocker(cash, view, 4999), 'balance');
+});
+
+test('invitations en attente : consommées une seule fois', () => {
+  clearPendingTableInvite();
+  assert.equal(takePendingTableInvite(), null);
+  setPendingTableInvite(['a', 'b']);
+  assert.deepEqual(takePendingTableInvite(), ['a', 'b']);
+  assert.equal(takePendingTableInvite(), null);
+});

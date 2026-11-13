@@ -2,6 +2,11 @@ import React, { useMemo, useState } from 'react';
 import { CheckCircle2, Loader2, ShieldAlert, Users } from 'lucide-react';
 import { CashTablesView, acceptCashTableTerms } from '../services/koraCashClient';
 import { formatFcfa, parseTypedAmount } from '../services/koraCashFormat';
+import { getPersistentItem, setPersistentItem } from '../utils/storageUtils';
+import {
+  LAST_CASH_TABLE_STORAGE_KEY, parseLastCashTable, serializeLastCashTable, cashRecreateBlocker, type LastCashTable,
+} from '../utils/lastTable';
+import { setPendingTableInvite, clearPendingTableInvite } from '../utils/pendingTableInvite';
 
 export interface CashTableRequest {
   betLevel?: number;
@@ -45,6 +50,9 @@ export const KoraCashTablesPanel: React.FC<KoraCashTablesPanelProps> = ({ view, 
   const [busy, setBusy] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [ticked, setTicked] = useState<boolean>(false);
+  const [showQuick, setShowQuick] = useState<boolean>(false);
+  const [quickUnticked, setQuickUnticked] = useState<string[]>([]);
+  const lastCash: LastCashTable | null = parseLastCashTable(getPersistentItem(LAST_CASH_TABLE_STORAGE_KEY));
 
   const range = useMemo(() => ({ min: bet * view.minBuyInMultiple, max: bet * view.maxBuyInMultiple }), [bet, view.minBuyInMultiple, view.maxBuyInMultiple]);
   const canAffordLevel = available >= range.min;
@@ -82,6 +90,33 @@ export const KoraCashTablesPanel: React.FC<KoraCashTablesPanelProps> = ({ view, 
           : { betLevel: bet, capacity, isPublic: mode === 'public', buyIn: parsed.amount }
       );
       if (!result.success) setError(result.error || 'Entrée à la table impossible.');
+      else if (mode !== 'code') rememberCashTable({ betLevel: bet, capacity, isPublic: mode === 'public', buyIn: parsed.amount });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /** Retient la table ouverte (hors « J'ai un code ») ; les coéquipiers déjà connus sont conservés. */
+  const rememberCashTable = (t: Omit<LastCashTable, 'teammates'>) => {
+    const prev = parseLastCashTable(getPersistentItem(LAST_CASH_TABLE_STORAGE_KEY));
+    setPersistentItem(LAST_CASH_TABLE_STORAGE_KEY, serializeLastCashTable({ ...t, teammates: prev?.teammates ?? [] }));
+  };
+
+  const quickBlocker = lastCash ? cashRecreateBlocker(lastCash, view, available) : null;
+
+  const submitQuick = async () => {
+    if (!lastCash || quickBlocker) return;
+    setError(null);
+    setBusy(true);
+    setPendingTableInvite(lastCash.teammates.filter((t) => !quickUnticked.includes(t.id)).map((t) => t.id));
+    try {
+      const result = await onOpenTable({ betLevel: lastCash.betLevel, capacity: lastCash.capacity, isPublic: lastCash.isPublic, buyIn: lastCash.buyIn });
+      if (!result.success) {
+        clearPendingTableInvite();
+        setError(result.error || 'Entrée à la table impossible.');
+      } else {
+        rememberCashTable(lastCash);
+      }
     } finally {
       setBusy(false);
     }
@@ -129,6 +164,77 @@ export const KoraCashTablesPanel: React.FC<KoraCashTablesPanelProps> = ({ view, 
 
   return (
     <div className="flex flex-col gap-3 p-3 rounded-2xl bg-slate-950/60 border border-slate-800">
+      {lastCash && !showQuick && (
+        <button
+          type="button"
+          id="btn-quick-cash-table-last"
+          onClick={() => { setQuickUnticked([]); setError(null); setShowQuick(true); }}
+          className="w-full p-3 rounded-xl bg-amber-500/15 border border-amber-400/50 text-left cursor-pointer"
+        >
+          <span className="block text-xs font-black text-white">Nouvelle table Kora Cash comme la dernière fois</span>
+          <span className="block text-xs text-slate-300">
+            Mise {formatFcfa(lastCash.betLevel)} · {lastCash.capacity} joueurs · {lastCash.isPublic ? 'salon public' : 'table privée'}
+          </span>
+        </button>
+      )}
+
+      {lastCash && showQuick && (
+        <div className="flex flex-col gap-2.5 p-3 rounded-xl bg-slate-900 border border-amber-400/50" id="cash-quick-sheet">
+          <span className="text-xs font-black text-white">Nouvelle table Kora Cash comme la dernière fois</span>
+          <ul className="text-xs text-slate-200 leading-relaxed list-none flex flex-col gap-0.5">
+            <li>Mise par partie : {formatFcfa(lastCash.betLevel)}</li>
+            <li>Joueurs : {lastCash.capacity} · {lastCash.isPublic ? 'salon public' : 'table privée'}</li>
+            <li>Somme que tu apportes : {formatFcfa(lastCash.buyIn)}</li>
+            <li>Ton solde disponible : {formatFcfa(available)}</li>
+          </ul>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Ta somme est engagée dès que tu prends place. Chaque invité choisit lui-même la sienne en arrivant. Commission : {view.rakePercent} % de chaque pot gagné.
+          </p>
+          {lastCash.teammates.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-bold text-slate-300">Prévenir par notification :</span>
+              <div className="flex flex-wrap gap-1.5">
+                {lastCash.teammates.map((t) => {
+                  const on = !quickUnticked.includes(t.id);
+                  return (
+                    <button key={t.id} type="button" aria-pressed={on} onClick={() => setQuickUnticked((prev) => (on ? [...prev, t.id] : prev.filter((x) => x !== t.id)))} className={chipClass(on)}>
+                      {on ? '✓ ' : ''}{t.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          {quickBlocker && (
+            <p className="flex items-start gap-2 text-xs font-bold text-amber-200">
+              <ShieldAlert className="w-4 h-4 shrink-0" />
+              <span>
+                {quickBlocker === 'balance'
+                  ? `Il te faut ${formatFcfa(lastCash.buyIn)} pour rouvrir cette table.`
+                  : 'Les règles de mise ont changé depuis ta dernière table : choisis-la à la main ci-dessous.'}
+                {quickBlocker === 'balance' && (
+                  <>{' '}<button type="button" onClick={onGoToDeposit} className="underline underline-offset-2 cursor-pointer">Déposer</button></>
+                )}
+              </span>
+            </p>
+          )}
+          <button
+            type="button"
+            id="btn-quick-cash-confirm"
+            disabled={busy || quickBlocker !== null}
+            onClick={() => void submitQuick()}
+            className="w-full h-10 rounded-xl bg-gradient-to-r from-amber-400 to-amber-600 text-slate-950 font-black text-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+          >
+            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+            <span>Prendre place et partager le lien</span>
+          </button>
+          <button type="button" disabled={busy} onClick={() => setShowQuick(false)} className="text-xs font-bold text-slate-400 cursor-pointer py-1">
+            Annuler
+          </button>
+          {error && <p className="text-xs font-bold text-rose-300">{error}</p>}
+        </div>
+      )}
+
       <div role="radiogroup" aria-label="Type de table" className="flex flex-wrap gap-1.5">
         {MODES.map((m) => (
           <button key={m.id} type="button" role="radio" aria-checked={mode === m.id} onClick={() => { setMode(m.id); setError(null); }} className={chipClass(mode === m.id)}>
