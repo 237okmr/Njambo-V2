@@ -42,6 +42,9 @@ export interface KatikaEngineConfig {
   crashReportWindowSeconds?: number;
   crashReportMaxPerClient?: number;
   crashReportMaxPerWindow?: number;
+  tablePreviewWindowSeconds?: number;
+  tablePreviewMaxPerClient?: number;
+  tablePreviewMaxPerWindow?: number;
   appointmentHorizonHours?: number;
   appointmentMinLeadSeconds?: number;
   appointmentReminderLeadMinutes?: number;

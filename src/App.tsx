@@ -6,6 +6,7 @@ import { Card, GameState, Player, SavedManche, AIDifficulty, GamePhase, GameInvi
 import { DEFAULT_BASE_BET, DEFAULT_INITIAL_CAPITAL } from './utils/deck';
 import { sounds, triggerHaptic } from './utils/sound';
 import { getPwaShareBase } from './utils/pwaLinks';
+import { JoinArrivalCard } from './components/multiplayer/JoinArrivalCard';
 import { forgetCashInviteCode, readCashInviteCode, recallCashInviteCode, rememberCashInviteCode, stripCashInviteParam } from './utils/cashInvite';
 import { GAME_HOME_PATH, isConsoleLocation, isKnownGamePath, routePathFor, screenFromPath } from './utils/appRoutes';
 import { consumeBackLayer } from './utils/backLayers';
@@ -1004,6 +1005,19 @@ function GameApp() {
     }, 400);
   }, [triggerToast, setShowMultiplayerHub]);
 
+  // Lien partagé (sans notification) : une carte « Rejoindre la table de X » d'abord, un seul geste ensuite.
+  const [arrivalCode, setArrivalCode] = useState<string | null>(null);
+  const cleanDeepLinkUrl = useCallback(() => {
+    // delay-ok: nettoyage de l'adresse du navigateur après ouverture du hub (même geste que les autres liens profonds), aucun effet sur la table
+    setTimeout(() => {
+      try {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } catch {
+        // ignore
+      }
+    }, 400);
+  }, []);
+
   useEffect(() => {
     if (deepLinkHandledRef.current) return;
     try {
@@ -1013,6 +1027,13 @@ function GameApp() {
       const cleanCode = rawCode.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase();
       if (!cleanCode) return;
       deepLinkHandledRef.current = true;
+
+      // Lien partagé par un joueur (WhatsApp, QR…) : pas de rejoindre automatique, la carte d'arrivée demande un seul geste.
+      // Une notification d'invitation (?inv=) vaut déjà un « oui » : elle suit le chemin direct ci-dessous.
+      if (!urlParams.get('inv') && wsService.getCurrentRoom()?.id !== cleanCode) {
+        setArrivalCode(cleanCode);
+        return;
+      }
 
       // Ouverture depuis une notification d'invitation alors que l'app était fermée :
       // on solde l'invitation (l'invitant reçoit « accepté ») comme le fait le bouton Rejoindre.
@@ -1064,6 +1085,32 @@ function GameApp() {
       // ignore
     }
   }, [handleJoinRoom, localPlayerName, triggerToast, setShowMultiplayerHub]);
+
+  const handleArrivalJoin = useCallback(
+    (name: string) => {
+      const code = arrivalCode;
+      if (!code) return;
+      setArrivalCode(null);
+      setDeepLinkWaitState({ active: true, roomCode: code, elapsedSeconds: 0 });
+      handleJoinRoom(code, name).then((res) => {
+        setDeepLinkWaitState(null);
+        if (res.success) {
+          triggerToast(`Table #${code} rejointe.`);
+        } else {
+          triggerToast(res.error || 'Connexion à la table impossible.');
+          setShowMultiplayerHub(true); // le code reste prérempli tant que l'URL n'est pas nettoyée
+        }
+        cleanDeepLinkUrl();
+      });
+    },
+    [arrivalCode, handleJoinRoom, triggerToast, setShowMultiplayerHub, cleanDeepLinkUrl]
+  );
+
+  const handleArrivalLater = useCallback(() => {
+    setArrivalCode(null);
+    setShowMultiplayerHub(true); // le code reste prérempli tant que l'URL n'est pas nettoyée
+    cleanDeepLinkUrl();
+  }, [setShowMultiplayerHub, cleanDeepLinkUrl]);
 
   // Ouverture depuis une notification d'appel alors que l'app était fermée (?social=calls&mode=free|cash) :
   // Social s'ouvre sur les invitations, dans le bon mode. Le lien est nettoyé aussitôt.
@@ -3526,6 +3573,10 @@ function GameApp() {
           </div>
         )}
       </TopNotificationStack>
+
+      {arrivalCode && (
+        <JoinArrivalCard code={arrivalCode} initialName={localPlayerName} onJoin={handleArrivalJoin} onLater={handleArrivalLater} />
+      )}
 
       {/* Deep Link Joining Overlay */}
       {deepLinkWaitState?.active && (

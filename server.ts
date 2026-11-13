@@ -11,6 +11,10 @@ import compression from 'compression';
 import { WebSocketServer } from 'ws';
 import { createServer as createViteServer } from 'vite';
 import { RoomManager } from './server/rooms/roomManager';
+import { createCrashLimiter } from './server/diagnostics/crashReportRules';
+import { buildLinkPreview, injectLinkPreview, requestOrigin } from './server/linkPreview/linkPreviewRules';
+import { buildFreeTablePreview } from './server/linkPreview/tablePreview';
+import fs from 'node:fs';
 import { loadEngineConfigFromStore, persistEngineConfigToStore, getConfigStoreStatus } from './server/engine/configStore';
 import { recordConnection, recordDisconnection, startMetricsFlushLoop, getTodaySnapshot } from './server/rooms/connectionMetrics';
 import { getEngineConfig, getEngineConfigVersion } from './server/engine/engineConfig';
@@ -469,6 +473,26 @@ async function startServer() {
       clientKey: forwarded || req.socket.remoteAddress || '',
     });
     res.status(204).end();
+  });
+
+  // Carte d'arrivée d'un lien de table gratuite : hôte et places, jamais de capital ni de noms de joueurs.
+  // Plafonné par appareil : au-delà, réponse neutre (on ne laisse pas deviner les codes un par un).
+  const tablePreviewLimiter = createCrashLimiter();
+  app.get('/api/table-preview/:code', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const cfg = getEngineConfig();
+    const forwarded = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+    const allowed = tablePreviewLimiter.allow(forwarded || req.socket.remoteAddress || '', Date.now(), {
+      windowMs: Number(cfg.tablePreviewWindowSeconds ?? 60) * 1000,
+      maxPerKey: Number(cfg.tablePreviewMaxPerClient ?? 20),
+      maxGlobal: Number(cfg.tablePreviewMaxPerWindow ?? 600),
+    });
+    if (!allowed) {
+      res.json({ state: 'UNAVAILABLE' });
+      return;
+    }
+    const code = String(req.params.code || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 8);
+    res.json(buildFreeTablePreview(code ? RoomManager.getRoom(code) : undefined));
   });
 
   // Télémétrie : réception des parties SOLO (jouées sur l'appareil, parfois hors ligne).
@@ -3145,6 +3169,17 @@ async function startServer() {
 
     app.get('*', (req, res) => {
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      // Lien de table (?join=, ?room=, ?cash=) : la page part avec son aperçu (titre, texte, image) pour les robots des messageries.
+      const preview = buildLinkPreview(req.query as Record<string, unknown>, requestOrigin(req.headers as Record<string, unknown>, req.protocol));
+      if (preview) {
+        try {
+          const html = fs.readFileSync(path.join(distPath, 'index.html'), 'utf8');
+          res.type('html').send(injectLinkPreview(html, preview));
+          return;
+        } catch {
+          // page illisible : on retombe sur l'envoi normal
+        }
+      }
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }

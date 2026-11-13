@@ -411,6 +411,21 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Plafond global sur la même fenêtre : chaque rapport accepté coûte une lecture et une écriture Firestore.',
   },
   {
+    key: 'tablePreviewWindowSeconds', label: 'Carte d\'arrivée d\'un lien de table : durée de la fenêtre de plafonds', unit: 's',
+    min: 10, max: 600, default: 60, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Les deux plafonds suivants se comptent sur cette durée.',
+  },
+  {
+    key: 'tablePreviewMaxPerClient', label: 'Carte d\'arrivée : consultations par appareil', unit: '',
+    min: 1, max: 300, default: 20, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Empêche de deviner les codes de table un par un pour découvrir qui les a ouvertes. Au-delà, la carte s\'affiche sans détail.',
+  },
+  {
+    key: 'tablePreviewMaxPerWindow', label: 'Carte d\'arrivée : consultations pour tout le serveur', unit: '',
+    min: 1, max: 20000, default: 600, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Plafond global sur la même fenêtre.',
+  },
+  {
     key: 'clientOnlinePlayersPollSeconds', label: 'Rafraîchissement de la liste « En ligne »', unit: 's',
     min: 5, max: 60, default: 15, group: 'connexion', scope: 'client', effect: 'immediate', advanced: true,
     help: 'Fréquence à laquelle la liste « En ligne » se met à jour tant que son écran est ouvert.',
