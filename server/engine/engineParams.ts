@@ -546,6 +546,36 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Un type d\'appareil est signalé quand sa part de fenêtres de connexion qui échouent (hors « fermée par l\'utilisateur », qui peut être un simple abandon) dépasse d\'au moins ce nombre de points celle des autres appareils.',
   },
   {
+    key: 'cashAuditEnabled', label: 'Audit des portefeuilles Kora Cash (lecture seule)', unit: '', type: 'boolean',
+    min: 0, max: 1, default: true, group: 'katika', scope: 'server', effect: 'immediate',
+    help: 'Ouvert : le serveur rapproche périodiquement chaque portefeuille, son registre et les fiches de siège, et signale tout écart dans katika. Ne modifie jamais un solde ni une ligne de registre, et ne bloque aucun retrait.',
+  },
+  {
+    key: 'cashAuditIntervalMinutes', label: 'Audit des portefeuilles : intervalle entre deux passages', unit: 'min',
+    min: 5, max: 10080, default: 1440, group: 'katika', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Chaque passage ne revoit que les joueurs dont le registre a bougé depuis le précédent. Un contrôle complet se lance à la demande depuis katika.',
+  },
+  {
+    key: 'cashAuditMaxPlayersPerRun', label: 'Audit des portefeuilles : joueurs par passage', unit: '',
+    min: 10, max: 5000, default: 500, group: 'katika', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Plafond de lectures : au-delà, le passage s\'arrête et reprend là où il s\'est arrêté au passage suivant.',
+  },
+  {
+    key: 'cashAuditResumeSeconds', label: 'Audit des portefeuilles : reprise après un passage partiel', unit: 's',
+    min: 5, max: 3600, default: 30, group: 'katika', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Quand un passage atteint son plafond de joueurs, le suivant démarre après ce délai (et non à l\'intervalle normal) jusqu\'à avoir tout vu.',
+  },
+  {
+    key: 'cashAuditOverlapSeconds', label: 'Audit des portefeuilles : chevauchement des passages', unit: 's',
+    min: 0, max: 3600, default: 300, group: 'katika', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Chaque passage remonte un peu avant le précédent pour ne manquer aucune écriture arrivée pendant celui-ci.',
+  },
+  {
+    key: 'cashAuditLeaseSeconds', label: 'Audit des portefeuilles : durée du verrou', unit: 's',
+    min: 60, max: 3600, default: 600, group: 'katika', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Un seul serveur à la fois fait l\'audit. Si un passage plante, le verrou expire après ce délai et un autre peut reprendre.',
+  },
+  {
     key: 'tablePreviewWindowSeconds', label: 'Carte d\'arrivée d\'un lien de table : durée de la fenêtre de plafonds', unit: 's',
     min: 10, max: 600, default: 60, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
     help: 'Les deux plafonds suivants se comptent sur cette durée.',

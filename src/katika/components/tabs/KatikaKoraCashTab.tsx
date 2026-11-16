@@ -18,6 +18,7 @@ import { KatikaService, DEFAULT_KORA_CASH_CONFIG } from '../../services/katikaSe
 import { useKatikaAuth } from '../../context/KatikaAuthContext';
 import { ProviderKeysPanel } from '../../cash/ProviderKeysPanel';
 import { KatikaDemoCleanupCard } from '../../cash/KatikaDemoCleanupCard';
+import { KatikaWalletAuditCard } from '../../cash/KatikaWalletAuditCard';
 import { KatikaCampayDepositsCard } from '../../cash/KatikaCampayDepositsCard';
 import { KatikaWithdrawalsCard } from '../../cash/KatikaWithdrawalsCard';
 import { KatikaCashTablesCard } from '../../cash/KatikaCashTablesCard';
@@ -277,6 +278,7 @@ export const KatikaKoraCashTab: React.FC = () => {
         {activeSection === 'FINANCES' && <KatikaFinanceCard />}
         {activeSection === 'SECURITY_ALERTS' && <KatikaSecurityCard />}
         {activeSection === 'RESPONSIBLE_GAMING' && <KatikaResponsibleGamingCard />}
+        {activeSection === 'WALLETS_TRANSACTIONS' && <KatikaWalletAuditCard />}
         {activeSection === 'WALLETS_TRANSACTIONS' && <KatikaJournalCard />}
         {activeSection === 'WALLETS_TRANSACTIONS' && <KatikaCampayDepositsCard />}
         {activeSection === 'WALLETS_TRANSACTIONS' && <KatikaDemoCleanupCard />}

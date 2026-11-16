@@ -550,6 +550,13 @@ service cloud.firestore {
     match /client_auth_stats/{docId} {
       allow read, write: if false;
     }
+    // Kora Cash — audit d'intégrité des portefeuilles : écrit et lu par le serveur seulement.
+    match /cash_audit_findings/{docId} {
+      allow read, write: if false;
+    }
+    match /cash_audit_state/{docId} {
+      allow read, write: if false;
+    }
     // Rendez-vous du centre social : lus et écrits par le serveur seulement.
     match /social_appointments/{docId} {
       allow read, write: if false;

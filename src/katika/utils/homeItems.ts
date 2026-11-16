@@ -25,6 +25,8 @@ export interface HomeInputs {
   inviteSuspects?: number | null;
   /** Types d'appareils dont les fenêtres de connexion Google échouent nettement plus que chez les autres ; null si non lu ou non permis. */
   authSuspects?: number | null;
+  /** Portefeuilles Kora Cash en écart avec leur registre (erreurs de l'audit, hors simples informations), par environnement ; null si non lu ou non permis. */
+  cashAudit?: { live: number; demo: number } | null;
 }
 
 const plural = (n: number, one: string, many: string) => `${n} ${n > 1 ? many : one}`;
@@ -67,6 +69,20 @@ export function buildHomeTodo(input: HomeInputs): HomeTodoItem[] {
       level: 'WARNING',
       text: `${plural(input.authSuspects, "type d'appareil échoue", "types d'appareils échouent")} à ouvrir la connexion Google (2 jours)`,
       tab: 'LOGS',
+    });
+  }
+  if (input.cashAudit && input.cashAudit.live > 0) {
+    items.push({
+      level: 'CRITICAL',
+      text: `${plural(input.cashAudit.live, 'portefeuille réel est', 'portefeuilles réels sont')} en écart avec le registre Kora Cash`,
+      tab: 'KORA_CASH',
+    });
+  }
+  if (input.cashAudit && input.cashAudit.demo > 0) {
+    items.push({
+      level: 'WARNING',
+      text: `${plural(input.cashAudit.demo, 'portefeuille de démo est', 'portefeuilles de démo sont')} en écart avec le registre Kora Cash`,
+      tab: 'KORA_CASH',
     });
   }
   if (items.length === 0 && input.serverUp === true) items.push({ level: 'OK', text: 'Rien à traiter pour le moment' });

@@ -98,6 +98,8 @@ import { setWalletChangeListener } from './server/cash/walletEvents';
 import { listPendingDeposits, listRecentCampayDeposits } from './server/cash/depositStore';
 import { previewDemoCleanup, applyDemoCleanup } from './server/cash/demoCleanup';
 import { totalDeduction } from './server/cash/demoCleanupRules';
+import { auditEnabled, listAuditFindings, readAuditState, requestFullCashAudit, startCashAuditLoop } from './server/cash/cashAuditStore';
+import { AUDIT_CODES } from './server/cash/cashAuditRules';
 import { DepositError } from './server/cash/depositRules';
 import { CashLedgerError } from './server/cash/cashTypes';
 import { verifyFirebaseIdToken, setAdminUserClaim, getFirebaseAdminAuth, getFirebaseAdminAppDb } from './server/firebaseAdmin';
@@ -161,6 +163,7 @@ async function startServer() {
   RoomManager.enableRoomSnapshots();
   enableGameRecording();
   startMetricsFlushLoop();
+  startCashAuditLoop();
 
   const app = express();
   app.use(compression());
@@ -2466,6 +2469,47 @@ async function startServer() {
       console.error('[KoraCash] Correction des soldes de démo impossible.', err instanceof Error ? err.message : String(err));
       res.status(500).json({ success: false, error: 'Correction impossible.' });
     }
+  });
+
+  // Kora Cash — audit d'intégrité des portefeuilles (lecture seule sur l'argent) : état, compteurs et fiches en écart.
+  app.get('/api/katika/cash/audit', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    if (katikaReadsBlocked()) {
+      return res.status(503).json({ success: false, code: 'READ_LIMIT', error: READ_LIMIT_MESSAGE });
+    }
+    try {
+      // ?summary=1 : compteurs seulement (accueil de katika), sans relire les fiches.
+      const summaryOnly = req.query.summary === '1';
+      const [state, findings] = await Promise.all([readAuditState(), summaryOnly ? Promise.resolve([]) : listAuditFindings(100)]);
+      const none = { errors: 0, infos: 0 };
+      res.json({
+        success: true,
+        enabled: auditEnabled(),
+        running: Boolean(state.lease && state.lease.until > Date.now()),
+        lastRun: state.lastRun ?? null,
+        lastFullCompletedAt: state.lastFullCompletedAt ?? null,
+        full: state.full ? { active: state.full.active === true, startedAt: state.full.startedAt } : null,
+        counts: { DEMO: state.counts?.DEMO ?? none, LIVE: state.counts?.LIVE ?? none },
+        codes: AUDIT_CODES,
+        findings,
+      });
+    } catch (err) {
+      console.error('[CashAudit] Lecture impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Lecture de l\'audit impossible.' });
+    }
+  });
+
+  // Lance (ou poursuit) un contrôle complet de tous les portefeuilles. Répond tout de suite ; la suite avance en arrière-plan.
+  app.post('/api/katika/cash/audit/run', express.json(), (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    if (!auditEnabled()) {
+      return res.status(409).json({ success: false, error: 'L\'audit est désactivé dans les réglages.' });
+    }
+    if (katikaReadsBlocked()) {
+      return res.status(503).json({ success: false, code: 'READ_LIMIT', error: READ_LIMIT_MESSAGE });
+    }
+    void requestFullCashAudit().catch((err) => console.warn('[CashAudit] Contrôle complet :', err instanceof Error ? err.message : String(err)));
+    res.status(202).json({ success: true, started: true });
   });
 
   // Kora Cash — journal global des transactions (lecture seule). La période borne la requête ; type et joueur filtrent les lignes lues ;

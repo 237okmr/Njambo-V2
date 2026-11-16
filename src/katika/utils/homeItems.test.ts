@@ -36,6 +36,27 @@ describe('plantages de l\'application', () => {
   });
 });
 
+describe('audit des portefeuilles Kora Cash', () => {
+  it('un écart en réel est critique et mène à l\'onglet Kora Cash', () => {
+    const items = buildHomeTodo({ ...base, cashAudit: { live: 1, demo: 0 } });
+    assert.equal(items[0].level, 'CRITICAL');
+    assert.equal(items[0].text, '1 portefeuille réel est en écart avec le registre Kora Cash');
+    assert.equal(items[0].tab, 'KORA_CASH');
+    assert.equal(buildHomeTodo({ ...base, cashAudit: { live: 4, demo: 0 } })[0].text, '4 portefeuilles réels sont en écart avec le registre Kora Cash');
+  });
+
+  it('un écart en démo n\'est qu\'un avertissement, après le critique', () => {
+    const items = buildHomeTodo({ ...base, cashAudit: { live: 2, demo: 3 } });
+    assert.deepEqual(items.map((i) => i.level), ['CRITICAL', 'WARNING']);
+    assert.equal(items[1].text, '3 portefeuilles de démo sont en écart avec le registre Kora Cash');
+  });
+
+  it('aucun écart ou mesure non lue : pas de ligne', () => {
+    assert.equal(buildHomeTodo({ ...base, cashAudit: { live: 0, demo: 0 } })[0].level, 'OK');
+    assert.equal(buildHomeTodo({ ...base, cashAudit: null })[0].level, 'OK');
+  });
+});
+
 describe('Confirmation renforcée de Kora Cash sur téléphone', () => {
   it('seulement pour une action Kora Cash, sur petit écran', () => {
     assert.equal(needsStrongConfirm('POST', '/api/katika/cash/withdrawals/x/approve', true), true);

@@ -69,6 +69,12 @@ export interface KatikaEngineConfig {
   authStatsRetentionDays?: number;
   authStatsMinAttempts?: number;
   authStatsGapPoints?: number;
+  cashAuditEnabled?: boolean;
+  cashAuditIntervalMinutes?: number;
+  cashAuditMaxPlayersPerRun?: number;
+  cashAuditResumeSeconds?: number;
+  cashAuditOverlapSeconds?: number;
+  cashAuditLeaseSeconds?: number;
   tablePreviewWindowSeconds?: number;
   tablePreviewMaxPerClient?: number;
   tablePreviewMaxPerWindow?: number;
