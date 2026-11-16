@@ -264,6 +264,25 @@
           } catch (e) {}
         }
         window.__njamboReportCrash = report;
+        // Comptage anonyme des démarrages : « commencé » ici (avant le code du jeu, donc même si un vieux navigateur ne sait pas
+        // le lire), « accueil affiché » depuis l'écran d'accueil. Un envoi de chaque par chargement de page, jamais pour la console katika.
+        var bootSent = {};
+        function bootSignal(step) {
+          try {
+            if (bootSent[step]) return;
+            bootSent[step] = true;
+            var body = JSON.stringify({ step: step, build: build() });
+            if (navigator.sendBeacon && navigator.sendBeacon('/api/telemetry/client-boot', new Blob([body], { type: 'application/json' }))) return;
+            if (window.fetch) fetch('/api/telemetry/client-boot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true }).catch(function () {});
+          } catch (e) {}
+        }
+        var isConsole = /^\/(katika|copilot)/i.test(location.pathname) || /(^|[?&])(copilot|katika)(=|&|$)|mode=copilot|view=copilot/i.test(location.search);
+        if (!isConsole) {
+          window.__njamboBootSignal = bootSignal;
+          // Après l'analyse de la page : la version de l'application se lit sur la balise du script principal, pas encore présente ici.
+          if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { bootSignal('start'); });
+          else bootSignal('start');
+        }
         window.addEventListener('error', function (e) {
           if (e && e.filename && /^(chrome|moz|safari)-extension:/.test(e.filename)) return;
           show(e && e.message);

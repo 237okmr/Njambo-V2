@@ -36,13 +36,14 @@ export const KatikaHomeTab: React.FC<KatikaHomeTabProps> = ({ access, maintenanc
     const canCash = can(access, 'cash.view');
     const canLogs = can(access, 'logs.view');
     const canLive = can(access, 'dashboard.view') || can(access, 'rooms.view');
-    const [health, withdrawals, protection, logs, metrics, crashes] = await Promise.all([
+    const [health, withdrawals, protection, logs, metrics, crashes, bootStats] = await Promise.all([
       fetch('/api/health', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
       canCash ? readJson('/api/katika/cash/withdrawals') : Promise.resolve(null),
       canCash ? readJson('/api/katika/cash/protection') : Promise.resolve(null),
       canLogs ? readJson('/api/katika/audit-logs') : Promise.resolve(null),
       canLive ? readJson('/api/katika/live-metrics') : Promise.resolve(null),
       canLogs ? readJson('/api/katika/crashes') : Promise.resolve(null),
+      canLogs ? readJson('/api/katika/boot-stats?days=2') : Promise.resolve(null),
     ]);
 
     const since = Date.now() - 24 * 3_600_000; // delay-ok: période d'affichage « dernières 24 h », pas un délai
@@ -57,6 +58,7 @@ export const KatikaHomeTab: React.FC<KatikaHomeTabProps> = ({ access, maintenanc
       openCrashes: Array.isArray(crashes?.crashes)
         ? crashes.crashes.filter((c: { resolved: boolean; lastSeenAt: number }) => !c.resolved && c.lastSeenAt >= since).length
         : null,
+      bootSuspects: typeof bootStats?.suspects === 'number' ? bootStats.suspects : null,
       journalAlerts: logs
         ? {
             critical: recentLogs.filter((l) => l.severity === 'CRITICAL').length,

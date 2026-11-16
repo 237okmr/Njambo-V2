@@ -114,6 +114,8 @@ import { buildClientAudit, katikaAuditStore, mergeAuditLogs } from './server/kat
 import { getReadBudget, recordServerReads } from './server/katika/readBudget';
 import { createCrashReportService } from './server/diagnostics/crashReports';
 import { firestoreCrashStore } from './server/diagnostics/crashReportStore';
+import { analyzeBootFamilies, sanitizeBootSignal, sumBootDays } from './server/diagnostics/bootStatsRules';
+import { flushBootStats, readBootDays, recordBootSignal } from './server/diagnostics/bootStatsStore';
 import { getClientReads, recordClientReads } from './server/katika/clientReads';
 import { computeRepairPlan } from './server/profileRepair';
 import { collection, getCountFromServer, getDocs, query, limit, orderBy, startAfter } from 'firebase/firestore';
@@ -174,6 +176,7 @@ async function startServer() {
     console.log(`[Server] Signal ${signal} reçu : sauvegarde des tables (max ${flushSeconds}s) avant arrêt.`);
     await Promise.race([
       RoomManager.flushAllRoomSnapshots(),
+      flushBootStats(),
       new Promise((resolve) => setTimeout(resolve, flushSeconds * 1000)),
     ]).catch(() => {});
     process.exit(0);
@@ -472,6 +475,29 @@ async function startServer() {
       userAgent: req.headers['user-agent'],
       clientKey: forwarded || req.socket.remoteAddress || '',
     });
+    res.status(204).end();
+  });
+
+  // Démarrages de l'application : deux signaux anonymes par chargement de page (démarrage commencé, accueil affiché).
+  // Seuls le type de signal et la version de l'application sont lus ; l'appareil vient de l'user-agent. Plafonné par appareil
+  // et pour tout le serveur ; réponse toujours vide et rapide.
+  const bootLimiter = createCrashLimiter();
+  app.post('/api/telemetry/client-boot', express.json({ type: ['application/json', 'text/plain'], limit: '1kb' }), (req, res) => {
+    try {
+      const cfg = getEngineConfig();
+      const forwarded = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+      const allowed = bootLimiter.allow(forwarded || req.socket.remoteAddress || 'inconnu', Date.now(), {
+        windowMs: Number(cfg.bootStatsWindowSeconds ?? 60) * 1000,
+        maxPerKey: Number(cfg.bootStatsMaxPerClient ?? 6),
+        maxGlobal: Number(cfg.bootStatsMaxPerWindow ?? 3000),
+      });
+      if (allowed) {
+        const signal = sanitizeBootSignal(req.body, req.headers['user-agent']);
+        if (signal.ok) recordBootSignal(signal.step, signal.family);
+      }
+    } catch {
+      // la mesure ne gêne jamais le jeu
+    }
     res.status(204).end();
   });
 
@@ -1982,6 +2008,29 @@ async function startServer() {
   });
 
   // Plantages des navigateurs (lecture et suivi par les administrateurs ; droit « journal »).
+  // Démarrages : compteurs par type d'appareil sur les n derniers jours, avec les types suspects (démarrent sans afficher l'accueil).
+  app.get('/api/katika/boot-stats', async (req, res) => {
+    try {
+      const cfg = getEngineConfig();
+      const days = Math.max(1, Math.min(90, Math.floor(Number(req.query.days)) || 7));
+      const thresholds = {
+        minStarts: Number(cfg.bootStatsMinStarts ?? 30),
+        gapPoints: Number(cfg.bootStatsGapPoints ?? 25),
+      };
+      const rows = analyzeBootFamilies(sumBootDays(await readBootDays(days)), thresholds);
+      res.json({
+        success: true,
+        days,
+        thresholds,
+        totalStarted: rows.reduce((n, r) => n + r.started, 0),
+        totalHome: rows.reduce((n, r) => n + r.home, 0),
+        suspects: rows.filter((r) => r.suspect).length,
+        families: rows,
+      });
+    } catch {
+      res.status(500).json({ success: false, error: 'Lecture impossible.' });
+    }
+  });
   app.get('/api/katika/crashes', async (_req, res) => {
     try {
       res.json({ success: true, crashes: await firestoreCrashStore.list() });

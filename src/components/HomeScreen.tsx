@@ -148,6 +148,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 }) => {
   const { profile, currentTitle, isLoggedIn } = usePlayerProfile();
 
+  // Comptage anonyme des démarrages : « accueil affiché ». Le script de index.html n'envoie le signal qu'une fois par chargement de page.
+  React.useEffect(() => {
+    (window as unknown as { __njamboBootSignal?: (step: string) => void }).__njamboBootSignal?.('home');
+  }, []);
   // Kora Cash : statut public lu une fois à l'ouverture du menu (activé ou non, démo ou réel).
   const [koraCashStatus, setKoraCashStatus] = React.useState<KoraCashPublicStatus | null>(null);
   const [koraCashLoaded, setKoraCashLoaded] = React.useState<boolean>(false);

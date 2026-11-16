@@ -19,6 +19,8 @@ export interface HomeInputs {
   journalAlerts: { critical: number; warning: number } | null;
   /** Types de plantage de l'application non traités et revus récemment ; null si non lu ou non permis. */
   openCrashes?: number | null;
+  /** Types d'appareils qui démarrent l'application sans afficher l'accueil (page blanche sans erreur) ; null si non lu ou non permis. */
+  bootSuspects?: number | null;
 }
 
 const plural = (n: number, one: string, many: string) => `${n} ${n > 1 ? many : one}`;
@@ -41,6 +43,13 @@ export function buildHomeTodo(input: HomeInputs): HomeTodoItem[] {
   }
   if (input.openCrashes && input.openCrashes > 0) {
     items.push({ level: 'WARNING', text: `${plural(input.openCrashes, 'type de plantage', 'types de plantage')} de l'application à examiner (24 h)`, tab: 'LOGS' });
+  }
+  if (input.bootSuspects && input.bootSuspects > 0) {
+    items.push({
+      level: 'WARNING',
+      text: `${plural(input.bootSuspects, "type d'appareil démarre", "types d'appareils démarrent")} l'application sans afficher l'accueil (2 jours)`,
+      tab: 'LOGS',
+    });
   }
   if (items.length === 0 && input.serverUp === true) items.push({ level: 'OK', text: 'Rien à traiter pour le moment' });
   return items.sort((a, b) => rank(a.level) - rank(b.level));

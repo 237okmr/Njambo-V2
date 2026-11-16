@@ -200,7 +200,7 @@ export const ENGINE_PARAMS: ParamDef[] = [
   {
     key: 'metricsFlushSeconds', label: 'Fréquence de sauvegarde des mesures de connexion', unit: 's',
     min: 30, max: 600, default: 60, group: 'caches-et-mises-a-jour', scope: 'server', effect: 'immediate', advanced: true,
-    help: 'Fréquence à laquelle les compteurs de connexions, déconnexions et relais sont écrits dans Firestore.',
+    help: 'Fréquence à laquelle les compteurs de connexions, déconnexions, relais et démarrages de l\'application sont écrits dans Firestore.',
   },
   {
     key: 'metricsRetentionDays', label: 'Conservation des mesures de connexion', unit: 'jours',
@@ -409,6 +409,41 @@ export const ENGINE_PARAMS: ParamDef[] = [
     key: 'crashReportMaxPerWindow', label: 'Plantages : rapports acceptés pour tout le serveur', unit: '',
     min: 1, max: 5000, default: 60, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
     help: 'Plafond global sur la même fenêtre : chaque rapport accepté coûte une lecture et une écriture Firestore.',
+  },
+  {
+    key: 'bootStatsWindowSeconds', label: 'Démarrages : durée de la fenêtre de plafonds', unit: 's',
+    min: 10, max: 600, default: 60, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Les deux plafonds suivants se comptent sur cette durée.',
+  },
+  {
+    key: 'bootStatsMaxPerClient', label: 'Démarrages : signaux acceptés par appareil', unit: '',
+    min: 2, max: 100, default: 6, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Un chargement de page envoie deux signaux. Au-delà de ce plafond, les signaux d\'un même appareil sont ignorés jusqu\'à la fin de la fenêtre (protège contre une boucle de rechargement).',
+  },
+  {
+    key: 'bootStatsMaxPerWindow', label: 'Démarrages : signaux acceptés pour tout le serveur', unit: '',
+    min: 10, max: 20000, default: 3000, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Plafond global sur la même fenêtre. Les signaux sont cumulés en mémoire : ce plafond protège la mémoire, pas Firestore.',
+  },
+  {
+    key: 'bootStatsMaxFamiliesPerDay', label: 'Démarrages : types d\'appareils suivis par jour', unit: '',
+    min: 20, max: 300, default: 100, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Au-delà, les nouveaux types d\'appareils d\'une même journée sont regroupés sous « Autres ». Borne la taille du document du jour.',
+  },
+  {
+    key: 'bootStatsRetentionDays', label: 'Démarrages : conservation des compteurs', unit: 'jours',
+    min: 7, max: 90, default: 30, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Les compteurs plus anciens sont supprimés automatiquement, au plus une fois par jour.',
+  },
+  {
+    key: 'bootStatsMinStarts', label: 'Démarrages : volume minimum pour juger un type d\'appareil', unit: '',
+    min: 5, max: 1000, default: 30, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'En dessous de ce nombre de démarrages, un type d\'appareil n\'est pas jugé : trop peu de cas pour conclure.',
+  },
+  {
+    key: 'bootStatsGapPoints', label: 'Démarrages : écart signalé avec les autres appareils', unit: 'points',
+    min: 5, max: 90, default: 25, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Un type d\'appareil est signalé quand sa part de démarrages arrivant à l\'accueil est inférieure d\'au moins ce nombre de points à celle de tous les autres réunis.',
   },
   {
     key: 'tablePreviewWindowSeconds', label: 'Carte d\'arrivée d\'un lien de table : durée de la fenêtre de plafonds', unit: 's',

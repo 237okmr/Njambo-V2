@@ -42,6 +42,13 @@ export interface KatikaEngineConfig {
   crashReportWindowSeconds?: number;
   crashReportMaxPerClient?: number;
   crashReportMaxPerWindow?: number;
+  bootStatsWindowSeconds?: number;
+  bootStatsMaxPerClient?: number;
+  bootStatsMaxPerWindow?: number;
+  bootStatsMaxFamiliesPerDay?: number;
+  bootStatsRetentionDays?: number;
+  bootStatsMinStarts?: number;
+  bootStatsGapPoints?: number;
   tablePreviewWindowSeconds?: number;
   tablePreviewMaxPerClient?: number;
   tablePreviewMaxPerWindow?: number;

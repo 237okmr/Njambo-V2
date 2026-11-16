@@ -538,6 +538,10 @@ service cloud.firestore {
     match /client_crashes/{docId} {
       allow read, write: if false;
     }
+    // Démarrages de l'application (compteurs anonymes par jour) : lus et écrits par le serveur seulement.
+    match /client_boot_stats/{docId} {
+      allow read, write: if false;
+    }
     // Rendez-vous du centre social : lus et écrits par le serveur seulement.
     match /social_appointments/{docId} {
       allow read, write: if false;

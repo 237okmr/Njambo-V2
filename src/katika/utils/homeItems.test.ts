@@ -45,3 +45,18 @@ describe('Confirmation renforcée de Kora Cash sur téléphone', () => {
     assert.equal(needsStrongConfirm('POST', '/api/katika/ban-player', true), false);
   });
 });
+
+describe('démarrages de l\'application', () => {
+  it('une ligne quand des types d\'appareils démarrent sans afficher l\'accueil, qui mène au journal', () => {
+    const one = buildHomeTodo({ ...base, bootSuspects: 1 }).find((i) => i.text.includes('sans afficher l\'accueil'));
+    assert.equal(one?.text, "1 type d'appareil démarre l'application sans afficher l'accueil (2 jours)");
+    assert.equal(one?.tab, 'LOGS');
+    const many = buildHomeTodo({ ...base, bootSuspects: 3 }).find((i) => i.text.includes('sans afficher l\'accueil'));
+    assert.equal(many?.text, "3 types d'appareils démarrent l'application sans afficher l'accueil (2 jours)");
+  });
+
+  it('rien à signaler quand aucun type n\'est suspect ou que la mesure n\'est pas lue', () => {
+    assert.ok(!buildHomeTodo({ ...base, bootSuspects: 0 }).some((i) => i.text.includes('accueil')));
+    assert.ok(!buildHomeTodo({ ...base, bootSuspects: null }).some((i) => i.text.includes('accueil')));
+  });
+});
