@@ -176,10 +176,9 @@ async function startServer() {
     shuttingDown = true;
     const flushSeconds = Number(RoomManager.getEngineConfig().shutdownFlushSeconds ?? 8);
     console.log(`[Server] Signal ${signal} reçu : sauvegarde des tables (max ${flushSeconds}s) avant arrêt.`);
+    // Toutes les sauvegardes doivent finir (Promise.all) ; seul le délai maximal peut couper court (Promise.race).
     await Promise.race([
-      RoomManager.flushAllRoomSnapshots(),
-      flushBootStats(),
-      flushInviteStats(),
+      Promise.all([RoomManager.flushAllRoomSnapshots(), flushBootStats(), flushInviteStats()]),
       new Promise((resolve) => setTimeout(resolve, flushSeconds * 1000)),
     ]).catch(() => {});
     process.exit(0);
