@@ -118,6 +118,10 @@ import { analyzeBootFamilies, sanitizeBootSignal, sumBootDays } from './server/d
 import { flushBootStats, readBootDays, recordBootSignal } from './server/diagnostics/bootStatsStore';
 import { analyzeInviteRows, sanitizeInviteSignal, sumInviteDays } from './server/diagnostics/inviteStatsRules';
 import { flushInviteStats, readInviteDays, recordInviteSignal } from './server/diagnostics/inviteStatsStore';
+import { analyzeAuthRows, sanitizeAuthSignal, sumAuthDays } from './server/diagnostics/authStatsRules';
+import { flushAuthStats, readAuthDays, recordAuthSignal } from './server/diagnostics/authStatsStore';
+import { relayAuthRequest } from './server/auth/authRelayRules';
+import firebaseAppletConfig from './firebase-applet-config.json';
 import { getClientReads, recordClientReads } from './server/katika/clientReads';
 import { computeRepairPlan } from './server/profileRepair';
 import { collection, getCountFromServer, getDocs, query, limit, orderBy, startAfter } from 'firebase/firestore';
@@ -178,7 +182,7 @@ async function startServer() {
     console.log(`[Server] Signal ${signal} reçu : sauvegarde des tables (max ${flushSeconds}s) avant arrêt.`);
     // Toutes les sauvegardes doivent finir (Promise.all) ; seul le délai maximal peut couper court (Promise.race).
     await Promise.race([
-      Promise.all([RoomManager.flushAllRoomSnapshots(), flushBootStats(), flushInviteStats()]),
+      Promise.all([RoomManager.flushAllRoomSnapshots(), flushBootStats(), flushInviteStats(), flushAuthStats()]),
       new Promise((resolve) => setTimeout(resolve, flushSeconds * 1000)),
     ]).catch(() => {});
     process.exit(0);
@@ -523,6 +527,62 @@ async function startServer() {
       // la mesure ne gêne jamais le jeu
     }
     res.status(204).end();
+  });
+
+  // Connexion Google : signaux anonymes (fenêtre ou redirection : lancée, réussie, échouée avec code d'erreur Firebase).
+  // Jamais de nom, de courriel ni de compte ; plafonné par appareil et pour tout le serveur ; réponse toujours vide et rapide.
+  const authStatsLimiter = createCrashLimiter();
+  app.post('/api/telemetry/client-auth', express.json({ type: ['application/json', 'text/plain'], limit: '1kb' }), (req, res) => {
+    try {
+      const cfg = getEngineConfig();
+      const forwarded = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+      const allowed = authStatsLimiter.allow(forwarded || req.socket.remoteAddress || 'inconnu', Date.now(), {
+        windowMs: Number(cfg.authStatsWindowSeconds ?? 60) * 1000,
+        maxPerKey: Number(cfg.authStatsMaxPerClient ?? 12),
+        maxGlobal: Number(cfg.authStatsMaxPerWindow ?? 1500),
+      });
+      if (allowed) {
+        const signal = sanitizeAuthSignal(req.body, req.headers['user-agent']);
+        if (signal.ok) recordAuthSignal(signal.counter, signal.group);
+      }
+    } catch {
+      // la mesure ne gêne jamais le jeu
+    }
+    res.status(204).end();
+  });
+
+  // Relais de la connexion Firebase sur le domaine du jeu (secours iPhone). Fermé tant que authRedirectEnabled est faux : 404.
+  // Lecture seule, un seul hôte amont (celui du projet), plafonné par appareil et pour tout le serveur.
+  const authRelayLimiter = createCrashLimiter();
+  app.use(['/__/auth', '/__/firebase'], async (req, res) => {
+    const cfg = getEngineConfig();
+    const enabled = cfg.authRedirectEnabled === true;
+    const forwarded = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+    const allowed =
+      !enabled ||
+      authRelayLimiter.allow(forwarded || req.socket.remoteAddress || 'inconnu', Date.now(), {
+        windowMs: Number(cfg.authRelayWindowSeconds ?? 60) * 1000,
+        maxPerKey: Number(cfg.authRelayMaxPerClient ?? 60),
+        maxGlobal: Number(cfg.authRelayMaxPerWindow ?? 2000),
+      });
+    if (!allowed) {
+      res.status(502).setHeader('Cache-Control', 'no-store').type('text/plain').send('Relais indisponible');
+      return;
+    }
+    const full = req.originalUrl || '';
+    const q = full.indexOf('?');
+    const relayed = await relayAuthRequest(
+      { method: req.method, path: q === -1 ? full : full.slice(0, q), search: q === -1 ? '' : full.slice(q), headers: req.headers },
+      {
+        enabled,
+        projectId: process.env.FIREBASE_PROJECT_ID || firebaseAppletConfig.projectId || '',
+        timeoutMs: Number(cfg.authRelayTimeoutSeconds ?? 8) * 1000,
+        fetchImpl: (url, init) => fetch(url, init) as any,
+      }
+    );
+    res.status(relayed.status);
+    for (const [k, v] of Object.entries(relayed.headers)) res.setHeader(k, v);
+    res.end(relayed.body);
   });
 
   // Carte d'arrivée d'un lien de table gratuite : hôte et places, jamais de capital ni de noms de joueurs.
@@ -2079,6 +2139,39 @@ async function startServer() {
           normalRefusals: total((r) => r.normalRefusals),
           technicalFailures: total((r) => r.technicalFailures),
           noAnswer: total((r) => r.noAnswer),
+        },
+        suspects: rows.filter((r) => r.suspect).length,
+        groups: rows,
+      });
+    } catch {
+      res.status(500).json({ success: false, error: 'Lecture impossible.' });
+    }
+  });
+  // Connexion Google : compteurs par type d'appareil et domaine de connexion sur les n derniers jours, avec les groupes suspects.
+  app.get('/api/katika/auth-stats', async (req, res) => {
+    try {
+      const cfg = getEngineConfig();
+      const days = Math.max(1, Math.min(90, Math.floor(Number(req.query.days)) || 7));
+      const thresholds = {
+        minAttempts: Number(cfg.authStatsMinAttempts ?? 20),
+        gapPoints: Number(cfg.authStatsGapPoints ?? 25),
+      };
+      const rows = analyzeAuthRows(sumAuthDays(await readAuthDays(days)), thresholds);
+      const total = (pick: (r: (typeof rows)[number]) => number) => rows.reduce((n, r) => n + pick(r), 0);
+      res.json({
+        success: true,
+        days,
+        thresholds,
+        redirectEnabled: cfg.authRedirectEnabled === true,
+        totals: {
+          popupStarts: total((r) => r.popupStarts),
+          popupOk: total((r) => r.popupOk),
+          popupTechnicalFailures: total((r) => r.popupTechnicalFailures),
+          popupAbandons: total((r) => r.popupAbandons),
+          redirectStarts: total((r) => r.redirectStarts),
+          redirectOk: total((r) => r.redirectOk),
+          redirectFailures: total((r) => r.redirectFailures),
+          redirectLost: total((r) => r.redirectLost),
         },
         suspects: rows.filter((r) => r.suspect).length,
         groups: rows,

@@ -481,6 +481,71 @@ export const ENGINE_PARAMS: ParamDef[] = [
     help: 'Un type d\'appareil est signalé quand sa part de tentatives qui échouent techniquement (délai réseau, exception, erreur générale, trop de tentatives) dépasse d\'au moins ce nombre de points celle des autres appareils. Les refus normaux (table pleine, partie commencée, table introuvable) ne comptent pas.',
   },
   {
+    key: 'authRedirectEnabled', label: 'Connexion Google de secours par redirection (iPhone et iPad)', unit: '', type: 'boolean',
+    min: 0, max: 1, default: false, group: 'connexion', scope: 'both', effect: 'immediate',
+    help: 'Fermé (par défaut) : la connexion passe par la fenêtre habituelle, comme aujourd\'hui. Ouvert : sur iPhone et iPad seulement, si la fenêtre échoue nettement (bloquée, environnement non supporté, stockage indisponible), l\'app bascule sur une redirection, et la connexion y passe par le domaine du jeu (relais /__/auth/ du serveur). À n\'ouvrir qu\'avec une preuve que la connexion est en cause (carte « Connexion Google » de l\'onglet Journaux), et après avoir ajouté l\'adresse de retour dans la console Google. Prérogative katika, jamais visible côté joueur. Pris en compte au prochain chargement de l\'app.',
+  },
+  {
+    key: 'authRedirectReturnSeconds', label: 'Redirection de connexion : durée de validité du retour', unit: 's',
+    min: 60, max: 3600, default: 600, group: 'connexion', scope: 'client', effect: 'immediate', advanced: true,
+    help: 'Après le départ vers la page Google, l\'app attend le retour pendant cette durée. Passé ce délai, un retour sans compte connecté n\'est plus compté comme une redirection perdue.',
+  },
+  {
+    key: 'authRelayTimeoutSeconds', label: 'Relais de connexion : délai de réponse de Firebase', unit: 's',
+    min: 2, max: 30, default: 8, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Le relais abandonne (erreur 502) si Firebase ne répond pas dans ce délai.',
+  },
+  {
+    key: 'authRelayWindowSeconds', label: 'Relais de connexion : durée de la fenêtre de plafonds', unit: 's',
+    min: 10, max: 600, default: 60, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Les deux plafonds suivants se comptent sur cette durée.',
+  },
+  {
+    key: 'authRelayMaxPerClient', label: 'Relais de connexion : requêtes acceptées par appareil', unit: '',
+    min: 5, max: 500, default: 60, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Une connexion charge quelques fichiers d\'aide. Au-delà de ce plafond, l\'appareil reçoit une erreur 502 jusqu\'à la fin de la fenêtre.',
+  },
+  {
+    key: 'authRelayMaxPerWindow', label: 'Relais de connexion : requêtes acceptées pour tout le serveur', unit: '',
+    min: 50, max: 50000, default: 2000, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Plafond global sur la même fenêtre : protège le serveur et Firebase contre un usage abusif du relais.',
+  },
+  {
+    key: 'authStatsWindowSeconds', label: 'Connexion Google : durée de la fenêtre de plafonds', unit: 's',
+    min: 10, max: 600, default: 60, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Les deux plafonds suivants se comptent sur cette durée.',
+  },
+  {
+    key: 'authStatsMaxPerClient', label: 'Connexion Google : signaux acceptés par appareil', unit: '',
+    min: 2, max: 100, default: 12, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Une tentative envoie deux ou trois signaux. Au-delà de ce plafond, les signaux d\'un même appareil sont ignorés jusqu\'à la fin de la fenêtre.',
+  },
+  {
+    key: 'authStatsMaxPerWindow', label: 'Connexion Google : signaux acceptés pour tout le serveur', unit: '',
+    min: 10, max: 20000, default: 1500, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Plafond global sur la même fenêtre. Les signaux sont cumulés en mémoire : ce plafond protège la mémoire, pas Firestore.',
+  },
+  {
+    key: 'authStatsMaxFamiliesPerDay', label: 'Connexion Google : groupes d\'appareils suivis par jour', unit: '',
+    min: 20, max: 300, default: 100, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Un groupe = type d\'appareil et domaine de connexion utilisé. Au-delà, les nouveaux groupes d\'une même journée sont regroupés sous « Autres ». Borne la taille du document du jour.',
+  },
+  {
+    key: 'authStatsRetentionDays', label: 'Connexion Google : conservation des compteurs', unit: 'jours',
+    min: 7, max: 90, default: 30, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Les compteurs plus anciens sont supprimés automatiquement, au plus une fois par jour.',
+  },
+  {
+    key: 'authStatsMinAttempts', label: 'Connexion Google : volume minimum pour juger un type d\'appareil', unit: '',
+    min: 5, max: 1000, default: 20, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'En dessous de ce nombre de fenêtres de connexion lancées, un type d\'appareil n\'est pas jugé : trop peu de cas pour conclure.',
+  },
+  {
+    key: 'authStatsGapPoints', label: 'Connexion Google : écart d\'échecs signalé', unit: 'points',
+    min: 5, max: 90, default: 25, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Un type d\'appareil est signalé quand sa part de fenêtres de connexion qui échouent (hors « fermée par l\'utilisateur », qui peut être un simple abandon) dépasse d\'au moins ce nombre de points celle des autres appareils.',
+  },
+  {
     key: 'tablePreviewWindowSeconds', label: 'Carte d\'arrivée d\'un lien de table : durée de la fenêtre de plafonds', unit: 's',
     min: 10, max: 600, default: 60, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
     help: 'Les deux plafonds suivants se comptent sur cette durée.',

@@ -25,6 +25,7 @@ import { KatikaConnectionHealthPanel } from './KatikaConnectionHealthPanel';
 import { KatikaCrashesPanel } from './KatikaCrashesPanel';
 import { KatikaBootStatsPanel } from './KatikaBootStatsPanel';
 import { KatikaInviteStatsPanel } from './KatikaInviteStatsPanel';
+import { KatikaAuthStatsPanel } from './KatikaAuthStatsPanel';
 
 export const KatikaLogsTab: React.FC = () => {
   const [logs, setLogs] = useState<KatikaAuditLog[]>([]);
@@ -117,6 +118,7 @@ export const KatikaLogsTab: React.FC = () => {
       <KatikaConnectionHealthPanel />
       <KatikaBootStatsPanel />
       <KatikaInviteStatsPanel />
+      <KatikaAuthStatsPanel />
       <KatikaCrashesPanel />
 
       {/* Search, Filter & Export Bar */}

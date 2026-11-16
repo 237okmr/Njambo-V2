@@ -295,10 +295,24 @@
             if (window.fetch) fetch('/api/telemetry/client-invite', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true }).catch(function () {});
           } catch (e) {}
         }
+        // Comptage anonyme des connexions Google (fenêtre ou redirection : lancée, réussie, échouée avec le code d'erreur Firebase).
+        // « relay » dit si la connexion passait par le domaine du jeu. Jamais de nom, de courriel ni de compte. Un envoi par étape et par chargement.
+        var authSent = {};
+        function authSignal(step, detail, relay) {
+          try {
+            var k = step + '|' + (detail || '');
+            if (authSent[k]) return;
+            authSent[k] = true;
+            var body = JSON.stringify({ step: step, detail: detail ? String(detail).slice(0, 60) : undefined, relay: relay === true, build: build() });
+            if (navigator.sendBeacon && navigator.sendBeacon('/api/telemetry/client-auth', new Blob([body], { type: 'application/json' }))) return;
+            if (window.fetch) fetch('/api/telemetry/client-auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true }).catch(function () {});
+          } catch (e) {}
+        }
         var isConsole = /^\/(katika|copilot)/i.test(location.pathname) || /(^|[?&])(copilot|katika)(=|&|$)|mode=copilot|view=copilot/i.test(location.search);
         if (!isConsole) {
           window.__njamboBootSignal = bootSignal;
           window.__njamboInviteSignal = inviteSignal;
+          window.__njamboAuthSignal = authSignal;
           // Après l'analyse de la page : la version de l'application se lit sur la balise du script principal, pas encore présente ici.
           if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', function () { bootSignal('start'); inviteSignal('opened'); });

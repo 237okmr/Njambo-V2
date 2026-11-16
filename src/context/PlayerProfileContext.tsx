@@ -6,13 +6,16 @@ import React, {
   useLayoutEffect,
   useCallback,
   useMemo,
+  useRef,
   ReactNode,
 } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { authErrorCode, authFailureReportMessage, describeGoogleSignInError, GoogleSignInOutcome } from '../utils/authErrors';
-import { auth } from '../lib/firebase';
+import { clearRedirectMarker, isIosDevice, readRedirectMarker, shouldFallbackToRedirect, writeRedirectMarker } from '../utils/authFlow';
+import { reportAuthStep } from '../utils/authSignal';
+import { auth, authViaGameDomain } from '../lib/firebase';
 import { setLocalPlayerName } from '../services/identity';
-import { getPublicParamNumber } from '../services/publicConfig';
+import { getPublicParam, getPublicParamNumber } from '../services/publicConfig';
 import { ConfirmedGoal, RankProgress, RankTitleId, TierSummary, rankProgress } from '../services/rankTiers';
 import { RankSnapshot, fetchRankSnapshot, readStoredRank } from '../services/rankClient';
 import {
@@ -200,15 +203,60 @@ export const PlayerProfileProvider: React.FC<{ children: ReactNode }> = ({ child
   }, [profile?.stats, isGuestProfile, rankUid, rankSnapshot]);
   const { currentTitle, nextTitle, progressPercent } = rankView;
 
+  // Retour d'une redirection de connexion (secours iPhone/iPad, réglage katika « authRedirectEnabled ») : la page vient de se recharger,
+  // un marqueur laissé avant le départ dit qu'on attendait ce retour. Pendant ce traitement, le chemin silencieux ci-dessous attend son tour.
+  const redirectReturnInFlightRef = useRef<boolean>(false);
+  useEffect(() => {
+    const marker = readRedirectMarker(localStorage, Date.now(), getPublicParamNumber('authRedirectReturnSeconds') * 1000);
+    if (!marker) return;
+    redirectReturnInFlightRef.current = true;
+    (async () => {
+      setIsSyncing(true);
+      setSyncMessage('Retour de Google : fusion de tes données locales...');
+      try {
+        const user = await playerProfileService.finishGoogleRedirect();
+        if (!user) {
+          reportAuthStep('redirect_lost', undefined, marker.relay);
+          setSyncMessage(null);
+          return;
+        }
+        reportAuthStep('redirect_ok', undefined, marker.relay);
+        const result = await playerProfileService.completeGoogleLogin(user);
+        setProfile(result.profile);
+        setHistory(result.history);
+        FriendService.mergeLocalContactsToCloud(result.profile.uid).catch((e) => {
+          console.warn('[PlayerProfileContext] Merge friends warning:', e);
+        });
+        setSyncMessage('Synchronisation réussie ! Ton palmarès est sécurisé.');
+        setTimeout(() => setSyncMessage(null), 4000); // delay-ok: message d'interface éphémère
+      } catch (err: unknown) {
+        const code = authErrorCode(err);
+        reportAuthStep('redirect_fail', code, marker.relay);
+        const view = describeGoogleSignInError(code);
+        setSyncMessage(view.message);
+        if (view.message !== null) setTimeout(() => setSyncMessage(null), 5000); // delay-ok: message d'interface éphémère
+        if (view.report) {
+          (window as unknown as { __njamboReportCrash?: (kind: string, message: string, stack?: string) => void }).__njamboReportCrash?.('auth', authFailureReportMessage(code), '');
+        }
+      } finally {
+        clearRedirectMarker(localStorage);
+        redirectReturnInFlightRef.current = false;
+        setIsSyncing(false);
+      }
+    })();
+  }, []);
+
   // Sync with auth changes and reconcile cloud state on app startup / page refresh
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
+        if (redirectReturnInFlightRef.current) return; // le retour de redirection s'en occupe
         if (profile.isGuest) {
           // User is logged in via Firebase but local state was guest or cache was wiped: perform silent fusion check
+          // (sans rouvrir de fenêtre de connexion : le compte est déjà connecté)
           try {
             setIsSyncing(true);
-            const result = await playerProfileService.loginWithGoogle();
+            const result = await playerProfileService.completeGoogleLogin(user);
             setProfile(result.profile);
             setHistory(result.history);
             // Auto-merge local contacts into cloud friends
@@ -285,8 +333,10 @@ export const PlayerProfileProvider: React.FC<{ children: ReactNode }> = ({ child
   const loginWithGoogle = useCallback(async (): Promise<GoogleSignInOutcome> => {
     setIsSyncing(true);
     setSyncMessage('Fusion de tes données locales avec ton compte Google...');
+    reportAuthStep('popup_start', undefined, authViaGameDomain); // mesure anonyme : une fenêtre de connexion est lancée
     try {
       const result = await playerProfileService.loginWithGoogle();
+      reportAuthStep('popup_ok', undefined, authViaGameDomain);
       setProfile(result.profile);
       setHistory(result.history);
       // Auto-merge local contacts into cloud friends
@@ -298,6 +348,26 @@ export const PlayerProfileProvider: React.FC<{ children: ReactNode }> = ({ child
       return { ok: true };
     } catch (err: unknown) {
       const code = authErrorCode(err);
+      reportAuthStep('popup_fail', code, authViaGameDomain);
+      // Secours (réglage katika fermé par défaut) : sur iPhone/iPad, un échec net de la fenêtre bascule sur la redirection.
+      const redirectAllowed = shouldFallbackToRedirect({
+        enabled: getPublicParam('authRedirectEnabled') === true,
+        ios: isIosDevice(navigator.userAgent, navigator.maxTouchPoints),
+        errorCode: code,
+      });
+      if (redirectAllowed) {
+        writeRedirectMarker(localStorage, { at: Date.now(), relay: authViaGameDomain });
+        reportAuthStep('redirect_start', undefined, authViaGameDomain);
+        try {
+          setSyncMessage('Ouverture de la page Google...');
+          await playerProfileService.startGoogleRedirect();
+          return { ok: false, message: null }; // la page quitte l'app ; le retour est traité au rechargement
+        } catch (redirectErr: unknown) {
+          clearRedirectMarker(localStorage);
+          reportAuthStep('redirect_fail', authErrorCode(redirectErr), authViaGameDomain);
+          // on retombe sur le message d'origine de la fenêtre
+        }
+      }
       const view = describeGoogleSignInError(code);
       if (view.message === null) {
         setSyncMessage(null);

@@ -1,5 +1,7 @@
 import {
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut as firebaseSignOut,
   GoogleAuthProvider,
   User,
@@ -1694,8 +1696,27 @@ export const playerProfileService = {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
     const credential = await signInWithPopup(auth, provider);
-    const user: User = credential.user;
+    return this.completeGoogleLogin(credential.user);
+  },
 
+  /** Variante du secours iPhone : mêmes réglages que la fenêtre, mais la page quitte l'app puis revient (voir finishGoogleRedirect). */
+  async startGoogleRedirect(): Promise<void> {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    await signInWithRedirect(auth, provider);
+  },
+
+  /** Au retour d'une redirection : l'utilisateur connecté, ou null s'il n'y a pas de redirection à terminer. */
+  async finishGoogleRedirect(): Promise<User | null> {
+    const result = await getRedirectResult(auth);
+    return result?.user ?? null;
+  },
+
+  /**
+   * Fusion des données d'invitée avec le compte Google, une fois le compte connecté (par la fenêtre, par la redirection, ou
+   * parce que la session Google existait déjà). N'ouvre jamais de fenêtre : on peut donc l'appeler sans geste de l'utilisateur.
+   */
+  async completeGoogleLogin(user: User): Promise<{ profile: PlayerProfile; history: PlayerGameHistoryItem[] }> {
     const guestProfile = this.getLocalProfile();
     const guestHistory = this.getLocalHistory();
 

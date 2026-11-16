@@ -172,6 +172,17 @@ async function readCollection(name) {
 
 describe('mesure enregistrée côté serveur', () => {
   it("après l'arrêt du serveur, la base contient les étapes de démarrage et d'invitation, sans donnée personnelle", async () => {
+    // Connexion Google : le relais est fermé par défaut (404, pas la page du jeu), et un signal anonyme est accepté puis enregistré.
+    const relay = await fetch(`${stack.baseUrl}/__/auth/handler`);
+    assert.equal(relay.status, 404, 'le relais de connexion doit être fermé tant que le réglage katika est fermé');
+    for (const body of [{ step: 'popup_start', build: 'test' }, { step: 'popup_fail', detail: 'auth/popup-blocked', build: 'test' }]) {
+      const res = await fetch(`${stack.baseUrl}/api/telemetry/client-auth`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'User-Agent': IPHONE_UA },
+        body: JSON.stringify(body),
+      });
+      assert.equal(res.status, 204);
+    }
     await stack.stopServer(); // l'arrêt gracieux vide les compteurs en mémoire dans Firestore
     const bootDays = await readCollection('client_boot_stats');
     const inviteDays = await readCollection('client_invite_stats');
@@ -192,8 +203,14 @@ describe('mesure enregistrée côté serveur', () => {
     }
     assert.ok(!Object.keys(total).some((k) => k.startsWith('fail_')), `un échec a été compté : ${JSON.stringify(total)}`);
 
+    const authDays = await readCollection('client_auth_stats');
+    const authTotal = {};
+    for (const g of authDays.flatMap((d) => Object.values(d.rows ?? {}))) for (const [k, n] of Object.entries(g.counts ?? {})) authTotal[k] = (authTotal[k] ?? 0) + n;
+    assert.equal(authTotal.popup_start, 1, `popup_start attendu : ${JSON.stringify(authTotal)}`);
+    assert.equal(authTotal['popup_fail_popup-blocked'], 1, `échec de fenêtre attendu : ${JSON.stringify(authTotal)}`);
+
     // Anonymat : ni pseudo ni code de table dans ce qui a été écrit.
-    const dump = JSON.stringify([bootDays, inviteDays]);
+    const dump = JSON.stringify([bootDays, inviteDays, authDays]);
     for (const secret of ['InviteTest', 'HoteTest']) assert.ok(!dump.includes(secret), `donnée personnelle retrouvée : ${secret}`);
   });
 });

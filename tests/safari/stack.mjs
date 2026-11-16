@@ -85,6 +85,7 @@ import firebaseConfig from '../../firebase-applet-config.json';
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
+export const authViaGameDomain = false;
 export const db = initializeFirestore(app, { localCache: memoryLocalCache(), experimentalForceLongPolling: true });
 connectFirestoreEmulator(db, '127.0.0.1', ${emulatorPort});
 export default app;

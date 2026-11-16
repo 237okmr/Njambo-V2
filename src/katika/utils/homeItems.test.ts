@@ -46,6 +46,21 @@ describe('Confirmation renforcée de Kora Cash sur téléphone', () => {
   });
 });
 
+describe('connexion Google', () => {
+  it('une ligne quand des types d\'appareils échouent à ouvrir la connexion, qui mène au journal', () => {
+    const one = buildHomeTodo({ ...base, authSuspects: 1 }).find((i) => i.text.includes('connexion Google'));
+    assert.equal(one?.text, "1 type d'appareil échoue à ouvrir la connexion Google (2 jours)");
+    assert.equal(one?.tab, 'LOGS');
+    const many = buildHomeTodo({ ...base, authSuspects: 3 }).find((i) => i.text.includes('connexion Google'));
+    assert.equal(many?.text, "3 types d'appareils échouent à ouvrir la connexion Google (2 jours)");
+  });
+
+  it('rien à signaler quand aucun type n\'est suspect ou que la mesure n\'est pas lue', () => {
+    assert.ok(!buildHomeTodo({ ...base, authSuspects: 0 }).some((i) => i.text.includes('connexion Google')));
+    assert.ok(!buildHomeTodo({ ...base, authSuspects: null }).some((i) => i.text.includes('connexion Google')));
+  });
+});
+
 describe('parcours d\'invitation', () => {
   it('une ligne quand des groupes d\'appareils échouent à rejoindre par lien, qui mène au journal', () => {
     const one = buildHomeTodo({ ...base, inviteSuspects: 1 }).find((i) => i.text.includes('lien d\'invitation'));

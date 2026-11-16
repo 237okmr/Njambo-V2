@@ -23,6 +23,8 @@ export interface HomeInputs {
   bootSuspects?: number | null;
   /** Groupes d'appareils dont les tentatives de jointure par lien d'invitation échouent techniquement bien plus que chez les autres ; null si non lu ou non permis. */
   inviteSuspects?: number | null;
+  /** Types d'appareils dont les fenêtres de connexion Google échouent nettement plus que chez les autres ; null si non lu ou non permis. */
+  authSuspects?: number | null;
 }
 
 const plural = (n: number, one: string, many: string) => `${n} ${n > 1 ? many : one}`;
@@ -57,6 +59,13 @@ export function buildHomeTodo(input: HomeInputs): HomeTodoItem[] {
     items.push({
       level: 'WARNING',
       text: `${plural(input.inviteSuspects, "groupe d'appareils échoue", "groupes d'appareils échouent")} à rejoindre une table par lien d'invitation (2 jours)`,
+      tab: 'LOGS',
+    });
+  }
+  if (input.authSuspects && input.authSuspects > 0) {
+    items.push({
+      level: 'WARNING',
+      text: `${plural(input.authSuspects, "type d'appareil échoue", "types d'appareils échouent")} à ouvrir la connexion Google (2 jours)`,
       tab: 'LOGS',
     });
   }
