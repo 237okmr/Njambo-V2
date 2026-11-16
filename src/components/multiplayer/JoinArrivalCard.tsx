@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Loader2, Users } from 'lucide-react';
 import { fetchTablePreview, type FreeTablePreview } from '../../services/tablePreviewClient';
+import { reportInviteStep } from '../../utils/inviteSignal';
 
 interface JoinArrivalCardProps {
   code: string;
@@ -19,7 +20,9 @@ export const JoinArrivalCard: React.FC<JoinArrivalCardProps> = ({ code, initialN
   useEffect(() => {
     let cancelled = false;
     fetchTablePreview(code).then((p) => {
-      if (!cancelled) setPreview(p);
+      if (cancelled) return;
+      setPreview(p);
+      reportInviteStep('card', p.state); // mesure anonyme : la carte est affichée, avec son état (ouverte, pleine, commencée, introuvable)
     });
     return () => {
       cancelled = true;

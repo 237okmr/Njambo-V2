@@ -7,6 +7,7 @@ import { DEFAULT_BASE_BET, DEFAULT_INITIAL_CAPITAL } from './utils/deck';
 import { sounds, triggerHaptic } from './utils/sound';
 import { getPwaShareBase } from './utils/pwaLinks';
 import { JoinArrivalCard } from './components/multiplayer/JoinArrivalCard';
+import { inviteFailureMotif, reportInviteStep } from './utils/inviteSignal';
 import { forgetCashInviteCode, readCashInviteCode, recallCashInviteCode, rememberCashInviteCode, stripCashInviteParam } from './utils/cashInvite';
 import { GAME_HOME_PATH, isConsoleLocation, isKnownGamePath, routePathFor, screenFromPath } from './utils/appRoutes';
 import { consumeBackLayer } from './utils/backLayers';
@@ -1061,14 +1062,17 @@ function GameApp() {
         return;
       }
 
+      reportInviteStep('click'); // mesure anonyme : tentative de jointure (ici automatique, sans carte d'arrivée)
       handleJoinRoom(cleanCode, localPlayerName).then((res) => {
         setDeepLinkWaitState((prev) => {
           if (!prev || !prev.active) return null; // already cancelled
           return null;
         });
         if (res.success) {
+          reportInviteStep('joined');
           triggerToast(`Table #${cleanCode} rejointe.`);
         } else {
+          reportInviteStep('failed', inviteFailureMotif(res.errorCode));
           triggerToast(res.error || 'Connexion à la table impossible.');
           setShowMultiplayerHub(true); // le code reste prérempli tant que l'URL n'est pas nettoyée
         }
@@ -1091,12 +1095,15 @@ function GameApp() {
       const code = arrivalCode;
       if (!code) return;
       setArrivalCode(null);
+      reportInviteStep('click'); // mesure anonyme : l'invité a touché « Rejoindre la table »
       setDeepLinkWaitState({ active: true, roomCode: code, elapsedSeconds: 0 });
       handleJoinRoom(code, name).then((res) => {
         setDeepLinkWaitState(null);
         if (res.success) {
+          reportInviteStep('joined');
           triggerToast(`Table #${code} rejointe.`);
         } else {
+          reportInviteStep('failed', inviteFailureMotif(res.errorCode));
           triggerToast(res.error || 'Connexion à la table impossible.');
           setShowMultiplayerHub(true); // le code reste prérempli tant que l'URL n'est pas nettoyée
         }
@@ -1107,6 +1114,7 @@ function GameApp() {
   );
 
   const handleArrivalLater = useCallback(() => {
+    reportInviteStep('later'); // mesure anonyme : « Pas maintenant »
     setArrivalCode(null);
     setShowMultiplayerHub(true); // le code reste prérempli tant que l'URL n'est pas nettoyée
     cleanDeepLinkUrl();

@@ -286,14 +286,14 @@ export function useMultiplayerGame() {
           resolve({ success: true });
           return;
         }
-        resolve({ success: false, error: 'Connexion impossible. Vérifie ton réseau puis réessaie.' });
+        resolve({ success: false, error: 'Connexion impossible. Vérifie ton réseau puis réessaie.', errorCode: 'TIMEOUT' });
       }, getPublicParamNumber('clientTableActionTimeoutSeconds') * 1000);
 
       wsService.joinRoom(roomId, playerName, confirmLeaveCurrent).catch((err: any) => {
         unsubRoom();
         unsubError();
         clearTimeout(timeout);
-        resolve({ success: false, error: err.message });
+        resolve({ success: false, error: err.message, errorCode: 'EXCEPTION' });
       });
     });
   }, []);

@@ -276,12 +276,36 @@
             if (window.fetch) fetch('/api/telemetry/client-boot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true }).catch(function () {});
           } catch (e) {}
         }
+        // Comptage anonyme du parcours d'invitation : « lien ouvert » part d'ici (même si le jeu ne se charge jamais), les autres étapes
+        // (carte affichée, clic, pas maintenant, rejoint, échec) partent de l'application. Le canal est lu à l'ouverture, avant que l'adresse
+        // soit nettoyée : lien partagé (?join=) ou notification d'invitation (?join= avec ?inv=). Jamais le code de la table, ni aucun nom.
+        var inviteChannel = '';
+        try {
+          var joinMatch = /(?:^|[?&])(?:join|room)=([^&]*)/i.exec(location.search);
+          var joinCode = joinMatch ? decodeURIComponent(joinMatch[1]).replace(/[^A-Za-z0-9]/g, '') : '';
+          if (joinCode) inviteChannel = /(?:^|[?&])inv=[^&]/i.test(location.search) ? 'notification' : 'link';
+        } catch (e) {}
+        var inviteSent = {};
+        function inviteSignal(step, detail) {
+          try {
+            if (!inviteChannel || inviteSent[step]) return;
+            inviteSent[step] = true;
+            var body = JSON.stringify({ step: step, channel: inviteChannel, mode: 'free', detail: detail ? String(detail).slice(0, 40) : undefined, build: build() });
+            if (navigator.sendBeacon && navigator.sendBeacon('/api/telemetry/client-invite', new Blob([body], { type: 'application/json' }))) return;
+            if (window.fetch) fetch('/api/telemetry/client-invite', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true }).catch(function () {});
+          } catch (e) {}
+        }
         var isConsole = /^\/(katika|copilot)/i.test(location.pathname) || /(^|[?&])(copilot|katika)(=|&|$)|mode=copilot|view=copilot/i.test(location.search);
         if (!isConsole) {
           window.__njamboBootSignal = bootSignal;
+          window.__njamboInviteSignal = inviteSignal;
           // Après l'analyse de la page : la version de l'application se lit sur la balise du script principal, pas encore présente ici.
-          if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { bootSignal('start'); });
-          else bootSignal('start');
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function () { bootSignal('start'); inviteSignal('opened'); });
+          } else {
+            bootSignal('start');
+            inviteSignal('opened');
+          }
         }
         window.addEventListener('error', function (e) {
           if (e && e.filename && /^(chrome|moz|safari)-extension:/.test(e.filename)) return;

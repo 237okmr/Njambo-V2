@@ -200,7 +200,7 @@ export const ENGINE_PARAMS: ParamDef[] = [
   {
     key: 'metricsFlushSeconds', label: 'Fréquence de sauvegarde des mesures de connexion', unit: 's',
     min: 30, max: 600, default: 60, group: 'caches-et-mises-a-jour', scope: 'server', effect: 'immediate', advanced: true,
-    help: 'Fréquence à laquelle les compteurs de connexions, déconnexions, relais et démarrages de l\'application sont écrits dans Firestore.',
+    help: 'Fréquence à laquelle les compteurs de connexions, déconnexions, relais, démarrages de l\'application et parcours d\'invitation sont écrits dans Firestore.',
   },
   {
     key: 'metricsRetentionDays', label: 'Conservation des mesures de connexion', unit: 'jours',
@@ -444,6 +444,41 @@ export const ENGINE_PARAMS: ParamDef[] = [
     key: 'bootStatsGapPoints', label: 'Démarrages : écart signalé avec les autres appareils', unit: 'points',
     min: 5, max: 90, default: 25, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
     help: 'Un type d\'appareil est signalé quand sa part de démarrages arrivant à l\'accueil est inférieure d\'au moins ce nombre de points à celle de tous les autres réunis.',
+  },
+  {
+    key: 'inviteStatsWindowSeconds', label: 'Invitations : durée de la fenêtre de plafonds', unit: 's',
+    min: 10, max: 600, default: 60, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Les deux plafonds suivants se comptent sur cette durée.',
+  },
+  {
+    key: 'inviteStatsMaxPerClient', label: 'Invitations : signaux acceptés par appareil', unit: '',
+    min: 2, max: 100, default: 12, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Un parcours d\'invitation envoie au plus cinq ou six signaux. Au-delà de ce plafond, les signaux d\'un même appareil sont ignorés jusqu\'à la fin de la fenêtre.',
+  },
+  {
+    key: 'inviteStatsMaxPerWindow', label: 'Invitations : signaux acceptés pour tout le serveur', unit: '',
+    min: 10, max: 20000, default: 1500, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Plafond global sur la même fenêtre. Les signaux sont cumulés en mémoire : ce plafond protège la mémoire, pas Firestore.',
+  },
+  {
+    key: 'inviteStatsMaxFamiliesPerDay', label: 'Invitations : groupes d\'appareils suivis par jour', unit: '',
+    min: 20, max: 300, default: 100, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Un groupe = type d\'appareil, canal (lien ou notification) et mode. Au-delà, les nouveaux groupes d\'une même journée sont regroupés sous « Autres ». Borne la taille du document du jour.',
+  },
+  {
+    key: 'inviteStatsRetentionDays', label: 'Invitations : conservation des compteurs', unit: 'jours',
+    min: 7, max: 90, default: 30, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Les compteurs plus anciens sont supprimés automatiquement, au plus une fois par jour.',
+  },
+  {
+    key: 'inviteStatsMinClicks', label: 'Invitations : volume minimum pour juger un type d\'appareil', unit: '',
+    min: 5, max: 1000, default: 20, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'En dessous de ce nombre de tentatives de jointure, un type d\'appareil n\'est pas jugé : trop peu de cas pour conclure.',
+  },
+  {
+    key: 'inviteStatsGapPoints', label: 'Invitations : écart d\'échecs techniques signalé', unit: 'points',
+    min: 5, max: 90, default: 25, group: 'connexion', scope: 'server', effect: 'immediate', advanced: true,
+    help: 'Un type d\'appareil est signalé quand sa part de tentatives qui échouent techniquement (délai réseau, exception, erreur générale, trop de tentatives) dépasse d\'au moins ce nombre de points celle des autres appareils. Les refus normaux (table pleine, partie commencée, table introuvable) ne comptent pas.',
   },
   {
     key: 'tablePreviewWindowSeconds', label: 'Carte d\'arrivée d\'un lien de table : durée de la fenêtre de plafonds', unit: 's',

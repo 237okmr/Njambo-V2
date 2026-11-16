@@ -2,6 +2,7 @@ import { getFirebaseAdminAppDb } from '../firebaseAdmin';
 import { getEngineConfig } from '../engine/engineConfig';
 import { flushPresenceDaily } from './presenceDaily';
 import { flushBootStats } from '../diagnostics/bootStatsStore';
+import { flushInviteStats } from '../diagnostics/inviteStatsStore';
 
 /**
  * Mesures de santé des connexions, agrégées par jour, pour diagnostiquer la qualité des connexions des
@@ -150,6 +151,7 @@ export async function flushMetricsToStore(): Promise<boolean> {
   rollIfNewDay();
   void flushPresenceDaily(); // présence quotidienne : même cadence (metricsFlushSeconds)
   void flushBootStats(); // démarrages de l'application : même cadence (metricsFlushSeconds)
+  void flushInviteStats(); // parcours d'invitation : même cadence (metricsFlushSeconds)
   try {
     const db = getFirebaseAdminAppDb();
     await db.collection(COLLECTION).doc(`connection_${current.dateKey}`).set(

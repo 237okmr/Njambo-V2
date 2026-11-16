@@ -49,6 +49,13 @@ export interface KatikaEngineConfig {
   bootStatsRetentionDays?: number;
   bootStatsMinStarts?: number;
   bootStatsGapPoints?: number;
+  inviteStatsWindowSeconds?: number;
+  inviteStatsMaxPerClient?: number;
+  inviteStatsMaxPerWindow?: number;
+  inviteStatsMaxFamiliesPerDay?: number;
+  inviteStatsRetentionDays?: number;
+  inviteStatsMinClicks?: number;
+  inviteStatsGapPoints?: number;
   tablePreviewWindowSeconds?: number;
   tablePreviewMaxPerClient?: number;
   tablePreviewMaxPerWindow?: number;

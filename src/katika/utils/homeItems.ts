@@ -21,6 +21,8 @@ export interface HomeInputs {
   openCrashes?: number | null;
   /** Types d'appareils qui démarrent l'application sans afficher l'accueil (page blanche sans erreur) ; null si non lu ou non permis. */
   bootSuspects?: number | null;
+  /** Groupes d'appareils dont les tentatives de jointure par lien d'invitation échouent techniquement bien plus que chez les autres ; null si non lu ou non permis. */
+  inviteSuspects?: number | null;
 }
 
 const plural = (n: number, one: string, many: string) => `${n} ${n > 1 ? many : one}`;
@@ -48,6 +50,13 @@ export function buildHomeTodo(input: HomeInputs): HomeTodoItem[] {
     items.push({
       level: 'WARNING',
       text: `${plural(input.bootSuspects, "type d'appareil démarre", "types d'appareils démarrent")} l'application sans afficher l'accueil (2 jours)`,
+      tab: 'LOGS',
+    });
+  }
+  if (input.inviteSuspects && input.inviteSuspects > 0) {
+    items.push({
+      level: 'WARNING',
+      text: `${plural(input.inviteSuspects, "groupe d'appareils échoue", "groupes d'appareils échouent")} à rejoindre une table par lien d'invitation (2 jours)`,
       tab: 'LOGS',
     });
   }

@@ -116,6 +116,8 @@ import { createCrashReportService } from './server/diagnostics/crashReports';
 import { firestoreCrashStore } from './server/diagnostics/crashReportStore';
 import { analyzeBootFamilies, sanitizeBootSignal, sumBootDays } from './server/diagnostics/bootStatsRules';
 import { flushBootStats, readBootDays, recordBootSignal } from './server/diagnostics/bootStatsStore';
+import { analyzeInviteRows, sanitizeInviteSignal, sumInviteDays } from './server/diagnostics/inviteStatsRules';
+import { flushInviteStats, readInviteDays, recordInviteSignal } from './server/diagnostics/inviteStatsStore';
 import { getClientReads, recordClientReads } from './server/katika/clientReads';
 import { computeRepairPlan } from './server/profileRepair';
 import { collection, getCountFromServer, getDocs, query, limit, orderBy, startAfter } from 'firebase/firestore';
@@ -177,6 +179,7 @@ async function startServer() {
     await Promise.race([
       RoomManager.flushAllRoomSnapshots(),
       flushBootStats(),
+      flushInviteStats(),
       new Promise((resolve) => setTimeout(resolve, flushSeconds * 1000)),
     ]).catch(() => {});
     process.exit(0);
@@ -494,6 +497,28 @@ async function startServer() {
       if (allowed) {
         const signal = sanitizeBootSignal(req.body, req.headers['user-agent']);
         if (signal.ok) recordBootSignal(signal.step, signal.family);
+      }
+    } catch {
+      // la mesure ne gêne jamais le jeu
+    }
+    res.status(204).end();
+  });
+
+  // Parcours d'invitation : signaux anonymes (lien ouvert, carte affichée, clic, pas maintenant, rejoint, échec avec motif).
+  // Jamais de code de table ni de nom ; plafonné par appareil et pour tout le serveur ; réponse toujours vide et rapide.
+  const inviteLimiter = createCrashLimiter();
+  app.post('/api/telemetry/client-invite', express.json({ type: ['application/json', 'text/plain'], limit: '1kb' }), (req, res) => {
+    try {
+      const cfg = getEngineConfig();
+      const forwarded = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+      const allowed = inviteLimiter.allow(forwarded || req.socket.remoteAddress || 'inconnu', Date.now(), {
+        windowMs: Number(cfg.inviteStatsWindowSeconds ?? 60) * 1000,
+        maxPerKey: Number(cfg.inviteStatsMaxPerClient ?? 12),
+        maxGlobal: Number(cfg.inviteStatsMaxPerWindow ?? 1500),
+      });
+      if (allowed) {
+        const signal = sanitizeInviteSignal(req.body, req.headers['user-agent']);
+        if (signal.ok) recordInviteSignal(signal.counter, signal.group);
       }
     } catch {
       // la mesure ne gêne jamais le jeu
@@ -2026,6 +2051,38 @@ async function startServer() {
         totalHome: rows.reduce((n, r) => n + r.home, 0),
         suspects: rows.filter((r) => r.suspect).length,
         families: rows,
+      });
+    } catch {
+      res.status(500).json({ success: false, error: 'Lecture impossible.' });
+    }
+  });
+  // Parcours d'invitation : compteurs par type d'appareil et canal sur les n derniers jours, avec les groupes suspects (échecs techniques).
+  app.get('/api/katika/invite-stats', async (req, res) => {
+    try {
+      const cfg = getEngineConfig();
+      const days = Math.max(1, Math.min(90, Math.floor(Number(req.query.days)) || 7));
+      const thresholds = {
+        minClicks: Number(cfg.inviteStatsMinClicks ?? 20),
+        gapPoints: Number(cfg.inviteStatsGapPoints ?? 25),
+      };
+      const rows = analyzeInviteRows(sumInviteDays(await readInviteDays(days)), thresholds);
+      const total = (pick: (r: (typeof rows)[number]) => number) => rows.reduce((n, r) => n + pick(r), 0);
+      res.json({
+        success: true,
+        days,
+        thresholds,
+        totals: {
+          opened: total((r) => r.opened),
+          cardShown: total((r) => r.cardShown),
+          clicks: total((r) => r.clicks),
+          later: total((r) => r.later),
+          joined: total((r) => r.joined),
+          normalRefusals: total((r) => r.normalRefusals),
+          technicalFailures: total((r) => r.technicalFailures),
+          noAnswer: total((r) => r.noAnswer),
+        },
+        suspects: rows.filter((r) => r.suspect).length,
+        groups: rows,
       });
     } catch {
       res.status(500).json({ success: false, error: 'Lecture impossible.' });

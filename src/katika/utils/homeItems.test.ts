@@ -46,6 +46,21 @@ describe('Confirmation renforcée de Kora Cash sur téléphone', () => {
   });
 });
 
+describe('parcours d\'invitation', () => {
+  it('une ligne quand des groupes d\'appareils échouent à rejoindre par lien, qui mène au journal', () => {
+    const one = buildHomeTodo({ ...base, inviteSuspects: 1 }).find((i) => i.text.includes('lien d\'invitation'));
+    assert.equal(one?.text, "1 groupe d'appareils échoue à rejoindre une table par lien d'invitation (2 jours)");
+    assert.equal(one?.tab, 'LOGS');
+    const many = buildHomeTodo({ ...base, inviteSuspects: 2 }).find((i) => i.text.includes('lien d\'invitation'));
+    assert.equal(many?.text, "2 groupes d'appareils échouent à rejoindre une table par lien d'invitation (2 jours)");
+  });
+
+  it('rien à signaler quand aucun groupe n\'est suspect ou que la mesure n\'est pas lue', () => {
+    assert.ok(!buildHomeTodo({ ...base, inviteSuspects: 0 }).some((i) => i.text.includes('lien d\'invitation')));
+    assert.ok(!buildHomeTodo({ ...base, inviteSuspects: null }).some((i) => i.text.includes('lien d\'invitation')));
+  });
+});
+
 describe('démarrages de l\'application', () => {
   it('une ligne quand des types d\'appareils démarrent sans afficher l\'accueil, qui mène au journal', () => {
     const one = buildHomeTodo({ ...base, bootSuspects: 1 }).find((i) => i.text.includes('sans afficher l\'accueil'));
