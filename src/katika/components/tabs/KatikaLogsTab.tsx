@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useIsCompactScreen } from '../../hooks/useIsCompactScreen';
 import { 
   ScrollText, 
   Search, 
@@ -16,7 +17,8 @@ import {
   FileSpreadsheet,
   Coins,
   Ban,
-  Radio
+  Radio,
+  ChevronDown
 } from 'lucide-react';
 import { KatikaAuditLog } from '../../types/katika';
 import { KatikaService, getAuditLogsNotice } from '../../services/katikaService';
@@ -28,7 +30,70 @@ import { KatikaBootStatsPanel } from './KatikaBootStatsPanel';
 import { KatikaInviteStatsPanel } from './KatikaInviteStatsPanel';
 import { KatikaAuthStatsPanel } from './KatikaAuthStatsPanel';
 
+const SeverityBadge: React.FC<{ severity: KatikaAuditLog['severity'] }> = ({ severity }) => {
+  if (severity === 'CRITICAL') {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20 text-[10px] font-bold">
+        <Ban className="w-3 h-3" />
+        Sanction
+      </span>
+    );
+  }
+  if (severity === 'WARNING') {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 text-[10px] font-medium">
+        <AlertTriangle className="w-3 h-3 text-amber-400" />
+        Avertissement
+      </span>
+    );
+  }
+  if (severity === 'INFO') {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px]">
+        <Info className="w-3 h-3" />
+        Info
+      </span>
+    );
+  }
+  return null;
+};
+
+const CategoryLabel: React.FC<{ type: KatikaAuditLog['type'] }> = ({ type }) => {
+  if (type === 'KATIKA_ACTION') {
+    return (
+      <span className="text-amber-400 flex items-center gap-1">
+        <UserX className="w-3 h-3" /> Modération
+      </span>
+    );
+  }
+  if (type === 'CONFIG_CHANGE') {
+    return (
+      <span className="text-purple-400 flex items-center gap-1">
+        <Sliders className="w-3 h-3" /> Paramètres
+      </span>
+    );
+  }
+  if (type === 'AUTH') {
+    return (
+      <span className="text-emerald-400 flex items-center gap-1">
+        <ShieldCheck className="w-3 h-3" /> Connexion
+      </span>
+    );
+  }
+  if (type === 'SERVER_ERROR') {
+    return (
+      <span className="text-red-400 flex items-center gap-1">
+        <AlertCircle className="w-3 h-3" /> Système
+      </span>
+    );
+  }
+  return null;
+};
+
 export const KatikaLogsTab: React.FC = () => {
+  const isCompact = useIsCompactScreen();
+  // Sur téléphone et tablette, les cinq panneaux techniques sont repliés : le journal reste en haut de page.
+  const [statsOpen, setStatsOpen] = useState<boolean>(false);
   const [logs, setLogs] = useState<KatikaAuditLog[]>([]);
   const [logsNotice, setLogsNotice] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
@@ -116,15 +181,30 @@ export const KatikaLogsTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <KatikaConnectionHealthPanel />
-      <KatikaBootStatsPanel />
-      <KatikaInviteStatsPanel />
-      <KatikaAuthStatsPanel />
-      <KatikaCrashesPanel />
+      {isCompact && (
+        <button
+          type="button"
+          onClick={() => setStatsOpen((v) => !v)}
+          aria-expanded={statsOpen}
+          className="w-full min-h-12 flex items-center justify-between gap-3 px-4 rounded-xl bg-slate-900/90 border border-slate-800 text-sm font-semibold text-slate-200 cursor-pointer"
+        >
+          <span>Santé et statistiques techniques</span>
+          <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${statsOpen ? 'rotate-180' : ''}`} />
+        </button>
+      )}
+      {(!isCompact || statsOpen) && (
+        <>
+          <KatikaConnectionHealthPanel />
+          <KatikaBootStatsPanel />
+          <KatikaInviteStatsPanel />
+          <KatikaAuthStatsPanel />
+          <KatikaCrashesPanel />
+        </>
+      )}
 
       {/* Search, Filter & Export Bar */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-4 rounded-xl bg-slate-900/90 border border-slate-800">
-        <div className="flex items-center gap-2 flex-1 max-w-md bg-slate-800/90 px-3 py-2 rounded-lg border border-slate-700/60">
+        <div className="flex items-center gap-2 flex-1 md:max-w-md bg-slate-800/90 px-3 py-2 rounded-lg border border-slate-700/60">
           <Search className="w-4 h-4 text-slate-400 shrink-0" />
           <input
             type="text"
@@ -132,24 +212,24 @@ export const KatikaLogsTab: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Rechercher par action, joueur, modérateur..."
-            className="bg-transparent border-none outline-none text-xs text-white placeholder-slate-500 w-full"
+            className="bg-transparent border-none outline-none text-base sm:text-xs text-white placeholder-slate-500 w-full min-h-8"
           />
           {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="text-slate-400 hover:text-slate-200">
-              <X className="w-3.5 h-3.5" />
+            <button onClick={() => setSearchQuery('')} aria-label="Effacer la recherche" className="shrink-0 w-9 h-9 -mr-2 flex items-center justify-center text-slate-400 hover:text-slate-200">
+              <X className="w-4 h-4" />
             </button>
           )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* Severity Filter */}
-          <div className="flex items-center bg-slate-800/90 p-1 rounded-lg border border-slate-700/60 text-xs">
+          {/* Severity Filter : défile à l'horizontale sur téléphone */}
+          <div className="flex items-center bg-slate-800/90 p-1 rounded-lg border border-slate-700/60 text-xs w-full sm:w-auto overflow-x-auto">
             {(['ALL', 'CRITICAL', 'WARNING', 'INFO'] as const).map((sev) => (
               <button
                 key={sev}
                 type="button"
                 onClick={() => setSeverityFilter(sev)}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+                className={`shrink-0 min-h-10 sm:min-h-0 px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                   severityFilter === sev
                     ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                     : 'text-slate-400 hover:text-slate-200'
@@ -167,7 +247,7 @@ export const KatikaLogsTab: React.FC = () => {
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="bg-slate-800/90 border border-slate-700/60 text-slate-300 text-xs rounded-lg px-2.5 py-1.5 outline-none cursor-pointer"
+            className="w-full sm:w-auto min-h-11 sm:min-h-0 bg-slate-800/90 border border-slate-700/60 text-slate-300 text-base sm:text-xs rounded-lg px-2.5 py-1.5 outline-none cursor-pointer"
           >
             <option value="ALL">Toutes les actions</option>
             <option value="KATIKA_ACTION">Modération & Joueurs</option>
@@ -180,7 +260,7 @@ export const KatikaLogsTab: React.FC = () => {
           <button
             type="button"
             onClick={handleExportCSV}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-950/50 hover:bg-emerald-900/70 text-emerald-300 text-xs font-semibold border border-emerald-800/60 cursor-pointer shadow-sm"
+            className="flex-1 sm:flex-none justify-center min-h-11 sm:min-h-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-950/50 hover:bg-emerald-900/70 text-emerald-300 text-xs font-semibold border border-emerald-800/60 cursor-pointer shadow-sm"
             title="Télécharger l'historique en fichier CSV pour Excel"
           >
             <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
@@ -191,7 +271,7 @@ export const KatikaLogsTab: React.FC = () => {
           <button
             type="button"
             onClick={handleExportJSON}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 cursor-pointer"
+            className="flex-1 sm:flex-none justify-center min-h-11 sm:min-h-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 cursor-pointer"
             title="Exporter les données brutes en JSON"
           >
             <Download className="w-3.5 h-3.5 text-cyan-400" />
@@ -203,7 +283,8 @@ export const KatikaLogsTab: React.FC = () => {
             type="button"
             onClick={fetchLogs}
             disabled={loading}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 cursor-pointer"
+            aria-label="Actualiser le journal"
+            className="shrink-0 min-w-11 min-h-11 sm:min-w-0 sm:min-h-0 justify-center flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 cursor-pointer"
             title="Actualiser le journal"
           >
             <RotateCw className={`w-3.5 h-3.5 text-amber-400 ${loading ? 'animate-spin' : ''}`} />
@@ -217,8 +298,51 @@ export const KatikaLogsTab: React.FC = () => {
         </div>
       )}
 
-      {/* Audit Logs Table */}
-      <div className="rounded-xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-lg">
+      {/* Téléphone et tablette : une carte par action (gravité + heure, description, acteur et catégorie) ; toucher pour le détail */}
+      <ul className="lg:hidden flex flex-col gap-2.5">
+        {filteredLogs.length === 0 ? (
+          <li className="rounded-xl border border-slate-800 bg-slate-900/90 p-4 text-sm text-slate-500 text-center">
+            Aucune action consignée ne correspond aux filtres.
+          </li>
+        ) : (
+          filteredLogs.map((log) => {
+            const cardBody = (
+              <>
+                <span className="flex items-center justify-between gap-2">
+                  <SeverityBadge severity={log.severity} />
+                  <span className="text-[11px] font-mono text-slate-400 whitespace-nowrap">
+                    {new Date(log.timestamp).toLocaleString([], { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </span>
+                <span className="block mt-2 text-sm text-slate-100 line-clamp-3 break-words">{log.summary}</span>
+                <span className="mt-2 flex items-center justify-between gap-2 text-[11px]">
+                  <span className="min-w-0 truncate text-slate-400">{log.actor}</span>
+                  <span className="shrink-0 font-mono"><CategoryLabel type={log.type} /></span>
+                </span>
+              </>
+            );
+            return (
+              <li key={log.id}>
+                {log.details ? (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedLogForDetails(log)}
+                    aria-label="Voir le détail de l'action"
+                    className="w-full text-left block rounded-xl border border-slate-800 bg-slate-900/90 p-3.5 min-h-[64px] cursor-pointer active:bg-slate-800/60"
+                  >
+                    {cardBody}
+                  </button>
+                ) : (
+                  <div className="rounded-xl border border-slate-800 bg-slate-900/90 p-3.5 min-h-[64px]">{cardBody}</div>
+                )}
+              </li>
+            );
+          })
+        )}
+      </ul>
+
+      {/* Audit Logs Table : écrans larges */}
+      <div className="hidden lg:block rounded-xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-lg">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
@@ -253,47 +377,11 @@ export const KatikaLogsTab: React.FC = () => {
                     </td>
 
                     <td className="py-3 px-4">
-                      {log.severity === 'CRITICAL' && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20 text-[10px] font-bold">
-                          <Ban className="w-3 h-3" />
-                          Sanction
-                        </span>
-                      )}
-                      {log.severity === 'WARNING' && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 text-[10px] font-medium">
-                          <AlertTriangle className="w-3 h-3 text-amber-400" />
-                          Avertissement
-                        </span>
-                      )}
-                      {log.severity === 'INFO' && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px]">
-                          <Info className="w-3 h-3" />
-                          Info
-                        </span>
-                      )}
+                      <SeverityBadge severity={log.severity} />
                     </td>
 
                     <td className="py-3 px-4 text-slate-300 text-[11px]">
-                      {log.type === 'KATIKA_ACTION' && (
-                        <span className="text-amber-400 flex items-center gap-1">
-                          <UserX className="w-3 h-3" /> Modération
-                        </span>
-                      )}
-                      {log.type === 'CONFIG_CHANGE' && (
-                        <span className="text-purple-400 flex items-center gap-1">
-                          <Sliders className="w-3 h-3" /> Paramètres
-                        </span>
-                      )}
-                      {log.type === 'AUTH' && (
-                        <span className="text-emerald-400 flex items-center gap-1">
-                          <ShieldCheck className="w-3 h-3" /> Connexion
-                        </span>
-                      )}
-                      {log.type === 'SERVER_ERROR' && (
-                        <span className="text-red-400 flex items-center gap-1">
-                          <AlertCircle className="w-3 h-3" /> Système
-                        </span>
-                      )}
+                      <CategoryLabel type={log.type} />
                     </td>
 
                     <td className="py-3 px-4 text-slate-200 font-sans text-xs">
