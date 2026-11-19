@@ -44,7 +44,7 @@ export const KatikaHeader: React.FC<KatikaHeaderProps> = ({
   useVisibleInterval(pingServer, getPublicParamNumber('katikaHealthRefreshSeconds') * 1000);
 
   return (
-    <header className="h-14 lg:h-16 border-b border-slate-800/90 bg-slate-900/90 backdrop-blur-md px-4 lg:px-6 flex items-center justify-between sticky top-0 z-50 select-none">
+    <header className="h-[calc(3.5rem+env(safe-area-inset-top))] lg:h-[calc(4rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] border-b border-slate-800/90 bg-slate-900/90 backdrop-blur-md px-4 lg:px-6 flex items-center justify-between sticky top-0 z-50 select-none">
       {/* Brand & Katika Shield */}
       <div className="flex items-center gap-3">
         <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shadow-inner">
