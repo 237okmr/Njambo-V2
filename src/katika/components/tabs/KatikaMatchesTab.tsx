@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { KatikaSheet, SHEET_BTN_SECONDARY } from '../KatikaSheet';
 import { 
   Trophy, 
   RotateCw, 
@@ -49,6 +50,7 @@ export const KatikaMatchesTab: React.FC<KatikaMatchesTabProps> = ({ initialRange
   const [winTypeFilter, setWinTypeFilter] = useState<string>('ALL');
   const [tableNatureFilter, setTableNatureFilter] = useState<'ALL' | 'HUMANS_ONLY' | 'HUMANS_VS_BOTS' | 'BOTS_ONLY'>('ALL');
   const [showFilters, setShowFilters] = useState<boolean>(false);
+  const [selectedMatch, setSelectedMatch] = useState<any | null>(null);
 
   useEffect(() => {
     const handleNav = (e: Event) => {
@@ -117,6 +119,19 @@ export const KatikaMatchesTab: React.FC<KatikaMatchesTabProps> = ({ initialRange
                   nameLower.includes('koubi doux') ||
                   nameLower === 'abandon';
     return !isBot;
+  };
+
+  // Occupation de la table : humains et bots (même calcul pour le tableau, les cartes et le détail)
+  const getOccupancy = (match: any, isWinHuman: boolean): { humanCount: number; botCount: number } => {
+    if (match.players && match.players.length > 0) {
+      return {
+        humanCount: match.players.filter((p: any) => p.isHuman).length,
+        botCount: match.players.filter((p: any) => !p.isHuman).length,
+      };
+    }
+    if (match.mode === 'SOLO') return { humanCount: 1, botCount: match.playerCount - 1 };
+    if (isWinHuman) return { humanCount: match.playerCount, botCount: 0 };
+    return { humanCount: match.playerCount - 1, botCount: 1 };
   };
 
   const getRecordQualifiedStatus = (m: any): 'completed' | 'in_progress' | 'abandoned' => {
@@ -236,6 +251,31 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
     navigateToKatikaTab('AI_ASSISTANT', prompt);
   };
 
+  const renderStatusBadge = (qualifiedStatus: 'completed' | 'in_progress' | 'abandoned') => {
+    if (qualifiedStatus === 'completed') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">
+          <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+          Certifiée
+        </span>
+      );
+    }
+    if (qualifiedStatus === 'in_progress') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/25 animate-pulse">
+          <RotateCw className="w-3 h-3 text-cyan-400 animate-spin" />
+          En direct
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-500/15 text-rose-300 border border-rose-500/25">
+        <AlertTriangle className="w-3 h-3 text-rose-400" />
+        Abandonnée
+      </span>
+    );
+  };
+
   const renderWinTypeBadge = (winType: string, isAbandoned?: boolean) => {
     if (isAbandoned) {
       return (
@@ -307,7 +347,7 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
           <button
             type="button"
             onClick={handleAskAIAboutHistory}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-purple-300 text-xs font-semibold transition cursor-pointer shadow-sm"
+            className="flex items-center justify-center gap-1.5 min-h-11 sm:min-h-0 px-3 py-1.5 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-purple-300 text-xs font-semibold transition cursor-pointer shadow-sm"
             title="Poser une question à l'IA sur l'historique et les tendances"
           >
             <Sparkles className="w-3.5 h-3.5 text-purple-400" />
@@ -315,10 +355,10 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
           </button>
 
           {/* Time range selector */}
-          <div className="flex items-center bg-slate-900 p-1 rounded-lg border border-slate-800 text-xs">
+          <div className="flex items-center bg-slate-900 p-1 rounded-lg border border-slate-800 text-xs w-full sm:w-auto">
             <button
               onClick={() => setTimeRange('24H')}
-              className={`px-2.5 py-1 rounded text-[11px] font-medium transition cursor-pointer ${
+              className={`flex-1 sm:flex-none min-h-10 sm:min-h-0 px-2.5 py-1 rounded text-[11px] font-medium transition cursor-pointer ${
                 timeRange === '24H' ? 'bg-amber-500/20 text-amber-300 font-bold' : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -326,7 +366,7 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
             </button>
             <button
               onClick={() => setTimeRange('7D')}
-              className={`px-2.5 py-1 rounded text-[11px] font-medium transition cursor-pointer ${
+              className={`flex-1 sm:flex-none min-h-10 sm:min-h-0 px-2.5 py-1 rounded text-[11px] font-medium transition cursor-pointer ${
                 timeRange === '7D' ? 'bg-amber-500/20 text-amber-300 font-bold' : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -334,7 +374,7 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
             </button>
             <button
               onClick={() => setTimeRange('ALL')}
-              className={`px-2.5 py-1 rounded text-[11px] font-medium transition cursor-pointer ${
+              className={`flex-1 sm:flex-none min-h-10 sm:min-h-0 px-2.5 py-1 rounded text-[11px] font-medium transition cursor-pointer ${
                 timeRange === 'ALL' ? 'bg-amber-500/20 text-amber-300 font-bold' : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -350,7 +390,7 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
             type="button"
             onClick={() => fetchMatches(timeRange)}
             disabled={loading}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-medium transition-colors cursor-pointer disabled:opacity-50"
+            className="flex items-center justify-center gap-1.5 min-h-11 sm:min-h-0 px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-medium transition-colors cursor-pointer disabled:opacity-50"
           >
             <RotateCw className={`w-3.5 h-3.5 text-amber-400 ${loading ? 'animate-spin' : ''}`} />
             <span>Actualiser</span>
@@ -366,14 +406,15 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
             setStatusSubTab('COMPLETED');
             setCurrentPage(1);
           }}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+          className={`flex-1 sm:flex-none justify-center min-h-11 sm:min-h-0 flex items-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-2 rounded-lg text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
             statusSubTab === 'COMPLETED'
               ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shadow-sm'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'
           }`}
         >
-          <CheckCircle2 className={`w-3.5 h-3.5 ${statusSubTab === 'COMPLETED' ? 'text-emerald-400' : 'text-slate-500'}`} />
-          <span>Manches Terminées (Officielles)</span>
+          <CheckCircle2 className={`hidden sm:block w-3.5 h-3.5 ${statusSubTab === 'COMPLETED' ? 'text-emerald-400' : 'text-slate-500'}`} />
+          <span className="sm:hidden">Terminées</span>
+          <span className="hidden sm:inline">Manches Terminées (Officielles)</span>
           <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-full ${
             statusSubTab === 'COMPLETED' ? 'bg-emerald-500/30 text-emerald-200' : 'bg-slate-800 text-slate-400'
           }`}>
@@ -387,14 +428,15 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
             setStatusSubTab('ABANDONED');
             setCurrentPage(1);
           }}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+          className={`flex-1 sm:flex-none justify-center min-h-11 sm:min-h-0 flex items-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-2 rounded-lg text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
             statusSubTab === 'ABANDONED'
               ? 'bg-rose-500/15 text-rose-300 border border-rose-500/30 shadow-sm'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'
           }`}
         >
-          <AlertTriangle className={`w-3.5 h-3.5 ${statusSubTab === 'ABANDONED' ? 'text-rose-400' : 'text-slate-500'}`} />
-          <span>Abandons & Forfaits</span>
+          <AlertTriangle className={`hidden sm:block w-3.5 h-3.5 ${statusSubTab === 'ABANDONED' ? 'text-rose-400' : 'text-slate-500'}`} />
+          <span className="sm:hidden">Abandons</span>
+          <span className="hidden sm:inline">Abandons & Forfaits</span>
           <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-full ${
             statusSubTab === 'ABANDONED' ? 'bg-rose-500/30 text-rose-200' : 'bg-slate-800 text-slate-400'
           }`}>
@@ -408,14 +450,15 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
             setStatusSubTab('ALL');
             setCurrentPage(1);
           }}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+          className={`flex-1 sm:flex-none justify-center min-h-11 sm:min-h-0 flex items-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-2 rounded-lg text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
             statusSubTab === 'ALL'
               ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30 shadow-sm'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'
           }`}
         >
-          <History className={`w-3.5 h-3.5 ${statusSubTab === 'ALL' ? 'text-amber-400' : 'text-slate-500'}`} />
-          <span>Toutes les Sessions (Vue brute)</span>
+          <History className={`hidden sm:block w-3.5 h-3.5 ${statusSubTab === 'ALL' ? 'text-amber-400' : 'text-slate-500'}`} />
+          <span className="sm:hidden">Toutes</span>
+          <span className="hidden sm:inline">Toutes les Sessions (Vue brute)</span>
           <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-full ${
             statusSubTab === 'ALL' ? 'bg-amber-500/30 text-amber-200' : 'bg-slate-800 text-slate-400'
           }`}>
@@ -425,8 +468,8 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
       </div>
 
       {/* Summary Stat Badges for the Filtered View */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between transition-all duration-250">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+        <div className="p-3 sm:p-4 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between transition-all duration-250">
           <div>
             <span className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
               Sessions Filtrées ({statusSubTab === 'COMPLETED' ? 'Terminées' : statusSubTab === 'ABANDONED' ? 'Abandons' : 'Toutes'})
@@ -438,12 +481,12 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
               {statusSubTab === 'COMPLETED' ? 'Victoires certifiées au tableau' : statusSubTab === 'ABANDONED' ? 'Télémétrie des abandons' : 'Historique complet'}
             </div>
           </div>
-          <div className="w-10 h-10 rounded-xl border bg-purple-500/10 border-purple-500/20 text-purple-400 flex items-center justify-center">
+          <div className="hidden sm:flex w-10 h-10 rounded-xl border bg-purple-500/10 border-purple-500/20 text-purple-400 flex items-center justify-center">
             <Trophy className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between transition-all duration-250">
+        <div className="p-3 sm:p-4 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between transition-all duration-250">
           <div>
             <span className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
               Total Parties (5 tours) Jouées
@@ -455,12 +498,12 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
               ~{filteredMatches.length > 0 ? (totalPartiesDisputed / filteredMatches.length).toFixed(1) : 1} parties / manche
             </div>
           </div>
-          <div className="w-10 h-10 rounded-xl border bg-amber-500/10 border-amber-500/20 text-amber-400 flex items-center justify-center">
+          <div className="hidden sm:flex w-10 h-10 rounded-xl border bg-amber-500/10 border-amber-500/20 text-amber-400 flex items-center justify-center">
             <Layers className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between transition-all duration-250">
+        <div className="col-span-2 sm:col-span-1 p-3 sm:p-4 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between transition-all duration-250">
           <div>
             <span className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
               Volume Cumulé des Gains
@@ -472,14 +515,14 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
               Pots cumulés redistribués
             </div>
           </div>
-          <div className="w-10 h-10 rounded-xl border bg-emerald-500/10 border-emerald-500/20 text-emerald-400 flex items-center justify-center">
+          <div className="hidden sm:flex w-10 h-10 rounded-xl border bg-emerald-500/10 border-emerald-500/20 text-emerald-400 flex items-center justify-center">
             <Coins className="w-5 h-5" />
           </div>
         </div>
       </div>
 
       {/* Main Table Card */}
-      <div className="p-5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-4 shadow-sm">
+      <div className="p-3 sm:p-5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-4 shadow-sm">
         {/* Filter Controls Bar */}
         <div className="space-y-3 pb-3 border-b border-slate-800">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -492,7 +535,7 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
 
             <div className="flex items-center gap-2 flex-wrap">
               {/* Search Input */}
-              <div className="relative">
+              <div className="relative w-full sm:w-auto">
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
@@ -502,7 +545,7 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
                     setSearchFilter(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="pl-8 pr-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-400 transition w-56 cursor-pointer"
+                  className="pl-8 pr-3 py-1.5 min-h-11 sm:min-h-0 rounded-lg bg-slate-800 border border-slate-700 text-base sm:text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-400 transition w-full sm:w-56"
                 />
               </div>
 
@@ -510,7 +553,7 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
               <button
                 type="button"
                 onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition cursor-pointer ${
+                className={`flex items-center gap-1.5 min-h-11 sm:min-h-0 px-3 py-1.5 rounded-lg border text-xs font-semibold transition cursor-pointer ${
                   showFilters || activeFiltersCount > 0
                     ? 'bg-amber-500/10 text-amber-300 border-amber-500/30'
                     : 'bg-slate-800 hover:bg-slate-750 text-slate-400 border-slate-700'
@@ -537,7 +580,7 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
                     setSearchFilter('');
                     setCurrentPage(1);
                   }}
-                  className="text-[11px] text-slate-500 hover:text-amber-400 transition font-mono cursor-pointer"
+                  className="min-h-11 sm:min-h-0 px-2 text-[11px] text-slate-500 hover:text-amber-400 transition font-mono cursor-pointer"
                 >
                   [Réinitialiser]
                 </button>
@@ -557,7 +600,7 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
                     setModeFilter(e.target.value as any);
                     setCurrentPage(1);
                   }}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-300 focus:outline-none focus:border-amber-400 cursor-pointer"
+                  className="w-full min-h-11 sm:min-h-0 px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-base sm:text-xs text-slate-300 focus:outline-none focus:border-amber-400 cursor-pointer"
                 >
                   <option value="ALL">Tous les modes</option>
                   <option value="MULTIPLAYER">Multijoueur (Live)</option>
@@ -574,7 +617,7 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
                     setTableNatureFilter(e.target.value as any);
                     setCurrentPage(1);
                   }}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-300 focus:outline-none focus:border-amber-400 cursor-pointer"
+                  className="w-full min-h-11 sm:min-h-0 px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-base sm:text-xs text-slate-300 focus:outline-none focus:border-amber-400 cursor-pointer"
                 >
                   <option value="ALL">Toutes natures</option>
                   <option value="HUMANS_ONLY">Humains vs Humains 👥</option>
@@ -592,7 +635,7 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
                     setPlayerCountFilter(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-300 focus:outline-none focus:border-amber-400 cursor-pointer"
+                  className="w-full min-h-11 sm:min-h-0 px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-base sm:text-xs text-slate-300 focus:outline-none focus:border-amber-400 cursor-pointer"
                 >
                   <option value="ALL">Toutes les tailles</option>
                   <option value="2">2 Joueurs (Duels)</option>
@@ -610,7 +653,7 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
                     setWinTypeFilter(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-300 focus:outline-none focus:border-amber-400 cursor-pointer"
+                  className="w-full min-h-11 sm:min-h-0 px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-base sm:text-xs text-slate-300 focus:outline-none focus:border-amber-400 cursor-pointer"
                 >
                   <option value="ALL">Tous les coups</option>
                   <option value="DOUBLE_KORA">Double Kora (x4)</option>
@@ -626,7 +669,7 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
 
         {/* Official Rules Context Banner */}
         <div className="px-3.5 py-2 rounded-lg bg-amber-500/10 border border-amber-500/25 flex items-center justify-between text-xs text-amber-200">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col items-start sm:flex-row sm:items-center gap-1.5 sm:gap-2">
             <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono font-bold text-[10px] uppercase border border-amber-500/30 shrink-0">
               Distinction Katika
             </span>
@@ -653,7 +696,65 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
             <p>Essayez de réinitialiser vos filtres ou de sélectionner une plage de temps plus large.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          {/* Téléphone et tablette : une carte par manche (statut + date, vainqueur, coup décisif + pot) ; toucher pour le détail */}
+          <ul className="lg:hidden flex flex-col gap-2.5">
+            {paginatedMatches.map((match) => {
+              const isWinHuman = isWinnerHuman(match);
+              const qualifiedStatus = getRecordQualifiedStatus(match);
+              const isAbandoned = qualifiedStatus === 'abandoned';
+              return (
+                <li key={match.id || `${match.createdAt}-${match.winnerName}`}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedMatch(match)}
+                    aria-label="Voir le détail de la manche"
+                    className="w-full text-left block rounded-xl border border-slate-800 bg-slate-950/40 p-3.5 min-h-[64px] cursor-pointer active:bg-slate-800/60"
+                  >
+                    <span className="flex items-center justify-between gap-2">
+                      {renderStatusBadge(qualifiedStatus)}
+                      <span className="text-[11px] font-mono text-slate-400 whitespace-nowrap">
+                        {new Date(match.createdAt).toLocaleDateString('fr-FR')} {new Date(match.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </span>
+                    <span className="mt-2.5 flex items-center gap-2 min-w-0">
+                      <span className={`w-7 h-7 shrink-0 rounded-full font-bold flex items-center justify-center text-xs ${
+                        isAbandoned ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-gradient-to-tr from-amber-600 to-amber-400 text-slate-950'
+                      }`}>
+                        {isAbandoned ? 'X' : (match.winnerName || 'J').charAt(0).toUpperCase()}
+                      </span>
+                      <span className="min-w-0 truncate text-sm font-semibold text-slate-100">
+                        {isAbandoned ? (match.leaverName ? `Quitté par ${match.leaverName}` : 'Session incomplète') : match.winnerName}
+                      </span>
+                      {!isAbandoned && (
+                        <span className={`shrink-0 px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wide border ${
+                          isWinHuman ? 'bg-purple-500/20 text-purple-300 border-purple-500/25' : 'bg-slate-800 text-slate-400 border-slate-700 font-mono'
+                        }`}>
+                          {isWinHuman ? 'Humain' : 'Bot'}
+                        </span>
+                      )}
+                    </span>
+                    <span className="mt-2.5 flex items-center justify-between gap-2">
+                      <span className="min-w-0">
+                        {isAbandoned ? (
+                          <span className="inline-flex px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                            {match.abandonmentReason || 'INACTIVITÉ > 30MIN'}
+                          </span>
+                        ) : (
+                          renderWinTypeBadge(match.winType)
+                        )}
+                      </span>
+                      <span className="shrink-0 font-mono font-bold text-amber-300 text-sm">
+                        {match.potWon ? `${match.potWon.toLocaleString('fr-FR')} jetons` : '—'}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-slate-800 text-[11px] text-slate-400 font-mono uppercase bg-slate-950/40">
@@ -676,23 +777,7 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
                   const qualifiedStatus = getRecordQualifiedStatus(match);
                   const isAbandoned = qualifiedStatus === 'abandoned';
                   
-                  let humanCount = 0;
-                  let botCount = 0;
-                  if (match.players && match.players.length > 0) {
-                    humanCount = match.players.filter((p: any) => p.isHuman).length;
-                    botCount = match.players.filter((p: any) => !p.isHuman).length;
-                  } else if (match.mode === 'SOLO') {
-                    humanCount = 1;
-                    botCount = match.playerCount - 1;
-                  } else {
-                    if (isWinHuman) {
-                      humanCount = match.playerCount;
-                      botCount = 0;
-                    } else {
-                      humanCount = match.playerCount - 1;
-                      botCount = 1;
-                    }
-                  }
+                  const { humanCount, botCount } = getOccupancy(match, isWinHuman);
 
                   return (
                     <tr key={match.id || `${match.createdAt}-${match.winnerName}`} className="hover:bg-slate-800/40 transition-colors">
@@ -823,6 +908,7 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
               </tbody>
             </table>
           </div>
+          </>
         )}
 
         {/* Pagination Controls */}
@@ -836,7 +922,7 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
                 setCurrentPage(1);
               }}
               aria-label="Nombre de parties par page"
-              className="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-200 text-xs focus:outline-none"
+              className="min-h-11 sm:min-h-0 px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-200 text-base sm:text-xs focus:outline-none"
             >
               <option value={10}>10</option>
               <option value={15}>15</option>
@@ -847,7 +933,7 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
             <span>manches par page (sur {filteredMatches.length})</span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between sm:justify-start gap-3">
             <span className="font-mono text-[11px] text-slate-400">
               Page <span className="text-white font-bold">{currentPage}</span> sur <span className="text-white font-bold">{totalPages}</span>
             </span>
@@ -856,7 +942,7 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage <= 1}
-                className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 transition"
+                className="min-w-11 min-h-11 sm:min-w-0 sm:min-h-0 flex items-center justify-center p-2 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 transition"
                 title="Page précédente"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -865,7 +951,7 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage >= totalPages}
-                className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 transition"
+                className="min-w-11 min-h-11 sm:min-w-0 sm:min-h-0 flex items-center justify-center p-2 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 transition"
                 title="Page suivante"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -874,6 +960,50 @@ Quelles sont les anomalies, tendances de jeu et recommandations pour Katika ?`;
           </div>
         </div>
       </div>
+
+      {/* Détail d'une manche : lecture seule, un toucher sur le fond ferme le volet */}
+      {selectedMatch && (() => {
+        const m = selectedMatch;
+        const isWinHuman = isWinnerHuman(m);
+        const qualified = getRecordQualifiedStatus(m);
+        const isAbandoned = qualified === 'abandoned';
+        const { humanCount, botCount } = getOccupancy(m, isWinHuman);
+        const parties = m.partiesCount || m.roundsCount || 1;
+        const rows: Array<[string, React.ReactNode]> = [
+          ['Date et heure', `${new Date(m.createdAt).toLocaleDateString('fr-FR')} ${new Date(m.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`],
+          ['Statut', renderStatusBadge(qualified)],
+          ['Mode et format', `${m.mode === 'MULTIPLAYER' ? 'Multijoueur' : 'Solo'} · ${m.playerCount} joueurs · ${humanCount} humain(s) / ${botCount} bot(s)`],
+          [isAbandoned ? 'Quitté par' : 'Vainqueur', isAbandoned ? (m.leaverName || 'Session incomplète') : `${m.winnerName} (${isWinHuman ? 'humain' : 'bot'})`],
+        ];
+        if (m.winnerId && !isAbandoned) rows.push(['ID du vainqueur', <span className="font-mono text-xs break-all">{m.winnerId}</span>]);
+        rows.push([isAbandoned ? "Raison d'abandon" : 'Coup décisif', isAbandoned ? (m.abandonmentReason || 'INACTIVITÉ > 30MIN') : renderWinTypeBadge(m.winType)]);
+        if (isAbandoned && m.trickNumberAtQuit) rows.push(['Interrompu', `au tour ${m.trickNumberAtQuit}/5`]);
+        rows.push(['Parties (5 tours)', `${parties} ${parties > 1 ? 'parties' : 'partie'}`]);
+        rows.push(['Pot remporté', m.potWon ? `${m.potWon.toLocaleString('fr-FR')} jetons` : '—']);
+        if (m.id) rows.push(['ID de la manche', <span className="font-mono text-xs break-all">{m.id}</span>]);
+        return (
+          <KatikaSheet
+            title={<span>Détail de la manche</span>}
+            maxWidth="lg"
+            dismissOnBackdrop
+            onClose={() => setSelectedMatch(null)}
+            footer={
+              <button type="button" onClick={() => setSelectedMatch(null)} className={SHEET_BTN_SECONDARY}>
+                Fermer
+              </button>
+            }
+          >
+            <dl className="divide-y divide-slate-800 text-sm">
+              {rows.map(([label, value]) => (
+                <div key={label} className="py-2.5 flex flex-col gap-0.5 sm:flex-row sm:justify-between sm:gap-4">
+                  <dt className="text-[11px] font-mono uppercase tracking-wider text-slate-500">{label}</dt>
+                  <dd className="text-slate-100 sm:text-right min-w-0">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </KatikaSheet>
+        );
+      })()}
     </div>
   );
 };

@@ -82,7 +82,7 @@ const KatikaWorkspace: React.FC<{ initialTab?: KatikaTab }> = ({ initialTab }) =
 
   return (
     <KatikaAiChatProvider>
-      <div className="min-h-dvh bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500/30">
+      <div className="katika-ui min-h-dvh bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500/30">
         <KatikaHeader
           isMaintenanceMode={config?.isMaintenanceMode || false}
           onToggleMaintenance={handleToggleMaintenance}

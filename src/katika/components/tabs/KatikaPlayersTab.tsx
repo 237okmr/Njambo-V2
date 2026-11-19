@@ -36,6 +36,7 @@ import {
 import { KatikaPlayer, KatikaPlayerMatchHistory } from '../../types/katika';
 import { KatikaService, OFFICIAL_BOT_NAMES } from '../../services/katikaService';
 import { KATIKA_NAVIGATE_EVENT, KatikaNavigationEventDetail, navigateToKatikaTab } from '../../utils/katikaNavigation';
+import { KatikaSheet, SHEET_BTN_DANGER, SHEET_BTN_PRIMARY, SHEET_BTN_SECONDARY } from '../KatikaSheet';
 import { AVATAR_OPTIONS, HONORIFIC_TITLES, AvatarOptionId } from '../../../types/playerProfile';
 import { PlayerAvatar } from '../../../components/profile/PlayerAvatar';
 import { isEligibleLeaderboardUser, getLeaderboardIneligibilityReasons, LeaderboardIneligibilityReason, MASTERY_CONFIG } from '../../../services/masteryConfig';
@@ -86,6 +87,17 @@ export const KatikaPlayersTab: React.FC = () => {
 
   // Selected Player Dossier Modal
   const [dossierPlayer, setDossierPlayer] = useState<KatikaPlayer | null>(null);
+
+  // Dossier ouvert : la page derrière ne défile pas.
+  const isDossierOpen = dossierPlayer !== null;
+  useEffect(() => {
+    if (!isDossierOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [isDossierOpen]);
 
   // Diagnostic historique cloud (lecture seule) : analyse users/{uid}/history pour le joueur du dossier.
   const [histDiag, setHistDiag] = useState<{
@@ -540,14 +552,14 @@ export const KatikaPlayersTab: React.FC = () => {
       )}
 
       {/* Humains vs Bots vs Audit Palmarès Division Tab Bar */}
-      <div className="flex border-b border-slate-800/80 bg-slate-950/30 p-1.5 rounded-xl gap-2 flex-wrap">
+      <div className="flex border-b border-slate-800/80 bg-slate-950/30 p-1.5 rounded-xl gap-2 overflow-x-auto sm:flex-wrap">
         <button
           type="button"
           onClick={() => {
             setActivePlayersTab('HUMANS');
             setStatusFilter('ALL');
           }}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-bold text-xs transition-all cursor-pointer border ${
+          className={`shrink-0 whitespace-nowrap min-h-11 sm:min-h-0 flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-lg font-bold text-xs transition-all cursor-pointer border ${
             activePlayersTab === 'HUMANS'
               ? 'bg-purple-500/15 text-purple-300 border-purple-500/35 shadow-sm'
               : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
@@ -565,7 +577,7 @@ export const KatikaPlayersTab: React.FC = () => {
             setActivePlayersTab('BOTS');
             setStatusFilter('ALL');
           }}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-bold text-xs transition-all cursor-pointer border ${
+          className={`shrink-0 whitespace-nowrap min-h-11 sm:min-h-0 flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-lg font-bold text-xs transition-all cursor-pointer border ${
             activePlayersTab === 'BOTS'
               ? 'bg-slate-800 text-slate-300 border-slate-700 shadow-sm'
               : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
@@ -583,7 +595,7 @@ export const KatikaPlayersTab: React.FC = () => {
             setActivePlayersTab('LEADERBOARD_AUDIT');
             setStatusFilter('ALL');
           }}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-bold text-xs transition-all cursor-pointer border ${
+          className={`shrink-0 whitespace-nowrap min-h-11 sm:min-h-0 flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-lg font-bold text-xs transition-all cursor-pointer border ${
             activePlayersTab === 'LEADERBOARD_AUDIT'
               ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
               : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
@@ -618,12 +630,12 @@ export const KatikaPlayersTab: React.FC = () => {
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 shrink-0 w-full md:w-auto">
               <button
                 type="button"
                 onClick={fetchPlayers}
                 disabled={loading}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 cursor-pointer"
+                className="flex-1 md:flex-none justify-center min-h-11 md:min-h-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 cursor-pointer"
               >
                 <RotateCw className={`w-3.5 h-3.5 text-amber-400 ${loading ? 'animate-spin' : ''}`} />
                 <span>Actualiser</span>
@@ -660,18 +672,18 @@ export const KatikaPlayersTab: React.FC = () => {
 
           {/* Search & Audit Filter Bar */}
           <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-4 rounded-xl bg-slate-900/90 border border-slate-800">
-            <div className="flex items-center gap-2 flex-1 max-w-md bg-slate-800/90 px-3 py-2 rounded-lg border border-slate-700/60">
+            <div className="flex items-center gap-2 flex-1 md:max-w-md bg-slate-800/90 px-3 py-2 rounded-lg border border-slate-700/60">
               <Search className="w-4 h-4 text-slate-400 shrink-0" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Filtrer audit par pseudo, ID ou e-mail..."
-                className="bg-transparent border-none outline-none text-xs text-white placeholder-slate-500 w-full"
+                className="bg-transparent border-none outline-none text-base sm:text-xs text-white placeholder-slate-500 w-full min-h-8"
               />
               {searchQuery && (
-                <button onClick={() => setSearchQuery('')} className="text-slate-400 hover:text-slate-200">
-                  <X className="w-3.5 h-3.5" />
+                <button onClick={() => setSearchQuery('')} aria-label="Effacer la recherche" className="shrink-0 w-9 h-9 -mr-2 flex items-center justify-center text-slate-400 hover:text-slate-200">
+                  <X className="w-4 h-4" />
                 </button>
               )}
             </div>
@@ -682,7 +694,7 @@ export const KatikaPlayersTab: React.FC = () => {
                   key={f}
                   type="button"
                   onClick={() => setLeaderboardAuditFilter(f)}
-                  className={`px-3 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
+                  className={`min-h-10 sm:min-h-0 px-3 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
                     leaderboardAuditFilter === f
                       ? f === 'INELIGIBLE_ONLY'
                         ? 'bg-red-500/20 text-red-300 border border-red-500/30'
@@ -700,8 +712,107 @@ export const KatikaPlayersTab: React.FC = () => {
             </div>
           </div>
 
-          {/* Audit Table */}
-          <div className="rounded-xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-lg">
+          {/* Téléphone et tablette : une carte par compte audité, avec ses actions en cibles de 44 px */}
+          <ul className="lg:hidden flex flex-col gap-3">
+            {leaderboardFilteredList.length === 0 ? (
+              <li className="rounded-xl border border-slate-800 bg-slate-900/90 p-4 text-sm text-slate-500 text-center">
+                Aucun compte trouvé avec ces critères d'audit.
+              </li>
+            ) : (
+              leaderboardFilteredList.map(({ player, isEligible, reasons, data }) => {
+                const isGoogleAuth = player.authProvider === 'google.com' || data?.authProvider === 'google.com';
+                return (
+                  <li key={player.id} className="rounded-xl border border-slate-800 bg-slate-900/90 p-3.5 space-y-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <PlayerAvatar avatarId={(player.avatarId as AvatarOptionId) || 'lion'} photoURL={player.photoURL} size="sm" />
+                      <div className="min-w-0">
+                        <div className="font-bold text-white flex items-center gap-1.5 flex-wrap">
+                          <span className="truncate">{player.name}</span>
+                          {player.isBot && (
+                            <span className="px-1 rounded text-[8px] bg-slate-800 text-slate-400 font-mono border border-slate-700">BOT</span>
+                          )}
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-mono truncate">UID : <span className="text-slate-300">{player.id}</span></div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      {isEligible ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                          QUALIFIÉ PALMARÈS
+                        </span>
+                      ) : (
+                        <>
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-red-500/20 text-red-300 border border-red-500/40">
+                            <ShieldAlert className="w-3.5 h-3.5 text-red-400" />
+                            EXCLU DU PALMARÈS
+                          </span>
+                          <div className="flex flex-wrap gap-1">
+                            {reasons.map((r: LeaderboardIneligibilityReason) => (
+                              <span key={r} className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-red-950/80 text-red-300 border border-red-800">
+                                {r === 'SANS_MARQUEUR_GOOGLE' && '⚠️ Pas de compte Google'}
+                                {r === 'DRAPEAU_INVITE' && '⚠️ Compte Invité'}
+                                {r === 'ID_BOT' && '🤖 Identifiant / Drapeau Robot'}
+                                {r === 'NOM_GENERIQUE' && '🏷️ Pseudo générique'}
+                                {r === 'STATS_INVALIDES' && '❌ Stats incohérentes'}
+                                {r === 'AUCUNE_PARTIE' && '0️⃣ Aucune partie'}
+                              </span>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3 text-[11px] font-mono">
+                      <span className={isGoogleAuth ? 'text-sky-300' : 'text-amber-300'}>
+                        {isGoogleAuth ? 'Google (google.com)' : (player.isGuest ? 'Invité (anonyme)' : 'Sans marqueur Google')}
+                      </span>
+                      <span className="text-slate-300 text-right">
+                        {player.totalGames} parties (V : {player.victories}) · {player.masteryScore ?? 0} pts
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-2 pt-1">
+                      {!isEligible && (
+                        <button
+                          type="button"
+                          onClick={() => handleValidateForLeaderboard(player)}
+                          className="min-h-11 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1.5"
+                        >
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                          <span>Valider Google</span>
+                        </button>
+                      )}
+                      <div className="grid grid-cols-2 gap-2">
+                        {!player.isBot && (
+                          <button
+                            type="button"
+                            onClick={() => handleMarkAsBot(player)}
+                            className="min-h-11 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs transition cursor-pointer flex items-center justify-center gap-1.5"
+                          >
+                            <Layers className="w-4 h-4 text-slate-400" />
+                            <span>Marquer Bot</span>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setDeleteConfirmPlayer(player)}
+                          className={`min-h-11 rounded-lg bg-red-950/60 hover:bg-red-900/80 text-red-300 border border-red-800 text-xs transition cursor-pointer flex items-center justify-center gap-1.5 ${player.isBot ? 'col-span-2' : ''}`}
+                        >
+                          <UserX className="w-4 h-4 text-red-400" />
+                          <span>Supprimer</span>
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })
+            )}
+          </ul>
+
+          {/* Audit Table : écrans larges */}
+          <div className="hidden lg:block rounded-xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-lg">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
@@ -867,7 +978,7 @@ export const KatikaPlayersTab: React.FC = () => {
         <>
           {/* Filter & Search Bar */}
           <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-4 rounded-xl bg-slate-900/90 border border-slate-800">
-        <div className="flex items-center gap-2 flex-1 max-w-md bg-slate-800/90 px-3 py-2 rounded-lg border border-slate-700/60">
+        <div className="flex items-center gap-2 flex-1 md:max-w-md bg-slate-800/90 px-3 py-2 rounded-lg border border-slate-700/60">
           <Search className="w-4 h-4 text-slate-400 shrink-0" />
           <input
             type="text"
@@ -875,11 +986,11 @@ export const KatikaPlayersTab: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Rechercher par pseudo, ID ou IP..."
-            className="bg-transparent border-none outline-none text-xs text-white placeholder-slate-500 w-full"
+            className="bg-transparent border-none outline-none text-base sm:text-xs text-white placeholder-slate-500 w-full min-h-8"
           />
           {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="text-slate-400 hover:text-slate-200">
-              <X className="w-3.5 h-3.5" />
+            <button onClick={() => setSearchQuery('')} aria-label="Effacer la recherche" className="shrink-0 w-9 h-9 -mr-2 flex items-center justify-center text-slate-400 hover:text-slate-200">
+              <X className="w-4 h-4" />
             </button>
           )}
         </div>
@@ -894,7 +1005,7 @@ export const KatikaPlayersTab: React.FC = () => {
                   key={st}
                   type="button"
                   onClick={() => setStatusFilter(st)}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer flex items-center gap-1 ${
+                  className={`min-h-10 sm:min-h-0 px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer flex items-center gap-1 ${
                     statusFilter === st
                       ? st === 'ANTI_JEU'
                         ? 'bg-red-500/20 text-red-300 border border-red-500/30 font-bold'
@@ -927,7 +1038,7 @@ export const KatikaPlayersTab: React.FC = () => {
           <button
             type="button"
             onClick={handleAskAIAboutPlayerBase}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-purple-500/20 to-amber-500/20 hover:from-purple-500/30 hover:to-amber-500/30 text-amber-200 text-xs font-semibold border border-amber-500/40 shadow-sm cursor-pointer transition-all"
+            className="flex-1 sm:flex-none justify-center min-h-11 sm:min-h-0 flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-purple-500/20 to-amber-500/20 hover:from-purple-500/30 hover:to-amber-500/30 text-amber-200 text-xs font-semibold border border-amber-500/40 shadow-sm cursor-pointer transition-all"
             title="Consulter l'Assistant IA sur la base joueurs et anomalies"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
@@ -938,7 +1049,7 @@ export const KatikaPlayersTab: React.FC = () => {
             type="button"
             onClick={fetchPlayers}
             disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 cursor-pointer"
+            className="flex-1 sm:flex-none justify-center min-h-11 sm:min-h-0 flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 cursor-pointer"
             title="Rafraîchir les données joueurs"
           >
             <RotateCw className={`w-3.5 h-3.5 text-amber-400 ${loading ? 'animate-spin' : ''}`} />
@@ -960,7 +1071,7 @@ export const KatikaPlayersTab: React.FC = () => {
                 key={pref}
                 type="button"
                 onClick={() => setPreferenceFilter(pref)}
-                className={`px-3 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
+                className={`min-h-10 sm:min-h-0 px-3 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
                   preferenceFilter === pref
                     ? 'bg-purple-500/20 text-purple-300 border border-purple-500/35 shadow-sm'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/20'
@@ -984,7 +1095,7 @@ export const KatikaPlayersTab: React.FC = () => {
                 key={srt}
                 type="button"
                 onClick={() => setSortBy(srt)}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer ${
+                className={`min-h-10 sm:min-h-0 px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer ${
                   sortBy === srt
                     ? 'bg-amber-500/20 text-amber-300 border border-amber-500/35'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/20'
@@ -1424,17 +1535,33 @@ export const KatikaPlayersTab: React.FC = () => {
       {/* DOSSIER JOUEUR COMPLET MODAL */}
       {/* ========================================================================= */}
       {dossierPlayer && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-          <div className="w-full max-w-4xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-            
+        <div className="fixed left-0 right-0 top-0 h-dvh z-[75] bg-black/80 backdrop-blur-md flex items-stretch sm:items-center justify-center sm:p-5">
+          <div role="dialog" aria-modal="true" aria-label={`Dossier de ${dossierPlayer.name}`} className="w-full sm:max-w-4xl bg-slate-900 sm:border border-slate-700/80 sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col h-full sm:h-auto sm:max-h-[92%]">
+
+            {/* Barre du haut (téléphone) : nom et fermeture toujours visibles */}
+            <div className="sm:hidden shrink-0 flex items-center justify-between gap-3 bg-slate-950 border-b border-slate-800 pl-4 pr-2 pt-[env(safe-area-inset-top)] min-h-[calc(3rem+env(safe-area-inset-top))]">
+              <span className="min-w-0 truncate text-sm font-bold text-white">Dossier de {dossierPlayer.name}</span>
+              <button
+                type="button"
+                onClick={() => setDossierPlayer(null)}
+                aria-label="Fermer le dossier"
+                className="shrink-0 w-11 h-11 flex items-center justify-center rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Sur téléphone, en-tête et corps défilent ensemble ; dès 640 px, seul le corps défile */}
+            <div className="flex-1 min-h-0 flex flex-col overflow-y-auto overscroll-contain sm:overflow-hidden">
+
             {/* Header */}
             {(() => {
               const avatar = AVATAR_OPTIONS.find(a => a.id === dossierPlayer.avatarId);
               const title = HONORIFIC_TITLES.find(t => t.id === dossierPlayer.honorificTitleId);
 
               return (
-                <div className="p-5 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border-b border-slate-800 flex items-center justify-between flex-wrap gap-3">
-                  <div className="flex items-center gap-3.5">
+                <div className="shrink-0 p-4 sm:p-5 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border-b border-slate-800 flex items-center justify-between flex-wrap gap-3">
+                  <div className="flex items-start sm:items-center gap-3.5">
                     <PlayerAvatar
                       avatarId={(dossierPlayer.avatarId as AvatarOptionId) || 'lion'}
                       photoURL={dossierPlayer.photoURL}
@@ -1478,7 +1605,7 @@ export const KatikaPlayersTab: React.FC = () => {
                       {/* Google & Privacy Row (Exclusive Katika Master) */}
                       <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                         {dossierPlayer.email ? (
-                          <div className="flex items-center gap-2 bg-slate-950/90 px-2.5 py-1 rounded-lg border border-slate-800">
+                          <div className="flex items-center gap-2 flex-wrap bg-slate-950/90 px-2.5 py-1 rounded-lg border border-slate-800">
                             <span className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold text-sky-400">
                               <Lock className="w-3 h-3 text-sky-400" />
                               Compte Google :
@@ -1536,17 +1663,17 @@ export const KatikaPlayersTab: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 w-full sm:w-auto">
                     <button
                       type="button"
                       onClick={() => handleAskAIAboutPlayer(dossierPlayer)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-semibold transition cursor-pointer shadow-sm"
+                      className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-semibold transition cursor-pointer shadow-sm"
                       title="Obtenir un diagnostic approfondi par l'assistant IA"
                     >
                       <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                       <span>Audit IA du profil</span>
                     </button>
-                    <div className="bg-slate-950 px-3.5 py-1.5 rounded-xl border border-amber-500/30 text-right">
+                    <div className="bg-slate-950 px-3.5 py-1.5 rounded-xl border border-amber-500/30 sm:text-right">
                       <div className="text-[10px] text-slate-400 font-mono">Capital Jetons</div>
                       <div className="text-sm font-bold font-mono text-amber-400">
                         {dossierPlayer.chipsBalance.toLocaleString('fr-FR')} jetons
@@ -1554,7 +1681,8 @@ export const KatikaPlayersTab: React.FC = () => {
                     </div>
                     <button
                       onClick={() => setDossierPlayer(null)}
-                      className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition cursor-pointer"
+                      aria-label="Fermer le dossier"
+                      className="hidden sm:block p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition cursor-pointer"
                     >
                       <X className="w-5 h-5" />
                     </button>
@@ -1564,11 +1692,11 @@ export const KatikaPlayersTab: React.FC = () => {
             })()}
 
             {/* Dossier Body */}
-            <div className="p-5 sm:p-6 overflow-y-auto space-y-6 flex-1">
+            <div className="p-4 sm:p-6 sm:overflow-y-auto space-y-6 flex-1 sm:min-h-0">
               
               {/* Section 0: Distinction Katika Manche vs Partie */}
               <div className="p-4 rounded-xl bg-slate-850/90 border border-slate-700/80 space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-2">
                     <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono font-bold text-[10px] uppercase border border-amber-500/30">
                       Règles Katika
@@ -2147,14 +2275,15 @@ export const KatikaPlayersTab: React.FC = () => {
                 </div>
               )}
             </div>
+            </div>
 
             {/* Dossier Footer Action Bar */}
-            <div className="p-4 bg-slate-950 border-t border-slate-800 flex items-center justify-between flex-wrap gap-3">
-              <div className="flex items-center gap-2">
+            <div className="shrink-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:pb-4 bg-slate-950 border-t border-slate-800 grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:items-center sm:justify-between">
+              <div className="contents sm:flex sm:items-center sm:gap-2">
                 <button
                   type="button"
                   onClick={() => handleAskAIAboutPlayer(dossierPlayer)}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 text-xs font-semibold transition cursor-pointer"
+                  className="flex items-center justify-center gap-1.5 min-h-11 sm:min-h-0 px-3.5 py-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 text-xs font-semibold transition cursor-pointer"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-purple-400" />
                   <span>Audit IA du dossier</span>
@@ -2165,19 +2294,19 @@ export const KatikaPlayersTab: React.FC = () => {
                     setResetChipsModalPlayer(dossierPlayer);
                     setNewChipsValue(dossierPlayer.chipsBalance);
                   }}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 text-xs font-semibold transition"
+                  className="flex items-center justify-center gap-1.5 min-h-11 sm:min-h-0 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 text-xs font-semibold transition"
                 >
                   <Coins className="w-3.5 h-3.5" />
                   <span>Régulariser Solde jetons</span>
                 </button>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="contents sm:flex sm:items-center sm:gap-2">
                 {dossierPlayer.status === 'BANNED' ? (
                   <button
                     type="button"
                     onClick={() => handleRehabilitate(dossierPlayer)}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-950 transition"
+                    className="col-span-2 sm:col-span-1 flex items-center justify-center gap-1.5 min-h-11 sm:min-h-0 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-950 transition"
                   >
                     <UserCheck className="w-3.5 h-3.5" />
                     <span>Lever Sanction & Réhabiliter</span>
@@ -2190,7 +2319,7 @@ export const KatikaPlayersTab: React.FC = () => {
                         setWarnModalPlayer(dossierPlayer);
                         setWarnReason('Comportement anti-jeu ou déconnexions intempestives');
                       }}
-                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-semibold transition"
+                      className="flex items-center justify-center gap-1.5 min-h-11 sm:min-h-0 px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-semibold transition"
                     >
                       <AlertTriangle className="w-3.5 h-3.5" />
                       <span>Avertir ({dossierPlayer.warningsCount}/3)</span>
@@ -2203,7 +2332,7 @@ export const KatikaPlayersTab: React.FC = () => {
                         setBanDurationHours(24);
                         setBanReason('Comportement anti-jeu répété');
                       }}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold shadow-lg shadow-red-950 transition"
+                      className="flex items-center justify-center gap-1.5 min-h-11 sm:min-h-0 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold shadow-lg shadow-red-950 transition"
                     >
                       <Ban className="w-3.5 h-3.5" />
                       <span>Sanctionner / Bannir</span>
@@ -2218,288 +2347,252 @@ export const KatikaPlayersTab: React.FC = () => {
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 1: AVERTIR LE JOUEUR */}
+      {/* VOLET 1: AVERTIR LE JOUEUR */}
       {/* ========================================================================= */}
       {warnModalPlayer && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-slate-900 border border-amber-500/40 rounded-2xl p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
-                <AlertTriangle className="w-4 h-4" />
-                <span>Notifier un Avertissement</span>
-              </div>
-              <button onClick={() => setWarnModalPlayer(null)} className="text-slate-400 hover:text-white">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-3 text-xs">
-              <p className="text-slate-300">
-                Vous envoyez un avertissement officiel à <b className="text-white font-mono">{warnModalPlayer.name}</b>.
-                Ce joueur aura désormais <b>{warnModalPlayer.warningsCount + 1} avertissement(s)</b> consignés dans son dossier.
-              </p>
-
-              <div className="space-y-1">
-                <label className="text-[11px] font-mono text-slate-400 uppercase">Motif obligatoire :</label>
-                <textarea
-                  value={warnReason}
-                  onChange={(e) => setWarnReason(e.target.value)}
-                  rows={3}
-                  className="w-full bg-slate-850 border border-slate-700 rounded-xl p-2.5 text-xs text-white outline-none focus:border-amber-500"
-                  placeholder="Précisez la raison de l'avertissement..."
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
-              <button
-                type="button"
-                onClick={() => setWarnModalPlayer(null)}
-                className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium"
-              >
+        <KatikaSheet
+          title={
+            <>
+              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+              <span className="text-amber-400 text-sm">Notifier un avertissement</span>
+            </>
+          }
+          tone="warning"
+          onClose={() => setWarnModalPlayer(null)}
+          footer={
+            <>
+              <button type="button" onClick={() => setWarnModalPlayer(null)} className={SHEET_BTN_SECONDARY}>
                 Annuler
               </button>
-              <button
-                type="button"
-                onClick={handleConfirmWarn}
-                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow-lg shadow-amber-950"
-              >
-                Envoyer l'Avertissement
+              <button type="button" onClick={handleConfirmWarn} className={SHEET_BTN_PRIMARY}>
+                Envoyer l'avertissement
               </button>
+            </>
+          }
+        >
+          <div className="space-y-3 text-xs">
+            <p className="text-slate-300">
+              Vous envoyez un avertissement officiel à <b className="text-white font-mono">{warnModalPlayer.name}</b>.
+              Ce joueur aura désormais <b>{warnModalPlayer.warningsCount + 1} avertissement(s)</b> consignés dans son dossier.
+            </p>
+
+            <div className="space-y-1">
+              <label className="text-[11px] font-mono text-slate-400 uppercase">Motif obligatoire :</label>
+              <textarea
+                value={warnReason}
+                onChange={(e) => setWarnReason(e.target.value)}
+                rows={3}
+                className="w-full bg-slate-850 border border-slate-700 rounded-xl p-2.5 text-base sm:text-xs text-white outline-none focus:border-amber-500"
+                placeholder="Précisez la raison de l'avertissement..."
+              />
             </div>
           </div>
-        </div>
+        </KatikaSheet>
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 2: RÉINITIALISER LE CAPITAL / JETONS */}
+      {/* VOLET 2: RÉINITIALISER LE CAPITAL / JETONS */}
       {/* ========================================================================= */}
       {resetChipsModalPlayer && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
-                <Coins className="w-4 h-4" />
-                <span>Régularisation du Capital Jetons</span>
-              </div>
-              <button onClick={() => setResetChipsModalPlayer(null)} className="text-slate-400 hover:text-white">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-4 text-xs">
-              <p className="text-slate-300">
-                Ajuster le solde de <b className="text-white font-mono">{resetChipsModalPlayer.name}</b> (Actuel : <b className="text-amber-400">{resetChipsModalPlayer.chipsBalance.toLocaleString('fr-FR')} jetons</b>).
-              </p>
-
-              <div className="space-y-2">
-                <label className="text-[11px] font-mono text-slate-400 uppercase">Nouveau Solde (jetons) :</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    value={newChipsValue}
-                    onChange={(e) => setNewChipsValue(Math.max(0, parseInt(e.target.value) || 0))}
-                    className="w-full bg-slate-850 border border-slate-700 rounded-xl p-2 text-sm text-white font-mono outline-none focus:border-amber-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setNewChipsValue(5000)}
-                    className="px-2.5 py-2 rounded-lg bg-slate-800 text-slate-300 text-[11px] font-mono whitespace-nowrap hover:bg-slate-700"
-                  >
-                    Def. (5k)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setNewChipsValue(0)}
-                    className="px-2.5 py-2 rounded-lg bg-red-950/60 text-red-300 text-[11px] font-mono whitespace-nowrap hover:bg-red-900"
-                  >
-                    Reset (0)
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[11px] font-mono text-slate-400 uppercase">Motif obligatoire d'audit :</label>
-                <input
-                  type="text"
-                  value={resetChipsReason}
-                  onChange={(e) => setResetChipsReason(e.target.value)}
-                  className="w-full bg-slate-850 border border-slate-700 rounded-xl p-2.5 text-xs text-white outline-none focus:border-amber-500"
-                  placeholder="Ex: Régularisation suite à incident ou triche..."
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
-              <button
-                type="button"
-                onClick={() => setResetChipsModalPlayer(null)}
-                className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium"
-              >
+        <KatikaSheet
+          title={
+            <>
+              <Coins className="w-4 h-4 text-amber-400 shrink-0" />
+              <span className="text-amber-400 text-sm">Régularisation du capital jetons</span>
+            </>
+          }
+          onClose={() => setResetChipsModalPlayer(null)}
+          footer={
+            <>
+              <button type="button" onClick={() => setResetChipsModalPlayer(null)} className={SHEET_BTN_SECONDARY}>
                 Annuler
               </button>
-              <button
-                type="button"
-                onClick={handleConfirmResetChips}
-                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold"
-              >
-                Confirmer l'Ajustement
+              <button type="button" onClick={handleConfirmResetChips} className={SHEET_BTN_PRIMARY}>
+                Confirmer l'ajustement
               </button>
+            </>
+          }
+        >
+          <div className="space-y-4 text-xs">
+            <p className="text-slate-300">
+              Ajuster le solde de <b className="text-white font-mono">{resetChipsModalPlayer.name}</b> (Actuel : <b className="text-amber-400">{resetChipsModalPlayer.chipsBalance.toLocaleString('fr-FR')} jetons</b>).
+            </p>
+
+            <div className="space-y-2">
+              <label className="text-[11px] font-mono text-slate-400 uppercase">Nouveau solde (jetons) :</label>
+              <input
+                type="number"
+                inputMode="numeric"
+                value={newChipsValue}
+                onChange={(e) => setNewChipsValue(Math.max(0, parseInt(e.target.value) || 0))}
+                className="w-full bg-slate-850 border border-slate-700 rounded-xl p-2.5 text-base sm:text-sm text-white font-mono outline-none focus:border-amber-500"
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setNewChipsValue(5000)}
+                  className="min-h-11 sm:min-h-0 px-2.5 py-2 rounded-lg bg-slate-800 text-slate-300 text-[11px] font-mono whitespace-nowrap hover:bg-slate-700"
+                >
+                  Déf. (5k)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNewChipsValue(0)}
+                  className="min-h-11 sm:min-h-0 px-2.5 py-2 rounded-lg bg-red-950/60 text-red-300 text-[11px] font-mono whitespace-nowrap hover:bg-red-900"
+                >
+                  Reset (0)
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[11px] font-mono text-slate-400 uppercase">Motif obligatoire d'audit :</label>
+              <input
+                type="text"
+                value={resetChipsReason}
+                onChange={(e) => setResetChipsReason(e.target.value)}
+                className="w-full bg-slate-850 border border-slate-700 rounded-xl p-2.5 text-base sm:text-xs text-white outline-none focus:border-amber-500"
+                placeholder="Ex: Régularisation suite à incident ou triche..."
+              />
             </div>
           </div>
-        </div>
+        </KatikaSheet>
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 3: BANNIR LE JOUEUR (TEMPORAIRE / DÉFINITIF) */}
+      {/* VOLET 3: BANNIR LE JOUEUR (TEMPORAIRE / DÉFINITIF) */}
       {/* ========================================================================= */}
       {banModalPlayer && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-slate-900 border border-red-800/80 rounded-2xl p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2 text-red-400 font-bold text-sm">
-                <Ban className="w-4 h-4" />
-                <span>Sanctionner : {banModalPlayer.name}</span>
-              </div>
-              <button onClick={() => setBanModalPlayer(null)} className="text-slate-400 hover:text-white">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-4 text-xs">
-              <div className="space-y-2">
-                <label className="text-[11px] font-mono text-slate-400 uppercase">Type de Sanction :</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setBanType('TEMPORARY')}
-                    className={`p-2.5 rounded-xl border text-xs font-bold transition flex flex-col items-center gap-1 ${
-                      banType === 'TEMPORARY'
-                        ? 'bg-red-950/60 border-red-500 text-red-200'
-                        : 'bg-slate-800 border-slate-700 text-slate-400'
-                    }`}
-                  >
-                    <span>Temporaire</span>
-                    <span className="text-[10px] font-normal text-slate-400">Suspension minutée</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setBanType('PERMANENT')}
-                    className={`p-2.5 rounded-xl border text-xs font-bold transition flex flex-col items-center gap-1 ${
-                      banType === 'PERMANENT'
-                        ? 'bg-red-950 border-red-500 text-red-200'
-                        : 'bg-slate-800 border-slate-700 text-slate-400'
-                    }`}
-                  >
-                    <span>Définitif</span>
-                    <span className="text-[10px] font-normal text-slate-400">Liste Noire Permanente</span>
-                  </button>
-                </div>
-              </div>
-
-              {banType === 'TEMPORARY' && (
-                <div className="space-y-2">
-                  <label className="text-[11px] font-mono text-slate-400 uppercase">Durée de suspension :</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { label: '1 Heure', hours: 1 },
-                      { label: '24 Heures', hours: 24 },
-                      { label: '7 Jours', hours: 168 },
-                    ].map((dur) => (
-                      <button
-                        key={dur.hours}
-                        type="button"
-                        onClick={() => setBanDurationHours(dur.hours)}
-                        className={`p-2 rounded-xl text-xs font-mono font-bold transition ${
-                          banDurationHours === dur.hours
-                            ? 'bg-red-600 text-white'
-                            : 'bg-slate-850 border border-slate-700 text-slate-300'
-                        }`}
-                      >
-                        {dur.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-1">
-                <label className="text-[11px] font-mono text-slate-400 uppercase">Motif obligatoire de la sanction :</label>
-                <textarea
-                  value={banReason}
-                  onChange={(e) => setBanReason(e.target.value)}
-                  rows={3}
-                  className="w-full bg-slate-850 border border-slate-700 rounded-xl p-2.5 text-xs text-white outline-none focus:border-red-500"
-                  placeholder="Précisez la violation des règles..."
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
-              <button
-                type="button"
-                onClick={() => setBanModalPlayer(null)}
-                className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium"
-              >
+        <KatikaSheet
+          title={
+            <>
+              <Ban className="w-4 h-4 text-red-400 shrink-0" />
+              <span className="text-red-400 text-sm truncate">Sanctionner : {banModalPlayer.name}</span>
+            </>
+          }
+          tone="danger"
+          onClose={() => setBanModalPlayer(null)}
+          footer={
+            <>
+              <button type="button" onClick={() => setBanModalPlayer(null)} className={SHEET_BTN_SECONDARY}>
                 Annuler
               </button>
-              <button
-                type="button"
-                onClick={handleConfirmBan}
-                className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold shadow-lg shadow-red-950"
-              >
-                Appliquer la Sanction
+              <button type="button" onClick={handleConfirmBan} className={SHEET_BTN_DANGER}>
+                Appliquer la sanction
               </button>
+            </>
+          }
+        >
+          <div className="space-y-4 text-xs">
+            <div className="space-y-2">
+              <label className="text-[11px] font-mono text-slate-400 uppercase">Type de sanction :</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setBanType('TEMPORARY')}
+                  className={`min-h-12 p-2.5 rounded-xl border text-xs font-bold transition flex flex-col items-center gap-1 ${
+                    banType === 'TEMPORARY'
+                      ? 'bg-red-950/60 border-red-500 text-red-200'
+                      : 'bg-slate-800 border-slate-700 text-slate-400'
+                  }`}
+                >
+                  <span>Temporaire</span>
+                  <span className="text-[10px] font-normal text-slate-400">Suspension minutée</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setBanType('PERMANENT')}
+                  className={`min-h-12 p-2.5 rounded-xl border text-xs font-bold transition flex flex-col items-center gap-1 ${
+                    banType === 'PERMANENT'
+                      ? 'bg-red-950 border-red-500 text-red-200'
+                      : 'bg-slate-800 border-slate-700 text-slate-400'
+                  }`}
+                >
+                  <span>Définitif</span>
+                  <span className="text-[10px] font-normal text-slate-400">Liste noire permanente</span>
+                </button>
+              </div>
+            </div>
+
+            {banType === 'TEMPORARY' && (
+              <div className="space-y-2">
+                <label className="text-[11px] font-mono text-slate-400 uppercase">Durée de suspension :</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { label: '1 Heure', hours: 1 },
+                    { label: '24 Heures', hours: 24 },
+                    { label: '7 Jours', hours: 168 },
+                  ].map((dur) => (
+                    <button
+                      key={dur.hours}
+                      type="button"
+                      onClick={() => setBanDurationHours(dur.hours)}
+                      className={`min-h-11 sm:min-h-0 p-2 rounded-xl text-xs font-mono font-bold transition ${
+                        banDurationHours === dur.hours
+                          ? 'bg-red-600 text-white'
+                          : 'bg-slate-850 border border-slate-700 text-slate-300'
+                      }`}
+                    >
+                      {dur.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-1">
+              <label className="text-[11px] font-mono text-slate-400 uppercase">Motif obligatoire de la sanction :</label>
+              <textarea
+                value={banReason}
+                onChange={(e) => setBanReason(e.target.value)}
+                rows={3}
+                className="w-full bg-slate-850 border border-slate-700 rounded-xl p-2.5 text-base sm:text-xs text-white outline-none focus:border-red-500"
+                placeholder="Précisez la violation des règles..."
+              />
             </div>
           </div>
-        </div>
+        </KatikaSheet>
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 3: CONFIRMATION SUPPRESSION COMPTE */}
+      {/* VOLET 4: CONFIRMATION SUPPRESSION COMPTE */}
       {/* ========================================================================= */}
       {deleteConfirmPlayer && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-slate-900 border border-red-500/50 rounded-2xl p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2 text-red-400 font-bold text-sm">
-                <UserX className="w-5 h-5" />
-                <span>Supprimer Définitivement le Compte</span>
-              </div>
-              <button onClick={() => setDeleteConfirmPlayer(null)} className="text-slate-400 hover:text-white">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-3 text-xs">
-              <div className="p-3 rounded-xl bg-red-950/40 border border-red-500/30 text-red-200">
-                ⚠️ <strong>Attention :</strong> Cette action est irréversible. Le document utilisateur <code className="font-mono bg-black/40 px-1 py-0.5 rounded text-white">{deleteConfirmPlayer.id}</code> ({deleteConfirmPlayer.name}) sera supprimé de la base Firestore.
-              </div>
-              <p className="text-slate-400">
-                Toutes les statistiques locales et données de profil associées à cet identifiant seront purgées.
-              </p>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
-              <button
-                type="button"
-                onClick={() => setDeleteConfirmPlayer(null)}
-                className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium"
-              >
+        <KatikaSheet
+          title={
+            <>
+              <UserX className="w-5 h-5 text-red-400 shrink-0" />
+              <span className="text-red-400 text-sm">Supprimer définitivement le compte</span>
+            </>
+          }
+          tone="danger"
+          onClose={() => setDeleteConfirmPlayer(null)}
+          footer={
+            <>
+              <button type="button" onClick={() => setDeleteConfirmPlayer(null)} className={SHEET_BTN_SECONDARY}>
                 Annuler
               </button>
               <button
                 type="button"
                 onClick={() => handleDeleteUser(deleteConfirmPlayer)}
-                className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold shadow-lg shadow-red-950 flex items-center gap-1.5"
+                className={`${SHEET_BTN_DANGER} flex items-center justify-center gap-1.5`}
               >
                 <Trash2 className="w-4 h-4" />
-                <span>Confirmer la Suppression</span>
+                <span>Confirmer la suppression</span>
               </button>
+            </>
+          }
+        >
+          <div className="space-y-3 text-xs">
+            <div className="p-3 rounded-xl bg-red-950/40 border border-red-500/30 text-red-200">
+              ⚠️ <strong>Attention :</strong> Cette action est irréversible. Le document utilisateur <code className="font-mono bg-black/40 px-1 py-0.5 rounded text-white break-all">{deleteConfirmPlayer.id}</code> ({deleteConfirmPlayer.name}) sera supprimé de la base Firestore.
             </div>
+            <p className="text-slate-400">
+              Toutes les statistiques locales et données de profil associées à cet identifiant seront purgées.
+            </p>
           </div>
-        </div>
+        </KatikaSheet>
       )}
     </div>
   );
