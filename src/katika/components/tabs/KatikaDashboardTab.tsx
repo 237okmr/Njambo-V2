@@ -228,14 +228,14 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
   return (
     <div className="space-y-6">
       {/* Top Header Bar: Sub-Tabs & Global Controls (Single Unified Line) */}
-      <div className="flex flex-row items-center justify-between gap-3 bg-slate-900/90 border border-slate-800 p-2.5 rounded-2xl shadow-sm overflow-x-auto whitespace-nowrap">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-slate-900/90 border border-slate-800 p-2.5 rounded-2xl shadow-sm">
         {/* Navigation Sub-Tabs */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-950/80 rounded-xl border border-slate-800/80 shrink-0">
+        <div className="flex items-center gap-1.5 p-1 bg-slate-950/80 rounded-xl border border-slate-800/80 w-full lg:w-auto lg:shrink-0">
           <button
             type="button"
             id="katika-subtab-live"
             onClick={() => setActiveSubTab('LIVE')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            className={`flex-1 lg:flex-none justify-center min-h-11 sm:min-h-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               activeSubTab === 'LIVE'
                 ? 'bg-amber-500 text-slate-950 shadow-md font-bold'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
@@ -249,7 +249,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
             type="button"
             id="katika-subtab-business"
             onClick={() => setActiveSubTab('BUSINESS')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            className={`flex-1 lg:flex-none justify-center min-h-11 sm:min-h-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               activeSubTab === 'BUSINESS'
                 ? 'bg-amber-500 text-slate-950 shadow-md font-bold'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
@@ -263,7 +263,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
             type="button"
             id="katika-subtab-gameplay"
             onClick={() => setActiveSubTab('GAMEPLAY')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            className={`flex-1 lg:flex-none justify-center min-h-11 sm:min-h-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               activeSubTab === 'GAMEPLAY'
                 ? 'bg-amber-500 text-slate-950 shadow-md font-bold'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
@@ -275,12 +275,12 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
         </div>
 
         {/* Global Range Selector & Actions on the exact same line */}
-        <div className="flex items-center gap-3 shrink-0 ml-auto">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full lg:w-auto lg:shrink-0 lg:ml-auto">
           {/* Time range selector */}
-          <div className="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs">
+          <div className="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs w-full sm:w-auto">
             <button
               onClick={() => handleTimeRangeChange('TODAY')}
-              className={`px-2.5 py-1 rounded text-[11px] font-medium transition cursor-pointer ${
+              className={`flex-1 sm:flex-none min-h-10 sm:min-h-0 px-2.5 py-1 rounded text-[11px] font-medium transition cursor-pointer ${
                 timeRange === 'TODAY' ? 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30' : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -288,7 +288,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
             </button>
             <button
               onClick={() => handleTimeRangeChange('24H')}
-              className={`px-2.5 py-1 rounded text-[11px] font-medium transition cursor-pointer ${
+              className={`flex-1 sm:flex-none min-h-10 sm:min-h-0 px-2.5 py-1 rounded text-[11px] font-medium transition cursor-pointer ${
                 timeRange === '24H' ? 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30' : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -296,7 +296,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
             </button>
             <button
               onClick={() => handleTimeRangeChange('7D')}
-              className={`px-2.5 py-1 rounded text-[11px] font-medium transition cursor-pointer ${
+              className={`flex-1 sm:flex-none min-h-10 sm:min-h-0 px-2.5 py-1 rounded text-[11px] font-medium transition cursor-pointer ${
                 timeRange === '7D' ? 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30' : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -304,7 +304,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
             </button>
             <button
               onClick={() => handleTimeRangeChange('ALL')}
-              className={`px-2.5 py-1 rounded text-[11px] font-medium transition cursor-pointer ${
+              className={`flex-1 sm:flex-none min-h-10 sm:min-h-0 px-2.5 py-1 rounded text-[11px] font-medium transition cursor-pointer ${
                 timeRange === 'ALL' ? 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30' : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -330,7 +330,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
                 initialPrompt: `Analyse globale du Tableau de Bord Katika (Période: ${timeRange}) :\n- Joueurs connectés: ${kpis.connectedPlayersCount}\n- Manches jouées: ${totalGames} (Multi: ${kpis.multiplayerGamesCount}, Solo: ${kpis.soloGamesCount})\n- Taux de Kora: ${koraRate}% (${kpis.koraCount} Kora, ${kpis.doubleKoraCount} Double Kora)\n- Taux d'abandon: ${abandonRate}%\n- Pot moyen: ${kpis.avgPotPerGame.toLocaleString('fr-FR')} jetons (Volume total: ${kpis.totalChipsWon.toLocaleString('fr-FR')} jetons)\n- Taux de rétention D1/D7: ${d1}% / ${d7}%\n\nPeux-tu me dresser un bilan synthétique de la santé de la plateforme et des opportunités d'amélioration ?`
               });
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-500/20 to-amber-500/20 hover:from-purple-500/30 hover:to-amber-500/30 text-amber-200 text-xs font-semibold border border-amber-500/40 shadow-sm cursor-pointer transition-all"
+            className="flex-1 sm:flex-none justify-center min-h-11 sm:min-h-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-500/20 to-amber-500/20 hover:from-purple-500/30 hover:to-amber-500/30 text-amber-200 text-xs font-semibold border border-amber-500/40 shadow-sm cursor-pointer transition-all"
             title="Consulter l'Assistant IA sur ces métriques"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
@@ -342,7 +342,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
             id="katika-refresh-kpis-btn"
             onClick={() => fetchKpis(timeRange)}
             disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-medium transition-colors cursor-pointer disabled:opacity-50"
+            className="flex-1 sm:flex-none justify-center min-h-11 sm:min-h-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-medium transition-colors cursor-pointer disabled:opacity-50"
           >
             <RotateCw className={`w-3.5 h-3.5 text-amber-400 ${loading ? 'animate-spin' : ''}`} />
             <span>Actualiser</span>
@@ -441,7 +441,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
           {/* 2. Module Central 2 Colonnes Équilibrées */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {/* Colonne 1 : Activité & Cycle des Manches */}
-            <div className="p-5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-4 flex flex-col justify-between">
+            <div className="p-4 sm:p-5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-4 flex flex-col justify-between">
               <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
                 <div className="flex items-center gap-2">
                   <Layers className="w-4 h-4 text-purple-400" />
@@ -545,7 +545,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
             </div>
 
             {/* Colonne 2 : Audace & Taux de Kora */}
-            <div className="p-5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-4 flex flex-col justify-between">
+            <div className="p-4 sm:p-5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-4 flex flex-col justify-between">
               <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
                 <div className="flex items-center gap-2">
                   <Flame className="w-4 h-4 text-amber-400" />
@@ -670,7 +670,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
           )}
 
           {/* 4. Évolution Temporelle de l'Activité */}
-          <div className="p-5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-4">
+          <div className="p-4 sm:p-5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-amber-400" />
@@ -751,7 +751,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
           </div>
 
           {/* 5. Supervision des Sessions Récentes */}
-          <div className="p-5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-4">
+          <div className="p-4 sm:p-5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <History className="w-4 h-4 text-amber-400" />
@@ -763,11 +763,11 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
 
               {/* Status Filter Buttons */}
               <div className="flex items-center gap-2 flex-wrap">
-                <div className="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs">
+                <div className="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs w-full sm:w-auto overflow-x-auto">
                   <button
                     type="button"
                     onClick={() => setRecentFilter('ALL')}
-                    className={`px-2 py-0.5 rounded text-[10.5px] font-medium transition cursor-pointer ${
+                    className={`shrink-0 whitespace-nowrap min-h-10 sm:min-h-0 px-2.5 sm:px-2 py-0.5 rounded text-[10.5px] font-medium transition cursor-pointer ${
                       recentFilter === 'ALL' ? 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30' : 'text-slate-400 hover:text-white'
                     }`}
                   >
@@ -776,7 +776,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
                   <button
                     type="button"
                     onClick={() => setRecentFilter('COMPLETED')}
-                    className={`px-2 py-0.5 rounded text-[10.5px] font-medium transition cursor-pointer ${
+                    className={`shrink-0 whitespace-nowrap min-h-10 sm:min-h-0 px-2.5 sm:px-2 py-0.5 rounded text-[10.5px] font-medium transition cursor-pointer ${
                       recentFilter === 'COMPLETED' ? 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30' : 'text-slate-400 hover:text-white'
                     }`}
                   >
@@ -785,7 +785,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
                   <button
                     type="button"
                     onClick={() => setRecentFilter('IN_PROGRESS')}
-                    className={`px-2 py-0.5 rounded text-[10.5px] font-medium transition cursor-pointer ${
+                    className={`shrink-0 whitespace-nowrap min-h-10 sm:min-h-0 px-2.5 sm:px-2 py-0.5 rounded text-[10.5px] font-medium transition cursor-pointer ${
                       recentFilter === 'IN_PROGRESS' ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30' : 'text-slate-400 hover:text-white'
                     }`}
                   >
@@ -794,7 +794,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
                   <button
                     type="button"
                     onClick={() => setRecentFilter('ABANDONED')}
-                    className={`px-2 py-0.5 rounded text-[10.5px] font-medium transition cursor-pointer ${
+                    className={`shrink-0 whitespace-nowrap min-h-10 sm:min-h-0 px-2.5 sm:px-2 py-0.5 rounded text-[10.5px] font-medium transition cursor-pointer ${
                       recentFilter === 'ABANDONED' ? 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30' : 'text-slate-400 hover:text-white'
                     }`}
                   >
@@ -806,7 +806,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
                   <button
                     type="button"
                     onClick={() => onNavigateTab('MATCHES')}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-semibold transition cursor-pointer"
+                    className="flex items-center gap-1 min-h-11 sm:min-h-0 px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-semibold transition cursor-pointer"
                   >
                     <span>Archive complète</span>
                     <ArrowRight className="w-3 h-3" />
@@ -815,7 +815,64 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
               </div>
             </div>
 
-            <div className="overflow-x-auto">
+            {/* Téléphone et tablette : une carte par session (statut + heure, joueur, issue + pot) */}
+            <ul className="lg:hidden flex flex-col gap-2.5">
+              {filteredRecentMatches.length === 0 ? (
+                <li className="py-6 text-center text-slate-500 text-xs">
+                  Aucune session dans cette catégorie pour la période sélectionnée.
+                </li>
+              ) : (
+                filteredRecentMatches.slice(0, 6).map((match) => {
+                  const quit = match.status === 'abandoned' || match.isAbandoned;
+                  return (
+                    <li key={match.id} className="rounded-xl border border-slate-800 bg-slate-950/40 p-3.5">
+                      <div className="flex items-center justify-between gap-2">
+                        {renderStatusBadge(match.status, match.isAbandoned)}
+                        <span className="flex items-center gap-2 text-[11px] font-mono text-slate-400">
+                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                            match.mode === 'MULTIPLAYER' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-slate-800 text-slate-300 border border-slate-700'
+                          }`}>
+                            {match.mode === 'MULTIPLAYER' ? `${match.playerCount}J Multi` : 'Solo'}
+                          </span>
+                          {new Date(match.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <div className="mt-2.5 flex items-center gap-2 min-w-0">
+                        <div className={`w-6 h-6 shrink-0 rounded-full font-bold flex items-center justify-center text-[11px] ${
+                          quit ? 'bg-amber-500/30 text-amber-300' : 'bg-amber-500 text-slate-950'
+                        }`}>
+                          {(match.winnerName || 'J').charAt(0).toUpperCase()}
+                        </div>
+                        <span className={`min-w-0 truncate text-sm ${quit ? 'text-amber-200/80' : 'text-white font-semibold'}`}>
+                          {match.winnerName || 'Joueur'}
+                        </span>
+                      </div>
+                      <div className="mt-2.5 flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          {quit ? (
+                            <span className="text-[11px] text-slate-400 font-mono">
+                              {match.trickNumberAtQuit ? `Interrompu tour ${match.trickNumberAtQuit}/5` : 'Inactivité / Forfait'}
+                            </span>
+                          ) : (
+                            renderWinTypeBadge(match.winType)
+                          )}
+                        </div>
+                        <div className="shrink-0 text-right font-mono text-[11px] text-slate-400">
+                          {match.partiesCount || match.roundsCount || 1} donne(s)
+                          {kpis.bettingEconomyEnabled && (
+                            <span className="ml-2 text-sm font-bold text-amber-300">
+                              {match.potWon ? `${match.potWon.toLocaleString('fr-FR')} jetons` : '—'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })
+              )}
+            </ul>
+
+            <div className="hidden lg:block overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-slate-800 text-[11px] text-slate-400 font-mono uppercase bg-slate-950/40">
@@ -898,7 +955,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
       {activeSubTab === 'BUSINESS' && (
         <div className="space-y-6">
           {/* Module Banner with One-Pager Investor Modal Action */}
-          <div className="p-5 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="p-4 sm:p-5 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shrink-0">
                 <HeartHandshake className="w-5 h-5" />
@@ -938,7 +995,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
           {/* 3 Pillars Grid: DAU/MAU Stickiness | Cohorts D1/D7/D30 | 24H Heatmap */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             {/* Pilier 1: Actifs & Stickiness Ratio */}
-            <div className="p-5 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-col justify-between space-y-4">
+            <div className="p-4 sm:p-5 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-col justify-between space-y-4">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div className="flex items-center gap-2">
                   <Users className="w-4 h-4 text-cyan-400" />
@@ -982,7 +1039,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
             </div>
 
             {/* Pilier 2: Cohortes de Rétention D1 / D7 / D30 */}
-            <div className="p-5 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-col justify-between space-y-4">
+            <div className="p-4 sm:p-5 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-col justify-between space-y-4">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-emerald-400" />
@@ -1043,7 +1100,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
             </div>
 
             {/* Pilier 3: Heatmap des 24 Heures */}
-            <div className="p-5 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-col justify-between space-y-4">
+            <div className="p-4 sm:p-5 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-col justify-between space-y-4">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div className="flex items-center gap-2">
                   <BarChart3 className="w-4 h-4 text-amber-400" />
@@ -1109,7 +1166,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
           {/* Section 1: Pacing & Audacity Barometer (2 Columns) */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {/* Cadence & Durées Réelles */}
-            <div className="p-5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-4">
+            <div className="p-4 sm:p-5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-4">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div className="flex items-center gap-2">
                   <Timer className="w-4 h-4 text-purple-400" />
@@ -1160,7 +1217,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
             </div>
 
             {/* Baromètre d'Audace (Kora Index) */}
-            <div className="p-5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-4">
+            <div className="p-4 sm:p-5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-4">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div className="flex items-center gap-2">
                   <Gauge className="w-4 h-4 text-amber-400" />
@@ -1213,7 +1270,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
           </div>
 
           {/* Section 2: Fluidité & Détection des Frustrations (3 Pillars) */}
-          <div className="p-5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-5">
+          <div className="p-4 sm:p-5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
@@ -1367,7 +1424,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
           {/* Section 3: Victory Breakdown & Table Formats Distribution */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Taux de Victoires CRM Breakdown */}
-            <div className="p-5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-4">
+            <div className="p-4 sm:p-5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-4">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div className="flex items-center gap-2">
                   <Crown className="w-4 h-4 text-amber-400" />
@@ -1452,7 +1509,7 @@ export const KatikaDashboardTab: React.FC<KatikaDashboardTabProps> = ({ onNaviga
             </div>
 
             {/* Répartition des Parties par Taille de Table */}
-            <div className="p-5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-4">
+            <div className="p-4 sm:p-5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-4">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div className="flex items-center gap-2">
                   <Layers className="w-4 h-4 text-cyan-400" />
