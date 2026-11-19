@@ -552,14 +552,14 @@ export const KatikaPlayersTab: React.FC = () => {
       )}
 
       {/* Humains vs Bots vs Audit Palmarès Division Tab Bar */}
-      <div className="flex border-b border-slate-800/80 bg-slate-950/30 p-1.5 rounded-xl gap-2 flex-wrap">
+      <div className="flex border-b border-slate-800/80 bg-slate-950/30 p-1.5 rounded-xl gap-2 overflow-x-auto sm:flex-wrap">
         <button
           type="button"
           onClick={() => {
             setActivePlayersTab('HUMANS');
             setStatusFilter('ALL');
           }}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-bold text-xs transition-all cursor-pointer border ${
+          className={`shrink-0 whitespace-nowrap min-h-11 sm:min-h-0 flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-lg font-bold text-xs transition-all cursor-pointer border ${
             activePlayersTab === 'HUMANS'
               ? 'bg-purple-500/15 text-purple-300 border-purple-500/35 shadow-sm'
               : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
@@ -577,7 +577,7 @@ export const KatikaPlayersTab: React.FC = () => {
             setActivePlayersTab('BOTS');
             setStatusFilter('ALL');
           }}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-bold text-xs transition-all cursor-pointer border ${
+          className={`shrink-0 whitespace-nowrap min-h-11 sm:min-h-0 flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-lg font-bold text-xs transition-all cursor-pointer border ${
             activePlayersTab === 'BOTS'
               ? 'bg-slate-800 text-slate-300 border-slate-700 shadow-sm'
               : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
@@ -595,7 +595,7 @@ export const KatikaPlayersTab: React.FC = () => {
             setActivePlayersTab('LEADERBOARD_AUDIT');
             setStatusFilter('ALL');
           }}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-bold text-xs transition-all cursor-pointer border ${
+          className={`shrink-0 whitespace-nowrap min-h-11 sm:min-h-0 flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-lg font-bold text-xs transition-all cursor-pointer border ${
             activePlayersTab === 'LEADERBOARD_AUDIT'
               ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
               : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
@@ -630,12 +630,12 @@ export const KatikaPlayersTab: React.FC = () => {
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 shrink-0 w-full md:w-auto">
               <button
                 type="button"
                 onClick={fetchPlayers}
                 disabled={loading}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 cursor-pointer"
+                className="flex-1 md:flex-none justify-center min-h-11 md:min-h-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 cursor-pointer"
               >
                 <RotateCw className={`w-3.5 h-3.5 text-amber-400 ${loading ? 'animate-spin' : ''}`} />
                 <span>Actualiser</span>
@@ -672,18 +672,18 @@ export const KatikaPlayersTab: React.FC = () => {
 
           {/* Search & Audit Filter Bar */}
           <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-4 rounded-xl bg-slate-900/90 border border-slate-800">
-            <div className="flex items-center gap-2 flex-1 max-w-md bg-slate-800/90 px-3 py-2 rounded-lg border border-slate-700/60">
+            <div className="flex items-center gap-2 flex-1 md:max-w-md bg-slate-800/90 px-3 py-2 rounded-lg border border-slate-700/60">
               <Search className="w-4 h-4 text-slate-400 shrink-0" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Filtrer audit par pseudo, ID ou e-mail..."
-                className="bg-transparent border-none outline-none text-xs text-white placeholder-slate-500 w-full"
+                className="bg-transparent border-none outline-none text-base sm:text-xs text-white placeholder-slate-500 w-full min-h-8"
               />
               {searchQuery && (
-                <button onClick={() => setSearchQuery('')} className="text-slate-400 hover:text-slate-200">
-                  <X className="w-3.5 h-3.5" />
+                <button onClick={() => setSearchQuery('')} aria-label="Effacer la recherche" className="shrink-0 w-9 h-9 -mr-2 flex items-center justify-center text-slate-400 hover:text-slate-200">
+                  <X className="w-4 h-4" />
                 </button>
               )}
             </div>
@@ -694,7 +694,7 @@ export const KatikaPlayersTab: React.FC = () => {
                   key={f}
                   type="button"
                   onClick={() => setLeaderboardAuditFilter(f)}
-                  className={`px-3 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
+                  className={`min-h-10 sm:min-h-0 px-3 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
                     leaderboardAuditFilter === f
                       ? f === 'INELIGIBLE_ONLY'
                         ? 'bg-red-500/20 text-red-300 border border-red-500/30'
@@ -712,8 +712,107 @@ export const KatikaPlayersTab: React.FC = () => {
             </div>
           </div>
 
-          {/* Audit Table */}
-          <div className="rounded-xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-lg">
+          {/* Téléphone et tablette : une carte par compte audité, avec ses actions en cibles de 44 px */}
+          <ul className="lg:hidden flex flex-col gap-3">
+            {leaderboardFilteredList.length === 0 ? (
+              <li className="rounded-xl border border-slate-800 bg-slate-900/90 p-4 text-sm text-slate-500 text-center">
+                Aucun compte trouvé avec ces critères d'audit.
+              </li>
+            ) : (
+              leaderboardFilteredList.map(({ player, isEligible, reasons, data }) => {
+                const isGoogleAuth = player.authProvider === 'google.com' || data?.authProvider === 'google.com';
+                return (
+                  <li key={player.id} className="rounded-xl border border-slate-800 bg-slate-900/90 p-3.5 space-y-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <PlayerAvatar avatarId={(player.avatarId as AvatarOptionId) || 'lion'} photoURL={player.photoURL} size="sm" />
+                      <div className="min-w-0">
+                        <div className="font-bold text-white flex items-center gap-1.5 flex-wrap">
+                          <span className="truncate">{player.name}</span>
+                          {player.isBot && (
+                            <span className="px-1 rounded text-[8px] bg-slate-800 text-slate-400 font-mono border border-slate-700">BOT</span>
+                          )}
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-mono truncate">UID : <span className="text-slate-300">{player.id}</span></div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      {isEligible ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                          QUALIFIÉ PALMARÈS
+                        </span>
+                      ) : (
+                        <>
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-red-500/20 text-red-300 border border-red-500/40">
+                            <ShieldAlert className="w-3.5 h-3.5 text-red-400" />
+                            EXCLU DU PALMARÈS
+                          </span>
+                          <div className="flex flex-wrap gap-1">
+                            {reasons.map((r: LeaderboardIneligibilityReason) => (
+                              <span key={r} className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-red-950/80 text-red-300 border border-red-800">
+                                {r === 'SANS_MARQUEUR_GOOGLE' && '⚠️ Pas de compte Google'}
+                                {r === 'DRAPEAU_INVITE' && '⚠️ Compte Invité'}
+                                {r === 'ID_BOT' && '🤖 Identifiant / Drapeau Robot'}
+                                {r === 'NOM_GENERIQUE' && '🏷️ Pseudo générique'}
+                                {r === 'STATS_INVALIDES' && '❌ Stats incohérentes'}
+                                {r === 'AUCUNE_PARTIE' && '0️⃣ Aucune partie'}
+                              </span>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3 text-[11px] font-mono">
+                      <span className={isGoogleAuth ? 'text-sky-300' : 'text-amber-300'}>
+                        {isGoogleAuth ? 'Google (google.com)' : (player.isGuest ? 'Invité (anonyme)' : 'Sans marqueur Google')}
+                      </span>
+                      <span className="text-slate-300 text-right">
+                        {player.totalGames} parties (V : {player.victories}) · {player.masteryScore ?? 0} pts
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-2 pt-1">
+                      {!isEligible && (
+                        <button
+                          type="button"
+                          onClick={() => handleValidateForLeaderboard(player)}
+                          className="min-h-11 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1.5"
+                        >
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                          <span>Valider Google</span>
+                        </button>
+                      )}
+                      <div className="grid grid-cols-2 gap-2">
+                        {!player.isBot && (
+                          <button
+                            type="button"
+                            onClick={() => handleMarkAsBot(player)}
+                            className="min-h-11 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs transition cursor-pointer flex items-center justify-center gap-1.5"
+                          >
+                            <Layers className="w-4 h-4 text-slate-400" />
+                            <span>Marquer Bot</span>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setDeleteConfirmPlayer(player)}
+                          className={`min-h-11 rounded-lg bg-red-950/60 hover:bg-red-900/80 text-red-300 border border-red-800 text-xs transition cursor-pointer flex items-center justify-center gap-1.5 ${player.isBot ? 'col-span-2' : ''}`}
+                        >
+                          <UserX className="w-4 h-4 text-red-400" />
+                          <span>Supprimer</span>
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })
+            )}
+          </ul>
+
+          {/* Audit Table : écrans larges */}
+          <div className="hidden lg:block rounded-xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-lg">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
@@ -879,7 +978,7 @@ export const KatikaPlayersTab: React.FC = () => {
         <>
           {/* Filter & Search Bar */}
           <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-4 rounded-xl bg-slate-900/90 border border-slate-800">
-        <div className="flex items-center gap-2 flex-1 max-w-md bg-slate-800/90 px-3 py-2 rounded-lg border border-slate-700/60">
+        <div className="flex items-center gap-2 flex-1 md:max-w-md bg-slate-800/90 px-3 py-2 rounded-lg border border-slate-700/60">
           <Search className="w-4 h-4 text-slate-400 shrink-0" />
           <input
             type="text"
@@ -887,11 +986,11 @@ export const KatikaPlayersTab: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Rechercher par pseudo, ID ou IP..."
-            className="bg-transparent border-none outline-none text-xs text-white placeholder-slate-500 w-full"
+            className="bg-transparent border-none outline-none text-base sm:text-xs text-white placeholder-slate-500 w-full min-h-8"
           />
           {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="text-slate-400 hover:text-slate-200">
-              <X className="w-3.5 h-3.5" />
+            <button onClick={() => setSearchQuery('')} aria-label="Effacer la recherche" className="shrink-0 w-9 h-9 -mr-2 flex items-center justify-center text-slate-400 hover:text-slate-200">
+              <X className="w-4 h-4" />
             </button>
           )}
         </div>
@@ -906,7 +1005,7 @@ export const KatikaPlayersTab: React.FC = () => {
                   key={st}
                   type="button"
                   onClick={() => setStatusFilter(st)}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer flex items-center gap-1 ${
+                  className={`min-h-10 sm:min-h-0 px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer flex items-center gap-1 ${
                     statusFilter === st
                       ? st === 'ANTI_JEU'
                         ? 'bg-red-500/20 text-red-300 border border-red-500/30 font-bold'
@@ -939,7 +1038,7 @@ export const KatikaPlayersTab: React.FC = () => {
           <button
             type="button"
             onClick={handleAskAIAboutPlayerBase}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-purple-500/20 to-amber-500/20 hover:from-purple-500/30 hover:to-amber-500/30 text-amber-200 text-xs font-semibold border border-amber-500/40 shadow-sm cursor-pointer transition-all"
+            className="flex-1 sm:flex-none justify-center min-h-11 sm:min-h-0 flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-purple-500/20 to-amber-500/20 hover:from-purple-500/30 hover:to-amber-500/30 text-amber-200 text-xs font-semibold border border-amber-500/40 shadow-sm cursor-pointer transition-all"
             title="Consulter l'Assistant IA sur la base joueurs et anomalies"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
@@ -950,7 +1049,7 @@ export const KatikaPlayersTab: React.FC = () => {
             type="button"
             onClick={fetchPlayers}
             disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 cursor-pointer"
+            className="flex-1 sm:flex-none justify-center min-h-11 sm:min-h-0 flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 cursor-pointer"
             title="Rafraîchir les données joueurs"
           >
             <RotateCw className={`w-3.5 h-3.5 text-amber-400 ${loading ? 'animate-spin' : ''}`} />
@@ -972,7 +1071,7 @@ export const KatikaPlayersTab: React.FC = () => {
                 key={pref}
                 type="button"
                 onClick={() => setPreferenceFilter(pref)}
-                className={`px-3 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
+                className={`min-h-10 sm:min-h-0 px-3 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
                   preferenceFilter === pref
                     ? 'bg-purple-500/20 text-purple-300 border border-purple-500/35 shadow-sm'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/20'
@@ -996,7 +1095,7 @@ export const KatikaPlayersTab: React.FC = () => {
                 key={srt}
                 type="button"
                 onClick={() => setSortBy(srt)}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer ${
+                className={`min-h-10 sm:min-h-0 px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer ${
                   sortBy === srt
                     ? 'bg-amber-500/20 text-amber-300 border border-amber-500/35'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/20'
