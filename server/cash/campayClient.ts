@@ -171,9 +171,9 @@ function providerTimeoutMs(): number {
 }
 
 /** Jeton permanent s'il est enregistré, sinon jeton obtenu avec le nom d'utilisateur et le mot de passe. Jamais journalisé. */
-async function resolveDemoToken(creds: Record<string, string>): Promise<string | null> {
+async function resolveDemoToken(creds: Record<string, string>, forceFresh = false): Promise<string | null> {
   const direct = creds.permanent_token || creds.token;
-  if (direct) return direct;
+  if (direct && !forceFresh) return direct;
   if (!creds.username || !creds.password) return null;
   const res = await fetch(`${CAMPAY_DEMO_BASE_URL}/api/token/`, {
     method: 'POST',
@@ -189,8 +189,9 @@ async function resolveDemoToken(creds: Record<string, string>): Promise<string |
 /** Demande la collecte à Campay. Distingue refus net, acceptation et issue incertaine (voir CollectResult). */
 export async function startCampayCollect(params: { amount: number; phone: string; depositId: string }): Promise<CollectResult> {
   let token: string | null = null;
+  let creds: Record<string, string> | null = null;
   try {
-    const creds = await getProviderCredentials('campay', 'demo');
+    creds = await getProviderCredentials('campay', 'demo');
     if (!creds) return { kind: 'REJECTED', message: 'Le paiement par MTN MoMo ou Orange Money est indisponible pour l\'instant.' };
     token = await resolveDemoToken(creds);
   } catch {
@@ -200,9 +201,9 @@ export async function startCampayCollect(params: { amount: number; phone: string
   if (!token) return { kind: 'REJECTED', message: 'Le paiement par MTN MoMo ou Orange Money est indisponible pour l\'instant.' };
 
   try {
-    const res = await fetch(`${CAMPAY_DEMO_BASE_URL}/api/collect/`, {
+    const envoyerCollecte = (jeton: string) => fetch(`${CAMPAY_DEMO_BASE_URL}/api/collect/`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Token ${token}` },
+      headers: { 'Content-Type': 'application/json', Authorization: `Token ${jeton}` },
       body: JSON.stringify({
         amount: String(params.amount),
         currency: 'XAF',
@@ -212,13 +213,24 @@ export async function startCampayCollect(params: { amount: number; phone: string
       }),
       signal: AbortSignal.timeout(providerTimeoutMs()),
     });
+    let res = await envoyerCollecte(token);
+    if (res.status === 401) {
+      // Jeton enregistré refusé : un seul nouvel essai avec un jeton frais (nom d'utilisateur + mot de passe).
+      console.warn('[Campay] Collecte : jeton enregistré refusé (401), nouvel essai avec un jeton frais. Vérifier le panneau Prestataires de katika.');
+      const frais = await resolveDemoToken(creds ?? {}, true).catch(() => null);
+      if (frais && frais !== token) res = await envoyerCollecte(frais);
+    }
     const data = await res.json().catch(() => ({}));
     console.log('[Campay] Collecte : statut HTTP', res.status, 'dépôt', params.depositId);
     if (res.ok && typeof data?.reference === 'string' && data.reference) {
       return { kind: 'ACCEPTED', reference: data.reference };
     }
     if (res.status >= 400 && res.status < 500) {
-      const detail = typeof data?.message === 'string' && data.message ? data.message : `Erreur ${res.status}`;
+      if (res.status === 401) {
+        return { kind: 'REJECTED', message: 'Le paiement est momentanément indisponible. Réessaie un peu plus tard.' };
+      }
+      const brut = typeof data?.message === 'string' && data.message ? data.message : (typeof data?.detail === 'string' && data.detail ? data.detail : '');
+      const detail = brut || `Erreur ${res.status}`;
       return { kind: 'REJECTED', message: `Le paiement a été refusé : ${detail}` };
     }
     return { kind: 'UNKNOWN', message: `Réponse inattendue de Campay (statut ${res.status}).` };
