@@ -5,6 +5,7 @@
  * Les totaux s'écrivent dans la même transaction que l'événement qu'ils comptent : une opération rejouée ne compte jamais deux fois.
  */
 
+import { randomBytes } from 'node:crypto';
 import { AggregateField, FieldValue, Transaction } from 'firebase-admin/firestore';
 import { getFirebaseAdminAppDb } from '../firebaseAdmin';
 import { recordServerReads } from '../katika/readBudget';
@@ -17,6 +18,9 @@ import {
   FinanceCounters,
   FinanceSettings,
   addCounters,
+  DailyPoint,
+  OperatorWithdrawalInput,
+  dateKeyToNoonMs,
   lastDateKeys,
   normalizeFinanceSettings,
   summarize,
@@ -26,6 +30,7 @@ import {
 export const CASH_FINANCE_DAILY_COLLECTION = 'cash_finance_daily';
 export const CASH_FINANCE_TOTALS_COLLECTION = 'cash_finance_totals';
 export const CASH_RECONCILIATIONS_COLLECTION = 'cash_reconciliations';
+export const CASH_OPERATOR_WITHDRAWALS_COLLECTION = 'cash_operator_withdrawals';
 const SETTINGS_DOC = 'kora_cash_finance';
 
 /** Statuts d'un retrait dont l'argent a quitté le solde sans que l'envoi soit terminé : il reste dû au joueur. */
@@ -145,4 +150,83 @@ export async function getLatestBaseline(): Promise<ReconciliationDoc | null> {
   recordServerReads(snap.size);
   const docs = snap.docs.map((d) => d.data() as ReconciliationDoc).sort((a, b) => b.createdAt - a.createdAt);
   return docs[0] ?? null;
+}
+
+
+/** Totaux jour par jour (du plus ancien au plus récent), aujourd'hui compris. Au plus 90 lectures, comptées dans la jauge. */
+export async function getFinanceDaily(environment: CashEnvironment, days: number, nowMs: number = Date.now()): Promise<DailyPoint[]> {
+  const db = getFirebaseAdminAppDb();
+  const keys = lastDateKeys(nowMs, days, dateKeyFor).reverse();
+  const snaps = await db.getAll(...keys.map((key) => db.collection(CASH_FINANCE_DAILY_COLLECTION).doc(`${environment}_${key}`)));
+  recordServerReads(snaps.length);
+  return snaps.map((snap, index) => ({ dateKey: keys[index], counters: toCounters(snap.exists ? snap.data() : undefined) }));
+}
+
+export interface OperatorWithdrawalDoc {
+  id: string;
+  environment: CashEnvironment;
+  amount: number;
+  /** Jour du retrait (AAAA-MM-JJ, Douala) : celui où il compte dans les totaux. */
+  dateKey: string;
+  note: string;
+  actor: string;
+  createdAt: number;
+  cancelledAt?: number;
+  cancelledBy?: string;
+}
+
+/** Enregistre un retrait de l'exploitant et le compte dans les totaux, dans la même transaction. */
+export async function createOperatorWithdrawal(environment: CashEnvironment, input: OperatorWithdrawalInput, actor: string, nowMs: number = Date.now()): Promise<OperatorWithdrawalDoc> {
+  const noon = dateKeyToNoonMs(input.dateKey);
+  if (noon === null) throw new Error('Date invalide.');
+  const doc: OperatorWithdrawalDoc = {
+    id: `owd_${nowMs}_${randomBytes(4).toString('hex')}`,
+    environment,
+    amount: input.amount,
+    dateKey: input.dateKey,
+    note: input.note,
+    actor,
+    createdAt: nowMs,
+  };
+  const db = getFirebaseAdminAppDb();
+  await db.runTransaction(async (tx) => {
+    tx.create(db.collection(CASH_OPERATOR_WITHDRAWALS_COLLECTION).doc(doc.id), doc);
+    addFinanceCounters(tx, { operatorWithdrawals: input.amount }, noon, environment);
+  });
+  return doc;
+}
+
+export class OperatorWithdrawalError extends Error {
+  constructor(public readonly code: 'NOT_FOUND' | 'ALREADY_CANCELLED', message: string) {
+    super(message);
+  }
+}
+
+/** Annule une saisie (faute de frappe) : la ligne reste, marquée annulée, et les totaux sont corrigés dans la même transaction. */
+export async function cancelOperatorWithdrawal(id: string, actor: string, nowMs: number = Date.now()): Promise<OperatorWithdrawalDoc> {
+  if (!/^owd_\d+_[0-9a-f]{8}$/.test(id)) throw new OperatorWithdrawalError('NOT_FOUND', 'Retrait introuvable.');
+  const db = getFirebaseAdminAppDb();
+  const ref = db.collection(CASH_OPERATOR_WITHDRAWALS_COLLECTION).doc(id);
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) throw new OperatorWithdrawalError('NOT_FOUND', 'Retrait introuvable.');
+    const doc = snap.data() as OperatorWithdrawalDoc;
+    if (doc.cancelledAt) throw new OperatorWithdrawalError('ALREADY_CANCELLED', 'Ce retrait est déjà annulé.');
+    const noon = dateKeyToNoonMs(doc.dateKey) ?? doc.createdAt;
+    const next: OperatorWithdrawalDoc = { ...doc, cancelledAt: nowMs, cancelledBy: actor };
+    tx.set(ref, next);
+    addFinanceCounters(tx, { operatorWithdrawals: -doc.amount }, noon, doc.environment);
+    return next;
+  });
+}
+
+/** Derniers retraits de l'exploitant pour un environnement (annulés compris, marqués). Une lecture bornée. */
+export async function listOperatorWithdrawals(environment: CashEnvironment, max: number = 50): Promise<OperatorWithdrawalDoc[]> {
+  const snap = await getFirebaseAdminAppDb()
+    .collection(CASH_OPERATOR_WITHDRAWALS_COLLECTION)
+    .orderBy('createdAt', 'desc')
+    .limit(Math.min(200, Math.max(1, Math.floor(max))))
+    .get();
+  recordServerReads(snap.size);
+  return snap.docs.map((d) => d.data() as OperatorWithdrawalDoc).filter((d) => d.environment === environment);
 }
