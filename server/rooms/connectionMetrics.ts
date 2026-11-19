@@ -29,6 +29,8 @@ export interface DailyMetrics {
   disconnectionsByPlayer: Record<string, number>;
   authTimeouts: number;
   authTokenInvalid: number;
+  /** Envois de notifications push du jour : « TYPE_résultat » (ex. INVITATION_ok, APPOINTMENT_no_subscription, INVITATION_failed_410). */
+  pushOutcomes: Record<string, number>;
 }
 
 function emptyMetrics(dateKey: string): DailyMetrics {
@@ -48,6 +50,7 @@ function emptyMetrics(dateKey: string): DailyMetrics {
     disconnectionsByPlayer: {},
     authTimeouts: 0,
     authTokenInvalid: 0,
+    pushOutcomes: {},
   };
 }
 
@@ -128,6 +131,30 @@ export function recordAuthTokenInvalid(): void {
   current.authTokenInvalid += 1;
 }
 
+const PUSH_METRIC_TYPES = [
+  'INVITATION', 'GAME_START', 'YOUR_TURN', 'DISCONNECTED', 'FORFEIT_WARNING', 'FORFEIT_DECLARED',
+  'PLAYER_JOINED', 'RANK_CHANGE', 'SEARCH_CALL', 'APPOINTMENT', 'SYSTEM',
+] as const;
+const PUSH_METRIC_OUTCOMES = ['ok', 'no_subscription', 'blocked_prefs', 'quiet', 'deferred'] as const;
+
+/**
+ * Note le sort d'une notification push (liste fermée, aucun identifiant ni contenu) : envoyée, aucun abonnement trouvé pour le joueur,
+ * coupée par ses préférences ou le mode nuit, reportée, ou refusée par le service de notification (code HTTP à trois chiffres).
+ */
+export function recordPushOutcome(type: string | undefined, outcome: string, statusCode?: unknown): void {
+  rollIfNewDay();
+  const t = (PUSH_METRIC_TYPES as readonly string[]).includes(type ?? '') ? (type as string) : 'SYSTEM';
+  let o: string;
+  if (outcome === 'failed') {
+    const code = String(statusCode ?? '');
+    o = /^\d{3}$/.test(code) ? `failed_${code}` : 'failed_error';
+  } else {
+    o = (PUSH_METRIC_OUTCOMES as readonly string[]).includes(outcome) ? outcome : 'other';
+  }
+  const key = `${t}_${o}`;
+  current.pushOutcomes[key] = (current.pushOutcomes[key] || 0) + 1;
+}
+
 export interface MetricsSnapshot extends DailyMetrics {
   averageReconnectDelayMs: number;
   playersWithMultipleDisconnects: number;
@@ -142,6 +169,7 @@ export function getTodaySnapshot(): MetricsSnapshot {
     ...current,
     disconnectionsByCode: { ...current.disconnectionsByCode },
     disconnectionsByPlayer: { ...current.disconnectionsByPlayer },
+    pushOutcomes: { ...current.pushOutcomes },
     averageReconnectDelayMs,
     playersWithMultipleDisconnects,
   };

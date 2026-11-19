@@ -1,5 +1,6 @@
 import webpush from 'web-push';
 import crypto from 'crypto';
+import { recordPushOutcome } from './rooms/connectionMetrics';
 import { db } from '../src/lib/firebase';
 import {
   collection,
@@ -343,11 +344,13 @@ class PushService {
       userSubs = userSubs.filter((r) => r.subscription.endpoint === options.onlyEndpoint);
     }
 
+    const type = payload.data?.type;
+
     if (userSubs.length === 0) {
+      recordPushOutcome(type, 'no_subscription');
       return { success: 0, failed: 0, deferred: 0 };
     }
 
-    const type = payload.data?.type;
     const policy = PUSH_POLICY[type || 'SYSTEM'] || PUSH_POLICY.SYSTEM;
     const payloadString = JSON.stringify({
       title: payload.title,
@@ -367,13 +370,20 @@ class PushService {
       // Respect des préférences du joueur (types d'alerte + mode nuit) côté serveur,
       // seul endroit où elles peuvent réellement empêcher l'envoi.
       const prefs: ServerPushPreferences = { ...DEFAULT_SERVER_PUSH_PREFERENCES, ...(record.preferences || {}) };
-      if (!isTypeAllowed(type, prefs)) return;
+      if (!isTypeAllowed(type, prefs)) {
+        recordPushOutcome(type, 'blocked_prefs');
+        return;
+      }
       // Annonce non urgente : elle attend le matin du joueur au lieu de le réveiller ou d'être perdue.
       if (options?.nightWindow && (isQuietNow(prefs) || isInNightWindow(prefs.tzOffsetMinutes, options.nightWindow.startHour, options.nightWindow.endHour))) {
         deferredCount++;
+        recordPushOutcome(type, 'deferred');
         return;
       }
-      if (type !== 'SYSTEM' && !CRITICAL_TYPES.includes(type as PushType) && isQuietNow(prefs)) return;
+      if (type !== 'SYSTEM' && !CRITICAL_TYPES.includes(type as PushType) && isQuietNow(prefs)) {
+        recordPushOutcome(type, 'quiet');
+        return;
+      }
 
       try {
         await webpush.sendNotification(record.subscription as any, payloadString, {
@@ -382,9 +392,11 @@ class PushService {
           topic: sanitizeTopic(payload.tag),
         });
         successCount++;
+        recordPushOutcome(type, 'ok');
       } catch (err: any) {
         failedCount++;
         const code = err?.statusCode;
+        recordPushOutcome(type, 'failed', code);
         console.warn(`[PushService] Failed push to ${userId}:`, code || err?.message);
         // 404/410 : abonnement expiré. 401/403 : abonnement créé avec une autre clé VAPID
         // (ex. clés régénérées au redémarrage) : il est inutilisable, le client se réabonnera seul.

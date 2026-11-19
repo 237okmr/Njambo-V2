@@ -12,6 +12,7 @@ import {
   recordSeatReleased,
   recordRoomRestored,
   recordRejectedInvalidIdentifier,
+  recordPushOutcome,
   getTodaySnapshot,
 } from './connectionMetrics';
 
@@ -66,5 +67,28 @@ describe('mesures de santé des connexions', () => {
     recordDisconnection(playerId, 1006);
     const after = getTodaySnapshot();
     assert.equal(after.playersWithMultipleDisconnects, before.playersWithMultipleDisconnects + 1);
+  });
+  it('compte le sort des notifications push par type, sans identifiant ni contenu', () => {
+    const before = getTodaySnapshot().pushOutcomes;
+    recordPushOutcome('INVITATION', 'ok');
+    recordPushOutcome('INVITATION', 'no_subscription');
+    recordPushOutcome('APPOINTMENT', 'failed', 410);
+    recordPushOutcome('APPOINTMENT', 'failed', 'ECONNRESET');
+    const after = getTodaySnapshot().pushOutcomes;
+    const gain = (k: string) => (after[k] || 0) - (before[k] || 0);
+    assert.equal(gain('INVITATION_ok'), 1);
+    assert.equal(gain('INVITATION_no_subscription'), 1);
+    assert.equal(gain('APPOINTMENT_failed_410'), 1);
+    assert.equal(gain('APPOINTMENT_failed_error'), 1);
+  });
+
+  it('un type ou un résultat hors liste est rangé sous « SYSTEM » ou « other » (aucune clé libre)', () => {
+    const before = getTodaySnapshot().pushOutcomes;
+    recordPushOutcome('XvhceH5fLKPlMMrkLVJp8xYHC5H2', 'bizarre');
+    recordPushOutcome(undefined, 'ok');
+    const after = getTodaySnapshot().pushOutcomes;
+    assert.equal((after.SYSTEM_other || 0) - (before.SYSTEM_other || 0), 1);
+    assert.equal((after.SYSTEM_ok || 0) - (before.SYSTEM_ok || 0), 1);
+    assert.equal(Object.keys(after).some((k) => k.includes('Xvhce')), false);
   });
 });

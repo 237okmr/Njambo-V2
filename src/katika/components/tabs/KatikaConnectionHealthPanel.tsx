@@ -17,6 +17,45 @@ interface ConnectionMetrics {
   playersWithMultipleDisconnects: number;
   authTimeouts: number;
   authTokenInvalid: number;
+  pushOutcomes?: Record<string, number>;
+}
+
+const PUSH_TYPE_LABEL: Record<string, string> = {
+  INVITATION: 'Invitations',
+  GAME_START: 'Début de partie',
+  YOUR_TURN: 'Tour de jeu',
+  DISCONNECTED: 'Déconnexion',
+  FORFEIT_WARNING: 'Avertissement de forfait',
+  FORFEIT_DECLARED: 'Forfait',
+  PLAYER_JOINED: 'Joueur arrivé',
+  RANK_CHANGE: 'Changement de rang',
+  SEARCH_CALL: 'Je cherche une partie',
+  APPOINTMENT: 'Rendez-vous',
+  SYSTEM: 'Système et tests',
+};
+const PUSH_OUTCOME_LABEL: Record<string, string> = {
+  ok: 'envoyées',
+  no_subscription: 'sans abonnement',
+  blocked_prefs: 'coupées par les préférences',
+  quiet: 'coupées par le mode nuit',
+  deferred: 'reportées',
+  other: 'autres',
+};
+
+/** « Invitations : 3 envoyées, 2 sans abonnement, 1 refusée (410) », une ligne par type d'alerte du jour. */
+function pushLines(outcomes: Record<string, number> | undefined): string[] {
+  const byType = new Map<string, string[]>();
+  const entries = Object.entries(outcomes ?? {}).filter(([, n]) => Number(n) > 0).sort((a, b) => b[1] - a[1]);
+  for (const [key, n] of entries) {
+    const type = Object.keys(PUSH_TYPE_LABEL).find((t) => key.startsWith(`${t}_`));
+    if (!type) continue;
+    const outcome = key.slice(type.length + 1);
+    const label = outcome.startsWith('failed_')
+      ? `refusées (${outcome.slice(7) === 'error' ? 'erreur réseau' : outcome.slice(7)})`
+      : PUSH_OUTCOME_LABEL[outcome] ?? outcome;
+    byType.set(type, [...(byType.get(type) ?? []), `${n} ${label}`]);
+  }
+  return Array.from(byType.entries()).map(([type, parts]) => `${PUSH_TYPE_LABEL[type]} : ${parts.join(', ')}`);
 }
 
 /**
@@ -98,6 +137,19 @@ export const KatikaConnectionHealthPanel: React.FC = () => {
           {stat('Joueurs instables', metrics.playersWithMultipleDisconnects, '3 déconnexions ou plus aujourd\'hui')}
           {stat('Délais vérif. Google', metrics.authTimeouts, 'connexions Google trop lentes à confirmer')}
           {stat('Jetons Google refusés', metrics.authTokenInvalid, 'jeton expiré ou invalide')}
+        </div>
+      )}
+
+      {metrics && (
+        <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/40 space-y-1">
+          <span className="text-[10px] uppercase tracking-wide text-slate-500">Notifications push envoyées par le serveur (depuis le dernier démarrage, aujourd'hui)</span>
+          {pushLines(metrics.pushOutcomes).length === 0 ? (
+            <p className="text-[11px] text-slate-500">Aucun envoi pour l'instant. « Sans abonnement » : le joueur n'a aucun appareil abonné sous cet identifiant.</p>
+          ) : (
+            pushLines(metrics.pushOutcomes).map((line) => (
+              <p key={line} className="text-[11px] text-slate-300">{line}</p>
+            ))
+          )}
         </div>
       )}
     </div>
