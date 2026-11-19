@@ -12,6 +12,7 @@ import { KatikaService } from './services/katikaService';
 import { KATIKA_NAVIGATE_EVENT, KatikaNavigationEventDetail } from './utils/katikaNavigation';
 import { can, canSeeTab, firstAllowedTab } from './utils/katikaAccess';
 import { useIsCompactScreen } from './hooks/useIsCompactScreen';
+import { useKatikaViewport } from './hooks/useKatikaViewport';
 import { KatikaHomeTab } from './components/tabs/KatikaHomeTab';
 import { KatikaDashboardTab } from './components/tabs/KatikaDashboardTab';
 import { KatikaRoomsTab } from './components/tabs/KatikaRoomsTab';
@@ -81,7 +82,7 @@ const KatikaWorkspace: React.FC<{ initialTab?: KatikaTab }> = ({ initialTab }) =
 
   return (
     <KatikaAiChatProvider>
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500/30">
+      <div className="min-h-dvh bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500/30">
         <KatikaHeader
           isMaintenanceMode={config?.isMaintenanceMode || false}
           onToggleMaintenance={handleToggleMaintenance}
@@ -194,7 +195,7 @@ const KatikaGate: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen w-full bg-slate-950 flex flex-col items-center justify-center gap-3 text-slate-400">
+      <div className="min-h-dvh w-full bg-slate-950 flex flex-col items-center justify-center gap-3 text-slate-400">
         <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
         <span className="text-sm">Vérification des accès…</span>
       </div>
@@ -210,6 +211,8 @@ const KatikaGate: React.FC = () => {
 };
 
 export const KatikaApp: React.FC = () => {
+  // Zoom de page possible dans katika uniquement (l'écran de jeu garde sa balise viewport d'origine)
+  useKatikaViewport();
   return (
     <KatikaAuthProvider>
       <KatikaGate />
