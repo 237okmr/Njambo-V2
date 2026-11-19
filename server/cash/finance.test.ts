@@ -17,6 +17,9 @@ import {
   parseManualBalance,
   summarize,
   toCounters,
+  dateKeyToNoonMs,
+  parseDashboardDays,
+  parseOperatorWithdrawal,
 } from './financeRules';
 import { DEFAULT_WITHDRAWAL_SETTINGS, computeWithdrawalQuote, dateKeyFor } from './withdrawalRules';
 
@@ -49,7 +52,7 @@ describe('Finances — frais', () => {
 
 describe('Finances — recettes et marge', () => {
   it('additionne commission et frais, moins ce que garde Campay', () => {
-    const summary = summarize({ depositsGross: 1000, depositFees: 20, withdrawalsNet: 400, withdrawalFees: 6, rake: 50 }, settings);
+    const summary = summarize({ depositsGross: 1000, depositFees: 20, withdrawalsNet: 400, withdrawalFees: 6, rake: 50, operatorWithdrawals: 0 }, settings);
     assert.equal(summary.campayFees, 26);
     assert.equal(summary.margin, 50);
   });
@@ -68,7 +71,7 @@ describe('Finances — recettes et marge', () => {
 });
 
 describe('Finances — rapprochement', () => {
-  const counters = { depositsGross: 1000, depositFees: 20, withdrawalsNet: 400, withdrawalFees: 6, rake: 50 };
+  const counters = { depositsGross: 1000, depositFees: 20, withdrawalsNet: 400, withdrawalFees: 6, rake: 50, operatorWithdrawals: 0 };
   // Entrées 1000, sorties 400, Campay garde 20 + 6 : il reste 574 chez Campay. Dû aux joueurs : 524. Marge attendue : 50.
 
   it('ne signale rien quand les comptes tombent juste', () => {
@@ -110,5 +113,56 @@ describe('Finances — rapprochement', () => {
     assert.equal(parseManualBalance(10), 10);
     assert.equal(parseManualBalance(-1), null);
     assert.equal(parseManualBalance('10'), null);
+  });
+});
+
+
+describe('Finances — retraits de l\'exploitant', () => {
+  const dateKeyFor = (ms: number) => new Date(ms + 3_600_000).toISOString().slice(0, 10);
+  const now = Date.parse('2026-11-19T10:00:00+01:00');
+
+  it('retire ce que l\'exploitant a sorti de la marge restante, sans changer la marge', () => {
+    const summary = summarize({ ...EMPTY_FINANCE_COUNTERS, rake: 100, operatorWithdrawals: 30 }, settings);
+    assert.equal(summary.margin, 100);
+    assert.equal(summary.kept, 70);
+  });
+
+  it('attend un solde Campay plus bas après un retrait de l\'exploitant : pas de fausse alerte', () => {
+    const counters = { depositsGross: 1000, depositFees: 20, withdrawalsNet: 400, withdrawalFees: 6, rake: 50, operatorWithdrawals: 30 };
+    const r = computeReconciliation({ campayBalance: 544, owed: 524, counters, baseline: null, settings });
+    assert.equal(r.expectedMargin, 20);
+    assert.equal(r.gap, 0);
+    assert.equal(r.alert, false);
+  });
+
+  it('accepte un montant entier positif, daté aujourd\'hui par défaut', () => {
+    const r = parseOperatorWithdrawal({ amount: 5000, note: ' loyer ' }, now, dateKeyFor);
+    assert.equal(r.ok, true);
+    assert.deepEqual(r.value, { amount: 5000, dateKey: '2026-11-19', note: 'loyer' });
+  });
+
+  it('refuse montant nul, négatif, décimal ou énorme', () => {
+    [0, -5, 12.5, 2_000_000_000, '100', undefined].forEach((amount) => assert.equal(parseOperatorWithdrawal({ amount }, now, dateKeyFor).ok, false));
+  });
+
+  it('refuse une date future, mal formée ou vieille de plus d\'un an', () => {
+    assert.equal(parseOperatorWithdrawal({ amount: 10, dateKey: '2026-11-20' }, now, dateKeyFor).ok, false);
+    assert.equal(parseOperatorWithdrawal({ amount: 10, dateKey: '19/11/2026' }, now, dateKeyFor).ok, false);
+    assert.equal(parseOperatorWithdrawal({ amount: 10, dateKey: '2026-02-30' }, now, dateKeyFor).ok, false);
+    assert.equal(parseOperatorWithdrawal({ amount: 10, dateKey: '2025-01-01' }, now, dateKeyFor).ok, false);
+    assert.equal(parseOperatorWithdrawal({ amount: 10, dateKey: '2026-11-10' }, now, dateKeyFor).ok, true);
+  });
+
+  it('range un retrait ancien dans la bonne case journalière', () => {
+    const noon = dateKeyToNoonMs('2026-11-10');
+    assert.notEqual(noon, null);
+    assert.equal(dateKeyFor(noon as number), '2026-11-10');
+  });
+
+  it('ne retient que 7, 30 ou 90 jours, 30 par défaut', () => {
+    assert.equal(parseDashboardDays('7'), 7);
+    assert.equal(parseDashboardDays('90'), 90);
+    assert.equal(parseDashboardDays('15'), 30);
+    assert.equal(parseDashboardDays(undefined), 30);
   });
 });

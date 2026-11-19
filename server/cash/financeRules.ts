@@ -73,9 +73,11 @@ export interface FinanceCounters {
   withdrawalsNet: number;
   withdrawalFees: number;
   rake: number;
+  /** Argent que l'exploitant sort lui-même de Campay (saisi à la main dans katika). Ce n'est pas un retrait de joueur. */
+  operatorWithdrawals: number;
 }
 
-export const EMPTY_FINANCE_COUNTERS: FinanceCounters = { depositsGross: 0, depositFees: 0, withdrawalsNet: 0, withdrawalFees: 0, rake: 0 };
+export const EMPTY_FINANCE_COUNTERS: FinanceCounters = { depositsGross: 0, depositFees: 0, withdrawalsNet: 0, withdrawalFees: 0, rake: 0, operatorWithdrawals: 0 };
 
 const COUNTER_KEYS = Object.keys(EMPTY_FINANCE_COUNTERS) as (keyof FinanceCounters)[];
 
@@ -109,6 +111,8 @@ export interface FinanceSummary extends FinanceCounters {
   campayFees: number;
   /** Commission + frais pris aux joueurs - frais payés à Campay. */
   margin: number;
+  /** Ce qui reste à l'exploitant : la marge moins ce qu'il a déjà retiré de Campay pour lui. */
+  kept: number;
 }
 
 function roundCents(value: number): number {
@@ -117,7 +121,8 @@ function roundCents(value: number): number {
 
 export function summarize(counters: FinanceCounters, settings: FinanceSettings): FinanceSummary {
   const campayFees = roundCents((counters.depositsGross * settings.campayDepositPercent) / 100 + (counters.withdrawalsNet * settings.campayWithdrawalPercent) / 100);
-  return { ...counters, campayFees, margin: roundCents(counters.rake + counters.depositFees + counters.withdrawalFees - campayFees) };
+  const margin = roundCents(counters.rake + counters.depositFees + counters.withdrawalFees - campayFees);
+  return { ...counters, campayFees, margin, kept: roundCents(margin - counters.operatorWithdrawals) };
 }
 
 /** Les N derniers jours au format AAAA-MM-JJ (heure de Douala), aujourd'hui compris. */
@@ -156,8 +161,8 @@ export function computeReconciliation(params: {
   const { campayBalance, owed, counters, baseline, settings } = params;
   const realMargin = roundCents(campayBalance - owed);
   const expectedMargin = baseline
-    ? roundCents(baseline.realMargin + summarize(subtractCounters(counters, baseline.counters), settings).margin)
-    : summarize(counters, settings).margin;
+    ? roundCents(baseline.realMargin + summarize(subtractCounters(counters, baseline.counters), settings).kept)
+    : summarize(counters, settings).kept;
   const gap = roundCents(realMargin - expectedMargin);
   return { campayBalance, owed, realMargin, expectedMargin, gap, alert: Math.abs(gap) >= settings.gapAlertFcfa && gap !== 0 };
 }
@@ -171,4 +176,62 @@ export function parseManualBalance(raw: unknown): number | null {
 export function parseCampayBalance(data: any): number | null {
   const value = Number(data?.total_balance);
   return data && data.total_balance !== undefined && data.total_balance !== null && Number.isFinite(value) && value >= 0 ? value : null;
+}
+
+
+// ---------------------------------------------------------------------------
+// Retraits de l'exploitant (saisie à la main) et fenêtre du tableau de bord
+// ---------------------------------------------------------------------------
+
+/** Plafond d'un retrait saisi : filet contre une faute de frappe, pas une règle métier. */
+export const MAX_OPERATOR_WITHDRAWAL_FCFA = 1_000_000_000;
+/** Un retrait peut être noté avec une date passée, jusqu'à un an en arrière. */
+export const MAX_OPERATOR_BACKDATE_DAYS = 365;
+export const OPERATOR_NOTE_MAX = 140;
+export const DASHBOARD_ALLOWED_DAYS = [7, 30, 90] as const;
+export const DASHBOARD_DEFAULT_DAYS = 30;
+
+export interface OperatorWithdrawalInput {
+  amount: number;
+  /** AAAA-MM-JJ, heure de Douala. */
+  dateKey: string;
+  note: string;
+}
+
+const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Midi (heure de Douala) du jour désigné : l'instant qui range un événement dans la bonne case journalière. */
+export function dateKeyToNoonMs(dateKey: string): number | null {
+  if (!DATE_KEY_RE.test(dateKey)) return null;
+  const ms = Date.parse(`${dateKey}T12:00:00+01:00`);
+  return Number.isFinite(ms) ? ms : null;
+}
+
+export function parseOperatorWithdrawal(
+  body: any,
+  nowMs: number,
+  dateKeyFor: (ms: number) => string,
+): { ok: boolean; value?: OperatorWithdrawalInput; error?: string } {
+  const amount = body?.amount;
+  if (typeof amount !== 'number' || !Number.isSafeInteger(amount) || amount <= 0 || amount > MAX_OPERATOR_WITHDRAWAL_FCFA) {
+    return { ok: false, error: 'Montant invalide : un nombre entier de FCFA, supérieur à zéro.' };
+  }
+  const today = dateKeyFor(nowMs);
+  const dateKey = body?.dateKey === undefined || body?.dateKey === null || body?.dateKey === '' ? today : String(body.dateKey);
+  const noon = dateKeyToNoonMs(dateKey);
+  if (noon === null || dateKeyFor(noon) !== dateKey) return { ok: false, error: 'Date invalide.' };
+  if (dateKey > today) return { ok: false, error: 'La date ne peut pas être dans le futur.' };
+  if (nowMs - noon > (MAX_OPERATOR_BACKDATE_DAYS + 1) * 86_400_000) return { ok: false, error: 'Date trop ancienne (un an maximum).' };
+  const note = typeof body?.note === 'string' ? body.note.trim().slice(0, OPERATOR_NOTE_MAX) : '';
+  return { ok: true, value: { amount, dateKey, note } };
+}
+
+export function parseDashboardDays(raw: unknown): number {
+  const n = Number(raw);
+  return (DASHBOARD_ALLOWED_DAYS as readonly number[]).includes(n) ? n : DASHBOARD_DEFAULT_DAYS;
+}
+
+export interface DailyPoint {
+  dateKey: string;
+  counters: FinanceCounters;
 }

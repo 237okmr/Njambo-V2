@@ -29,16 +29,30 @@ import { pushService, buildGameUrl } from './server/pushService';
 import { saveProviderCredentials, getProviderCredentialsMasked, isCashSecretsKeyConfigured } from './server/cash/cashSecrets';
 import { testCampayConnection, createLiveCampayDeps, createLiveWithdrawalDeps, readCampayBalance } from './server/cash/campayClient';
 import {
+  OperatorWithdrawalError,
+  cancelOperatorWithdrawal,
+  createOperatorWithdrawal,
+  getFinanceDaily,
   getFinancePeriods,
   getFinanceSettings,
   getFinanceTotals,
   getLatestBaseline,
   getOwedToPlayers,
+  listOperatorWithdrawals,
   listReconciliations,
   saveReconciliation,
   updateFinanceSettings,
 } from './server/cash/financeStore';
-import { computeReconciliation, parseFinanceSettingsPatch, parseManualBalance } from './server/cash/financeRules';
+import {
+  EMPTY_FINANCE_COUNTERS,
+  addCounters,
+  computeReconciliation,
+  parseDashboardDays,
+  parseFinanceSettingsPatch,
+  parseManualBalance,
+  parseOperatorWithdrawal,
+  summarize,
+} from './server/cash/financeRules';
 import { startCampayDeposit, verifyMyDeposit, handleCampayWebhook } from './server/cash/campayDeposits';
 import { extractWebhookEvent, normalizeCameroonPhone } from './server/cash/campayRules';
 import {
@@ -2640,6 +2654,68 @@ async function startServer() {
     } catch (err) {
       console.error('[KoraCash] Lecture des finances impossible.', err instanceof Error ? err.message : String(err));
       res.status(500).json({ success: false, error: 'Lecture des finances impossible.' });
+    }
+  });
+
+  // Tableau de bord des dépôts, retraits et du rake : l'environnement suit celui de Kora Cash (démo aujourd'hui, live demain).
+  app.get('/api/katika/cash/dashboard', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const days = parseDashboardDays(req.query.days);
+      const environment = (await getKoraCashConfig()).environment;
+      const [settings, daily, totals, operatorWithdrawals] = await Promise.all([
+        getFinanceSettings(),
+        getFinanceDaily(environment, days),
+        getFinanceTotals(environment),
+        listOperatorWithdrawals(environment),
+      ]);
+      const windowCounters = daily.reduce((sum, point) => addCounters(sum, point.counters), { ...EMPTY_FINANCE_COUNTERS });
+      res.json({
+        success: true,
+        environment,
+        days,
+        generatedAt: Date.now(),
+        window: summarize(windowCounters, settings),
+        total: summarize(totals, settings),
+        daily: daily.map((point) => ({
+          dateKey: point.dateKey,
+          depositsGross: point.counters.depositsGross,
+          withdrawalsNet: point.counters.withdrawalsNet,
+          rake: point.counters.rake,
+          operatorWithdrawals: point.counters.operatorWithdrawals,
+        })),
+        operatorWithdrawals,
+      });
+    } catch (err) {
+      console.error('[KoraCash] Lecture du tableau de bord impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Lecture du tableau de bord impossible.' });
+    }
+  });
+
+  // Retrait que l'exploitant fait lui-même chez Campay : saisi à la main, tracé (auteur, heure), annulable.
+  app.post('/api/katika/cash/operator-withdrawals', express.json(), async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const parsed = parseOperatorWithdrawal(req.body, Date.now(), dateKeyFor);
+    if (!parsed.ok || !parsed.value) return res.status(400).json({ success: false, error: parsed.error || 'Saisie invalide.' });
+    try {
+      const environment = (await getKoraCashConfig()).environment;
+      const withdrawal = await createOperatorWithdrawal(environment, parsed.value, String((req as any).katikaUser?.email || 'katika'));
+      res.json({ success: true, withdrawal });
+    } catch (err) {
+      console.error('[KoraCash] Enregistrement du retrait de l’exploitant impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Enregistrement impossible.' });
+    }
+  });
+
+  app.post('/api/katika/cash/operator-withdrawals/:id/cancel', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const withdrawal = await cancelOperatorWithdrawal(req.params.id, String((req as any).katikaUser?.email || 'katika'));
+      res.json({ success: true, withdrawal });
+    } catch (err) {
+      if (err instanceof OperatorWithdrawalError) return res.status(err.code === 'NOT_FOUND' ? 404 : 409).json({ success: false, error: err.message });
+      console.error('[KoraCash] Annulation du retrait de l’exploitant impossible.', err instanceof Error ? err.message : String(err));
+      res.status(500).json({ success: false, error: 'Annulation impossible.' });
     }
   });
 

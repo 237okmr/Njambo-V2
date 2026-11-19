@@ -20,6 +20,7 @@ import { ProviderKeysPanel } from '../../cash/ProviderKeysPanel';
 import { KatikaDemoCleanupCard } from '../../cash/KatikaDemoCleanupCard';
 import { KatikaWalletAuditCard } from '../../cash/KatikaWalletAuditCard';
 import { KatikaCampayDepositsCard } from '../../cash/KatikaCampayDepositsCard';
+import { KatikaCashDashboardCard } from '../../cash/KatikaCashDashboardCard';
 import { KatikaWithdrawalsCard } from '../../cash/KatikaWithdrawalsCard';
 import { KatikaCashTablesCard } from '../../cash/KatikaCashTablesCard';
 import { KatikaResponsibleGamingCard, KatikaSecurityCard } from '../../cash/KatikaProtectionCards';
@@ -279,16 +280,21 @@ export const KatikaKoraCashTab: React.FC = () => {
       <div className="flex-1 min-w-0 w-full">
         {activeSection === 'GENERAL' && renderGeneral()}
         {activeSection === 'PROVIDERS' && <ProviderKeysPanel />}
-        {activeSection === 'DEPOSITS_WITHDRAWALS' && <KatikaWithdrawalsCard />}
+        {activeSection === 'DEPOSITS_WITHDRAWALS' && (
+          <div className="space-y-4">
+            <KatikaCashDashboardCard />
+            <KatikaCampayDepositsCard />
+            <KatikaWithdrawalsCard />
+          </div>
+        )}
         {(activeSection === 'TABLES' || activeSection === 'RAKE') && <KatikaCashTablesCard />}
         {activeSection === 'FINANCES' && <KatikaFinanceCard />}
         {activeSection === 'SECURITY_ALERTS' && <KatikaSecurityCard />}
         {activeSection === 'RESPONSIBLE_GAMING' && <KatikaResponsibleGamingCard />}
         {activeSection === 'WALLETS_TRANSACTIONS' && <KatikaWalletAuditCard />}
         {activeSection === 'WALLETS_TRANSACTIONS' && <KatikaJournalCard />}
-        {activeSection === 'WALLETS_TRANSACTIONS' && <KatikaCampayDepositsCard />}
         {activeSection === 'WALLETS_TRANSACTIONS' && <KatikaDemoCleanupCard />}
-        {activeSection !== 'GENERAL' && activeSection !== 'PROVIDERS' && activeSection !== 'TABLES' && activeSection !== 'RAKE' && activeSection !== 'FINANCES' && activeSection !== 'SECURITY_ALERTS' && activeSection !== 'RESPONSIBLE_GAMING' && renderPlaceholder(activeSection)}
+        {activeSection !== 'GENERAL' && activeSection !== 'PROVIDERS' && activeSection !== 'DEPOSITS_WITHDRAWALS' && activeSection !== 'TABLES' && activeSection !== 'RAKE' && activeSection !== 'FINANCES' && activeSection !== 'SECURITY_ALERTS' && activeSection !== 'RESPONSIBLE_GAMING' && renderPlaceholder(activeSection)}
       </div>
     </div>
   );
