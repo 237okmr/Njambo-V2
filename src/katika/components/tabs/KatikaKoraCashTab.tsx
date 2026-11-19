@@ -143,7 +143,7 @@ export const KatikaKoraCashTab: React.FC = () => {
 
   const renderGeneral = () => (
     <div className="space-y-4">
-      <div className="p-5 rounded-xl bg-slate-950/60 border border-slate-800 flex items-start justify-between gap-4">
+      <div className="p-4 sm:p-5 rounded-xl bg-slate-950/60 border border-slate-800 flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
         <div>
           <h3 className="text-sm font-semibold text-slate-200">Activer Kora Cash</h3>
           <p className="text-xs text-slate-400 mt-1 leading-relaxed">
@@ -155,7 +155,7 @@ export const KatikaKoraCashTab: React.FC = () => {
           type="button"
           disabled={loading || saving}
           onClick={handleToggleEnabled}
-          className={`shrink-0 px-4 py-2 rounded-lg text-xs font-bold transition-colors ${
+          className={`shrink-0 min-h-11 sm:min-h-0 flex items-center justify-center px-4 py-2 rounded-lg text-xs font-bold transition-colors ${
             config.isEnabled
               ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/25'
               : 'bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700'
@@ -165,7 +165,7 @@ export const KatikaKoraCashTab: React.FC = () => {
         </button>
       </div>
 
-      <div className="p-5 rounded-xl bg-slate-950/60 border border-slate-800">
+      <div className="p-4 sm:p-5 rounded-xl bg-slate-950/60 border border-slate-800">
         <h3 className="text-sm font-semibold text-slate-200">Prestataire actif</h3>
         <p className="text-xs text-slate-400 mt-1 mb-3 leading-relaxed">
           Réglé depuis la sous-section Prestataires. Lecture seule ici.
@@ -175,7 +175,7 @@ export const KatikaKoraCashTab: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-5 rounded-xl bg-slate-950/60 border border-slate-800">
+      <div className="p-4 sm:p-5 rounded-xl bg-slate-950/60 border border-slate-800">
         <h3 className="text-sm font-semibold text-slate-200">Environnement</h3>
         <p className="text-xs text-slate-400 mt-1 mb-3 leading-relaxed">
           Démo : aucune transaction réelle. LIVE : transactions réelles via le prestataire actif.
@@ -187,7 +187,7 @@ export const KatikaKoraCashTab: React.FC = () => {
               type="button"
               disabled={saving}
               onClick={() => handleEnvironmentChange(env)}
-              className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors ${
+              className={`flex-1 sm:flex-none min-h-11 sm:min-h-0 px-4 py-2 rounded-lg text-xs font-bold transition-colors ${
                 config.environment === env
                   ? env === 'LIVE'
                     ? 'bg-rose-500/15 text-rose-300 border border-rose-500/40'
@@ -220,7 +220,7 @@ export const KatikaKoraCashTab: React.FC = () => {
   const renderPlaceholder = (section: Exclude<KoraCashSubSection, 'GENERAL' | 'PROVIDERS'>) => {
     const sectionMeta = SUB_SECTIONS.find((s) => s.id === section);
     return (
-      <div className="p-5 rounded-xl bg-slate-950/60 border border-slate-800">
+      <div className="p-4 sm:p-5 rounded-xl bg-slate-950/60 border border-slate-800">
         <h3 className="text-sm font-semibold text-slate-200">{sectionMeta?.label} — à venir</h3>
         <p className="text-xs text-slate-400 mt-1 mb-3 leading-relaxed">
           Cette sous-section n'est pas encore branchée. Champs prévus :
@@ -247,8 +247,11 @@ export const KatikaKoraCashTab: React.FC = () => {
   }
 
   return (
-    <div className="flex gap-6">
-      <nav className="w-56 shrink-0 space-y-1">
+    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+      <nav
+        aria-label="Sections de Kora Cash"
+        className="flex lg:block gap-1 lg:space-y-1 overflow-x-auto lg:overflow-visible lg:w-56 lg:shrink-0 border-b border-slate-800 lg:border-0 pb-1 lg:pb-0"
+      >
         {SUB_SECTIONS.map((section) => {
           const Icon = section.icon;
           const isActive = activeSection === section.id;
@@ -256,21 +259,24 @@ export const KatikaKoraCashTab: React.FC = () => {
             <button
               key={section.id}
               type="button"
-              onClick={() => setActiveSection(section.id)}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors text-left ${
+              onClick={(e) => {
+                setActiveSection(section.id);
+                e.currentTarget.scrollIntoView?.({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+              }}
+              className={`shrink-0 whitespace-nowrap lg:w-full min-h-11 lg:min-h-0 flex items-center gap-2.5 px-3.5 lg:px-3 py-2 rounded-lg text-xs font-medium transition-colors text-left ${
                 isActive
                   ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'
               }`}
             >
               <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-amber-400' : 'text-slate-500'}`} />
-              <span className="truncate">{section.label}</span>
+              <span className="lg:truncate">{section.label}</span>
             </button>
           );
         })}
       </nav>
 
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 w-full">
         {activeSection === 'GENERAL' && renderGeneral()}
         {activeSection === 'PROVIDERS' && <ProviderKeysPanel />}
         {activeSection === 'DEPOSITS_WITHDRAWALS' && <KatikaWithdrawalsCard />}
