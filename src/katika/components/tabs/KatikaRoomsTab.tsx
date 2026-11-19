@@ -21,6 +21,7 @@ import {
 import { KatikaLiveRoom } from '../../types/katika';
 import { KatikaService } from '../../services/katikaService';
 import { KatikaLiveSpectatorModal } from '../modals/KatikaLiveSpectatorModal';
+import { KatikaSheet, SHEET_BTN_DANGER, SHEET_BTN_PRIMARY, SHEET_BTN_SECONDARY } from '../KatikaSheet';
 import { KATIKA_NAVIGATE_EVENT, KatikaNavigationEventDetail, navigateToKatikaTab } from '../../utils/katikaNavigation';
 
 export const KatikaRoomsTab: React.FC = () => {
@@ -498,45 +499,34 @@ export const KatikaRoomsTab: React.FC = () => {
         />
       )}
 
-      {/* Confirmation Modal */}
+      {/* Confirmation : volet en bas sur téléphone, fenêtre centrée dès 640 px */}
       {confirmModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-4">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                confirmModal.variant === 'danger' 
-                  ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' 
-                  : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-              }`}>
-                <AlertCircle className="w-5 h-5" />
-              </div>
-              <h4 className="text-base font-bold text-white">{confirmModal.title}</h4>
-            </div>
-
-            <p className="text-xs text-slate-300 leading-relaxed">
-              {confirmModal.description}
-            </p>
-
-            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-800">
-              <button
-                onClick={() => setConfirmModal(null)}
-                className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition"
-              >
+        <KatikaSheet
+          title={
+            <>
+              <AlertCircle className={`w-5 h-5 shrink-0 ${confirmModal.variant === 'danger' ? 'text-rose-400' : 'text-amber-400'}`} />
+              <span>{confirmModal.title}</span>
+            </>
+          }
+          tone={confirmModal.variant === 'danger' ? 'danger' : 'warning'}
+          onClose={() => setConfirmModal(null)}
+          footer={
+            <>
+              <button type="button" onClick={() => setConfirmModal(null)} className={SHEET_BTN_SECONDARY}>
                 Annuler
               </button>
               <button
+                type="button"
                 onClick={confirmModal.onConfirm}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition shadow-lg ${
-                  confirmModal.variant === 'danger'
-                    ? 'bg-rose-600 hover:bg-rose-500 text-white'
-                    : 'bg-amber-500 hover:bg-amber-400 text-slate-950'
-                }`}
+                className={confirmModal.variant === 'danger' ? SHEET_BTN_DANGER : SHEET_BTN_PRIMARY}
               >
                 {confirmModal.confirmLabel}
               </button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        >
+          <p className="text-sm text-slate-300 leading-relaxed">{confirmModal.description}</p>
+        </KatikaSheet>
       )}
     </div>
   );

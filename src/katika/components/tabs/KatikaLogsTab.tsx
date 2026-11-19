@@ -23,6 +23,7 @@ import { KatikaService, getAuditLogsNotice } from '../../services/katikaService'
 import { KATIKA_NAVIGATE_EVENT, KatikaNavigationEventDetail } from '../../utils/katikaNavigation';
 import { KatikaConnectionHealthPanel } from './KatikaConnectionHealthPanel';
 import { KatikaCrashesPanel } from './KatikaCrashesPanel';
+import { KatikaSheet, SHEET_BTN_SECONDARY } from '../KatikaSheet';
 import { KatikaBootStatsPanel } from './KatikaBootStatsPanel';
 import { KatikaInviteStatsPanel } from './KatikaInviteStatsPanel';
 import { KatikaAuthStatsPanel } from './KatikaAuthStatsPanel';
@@ -325,40 +326,33 @@ export const KatikaLogsTab: React.FC = () => {
         </div>
       </div>
 
-      {/* JSON Payload Details Modal */}
+      {/* Détail d'une action du Journal : lecture seule, un toucher sur le fond ferme le volet */}
       {selectedLogForDetails && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2 text-white font-bold text-sm">
-                <Code className="w-4 h-4 text-amber-400" />
-                <span>Détails Inaltérables de l'Action</span>
-              </div>
-              <button onClick={() => setSelectedLogForDetails(null)} className="text-slate-400 hover:text-white">
-                <X className="w-4 h-4" />
-              </button>
+        <KatikaSheet
+          title={
+            <>
+              <Code className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>Détails inaltérables de l'action</span>
+            </>
+          }
+          maxWidth="lg"
+          dismissOnBackdrop
+          onClose={() => setSelectedLogForDetails(null)}
+          footer={
+            <button type="button" onClick={() => setSelectedLogForDetails(null)} className={SHEET_BTN_SECONDARY}>
+              Fermer
+            </button>
+          }
+        >
+          <div className="space-y-3 text-sm">
+            <div className="text-slate-400">
+              Événement : <b className="text-white">{selectedLogForDetails.summary}</b>
             </div>
-
-            <div className="space-y-3 text-xs">
-              <div className="text-slate-400 font-mono text-[11px]">
-                Événement : <b className="text-white font-sans">{selectedLogForDetails.summary}</b>
-              </div>
-              <div className="p-3.5 bg-slate-950 rounded-xl border border-slate-800 overflow-x-auto text-[11px] font-mono text-amber-300">
-                <pre>{JSON.stringify(selectedLogForDetails.details, null, 2)}</pre>
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-3 border-t border-slate-800">
-              <button
-                type="button"
-                onClick={() => setSelectedLogForDetails(null)}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium"
-              >
-                Fermer
-              </button>
+            <div className="p-3.5 bg-slate-950 rounded-xl border border-slate-800 overflow-x-auto text-xs font-mono text-amber-300">
+              <pre>{JSON.stringify(selectedLogForDetails.details, null, 2)}</pre>
             </div>
           </div>
-        </div>
+        </KatikaSheet>
       )}
     </div>
   );
