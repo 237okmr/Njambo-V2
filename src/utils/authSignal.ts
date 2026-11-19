@@ -3,7 +3,9 @@
  * Seul le code d'erreur Firebase (ex. « auth/popup-blocked ») transite : jamais de nom, de courriel ni de compte.
  */
 
-export type AuthStep = 'popup_start' | 'popup_ok' | 'popup_fail' | 'redirect_start' | 'redirect_ok' | 'redirect_fail' | 'redirect_lost';
+export type AuthStep =
+  | 'popup_start' | 'popup_ok' | 'popup_fail' | 'redirect_start' | 'redirect_ok' | 'redirect_fail' | 'redirect_lost'
+  | 'id_refused' | 'id_repair' | 'id_norepair' | 'id_guest_forced';
 
 type AuthWindow = { __njamboAuthSignal?: (step: string, detail?: string, relay?: boolean) => void };
 

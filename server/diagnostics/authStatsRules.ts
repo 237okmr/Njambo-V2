@@ -11,8 +11,23 @@ import { createHash } from 'node:crypto';
 import { parseUserAgent } from './crashReportRules';
 import type { BootFamily } from './bootStatsRules';
 
-export const AUTH_STEPS = ['popup_start', 'popup_ok', 'popup_fail', 'redirect_start', 'redirect_ok', 'redirect_fail', 'redirect_lost'] as const;
+export const AUTH_STEPS = [
+  'popup_start', 'popup_ok', 'popup_fail', 'redirect_start', 'redirect_ok', 'redirect_fail', 'redirect_lost',
+  // Identité refusée par le serveur (« identifiant joueur différent de celui de la connexion ») : le client signale
+  // chaque refus reçu, et pourquoi la réparation automatique n'a pas eu lieu. Aucun identifiant ne transite.
+  'id_refused', 'id_repair', 'id_norepair', 'id_guest_forced',
+] as const;
 export type AuthStep = (typeof AUTH_STEPS)[number];
+
+/** Raisons pour lesquelles le client n'a pas réparé son identité après un refus (liste fermée, le reste devient « other »). */
+export const NOREPAIR_REASONS = ['no_expected', 'no_user', 'anonymous', 'uid_mismatch', 'already_aligned'] as const;
+/** Contexte d'un retour forcé à l'identifiant invité alors qu'une identité Google était enregistrée. */
+export const GUEST_FORCED_CONTEXTS = ['no_user', 'anonymous', 'google'] as const;
+
+function closedDetail(raw: unknown, allowed: readonly string[]): string {
+  const v = typeof raw === 'string' ? raw.toLowerCase().replace(/[^a-z_]/g, '').slice(0, 30) : '';
+  return allowed.includes(v) ? v : 'other';
+}
 
 /** Codes d'erreur Firebase (sans le préfixe « auth/ ») comptés séparément. Tout le reste devient « other ». */
 export const KNOWN_AUTH_CODES = [
@@ -66,7 +81,13 @@ export function sanitizeAuthSignal(body: unknown, userAgent: unknown): AuthSigna
   const b = (body && typeof body === 'object' ? body : {}) as Record<string, unknown>;
   const step = AUTH_STEPS.find((s) => s === b.step);
   if (!step) return { ok: false };
-  const counter = step.endsWith('_fail') ? `${step}_${normalizeAuthCode(b.detail)}` : step;
+  const counter = step.endsWith('_fail')
+    ? `${step}_${normalizeAuthCode(b.detail)}`
+    : step === 'id_norepair'
+      ? `${step}_${closedDetail(b.detail, NOREPAIR_REASONS)}`
+      : step === 'id_guest_forced'
+        ? `${step}_${closedDetail(b.detail, GUEST_FORCED_CONTEXTS)}`
+        : step;
   const ua = parseUserAgent(userAgent);
   const build = typeof b.build === 'string' ? b.build.replace(/[^A-Za-z0-9._-]/g, '').slice(0, MAX_BUILD_CHARS) : '';
   return {

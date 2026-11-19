@@ -60,7 +60,8 @@ import {
   HonorificTitle,
 } from '../types/playerProfile';
 import { getPersistentItem, setPersistentItem } from '../utils/storageUtils';
-import { getGuestId, setAuthenticatedUid, clearAuthenticatedUid } from './identity';
+import { getGuestId, setAuthenticatedUid, clearAuthenticatedUid, hasStoredAuthUid } from './identity';
+import { reportAuthStep } from '../utils/authSignal';
 import { RivalryService } from './rivalryService';
 import { LeaderboardService } from './leaderboardService';
 
@@ -535,6 +536,11 @@ export const playerProfileService = {
       if (!profile.isGuest && profile.uid) {
         setAuthenticatedUid(profile.uid);
       } else {
+        // Mesure anonyme : retour forcé à l'identifiant invité alors qu'une identité Google était enregistrée sur l'appareil.
+        if (hasStoredAuthUid()) {
+          const u = auth.currentUser;
+          reportAuthStep('id_guest_forced', !u ? 'no_user' : u.isAnonymous ? 'anonymous' : 'google');
+        }
         clearAuthenticatedUid();
       }
       setPersistentItem('njambo_player_name', profile.displayName);

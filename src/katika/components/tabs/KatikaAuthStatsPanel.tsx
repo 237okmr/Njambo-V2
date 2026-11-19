@@ -76,6 +76,48 @@ function failureDetails(counts: Record<string, number>): string {
     .join(', ');
 }
 
+const NOREPAIR_LABEL: Record<string, string> = {
+  no_expected: 'refus sans identifiant attendu',
+  no_user: 'aucune session Google',
+  anonymous: 'session anonyme',
+  uid_mismatch: 'autre compte',
+  already_aligned: 'identifiant déjà aligné (vient de la table)',
+  other: 'autre',
+};
+const FORCED_LABEL: Record<string, string> = {
+  no_user: 'sans session Google (déconnexion normale comprise)',
+  anonymous: 'session anonyme',
+  google: 'malgré une session Google',
+  other: 'autre',
+};
+
+const sumKeys = (counts: Record<string, number>, prefix: string) =>
+  Object.entries(counts).reduce((s, [k, n]) => (k.startsWith(prefix) ? s + (Number(n) || 0) : s), 0);
+
+const detailsOf = (counts: Record<string, number>, prefix: string, labels: Record<string, string>) =>
+  Object.entries(counts)
+    .filter(([k, n]) => k.startsWith(prefix) && n > 0)
+    .sort((a, b) => b[1] - a[1])
+    .map(([k, n]) => `${labels[k.slice(prefix.length)] ?? k.slice(prefix.length)} ${n}`)
+    .join(', ');
+
+/** Identité refusée par le serveur : refus reçus, réparations faites, et sinon la raison ; retours forcés à l'invité. Vide s'il n'y a rien. */
+function identityLine(counts: Record<string, number>): string {
+  const refused = Number(counts.id_refused) || 0;
+  const repaired = Number(counts.id_repair) || 0;
+  const notRepaired = sumKeys(counts, 'id_norepair_');
+  const forced = sumKeys(counts, 'id_guest_forced_');
+  if (refused + repaired + notRepaired + forced === 0) return '';
+  const parts: string[] = [];
+  if (refused + repaired + notRepaired > 0) {
+    parts.push(`identité refusée ${refused} fois, réparée ${repaired}, non réparée ${notRepaired}`);
+    const why = detailsOf(counts, 'id_norepair_', NOREPAIR_LABEL);
+    if (why) parts.push(`pourquoi : ${why}`);
+  }
+  if (forced > 0) parts.push(`retour forcé à l'invité ${forced} (${detailsOf(counts, 'id_guest_forced_', FORCED_LABEL)})`);
+  return parts.join(' · ');
+}
+
 /**
  * Connexion Google par type d'appareil : fenêtres lancées et réussies, échecs par code d'erreur Firebase, et le secours par redirection
  * (iPhone et iPad, réglage « Connexion Google de secours par redirection », fermé par défaut). Un type d'appareil est à examiner quand
@@ -153,6 +195,7 @@ export const KatikaAuthStatsPanel: React.FC = () => {
           <div className="space-y-2">
             {data.groups.map((g) => {
               const details = failureDetails(g.counts);
+              const identity = identityLine(g.counts);
               return (
                 <div key={g.key} className={`p-3 rounded-lg border ${g.suspect ? 'bg-slate-800/70 border-rose-500/40' : 'bg-slate-800/40 border-slate-700/40'}`}>
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-400">
@@ -173,6 +216,7 @@ export const KatikaAuthStatsPanel: React.FC = () => {
                     {!g.judged && g.key !== 'autres' ? ` · pas encore jugé (moins de ${data.thresholds.minAttempts} fenêtres)` : ''}
                   </p>
                   {details && <p className="mt-1 text-[11px] text-slate-500">Codes : {details}</p>}
+                  {identity && <p className="mt-1 text-[11px] text-amber-300/80">Identité : {identity}</p>}
                 </div>
               );
             })}

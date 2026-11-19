@@ -145,3 +145,31 @@ describe('connexion Google : analyse', () => {
     assert.notEqual(authGroupKey(group({ relay: true })), authGroupKey(group({ relay: false })));
   });
 });
+
+describe('identité refusée : validation des signaux', () => {
+  it('accepte les quatre étapes et ne garde que les raisons de la liste fermée', () => {
+    const refused = sanitizeAuthSignal({ step: 'id_refused' }, IPHONE_UA);
+    assert.equal(refused.ok && refused.counter, 'id_refused');
+    const repair = sanitizeAuthSignal({ step: 'id_repair' }, IPHONE_UA);
+    assert.equal(repair.ok && repair.counter, 'id_repair');
+    const why = sanitizeAuthSignal({ step: 'id_norepair', detail: 'already_aligned' }, IPHONE_UA);
+    assert.equal(why.ok && why.counter, 'id_norepair_already_aligned');
+    const forced = sanitizeAuthSignal({ step: 'id_guest_forced', detail: 'no_user' }, IPHONE_UA);
+    assert.equal(forced.ok && forced.counter, 'id_guest_forced_no_user');
+  });
+
+  it('une raison inconnue ou un identifiant glissé dans le détail devient « other »', () => {
+    const odd = sanitizeAuthSignal({ step: 'id_norepair', detail: 'XvhceH5fLKPlMMrkLVJp8xYHC5H2' }, IPHONE_UA);
+    assert.equal(odd.ok && odd.counter, 'id_norepair_other');
+    const none = sanitizeAuthSignal({ step: 'id_guest_forced' }, IPHONE_UA);
+    assert.equal(none.ok && none.counter, 'id_guest_forced_other');
+    assert.equal(JSON.stringify(odd).includes('Xvhce'), false);
+  });
+
+  it('les compteurs d\'identité n\'entrent pas dans le jugement des fenêtres de connexion', () => {
+    const rows = [row({}, { popup_start: 30, popup_ok: 30, id_refused: 12, id_repair: 3, id_norepair_already_aligned: 9 })];
+    const r = analyzeAuthRows(rows, thresholds)[0];
+    assert.equal(r.popupTechnicalFailures, 0);
+    assert.equal(r.suspect, false);
+  });
+});

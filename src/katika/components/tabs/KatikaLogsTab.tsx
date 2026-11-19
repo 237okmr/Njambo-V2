@@ -148,18 +148,20 @@ export const KatikaLogsTab: React.FC = () => {
 
   // Export as CSV (Excel compatible)
   const handleExportCSV = () => {
-    const headers = ['ID', 'Date_Heure', 'Severite', 'Type', 'Acteur', 'Resume'];
+    const headers = ['ID', 'Date_Heure', 'Severite', 'Type', 'Acteur', 'Resume', 'Details'];
     const rows = filteredLogs.map((l) => [
       `"${l.id}"`,
       `"${new Date(l.timestamp).toISOString()}"`,
       `"${l.severity}"`,
       `"${l.type}"`,
       `"${l.actor.replace(/"/g, '""')}"`,
-      `"${l.summary.replace(/"/g, '""')}"`
+      `"${l.summary.replace(/"/g, '""')}"`,
+      `"${(l.details ? JSON.stringify(l.details) : '').replace(/"/g, '""')}"`
     ]);
 
-    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
+    const csvText = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    // encodeURIComponent (et non encodeURI) : un \u00AB # \u00BB dans les d\u00E9tails couperait sinon le fichier.
+    const encodedUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvText);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
     link.setAttribute('download', `katika_audit_log_${new Date().toISOString().slice(0, 10)}.csv`);

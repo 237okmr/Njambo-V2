@@ -159,6 +159,14 @@ export function setAuthenticatedUid(uid: string): void {
 }
 
 /**
+ * Vrai quand une identité Google est actuellement enregistrée sur l'appareil (avant un éventuel retour à l'invité).
+ */
+export function hasStoredAuthUid(): boolean {
+  const authUid = getPersistentItem(AUTH_UID_KEY);
+  return Boolean(authUid && authUid.trim());
+}
+
+/**
  * Clears the authenticated UID on logout and restores the guest ID.
  */
 export function clearAuthenticatedUid(): void {

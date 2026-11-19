@@ -6,6 +6,7 @@ import { APP_VERSION } from '../version';
 import { playerProfileService } from './playerProfileService';
 import { getPersistentItem, setPersistentItem } from '../utils/storageUtils';
 import { getPlayerId, setLocalPlayerId, setInRoomStatus, onIdentityChange } from './identity';
+import { reportAuthStep } from '../utils/authSignal';
 import { noteServerConfigVersion, getPublicParamNumber } from './publicConfig';
 import { computeReconnectDelayMs } from './reconnectBackoff';
 
@@ -1268,6 +1269,27 @@ class WebSocketService {
             isGoogleAuthUser &&
             msg.expectedPlayerId === currentUser!.uid &&
             getPlayerId() !== msg.expectedPlayerId;
+
+          // Mesure anonyme (aucun identifiant n'est envoyé) : combien de refus, combien de réparations, et sinon pourquoi pas.
+          if (msg.expectedPlayerId) {
+            reportAuthStep('id_refused');
+            if (shouldAutoRepair) {
+              reportAuthStep('id_repair');
+            } else {
+              const reason = !currentUser
+                ? 'no_user'
+                : currentUser.isAnonymous
+                  ? 'anonymous'
+                  : msg.expectedPlayerId !== currentUser.uid
+                    ? 'uid_mismatch'
+                    : getPlayerId() === msg.expectedPlayerId
+                      ? 'already_aligned'
+                      : 'other';
+              reportAuthStep('id_norepair', reason);
+            }
+          } else {
+            reportAuthStep('id_norepair', 'no_expected');
+          }
 
           if (shouldAutoRepair && msg.expectedPlayerId) {
             console.warn(`[WS Auto-repair] Server expectedPlayerId '${msg.expectedPlayerId}' matches Google UID. Realigning identity.`);
