@@ -432,6 +432,31 @@ body,
   }
 }
 
+/*
+ * Katika (outil d'administration) sur téléphone et tablette, sous 1024 px :
+ * champs à 16 px (iOS ne zoome plus à la prise de focus) et hauteur tactile de 44 px.
+ * La classe katika-ui est posée sur l'espace de travail de katika et sur ses volets ;
+ * katika-settings sur le formulaire des Réglages, où les boutons de choix passent à 40 px.
+ * Ces règles ne touchent pas le jeu, qui garde ses tailles.
+ */
+@media (max-width: 1023.98px) {
+  .katika-ui input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  .katika-ui textarea,
+  .katika-ui select {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+
+  .katika-ui input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  .katika-ui select {
+    min-height: 2.75rem;
+  }
+
+  .katika-settings button:not([role='switch']):not(.underline) {
+    min-height: 2.5rem;
+  }
+}
+
 /* Hauteur réservée à la barre de navigation du bas : posée par BottomNavBar tant qu'elle est affichée. */
 html.has-bottom-nav {
   --app-bottom-nav: calc(3.5rem + env(safe-area-inset-bottom));

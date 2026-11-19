@@ -105,7 +105,7 @@ export const KatikaSheet: React.FC<KatikaSheetProps> = ({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`w-full ${MAX_WIDTH[maxWidth]} max-h-[calc(100%-1rem)] sm:max-h-[90%] flex flex-col bg-slate-900 border ${TONE_BORDER[tone]} rounded-t-2xl sm:rounded-2xl shadow-2xl outline-none overflow-hidden`}
+        className={`katika-ui w-full ${MAX_WIDTH[maxWidth]} max-h-[calc(100%-1rem)] sm:max-h-[90%] flex flex-col bg-slate-900 border ${TONE_BORDER[tone]} rounded-t-2xl sm:rounded-2xl shadow-2xl outline-none overflow-hidden`}
       >
         <div aria-hidden="true" className="sm:hidden mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-slate-700" />
 
